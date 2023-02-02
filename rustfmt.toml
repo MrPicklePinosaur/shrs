@@ -1,0 +1,8 @@
+group_imports = "StdExternalCrate"
+imports_layout = "Mixed"
+imports_granularity = "Crate"
+
+match_block_trailing_comma = true
+trailing_semicolon = true
+
+use_field_init_shorthand = true

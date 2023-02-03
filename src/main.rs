@@ -5,6 +5,12 @@ use std::{
     process::Command,
 };
 
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
+mod parser;
+
 fn main() {
     run();
 }
@@ -21,6 +27,11 @@ fn run() {
         let mut line = String::new();
         if let Err(e) = stdin().read_line(&mut line) {
             continue;
+        }
+
+        let mut parser = parser::ParserContext::new();
+        if let Err(e) = parser.parse(&line) {
+            eprintln!("{}", e);
         }
 
         let mut parts = line.trim().split_whitespace();

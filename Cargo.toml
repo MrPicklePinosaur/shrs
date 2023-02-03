@@ -10,3 +10,7 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 [features]
 
 [dependencies]
+pest = "2"
+pest_derive = "2"
+
+thiserror = "1"

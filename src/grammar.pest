@@ -1,0 +1,6 @@
+
+WHITESPACE = _{ " " }
+
+root = { cmd ~ arg*}
+cmd = { (ASCII_ALPHANUMERIC)+ }
+arg = { (ASCII_ALPHANUMERIC)+ }

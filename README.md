@@ -14,3 +14,4 @@ rust library to build your own shell
 - [ ] signals (^C, ^\, ^Z etc)
 - [ ] completion
 - [ ] history
+- [ ] alias

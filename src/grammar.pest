@@ -1,6 +1,10 @@
 
 WHITESPACE = _{ " " }
 
-root = { cmd ~ arg*}
-cmd = { (ASCII_ALPHANUMERIC)+ }
-arg = { (ASCII_ALPHANUMERIC)+ }
+root = { command ~ (PIPE ~ command)* } 
+
+command = { CMD ~ ARG* }
+
+CMD = @{ (ASCII_ALPHANUMERIC)+ }
+ARG = @{ (ASCII_ALPHANUMERIC|"-")+ }
+PIPE = @{ "|" }

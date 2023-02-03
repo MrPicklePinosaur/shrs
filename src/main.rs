@@ -1,12 +1,22 @@
 use std::{
+    env,
     io::{stdin, stdout, Write},
+    path::Path,
     process::Command,
 };
 
 fn main() {
+    run();
+}
+
+fn prompt_command() {
+    print!("> ");
+    stdout().flush();
+}
+
+fn run() {
     loop {
-        print!("> ");
-        stdout().flush();
+        prompt_command();
 
         let mut line = String::new();
         if let Err(e) = stdin().read_line(&mut line) {
@@ -29,7 +39,14 @@ fn run_command(cmd: &str, args: &Vec<&str>) {
     };
 }
 
-fn run_cd_command(args: &Vec<&str>) {}
+fn run_cd_command(args: &Vec<&str>) {
+    // if empty default to root (for now)
+    let raw_path = args.get(0).unwrap_or(&"/");
+    let path = Path::new(raw_path);
+    if let Err(e) = env::set_current_dir(path) {
+        eprintln!("{}", e);
+    }
+}
 
 fn run_exit_command(args: &Vec<&str>) {
     std::process::exit(0);

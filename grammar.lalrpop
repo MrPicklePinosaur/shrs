@@ -1,10 +1,14 @@
 use std::str::FromStr;
+use ast::*;
 
 grammar;
 
-pub Term: i32 = {
-    <n:Num> => n,
-    "(" <t:Term> ")" => t,
-};
+pub PipeSequence: Vec<Command> = {
+    <p:PipeSequence> "|" <c:Command> => p.into_iter().chain(c.into_iter()).collect(),
+    <c:Command> => vec![c],
+}
 
-Num: i32 = <s:r"[0-9]+"> => i32::from_str(s).unwrap();
+pub Command: Command = {
+    <s:r"[a-z]+"> => Command(s),
+}
+

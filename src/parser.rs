@@ -23,10 +23,10 @@ impl ParserContext {
 #[cfg(test)]
 mod tests {
 
-    use crate::parser::grammar::TermParser;
+    use super::grammar;
 
     #[test]
     fn parse() {
-        assert!(TermParser::new().parse("(((42)))").is_ok());
+        assert!(grammar::CommandParser::new().parse("abcd").is_ok());
     }
 }

@@ -20,14 +20,14 @@ impl ParserContext {
     }
 
     pub fn parse(&mut self, input: &str) -> Result<(), ParserError> {
-        let parsed = ShParser::parse(Rule::root, input)
+        let parsed = ShParser::parse(Rule::program, input)
             .map_err(|e| ParserError::UnsuccessfulParse(e.to_string()))?
             .next()
             .unwrap();
 
-        self.parse_root(parsed)?;
         Ok(())
     }
+    /*
 
     fn parse_root(&mut self, pair: Pair<Rule>) -> Result<(), ParserError> {
         // TODO find if we can build in this assert into the signature of the function
@@ -53,4 +53,5 @@ impl ParserContext {
         }
         Ok(())
     }
+    */
 }

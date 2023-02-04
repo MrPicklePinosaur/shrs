@@ -32,10 +32,10 @@ impl Shell {
                 continue;
             }
 
-            let mut parser = parser::ParserContext::new();
-            if let Err(e) = parser.parse(&line) {
-                eprintln!("{}", e);
-            }
+            // let mut parser = parser::ParserContext::new();
+            // if let Err(e) = parser.parse(&line) {
+            //     eprintln!("{}", e);
+            // }
 
             // let mut parts = line.trim().split_whitespace();
             // let cmd = parts.next().unwrap();

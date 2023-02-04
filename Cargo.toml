@@ -6,11 +6,13 @@ license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "modular library to build your own shell in rust"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
-
-[features]
+build = "build.rs"
 
 [dependencies]
-pest = "2"
-pest_derive = "2"
+lalrpop-util = { version = "0.19.8", features = ["lexer"] }
+regex = "1"
 
 thiserror = "1"
+
+[build-dependencies]
+lalrpop = "0.19.8"

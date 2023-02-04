@@ -7,4 +7,12 @@ command = { CMD ~ ARG* }
 
 CMD = @{ (ASCII_ALPHANUMERIC)+ }
 ARG = @{ (ASCII_ALPHANUMERIC|"-")+ }
+
 PIPE = @{ "|" }
+LESS = @{ "<" }
+GREAT = @{ ">" }
+DLESS = @{ "<<" }
+DGREAT = @{ ">>" }
+LESSAND = @{ "<&" }
+GREATAND = @{ ">&" }
+LESSGREAT = @{ "<>" }

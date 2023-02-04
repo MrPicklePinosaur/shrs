@@ -7,10 +7,14 @@ use std::{
 
 use super::parser;
 
+/// User defined command that gets ran when we wish to print the prompt
 fn prompt_command() {
     print!("> ");
     stdout().flush();
 }
+
+/// User defined command for formatting shell error messages
+fn error_command() {}
 
 pub struct Shell {}
 

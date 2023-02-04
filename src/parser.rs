@@ -10,9 +10,6 @@ use thiserror::Error;
 pub enum ParserError {
     #[error("unsuccessful parse")]
     UnsuccessfulParse(String),
-    // this error can get pretty vauge, prob remove
-    #[error("early termination: {0}")]
-    EarlyTermination(String),
 }
 
 pub struct ParserContext {}
@@ -35,17 +32,6 @@ impl ParserContext {
     fn parse_root(&mut self, pair: Pair<Rule>) -> Result<(), ParserError> {
         // TODO find if we can build in this assert into the signature of the function
         assert!(pair.as_rule() == Rule::root);
-
-        // let mut it = pair.into_inner();
-        // let part = it.next().ok_or(ParserError::EarlyTermination("root".into()))?;
-        // println!("{:?}", part);
-
-        // if let Some(part) = it.next() {
-        //     if part.as_rule() == Rule::PIPE {
-        // 	let next = it.next().ok_or(ParserError::EarlyTermination("root".into()))?;
-        // 	self.parse_root(next);
-        //     }
-        // }
 
         for command in pair.into_inner() {
             if command.as_rule() == Rule::command {

@@ -1,0 +1,15 @@
+use std::str::FromStr;
+use crate::ast;
+
+grammar;
+
+pub PipeSequence: ast::Command = {
+    <p:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(p), Box::new(s)),
+    <s:Simple> => s,
+}
+
+pub Simple: ast::Command = {
+    <words: CommandWord+> => ast::Command::Simple(<>)
+}
+
+pub CommandWord: ast::Word = r"[a-zA-Z0-9]+" => ast::Word(<>.into());

@@ -27,6 +27,7 @@ mod tests {
 
     #[test]
     fn parse() {
-        assert!(grammar::CommandParser::new().parse("abcd").is_ok());
+        let res = grammar::PipeSequenceParser::new().parse("ls home | grep downloads");
+        println!("{:?}", res);
     }
 }

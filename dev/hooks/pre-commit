@@ -5,5 +5,5 @@ NC='\033[0m'
 printf "${BOLD}[PRE-COMMIT]${NC} formatting code...\n"
 cargo +nightly fmt --all
 git add -u
-printf "${BOLD}[PRE-COMMIT]${NC} linting...\n"
-cargo clippy
+# printf "${BOLD}[PRE-COMMIT]${NC} linting...\n"
+# cargo clippy

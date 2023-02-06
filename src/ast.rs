@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 #[derive(Debug)]
 pub enum Command {
     /// Basic command
@@ -17,3 +19,16 @@ pub enum Command {
 
 #[derive(Debug)]
 pub struct Word(pub String);
+
+impl Deref for Word {
+    type Target = String;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Word {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}

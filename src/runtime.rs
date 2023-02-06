@@ -1,12 +1,12 @@
-pub struct Runtime {}
 
-pub struct PipeNode {}
 
-pub struct CommandNode {
-    pub cmd_name: String,
-    pub args: Vec<String>,
-}
-
-impl CommandNode {
-    pub fn eval(&self) {}
+pub fn eval_command(cmd: Command) {
+    match cmd {
+	Command::Simple(simple_cmd) => {
+	    
+	},
+	Command::Pipeline(a_cmd, b_cmd) => {
+	    
+	}
+    }
 }

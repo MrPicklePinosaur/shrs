@@ -2,6 +2,8 @@ lalrpop_mod!(pub grammar);
 
 use thiserror::Error;
 
+use crate::ast;
+
 #[derive(Error, Debug)]
 pub enum ParserError {
     #[error("unsuccessful parse")]
@@ -15,8 +17,10 @@ impl ParserContext {
         ParserContext {}
     }
 
-    pub fn parse(&mut self, input: &str) -> Result<(), ParserError> {
-        Ok(())
+    pub fn parse(&mut self, input: &str) -> Result<ast::Command, ParserError> {
+        grammar::PipeSequenceParser::new()
+            .parse(input)
+            .map_err(|e| ParserError::UnsuccessfulParse(e.to_string()))
     }
 }
 

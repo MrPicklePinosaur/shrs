@@ -2,6 +2,7 @@
 extern crate lalrpop_util;
 
 mod ast;
+mod history;
 mod parser;
 mod shell;
 

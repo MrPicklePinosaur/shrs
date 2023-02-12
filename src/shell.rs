@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, parser};
+use crate::{ast, history::History, parser};
 
 /// User defined command that gets ran when we wish to print the prompt
 fn prompt_command() {
@@ -18,14 +18,18 @@ fn prompt_command() {
 /// User defined command for formatting shell error messages
 fn error_command() {}
 
-pub struct Shell {}
+pub struct Shell {
+    history: History,
+}
 
 impl Shell {
     pub fn new() -> Self {
-        Shell {}
+        Shell {
+            history: History::new(),
+        }
     }
 
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&mut self) -> anyhow::Result<()> {
         loop {
             prompt_command();
 
@@ -33,6 +37,8 @@ impl Shell {
             if let Err(e) = stdin().read_line(&mut line) {
                 continue;
             }
+
+            self.history.add(line.clone());
 
             let mut parser = parser::ParserContext::new();
             match parser.parse(&line) {

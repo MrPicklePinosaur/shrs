@@ -3,6 +3,7 @@ extern crate lalrpop_util;
 
 mod ast;
 mod parser;
+mod prompt;
 mod shell;
 
 fn main() {

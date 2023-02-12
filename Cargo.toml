@@ -13,6 +13,7 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 
 thiserror = "1"
+anyhow = "1"
 
 [build-dependencies]
 lalrpop = "0.19.8"

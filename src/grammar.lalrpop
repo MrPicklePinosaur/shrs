@@ -9,7 +9,21 @@ pub PipeSequence: ast::Command = {
 }
 
 pub Simple: ast::Command = {
-    <words: CommandWord+> => ast::Command::Simple(<>)
+    <prefix: Redirect*> <words: CommandWord+> <suffix: Redirect*> => {
+    	let redirects = prefix.into_iter().chain(suffix.into_iter()).collect();
+	ast::Command::Simple { redirects, args: words }
+    }
+}
+
+pub Redirect: ast::Redirect = {
+    "<"  <file: Filename> => ast::Redirect::R { file },
+    ">"  <file: Filename> => ast::Redirect::W { file },
+    "<<" <file: Filename> => ast::Redirect::R { file },
+    ">>" <file: Filename> => ast::Redirect::W { file },
+    "<&" <file: Filename> => ast::Redirect::R { file },
+    ">&" <file: Filename> => ast::Redirect::W { file },
+    "<>" <file: Filename> => ast::Redirect::RW { file },
 }
 
 pub CommandWord: ast::Word = r"[a-zA-Z0-9]+" => ast::Word(<>.into());
+pub Filename: ast::Filename = r"[a-zA-Z0-9]+" => ast::Filename(<>.into());

@@ -50,12 +50,13 @@ impl Shell {
 
     fn eval_command(&self, cmd: ast::Command, stdin: Stdio) -> anyhow::Result<Child> {
         match cmd {
-            ast::Command::Simple(simple_cmd) => {
-                if simple_cmd.len() == 0 {
+            ast::Command::Simple { args, redirects } => {
+                if args.len() == 0 {
                     return Err(anyhow!("command is empty"));
                 }
+                println!("redirects {:?}", redirects);
 
-                let mut it = simple_cmd.into_iter();
+                let mut it = args.into_iter();
                 let cmd_name = it.next().unwrap().0;
                 let args = it
                     .collect::<Vec<_>>()

@@ -1,13 +1,23 @@
 use std::ops::{Deref, DerefMut};
 
 #[derive(Debug)]
+pub enum Redirect {
+    R { file: Filename },
+    W { file: Filename },
+    RW { file: Filename },
+}
+
+#[derive(Debug)]
 pub enum Command {
     /// Basic command
     ///
     /// ```sh
     /// ls -al
     /// ```
-    Simple(Vec<Word>),
+    Simple {
+        redirects: Vec<Redirect>,
+        args: Vec<Word>,
+    },
 
     /// Two commands joined by a pipe
     ///
@@ -19,6 +29,9 @@ pub enum Command {
 
 #[derive(Debug)]
 pub struct Word(pub String);
+
+#[derive(Debug)]
+pub struct Filename(pub String);
 
 impl Deref for Word {
     type Target = String;

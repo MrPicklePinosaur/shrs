@@ -16,14 +16,15 @@ pub Simple: ast::Command = {
 }
 
 pub Redirect: ast::Redirect = {
-    "<"  <file: Filename> => ast::Redirect::R { file },
-    ">"  <file: Filename> => ast::Redirect::W { file },
-    "<<" <file: Filename> => ast::Redirect::R { file },
-    ">>" <file: Filename> => ast::Redirect::W { file },
-    "<&" <file: Filename> => ast::Redirect::R { file },
-    ">&" <file: Filename> => ast::Redirect::W { file },
-    "<>" <file: Filename> => ast::Redirect::RW { file },
+    <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> "<<" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> ">>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> "<&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> ">&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> "<>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
 }
 
-pub CommandWord: ast::Word = r"[a-zA-Z0-9]+" => ast::Word(<>.into());
-pub Filename: ast::Filename = r"[a-zA-Z0-9]+" => ast::Filename(<>.into());
+pub IONumber: ast::IONumber = r"[0-9]+" => ast::IONumber(usize::from_str(<>).unwrap());
+pub CommandWord: ast::Word = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Word(<>.into());
+pub Filename: ast::Filename = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Filename(<>.into());

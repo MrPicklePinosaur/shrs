@@ -1,10 +1,18 @@
 use std::ops::{Deref, DerefMut};
 
 #[derive(Debug)]
-pub enum Redirect {
-    R { file: Filename },
-    W { file: Filename },
-    RW { file: Filename },
+pub struct Redirect {
+    pub n: Option<IONumber>,
+    pub file: Filename,
+    pub mode: RedirectMode,
+}
+
+#[derive(Debug)]
+pub enum RedirectMode {
+    Read,
+    Write,
+    ReadAppend,
+    WriteAppend,
 }
 
 #[derive(Debug)]
@@ -32,6 +40,9 @@ pub struct Word(pub String);
 
 #[derive(Debug)]
 pub struct Filename(pub String);
+
+#[derive(Debug)]
+pub struct IONumber(pub usize);
 
 impl Deref for Word {
     type Target = String;

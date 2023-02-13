@@ -17,12 +17,12 @@ pub Simple: ast::Command = {
 
 pub Redirect: ast::Redirect = {
     <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> "<<" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> ">>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> "<&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> ">&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> "<>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Write },
+    <n: IONumber?> "<<" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadAppend },
+    <n: IONumber?> ">>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteAppend },
+    <n: IONumber?> "<&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadDup },
+    <n: IONumber?> ">&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteDup },
+    <n: IONumber?> "<>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadWrite },
 }
 
 pub IONumber: ast::IONumber = r"[0-9]+" => ast::IONumber(usize::from_str(<>).unwrap());

@@ -1,5 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
+use pino_deref::Deref;
+
 #[derive(Debug)]
 pub struct Redirect {
     pub n: Option<IONumber>,
@@ -13,6 +15,9 @@ pub enum RedirectMode {
     Write,
     ReadAppend,
     WriteAppend,
+    ReadDup,
+    WriteDup,
+    ReadWrite,
 }
 
 #[derive(Debug)]
@@ -38,10 +43,10 @@ pub enum Command {
 #[derive(Debug)]
 pub struct Word(pub String);
 
-#[derive(Debug)]
+#[derive(Deref, Debug)]
 pub struct Filename(pub String);
 
-#[derive(Debug)]
+#[derive(Deref, Debug)]
 pub struct IONumber(pub usize);
 
 impl Deref for Word {

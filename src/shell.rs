@@ -1,6 +1,8 @@
 use std::{
     env,
+    fs::File,
     io::{stdin, stdout, Write},
+    os::fd::AsRawFd,
     path::Path,
     process::{Child, Output, Stdio},
 };
@@ -18,14 +20,20 @@ fn prompt_command() {
 /// User defined command for formatting shell error messages
 fn error_command() {}
 
-pub struct Shell {}
+const FD_TABLE_SIZE: usize = 128;
+pub struct Shell {
+    // TODO not bounds checked currently
+    fd_table: [i32; FD_TABLE_SIZE],
+}
 
 impl Shell {
     pub fn new() -> Self {
-        Shell {}
+        Shell {
+            fd_table: [-1; FD_TABLE_SIZE],
+        }
     }
 
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(&mut self) -> anyhow::Result<()> {
         loop {
             prompt_command();
 
@@ -48,13 +56,30 @@ impl Shell {
         }
     }
 
-    fn eval_command(&self, cmd: ast::Command, stdin: Stdio) -> anyhow::Result<Child> {
+    fn eval_command(&mut self, cmd: ast::Command, stdin: Stdio) -> anyhow::Result<Child> {
         match cmd {
             ast::Command::Simple { args, redirects } => {
                 if args.len() == 0 {
                     return Err(anyhow!("command is empty"));
                 }
                 println!("redirects {:?}", redirects);
+
+                // file redirections
+                for redirect in redirects {
+                    let filename = Path::new(&*redirect.file);
+                    // TODO might need to change the default
+                    let n = match redirect.n {
+                        Some(n) => *n,
+                        None => 0,
+                    };
+                    let file_handle = match redirect.mode {
+                        ast::RedirectMode::Read => {
+                            File::options().read(true).open(filename).unwrap()
+                        },
+                        _ => unimplemented!(),
+                    };
+                    self.fd_table[n] = file_handle.as_raw_fd();
+                }
 
                 let mut it = args.into_iter();
                 let cmd_name = it.next().unwrap().0;
@@ -63,6 +88,8 @@ impl Shell {
                     .into_iter()
                     .map(|a| a.clone())
                     .collect();
+
+                // SWAP which stdin var to use?, previous command or from file redirection?
 
                 match cmd_name.as_str() {
                     // "cd" => self.run_cd_command(&args),

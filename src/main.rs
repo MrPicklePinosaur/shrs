@@ -8,6 +8,6 @@ mod shell;
 fn main() {
     use shell::Shell;
 
-    let myshell = Shell::new();
+    let mut myshell = Shell::new();
     myshell.run();
 }

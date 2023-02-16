@@ -1,5 +1,25 @@
 use std::ops::{Deref, DerefMut};
 
+use pino_deref::Deref;
+
+#[derive(Debug)]
+pub struct Redirect {
+    pub n: Option<IONumber>,
+    pub file: Filename,
+    pub mode: RedirectMode,
+}
+
+#[derive(Debug)]
+pub enum RedirectMode {
+    Read,
+    Write,
+    ReadAppend,
+    WriteAppend,
+    ReadDup,
+    WriteDup,
+    ReadWrite,
+}
+
 #[derive(Debug)]
 pub enum Command {
     /// Basic command
@@ -7,7 +27,10 @@ pub enum Command {
     /// ```sh
     /// ls -al
     /// ```
-    Simple(Vec<Word>),
+    Simple {
+        redirects: Vec<Redirect>,
+        args: Vec<Word>,
+    },
 
     /// Two commands joined by a pipe
     ///
@@ -19,6 +42,12 @@ pub enum Command {
 
 #[derive(Debug)]
 pub struct Word(pub String);
+
+#[derive(Deref, Debug)]
+pub struct Filename(pub String);
+
+#[derive(Deref, Debug)]
+pub struct IONumber(pub usize);
 
 impl Deref for Word {
     type Target = String;

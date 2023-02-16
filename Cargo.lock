@@ -293,6 +293,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db8bcd96cb740d03149cbad5518db9fd87126a10ab519c011893b1754134c468"
 
 [[package]]
+name = "pino_deref"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d5038f71958a4a629a32f03adfc54cc21159fa80d190bc1104f42b4d1213209"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -372,6 +382,7 @@ dependencies = [
  "anyhow",
  "lalrpop",
  "lalrpop-util",
+ "pino_deref",
  "regex",
  "thiserror",
 ]

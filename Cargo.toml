@@ -19,3 +19,6 @@ anyhow = "1"
 
 [build-dependencies]
 lalrpop = "0.19.8"
+
+[[example]]
+name = "simple"

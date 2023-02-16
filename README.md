@@ -10,7 +10,7 @@ rust library to build your own shell
 ## TOOD
 
 - [x] pipes
-- [ ] file redirection
+- [x] file redirection
 - [ ] background process + job control (&)
 - [ ] subshells
 - [ ] control flow

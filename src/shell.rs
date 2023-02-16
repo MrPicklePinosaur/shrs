@@ -45,8 +45,9 @@ impl Shell {
             let mut parser = parser::ParserContext::new();
             match parser.parse(&line) {
                 Ok(cmd) => {
-                    let cmd_handle = self.eval_command(cmd, Stdio::inherit())?;
+                    let cmd_handle = self.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
                     let cmd_output = cmd_handle.wait_with_output()?;
+                    println!("[exit +{}]", cmd_output.status);
                     println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
                 },
                 Err(e) => {
@@ -56,7 +57,12 @@ impl Shell {
         }
     }
 
-    fn eval_command(&mut self, cmd: ast::Command, stdin: Stdio) -> anyhow::Result<Child> {
+    fn eval_command(
+        &mut self,
+        cmd: ast::Command,
+        stdin: Stdio,
+        stdout: Stdio,
+    ) -> anyhow::Result<Child> {
         match cmd {
             ast::Command::Simple { args, redirects } => {
                 if args.len() == 0 {
@@ -65,6 +71,9 @@ impl Shell {
                 println!("redirects {:?}", redirects);
 
                 // file redirections
+                // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of eariler ones
+                let mut cur_stdin = stdin;
+                let mut cur_stdout = stdout;
                 for redirect in redirects {
                     let filename = Path::new(&*redirect.file);
                     // TODO might need to change the default
@@ -72,13 +81,49 @@ impl Shell {
                         Some(n) => *n,
                         None => 0,
                     };
-                    let file_handle = match redirect.mode {
+                    match redirect.mode {
                         ast::RedirectMode::Read => {
-                            File::options().read(true).open(filename).unwrap()
+                            let file_handle = File::options().read(true).open(filename).unwrap();
+                            cur_stdin = Stdio::from(file_handle);
+                        },
+                        ast::RedirectMode::Write => {
+                            let file_handle = File::options()
+                                .write(true)
+                                .create_new(true)
+                                .open(filename)
+                                .unwrap();
+                            cur_stdout = Stdio::from(file_handle);
+                        },
+                        ast::RedirectMode::ReadAppend => {
+                            let file_handle = File::options()
+                                .read(true)
+                                .append(true)
+                                .open(filename)
+                                .unwrap();
+                            cur_stdin = Stdio::from(file_handle);
+                        },
+                        ast::RedirectMode::WriteAppend => {
+                            let file_handle = File::options()
+                                .write(true)
+                                .append(true)
+                                .create_new(true)
+                                .open(filename)
+                                .unwrap();
+                            cur_stdout = Stdio::from(file_handle);
+                        },
+                        ast::RedirectMode::ReadWrite => {
+                            let file_handle = File::options()
+                                .read(true)
+                                .write(true)
+                                .create_new(true)
+                                .open(filename)
+                                .unwrap();
+                            cur_stdin = Stdio::from(file_handle.try_clone().unwrap());
+                            cur_stdout = Stdio::from(file_handle);
                         },
                         _ => unimplemented!(),
                     };
-                    self.fd_table[n] = file_handle.as_raw_fd();
+                    // self.fd_table[n] = file_handle.as_raw_fd();
                 }
 
                 let mut it = args.into_iter();
@@ -94,14 +139,15 @@ impl Shell {
                 match cmd_name.as_str() {
                     // "cd" => self.run_cd_command(&args),
                     // "exit" => self.run_exit_command(&args),
-                    _ => self.run_external_command(&cmd_name, &args, stdin),
+                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
-                let mut a_cmd_handle = self.eval_command(*a_cmd, stdin)?;
-                let b_cmd_handle =
-                    self.eval_command(*b_cmd, Stdio::from(a_cmd_handle.stdout.take().unwrap()))?;
-                Ok(b_cmd_handle)
+                // let mut a_cmd_handle = self.eval_command(*a_cmd, stdin)?;
+                // let b_cmd_handle =
+                //     self.eval_command(*b_cmd, Stdio::from(a_cmd_handle.stdout.take().unwrap()))?;
+                // Ok(b_cmd_handle)
+                unimplemented!()
             },
         }
     }
@@ -128,13 +174,14 @@ impl Shell {
         cmd: &str,
         args: &Vec<String>,
         stdin: Stdio,
+        stdout: Stdio,
     ) -> anyhow::Result<Child> {
         use std::process::Command;
 
         let child = Command::new(cmd)
             .args(args)
             .stdin(stdin)
-            .stdout(Stdio::piped())
+            .stdout(stdout)
             .spawn()?;
         Ok(child)
     }

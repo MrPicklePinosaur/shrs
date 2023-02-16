@@ -20,17 +20,11 @@ fn prompt_command() {
 /// User defined command for formatting shell error messages
 fn error_command() {}
 
-const FD_TABLE_SIZE: usize = 128;
-pub struct Shell {
-    // TODO not bounds checked currently
-    fd_table: [i32; FD_TABLE_SIZE],
-}
+pub struct Shell {}
 
 impl Shell {
     pub fn new() -> Self {
-        Shell {
-            fd_table: [-1; FD_TABLE_SIZE],
-        }
+        Shell {}
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
@@ -46,9 +40,11 @@ impl Shell {
             match parser.parse(&line) {
                 Ok(cmd) => {
                     let cmd_handle = self.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
-                    let cmd_output = cmd_handle.wait_with_output()?;
-                    println!("[exit +{}]", cmd_output.status);
-                    println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+                    if let Some(cmd_handle) = cmd_handle {
+                        let cmd_output = cmd_handle.wait_with_output()?;
+                        println!("[exit +{}]", cmd_output.status);
+                        println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+                    }
                 },
                 Err(e) => {
                     eprintln!("{}", e);
@@ -57,12 +53,13 @@ impl Shell {
         }
     }
 
+    // TODO function signature is very ugly
     fn eval_command(
         &mut self,
         cmd: ast::Command,
         stdin: Stdio,
         stdout: Stdio,
-    ) -> anyhow::Result<Child> {
+    ) -> anyhow::Result<Option<Child>> {
         match cmd {
             ast::Command::Simple { args, redirects } => {
                 if args.len() == 0 {
@@ -76,10 +73,10 @@ impl Shell {
                 let mut cur_stdout = stdout;
                 for redirect in redirects {
                     let filename = Path::new(&*redirect.file);
-                    // TODO might need to change the default
+                    // TODO not making use of file descriptor at all right now
                     let n = match redirect.n {
                         Some(n) => *n,
-                        None => 0,
+                        None => 1,
                     };
                     match redirect.mode {
                         ast::RedirectMode::Read => {
@@ -111,6 +108,12 @@ impl Shell {
                                 .unwrap();
                             cur_stdout = Stdio::from(file_handle);
                         },
+                        ast::RedirectMode::ReadDup => {
+                            unimplemented!()
+                        },
+                        ast::RedirectMode::WriteDup => {
+                            unimplemented!()
+                        },
                         ast::RedirectMode::ReadWrite => {
                             let file_handle = File::options()
                                 .read(true)
@@ -121,9 +124,7 @@ impl Shell {
                             cur_stdin = Stdio::from(file_handle.try_clone().unwrap());
                             cur_stdout = Stdio::from(file_handle);
                         },
-                        _ => unimplemented!(),
                     };
-                    // self.fd_table[n] = file_handle.as_raw_fd();
                 }
 
                 let mut it = args.into_iter();
@@ -134,25 +135,32 @@ impl Shell {
                     .map(|a| a.clone())
                     .collect();
 
-                // SWAP which stdin var to use?, previous command or from file redirection?
+                // TODO which stdin var to use?, previous command or from file redirection?
 
                 match cmd_name.as_str() {
-                    // "cd" => self.run_cd_command(&args),
-                    // "exit" => self.run_exit_command(&args),
-                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout),
+                    "cd" => {
+                        self.run_cd_command(&args)?;
+                        Ok(None)
+                    },
+                    "exit" => self.run_exit_command(&args),
+                    _ => self
+                        .run_external_command(&cmd_name, &args, cur_stdin, cur_stdout)
+                        .map(|x| Some(x)),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
-                // let mut a_cmd_handle = self.eval_command(*a_cmd, stdin)?;
-                // let b_cmd_handle =
-                //     self.eval_command(*b_cmd, Stdio::from(a_cmd_handle.stdout.take().unwrap()))?;
-                // Ok(b_cmd_handle)
-                unimplemented!()
+                let a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped())?;
+                let piped_stdin = match a_cmd_handle {
+                    Some(mut h) => Stdio::from(h.stdout.take().unwrap()),
+                    None => Stdio::null(),
+                };
+                let b_cmd_handle = self.eval_command(*b_cmd, piped_stdin, stdout)?;
+                Ok(b_cmd_handle)
             },
         }
     }
 
-    fn run_cd_command(&self, args: &Vec<String>) {
+    fn run_cd_command(&self, args: &Vec<String>) -> anyhow::Result<()> {
         // if empty default to root (for now)
         let raw_path = if let Some(path) = args.get(0) {
             path
@@ -160,13 +168,12 @@ impl Shell {
             "/"
         };
         let path = Path::new(raw_path);
-        if let Err(e) = env::set_current_dir(path) {
-            eprintln!("{}", e);
-        }
+        env::set_current_dir(path)?;
+        Ok(())
     }
 
-    fn run_exit_command(&self, args: &Vec<String>) {
-        std::process::exit(0);
+    fn run_exit_command(&self, args: &Vec<String>) -> ! {
+        std::process::exit(0)
     }
 
     fn run_external_command(

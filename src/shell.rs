@@ -11,25 +11,29 @@ use anyhow::anyhow;
 
 use crate::{ast, parser};
 
-/// User defined command that gets ran when we wish to print the prompt
-fn prompt_command() {
+pub fn simple_prompt() {
     print!("> ");
     stdout().flush();
 }
+pub fn simple_error() {}
 
-/// User defined command for formatting shell error messages
-fn error_command() {}
-
-pub struct Shell {}
+pub type PromptCommand = fn();
+pub type ErrorCommand = fn();
+pub struct Shell {
+    /// User defined command that gets ran when we wish to print the prompt
+    pub prompt_command: PromptCommand,
+    /// User defined command for formatting shell error messages
+    pub error_command: ErrorCommand,
+}
 
 impl Shell {
-    pub fn new() -> Self {
-        Shell {}
-    }
+    // pub fn new() -> Self {
+    //     Shell {}
+    // }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
         loop {
-            prompt_command();
+            (self.prompt_command)();
 
             let mut line = String::new();
             if let Err(e) = stdin().read_line(&mut line) {

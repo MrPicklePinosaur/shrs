@@ -7,7 +7,7 @@ fn prompt_command() {
     use std::io::{stdout, Write};
 
     print!(
-        "{:?}@{:?} {:?} > ",
+        "{}@{} {} > ",
         username().unwrap(),
         hostname().unwrap(),
         top_pwd()

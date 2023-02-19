@@ -38,6 +38,12 @@ pub enum Command {
     /// cat .bashrc | wc -l
     /// ```
     Pipeline(Box<Command>, Box<Command>),
+
+    /// Compound command of And
+    And(Box<Command>, Box<Command>),
+
+    /// Compound command of Or
+    Or(Box<Command>, Box<Command>),
 }
 
 #[derive(Debug)]

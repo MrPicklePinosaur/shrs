@@ -2,7 +2,7 @@
 default: debug
 
 debug:
-    cargo run
+    cargo run --example simple
 
 devsetup:
     cp dev/hooks/* .git/hooks

@@ -44,6 +44,8 @@ pub enum Command {
 
     /// Compound command of Or
     Or(Box<Command>, Box<Command>),
+
+    Not(Box<Command>),
 }
 
 #[derive(Debug)]

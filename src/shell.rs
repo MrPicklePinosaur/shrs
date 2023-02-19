@@ -179,6 +179,11 @@ impl Shell {
                 let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
                 Ok(b_cmd_handle)
             },
+            ast::Command::Not(cmd) => {
+                // TODO exit status negate
+                let cmd_handle = self.eval_command(*cmd, stdin, stdout)?;
+                Ok(cmd_handle)
+            },
         }
     }
 

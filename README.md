@@ -11,6 +11,8 @@ rust library to build your own shell
 
 - [x] pipes
 - [x] file redirection
+- [ ] configuration scheme (config file? builder pattern?)
+- [ ] better logging + error reporting (different ways of displaying exit status)
 - [ ] background process + job control (&)
 - [ ] subshells
 - [ ] control flow

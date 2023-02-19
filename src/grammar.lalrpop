@@ -4,13 +4,18 @@ use crate::ast;
 grammar;
 
 pub AndOr: ast::Command = {
-    <a:AndOr> AND_IF "\n"* <p:PipeSequence> => ast::Command::And(Box::new(a), Box::new(p)),
-    <a:AndOr> OR_IF "\n"* <p:PipeSequence> => ast::Command::Or(Box::new(a), Box::new(p)),
-    <p:PipeSequence> => p,
+    <a:AndOr> AND_IF "\n"* <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> OR_IF "\n"* <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
+    <p:Pipeline> => p,
+}
+
+pub Pipeline: ast::Command = {
+    "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ps)),
+    <ps:PipeSequence> => ps,
 }
 
 pub PipeSequence: ast::Command = {
-    <p:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(p), Box::new(s)),
+    <ps:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(ps), Box::new(s)),
     <s:Simple> => s,
 }
 

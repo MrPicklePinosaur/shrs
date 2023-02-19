@@ -4,8 +4,8 @@ use crate::ast;
 grammar;
 
 pub AndOr: ast::Command = {
-    <a:AndOr> "&&" <p:PipeSequence> => ast::Command::And(Box::new(a), Box::new(p)),
-    <a:AndOr> "||" <p:PipeSequence> => ast::Command::Or(Box::new(a), Box::new(p)),
+    <a:AndOr> AND_IF "\n"* <p:PipeSequence> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> OR_IF "\n"* <p:PipeSequence> => ast::Command::Or(Box::new(a), Box::new(p)),
     <p:PipeSequence> => p,
 }
 
@@ -34,3 +34,6 @@ pub Redirect: ast::Redirect = {
 pub IONumber: ast::IONumber = r"[0-9]+" => ast::IONumber(usize::from_str(<>).unwrap());
 pub CommandWord: ast::Word = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Word(<>.into());
 pub Filename: ast::Filename = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Filename(<>.into());
+
+pub AND_IF: () = "&&" => ();
+pub OR_IF: () = "||" => ();

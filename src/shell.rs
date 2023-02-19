@@ -2,7 +2,6 @@ use std::{
     env,
     fs::File,
     io::{stdin, stdout, Write},
-    os::fd::AsRawFd,
     path::Path,
     process::{Child, Output, Stdio},
 };
@@ -44,11 +43,7 @@ impl Shell {
             match parser.parse(&line) {
                 Ok(cmd) => {
                     let cmd_handle = self.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
-                    if let Some(cmd_handle) = cmd_handle {
-                        let cmd_output = cmd_handle.wait_with_output()?;
-                        println!("[exit +{}]", cmd_output.status);
-                        println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
-                    }
+                    command_output(cmd_handle)?;
                 },
                 Err(e) => {
                     eprintln!("{}", e);
@@ -162,10 +157,27 @@ impl Shell {
                 Ok(b_cmd_handle)
             },
             ast::Command::And(a_cmd, b_cmd) => {
-                todo!()
+                // TODO double check if these stdin and stdou params are correct
+                let a_cmd_handle = self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped())?;
+                if let Some(output) = command_output(a_cmd_handle)? {
+                    if !output.status.success() {
+                        // TODO return something better (indicate that command failed with exit code)
+                        return Ok(None);
+                    }
+                }
+                let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
+                Ok(b_cmd_handle)
             },
+            // duplicate of And (could abstract a bit)
             ast::Command::Or(a_cmd, b_cmd) => {
-                todo!()
+                let a_cmd_handle = self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped())?;
+                if let Some(output) = command_output(a_cmd_handle)? {
+                    if output.status.success() {
+                        return Ok(None);
+                    }
+                }
+                let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
+                Ok(b_cmd_handle)
             },
         }
     }
@@ -201,5 +213,17 @@ impl Shell {
             .stdout(stdout)
             .spawn()?;
         Ok(child)
+    }
+}
+
+/// Small wrapper that outputs command output if exists
+fn command_output(cmd_handle: Option<Child>) -> anyhow::Result<Option<Output>> {
+    if let Some(cmd_handle) = cmd_handle {
+        let cmd_output = cmd_handle.wait_with_output()?;
+        println!("[exit +{}]", cmd_output.status);
+        println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+        Ok(Some(cmd_output))
+    } else {
+        Ok(None)
     }
 }

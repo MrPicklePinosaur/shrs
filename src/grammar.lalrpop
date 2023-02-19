@@ -3,6 +3,12 @@ use crate::ast;
 
 grammar;
 
+pub AndOr: ast::Command = {
+    <a:AndOr> "&&" <p:PipeSequence> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> "||" <p:PipeSequence> => ast::Command::Or(Box::new(a), Box::new(p)),
+    <p:PipeSequence> => p,
+}
+
 pub PipeSequence: ast::Command = {
     <p:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(p), Box::new(s)),
     <s:Simple> => s,

@@ -161,6 +161,12 @@ impl Shell {
                 let b_cmd_handle = self.eval_command(*b_cmd, piped_stdin, stdout)?;
                 Ok(b_cmd_handle)
             },
+            ast::Command::And(a_cmd, b_cmd) => {
+                todo!()
+            },
+            ast::Command::Or(a_cmd, b_cmd) => {
+                todo!()
+            },
         }
     }
 

@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn parse() {
-        let res = grammar::PipeSequenceParser::new().parse("ls home | grep downloads");
+        let res = grammar::AndOrParser::new().parse("ls home | grep downloads");
         println!("{:?}", res);
     }
 }

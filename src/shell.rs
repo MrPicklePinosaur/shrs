@@ -58,7 +58,7 @@ impl Shell {
         cmd: ast::Command,
         stdin: Stdio,
         stdout: Stdio,
-    ) -> anyhow::Result<Option<Child>> {
+    ) -> anyhow::Result<Child> {
         match cmd {
             ast::Command::Simple { args, redirects } => {
                 if args.len() == 0 {
@@ -137,22 +137,14 @@ impl Shell {
                 // TODO which stdin var to use?, previous command or from file redirection?
 
                 match cmd_name.as_str() {
-                    "cd" => {
-                        self.run_cd_command(&args)?;
-                        Ok(None)
-                    },
+                    "cd" => self.run_cd_command(&args),
                     "exit" => self.run_exit_command(&args),
-                    _ => self
-                        .run_external_command(&cmd_name, &args, cur_stdin, cur_stdout)
-                        .map(|x| Some(x)),
+                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
-                let a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped())?;
-                let piped_stdin = match a_cmd_handle {
-                    Some(mut h) => Stdio::from(h.stdout.take().unwrap()),
-                    None => Stdio::null(),
-                };
+                let mut a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped())?;
+                let piped_stdin = Stdio::from(a_cmd_handle.stdout.take().unwrap());
                 let b_cmd_handle = self.eval_command(*b_cmd, piped_stdin, stdout)?;
                 Ok(b_cmd_handle)
             },
@@ -162,7 +154,7 @@ impl Shell {
                 if let Some(output) = command_output(a_cmd_handle)? {
                     if !output.status.success() {
                         // TODO return something better (indicate that command failed with exit code)
-                        return Ok(None);
+                        return dummy_output();
                     }
                 }
                 let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
@@ -173,7 +165,7 @@ impl Shell {
                 let a_cmd_handle = self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped())?;
                 if let Some(output) = command_output(a_cmd_handle)? {
                     if output.status.success() {
-                        return Ok(None);
+                        return dummy_output();
                     }
                 }
                 let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
@@ -187,7 +179,7 @@ impl Shell {
         }
     }
 
-    fn run_cd_command(&self, args: &Vec<String>) -> anyhow::Result<()> {
+    fn run_cd_command(&self, args: &Vec<String>) -> anyhow::Result<Child> {
         // if empty default to root (for now)
         let raw_path = if let Some(path) = args.get(0) {
             path
@@ -196,7 +188,9 @@ impl Shell {
         };
         let path = Path::new(raw_path);
         env::set_current_dir(path)?;
-        Ok(())
+
+        // return a dummy command
+        dummy_output()
     }
 
     fn run_exit_command(&self, args: &Vec<String>) -> ! {
@@ -222,13 +216,15 @@ impl Shell {
 }
 
 /// Small wrapper that outputs command output if exists
-fn command_output(cmd_handle: Option<Child>) -> anyhow::Result<Option<Output>> {
-    if let Some(cmd_handle) = cmd_handle {
-        let cmd_output = cmd_handle.wait_with_output()?;
-        println!("[exit +{}]", cmd_output.status);
-        println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
-        Ok(Some(cmd_output))
-    } else {
-        Ok(None)
-    }
+fn command_output(cmd_handle: Child) -> anyhow::Result<Option<Output>> {
+    let cmd_output = cmd_handle.wait_with_output()?;
+    println!("[exit +{}]", cmd_output.status);
+    println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+    Ok(Some(cmd_output))
+}
+
+fn dummy_output() -> anyhow::Result<Child> {
+    use std::process::Command;
+    let cmd = Command::new("true").spawn()?;
+    Ok(cmd)
 }

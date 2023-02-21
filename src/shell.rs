@@ -2,6 +2,7 @@ use std::{
     env,
     fs::File,
     io::{stdin, stdout, Write},
+    os::unix::process::CommandExt,
     path::Path,
     process::{Child, Output, Stdio},
 };
@@ -42,7 +43,8 @@ impl Shell {
             let mut parser = parser::ParserContext::new();
             match parser.parse(&line) {
                 Ok(cmd) => {
-                    let cmd_handle = self.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
+                    let cmd_handle =
+                        self.eval_command(cmd, Stdio::inherit(), Stdio::piped(), None)?;
                     command_output(cmd_handle)?;
                 },
                 Err(e) => {
@@ -59,6 +61,7 @@ impl Shell {
         cmd: ast::Command,
         stdin: Stdio,
         stdout: Stdio,
+        pgid: Option<i32>,
     ) -> anyhow::Result<Child> {
         match cmd {
             ast::Command::Simple { args, redirects } => {
@@ -140,41 +143,48 @@ impl Shell {
                 match cmd_name.as_str() {
                     "cd" => self.run_cd_command(&args),
                     "exit" => self.run_exit_command(&args),
-                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout),
+                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
-                let mut a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped())?;
+                // TODO double check that pgid works properly for pipelines that are longer than one pipe (left recursiveness of parser might mess this up)
+                let mut a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped(), None)?;
                 let piped_stdin = Stdio::from(a_cmd_handle.stdout.take().unwrap());
-                let b_cmd_handle = self.eval_command(*b_cmd, piped_stdin, stdout)?;
+                let pgid = a_cmd_handle.id();
+                let b_cmd_handle =
+                    self.eval_command(*b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
                 Ok(b_cmd_handle)
             },
             ast::Command::And(a_cmd, b_cmd) => {
                 // TODO double check if these stdin and stdou params are correct
-                let a_cmd_handle = self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped())?;
+                let a_cmd_handle =
+                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = command_output(a_cmd_handle)? {
                     if !output.status.success() {
                         // TODO return something better (indicate that command failed with exit code)
-                        return dummy_output();
+                        return dummy_child();
                     }
                 }
-                let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
+                let b_cmd_handle =
+                    self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             // duplicate of And (could abstract a bit)
             ast::Command::Or(a_cmd, b_cmd) => {
-                let a_cmd_handle = self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped())?;
+                let a_cmd_handle =
+                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = command_output(a_cmd_handle)? {
                     if output.status.success() {
-                        return dummy_output();
+                        return dummy_child();
                     }
                 }
-                let b_cmd_handle = self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped())?;
+                let b_cmd_handle =
+                    self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             ast::Command::Not(cmd) => {
                 // TODO exit status negate
-                let cmd_handle = self.eval_command(*cmd, stdin, stdout)?;
+                let cmd_handle = self.eval_command(*cmd, stdin, stdout, None)?;
                 Ok(cmd_handle)
             },
         }
@@ -191,7 +201,7 @@ impl Shell {
         env::set_current_dir(path)?;
 
         // return a dummy command
-        dummy_output()
+        dummy_child()
     }
 
     fn run_exit_command(&self, args: &Vec<String>) -> ! {
@@ -204,6 +214,7 @@ impl Shell {
         args: &Vec<String>,
         stdin: Stdio,
         stdout: Stdio,
+        pgid: Option<i32>,
     ) -> anyhow::Result<Child> {
         use std::process::Command;
 
@@ -211,7 +222,9 @@ impl Shell {
             .args(args)
             .stdin(stdin)
             .stdout(stdout)
+            .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
             .spawn()?;
+
         Ok(child)
     }
 }
@@ -225,7 +238,7 @@ fn command_output(cmd_handle: Child) -> anyhow::Result<Option<Output>> {
     Ok(Some(cmd_output))
 }
 
-fn dummy_output() -> anyhow::Result<Child> {
+fn dummy_child() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)

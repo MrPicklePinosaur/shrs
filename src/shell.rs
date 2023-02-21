@@ -53,7 +53,8 @@ impl Shell {
     }
 
     // TODO function signature is very ugly
-    fn eval_command(
+    // TODO maybe make this a method of Command
+    pub fn eval_command(
         &mut self,
         cmd: ast::Command,
         stdin: Stdio,
@@ -64,7 +65,7 @@ impl Shell {
                 if args.len() == 0 {
                     return Err(anyhow!("command is empty"));
                 }
-                println!("redirects {:?}", redirects);
+                // println!("redirects {:?}", redirects);
 
                 // file redirections
                 // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of eariler ones
@@ -218,8 +219,9 @@ impl Shell {
 /// Small wrapper that outputs command output if exists
 fn command_output(cmd_handle: Child) -> anyhow::Result<Option<Output>> {
     let cmd_output = cmd_handle.wait_with_output()?;
-    println!("[exit +{}]", cmd_output.status);
-    println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+    // println!("[exit +{}]", cmd_output.status);
+    print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
+    stdout().flush()?;
     Ok(Some(cmd_output))
 }
 

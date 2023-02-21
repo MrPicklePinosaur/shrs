@@ -17,6 +17,9 @@ pino_deref = "0.1"
 thiserror = "1"
 anyhow = "1"
 
+[dev-dependencies]
+rexpect = "0.5"
+
 [build-dependencies]
 lalrpop = { version = "0.19.8", features = ["lexer"] }
 

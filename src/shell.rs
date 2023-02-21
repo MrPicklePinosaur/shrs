@@ -53,7 +53,8 @@ impl Shell {
     }
 
     // TODO function signature is very ugly
-    fn eval_command(
+    // TODO maybe make this a method of Command
+    pub fn eval_command(
         &mut self,
         cmd: ast::Command,
         stdin: Stdio,
@@ -227,4 +228,37 @@ fn dummy_output() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)
+}
+
+// TODO better cli testing, see tools like [assert_cmd](https://github.com/assert-rs/assert_cmd) or [rexpect](https://github.com/rust-cli/rexpect)
+#[cfg(test)]
+mod tests {
+    use std::process::Stdio;
+
+    use crate::{
+        ast, parser,
+        shell::{simple_error, simple_prompt, Shell},
+    };
+
+    fn init_shell() -> Shell {
+        Shell {
+            prompt_command: simple_prompt,
+            error_command: simple_error,
+        }
+    }
+
+    fn parse_command(line: &str) -> anyhow::Result<ast::Command> {
+        let mut parser = parser::ParserContext::new();
+        let parsed = parser.parse(line)?;
+        Ok(parsed)
+    }
+
+    #[test]
+    fn pipes() -> anyhow::Result<()> {
+        let mut shell = init_shell();
+        let cmd = parse_command("echo hello | tr e o")?;
+        shell.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
+
+        Ok(())
+    }
 }

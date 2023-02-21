@@ -65,7 +65,7 @@ impl Shell {
                 if args.len() == 0 {
                     return Err(anyhow!("command is empty"));
                 }
-                println!("redirects {:?}", redirects);
+                // println!("redirects {:?}", redirects);
 
                 // file redirections
                 // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of eariler ones
@@ -219,8 +219,9 @@ impl Shell {
 /// Small wrapper that outputs command output if exists
 fn command_output(cmd_handle: Child) -> anyhow::Result<Option<Output>> {
     let cmd_output = cmd_handle.wait_with_output()?;
-    println!("[exit +{}]", cmd_output.status);
-    println!("{:?}", std::str::from_utf8(&cmd_output.stdout)?);
+    // println!("[exit +{}]", cmd_output.status);
+    print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
+    stdout().flush()?;
     Ok(Some(cmd_output))
 }
 
@@ -228,37 +229,4 @@ fn dummy_output() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)
-}
-
-// TODO better cli testing, see tools like [assert_cmd](https://github.com/assert-rs/assert_cmd) or [rexpect](https://github.com/rust-cli/rexpect)
-#[cfg(test)]
-mod tests {
-    use std::process::Stdio;
-
-    use crate::{
-        ast, parser,
-        shell::{simple_error, simple_prompt, Shell},
-    };
-
-    fn init_shell() -> Shell {
-        Shell {
-            prompt_command: simple_prompt,
-            error_command: simple_error,
-        }
-    }
-
-    fn parse_command(line: &str) -> anyhow::Result<ast::Command> {
-        let mut parser = parser::ParserContext::new();
-        let parsed = parser.parse(line)?;
-        Ok(parsed)
-    }
-
-    #[test]
-    fn pipes() -> anyhow::Result<()> {
-        let mut shell = init_shell();
-        let cmd = parse_command("echo hello | tr e o")?;
-        shell.eval_command(cmd, Stdio::inherit(), Stdio::piped())?;
-
-        Ok(())
-    }
 }

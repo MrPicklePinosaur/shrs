@@ -11,26 +11,31 @@ use anyhow::anyhow;
 
 use crate::{ast, parser, signal::sig_handler};
 
+/// Default prompt
 pub fn simple_prompt() {
     print!("> ");
     stdout().flush();
 }
 pub fn simple_error() {}
 
+/// Default formmater for displaying the exit code of the previous command
+pub fn simple_exit_code(code: i32) {
+    println!("[exit +{}]", code);
+}
+
 pub type PromptCommand = fn();
 pub type ErrorCommand = fn();
+pub type ExitCodeCommand = fn(i32);
 pub struct Shell {
     /// User defined command that gets ran when we wish to print the prompt
     pub prompt_command: PromptCommand,
     /// User defined command for formatting shell error messages
     pub error_command: ErrorCommand,
+    /// User defined command for formatting exit code of previous command
+    pub exit_code_command: ExitCodeCommand,
 }
 
 impl Shell {
-    // pub fn new() -> Self {
-    //     Shell {}
-    // }
-
     pub fn run(&mut self) -> anyhow::Result<()> {
         sig_handler()?;
 
@@ -47,7 +52,7 @@ impl Shell {
                 Ok(cmd) => {
                     let cmd_handle =
                         self.eval_command(cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                    command_output(cmd_handle)?;
+                    self.command_output(cmd_handle)?;
                 },
                 Err(e) => {
                     eprintln!("{}", e);
@@ -161,7 +166,7 @@ impl Shell {
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
                     self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = command_output(a_cmd_handle)? {
+                if let Some(output) = self.command_output(a_cmd_handle)? {
                     if !output.status.success() {
                         // TODO return something better (indicate that command failed with exit code)
                         return dummy_child();
@@ -175,7 +180,7 @@ impl Shell {
             ast::Command::Or(a_cmd, b_cmd) => {
                 let a_cmd_handle =
                     self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = command_output(a_cmd_handle)? {
+                if let Some(output) = self.command_output(a_cmd_handle)? {
                     if output.status.success() {
                         return dummy_child();
                     }
@@ -210,7 +215,7 @@ impl Shell {
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        command_output(a_cmd_handle)?;
+                        self.command_output(a_cmd_handle)?;
                         let b_cmd_handle =
                             self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                         Ok(b_cmd_handle)
@@ -257,15 +262,15 @@ impl Shell {
 
         Ok(child)
     }
-}
 
-/// Small wrapper that outputs command output if exists
-fn command_output(cmd_handle: Child) -> anyhow::Result<Option<Output>> {
-    let cmd_output = cmd_handle.wait_with_output()?;
-    // println!("[exit +{}]", cmd_output.status);
-    print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
-    stdout().flush()?;
-    Ok(Some(cmd_output))
+    /// Small wrapper that outputs command output if exists
+    fn command_output(&self, cmd_handle: Child) -> anyhow::Result<Option<Output>> {
+        let cmd_output = cmd_handle.wait_with_output()?;
+        print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
+        stdout().flush()?;
+        (self.exit_code_command)(cmd_output.status.code().unwrap());
+        Ok(Some(cmd_output))
+    }
 }
 
 fn dummy_child() -> anyhow::Result<Child> {

@@ -190,10 +190,32 @@ impl Shell {
                 Ok(cmd_handle)
             },
             ast::Command::AsyncList(a_cmd, b_cmd) => {
-                todo!()
+                let a_cmd_handle =
+                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+
+                match b_cmd {
+                    None => Ok(a_cmd_handle),
+                    Some(b_cmd) => {
+                        let b_cmd_handle =
+                            self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                        Ok(b_cmd_handle)
+                    },
+                }
             },
             ast::Command::SeqList(a_cmd, b_cmd) => {
-                todo!()
+                // TODO very similar to AsyncList
+                let a_cmd_handle =
+                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+
+                match b_cmd {
+                    None => Ok(a_cmd_handle),
+                    Some(b_cmd) => {
+                        command_output(a_cmd_handle)?;
+                        let b_cmd_handle =
+                            self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                        Ok(b_cmd_handle)
+                    },
+                }
             },
         }
     }

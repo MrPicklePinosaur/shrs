@@ -9,7 +9,9 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, history::History, parser, signal::sig_handler};
+use crate::{
+    ast, builtin::history::history_builtin, history::History, parser, signal::sig_handler,
+};
 
 /// Default prompt
 pub fn simple_prompt() {
@@ -47,19 +49,28 @@ impl Default for Hooks {
 }
 
 pub struct Shell {
-    history: History,
     hooks: Hooks,
+}
+
+// Runtime context for the shell
+pub struct Context {
+    pub history: History,
+}
+
+impl Context {
+    pub fn new() -> Self {
+        Context {
+            history: History::new(),
+        }
+    }
 }
 
 impl Shell {
     pub fn new(hooks: Hooks) -> Self {
-        Shell {
-            history: History::new(),
-            hooks,
-        }
+        Shell { hooks }
     }
 
-    pub fn run(&mut self) -> anyhow::Result<()> {
+    pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
         sig_handler()?;
 
         loop {
@@ -70,13 +81,13 @@ impl Shell {
                 continue;
             }
 
-            self.history.add(line.clone());
+            ctx.history.add(line.clone());
 
             let mut parser = parser::ParserContext::new();
             match parser.parse(&line) {
                 Ok(cmd) => {
                     let cmd_handle =
-                        self.eval_command(cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                        self.eval_command(ctx, cmd, Stdio::inherit(), Stdio::piped(), None)?;
                     self.command_output(cmd_handle)?;
                 },
                 Err(e) => {
@@ -89,7 +100,8 @@ impl Shell {
     // TODO function signature is very ugly
     // TODO maybe make this a method of Command
     pub fn eval_command(
-        &mut self,
+        &self,
+        ctx: &mut Context,
         cmd: ast::Command,
         stdin: Stdio,
         stdout: Stdio,
@@ -175,23 +187,24 @@ impl Shell {
                 match cmd_name.as_str() {
                     "cd" => self.run_cd_command(&args),
                     "exit" => self.run_exit_command(&args),
-                    "history" => self.run_history_command(&args),
+                    "history" => history_builtin(ctx, &args),
                     _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
                 // TODO double check that pgid works properly for pipelines that are longer than one pipe (left recursiveness of parser might mess this up)
-                let mut a_cmd_handle = self.eval_command(*a_cmd, stdin, Stdio::piped(), None)?;
+                let mut a_cmd_handle =
+                    self.eval_command(ctx, *a_cmd, stdin, Stdio::piped(), None)?;
                 let piped_stdin = Stdio::from(a_cmd_handle.stdout.take().unwrap());
                 let pgid = a_cmd_handle.id();
                 let b_cmd_handle =
-                    self.eval_command(*b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
+                    self.eval_command(ctx, *b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
                 Ok(b_cmd_handle)
             },
             ast::Command::And(a_cmd, b_cmd) => {
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
-                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = self.command_output(a_cmd_handle)? {
                     if !output.status.success() {
                         // TODO return something better (indicate that command failed with exit code)
@@ -199,36 +212,36 @@ impl Shell {
                     }
                 }
                 let b_cmd_handle =
-                    self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             // duplicate of And (could abstract a bit)
             ast::Command::Or(a_cmd, b_cmd) => {
                 let a_cmd_handle =
-                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = self.command_output(a_cmd_handle)? {
                     if output.status.success() {
                         return dummy_child();
                     }
                 }
                 let b_cmd_handle =
-                    self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             ast::Command::Not(cmd) => {
                 // TODO exit status negate
-                let cmd_handle = self.eval_command(*cmd, stdin, stdout, None)?;
+                let cmd_handle = self.eval_command(ctx, *cmd, stdin, stdout, None)?;
                 Ok(cmd_handle)
             },
             ast::Command::AsyncList(a_cmd, b_cmd) => {
                 let a_cmd_handle =
-                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
                         let b_cmd_handle =
-                            self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                            self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -236,14 +249,14 @@ impl Shell {
             ast::Command::SeqList(a_cmd, b_cmd) => {
                 // TODO very similar to AsyncList
                 let a_cmd_handle =
-                    self.eval_command(*a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
                         self.command_output(a_cmd_handle)?;
                         let b_cmd_handle =
-                            self.eval_command(*b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                            self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -262,15 +275,6 @@ impl Shell {
         env::set_current_dir(path)?;
 
         // return a dummy command
-        dummy_child()
-    }
-
-    fn run_history_command(&self, args: &Vec<String>) -> anyhow::Result<Child> {
-        let history = self.history.all();
-        for (i, h) in history.iter().enumerate() {
-            print!("{} {}", i, h);
-        }
-        stdout().flush()?;
         dummy_child()
     }
 
@@ -308,7 +312,7 @@ impl Shell {
     }
 }
 
-fn dummy_child() -> anyhow::Result<Child> {
+pub fn dummy_child() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)

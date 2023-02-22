@@ -9,6 +9,7 @@ use std::{
 
 use clap::{Parser, Subcommand};
 
+use super::BuiltinCmd;
 use crate::shell::{dummy_child, Context, Shell};
 
 #[derive(Parser)]
@@ -24,28 +25,33 @@ enum Commands {
     Search { query: String },
 }
 
-pub fn history_builtin(ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child> {
-    // TODO hack
-    let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
+#[derive(Default)]
+pub struct HistoryBuiltin {}
 
-    match &cli.command {
-        None => {
-            let history = ctx.history.all();
-            for (i, h) in history.iter().enumerate() {
-                print!("{} {}", i, h);
-            }
-            stdout().flush()?;
-        },
-        Some(Commands::Clear) => {
-            ctx.history.clear();
-        },
-        Some(Commands::Run { index }) => {
-            todo!()
-        },
-        Some(Commands::Search { query }) => {
-            todo!()
-        },
+impl BuiltinCmd for HistoryBuiltin {
+    fn run(&self, ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child> {
+        // TODO hack
+        let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
+
+        match &cli.command {
+            None => {
+                let history = ctx.history.all();
+                for (i, h) in history.iter().enumerate() {
+                    print!("{} {}", i, h);
+                }
+                stdout().flush()?;
+            },
+            Some(Commands::Clear) => {
+                ctx.history.clear();
+            },
+            Some(Commands::Run { index }) => {
+                todo!()
+            },
+            Some(Commands::Search { query }) => {
+                todo!()
+            },
+        }
+
+        dummy_child()
     }
-
-    dummy_child()
 }

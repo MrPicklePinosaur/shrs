@@ -9,9 +9,7 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{
-    ast, builtin::history::history_builtin, history::History, parser, signal::sig_handler,
-};
+use crate::{ast, builtin::Builtins, history::History, parser, signal::sig_handler};
 
 /// Default prompt
 pub fn simple_prompt() {
@@ -50,6 +48,7 @@ impl Default for Hooks {
 
 pub struct Shell {
     hooks: Hooks,
+    builtins: Builtins,
 }
 
 // Runtime context for the shell
@@ -66,8 +65,8 @@ impl Context {
 }
 
 impl Shell {
-    pub fn new(hooks: Hooks) -> Self {
-        Shell { hooks }
+    pub fn new(hooks: Hooks, builtins: Builtins) -> Self {
+        Shell { hooks, builtins }
     }
 
     pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
@@ -185,9 +184,9 @@ impl Shell {
                 // TODO which stdin var to use?, previous command or from file redirection?
 
                 match cmd_name.as_str() {
-                    "cd" => self.run_cd_command(&args),
-                    "exit" => self.run_exit_command(&args),
-                    "history" => history_builtin(ctx, &args),
+                    "cd" => self.builtins.cd.run(ctx, &args),
+                    "exit" => self.builtins.exit.run(ctx, &args),
+                    "history" => self.builtins.history.run(ctx, &args),
                     _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },
@@ -262,24 +261,6 @@ impl Shell {
                 }
             },
         }
-    }
-
-    fn run_cd_command(&self, args: &Vec<String>) -> anyhow::Result<Child> {
-        // if empty default to root (for now)
-        let raw_path = if let Some(path) = args.get(0) {
-            path
-        } else {
-            "/"
-        };
-        let path = Path::new(raw_path);
-        env::set_current_dir(path)?;
-
-        // return a dummy command
-        dummy_child()
-    }
-
-    fn run_exit_command(&self, args: &Vec<String>) -> ! {
-        std::process::exit(0)
     }
 
     fn run_external_command(

@@ -1,4 +1,5 @@
 use shrs::{
+    builtin::Builtins,
     prompt::{hostname, top_pwd, username},
     shell::{self, simple_error, simple_exit_code, Context},
 };
@@ -22,7 +23,8 @@ fn main() {
         prompt_command,
         ..Default::default()
     };
-    let myshell = Shell::new(hooks);
+    let builtins = Builtins::default();
+    let myshell = Shell::new(hooks, builtins);
     let mut ctx = Context::new();
     myshell.run(&mut ctx);
 }

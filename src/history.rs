@@ -1,8 +1,13 @@
+// TODO could make a history trait so users can implement their own history handlers
+
+// TODO configuration for history like max history length and if duplicates should be stored
+
 pub struct History {
     // consider storing the parsed version of the command
     data: Vec<String>,
 }
 
+// TODO sketch up a better History library (this current one is stupid and is just a wrapper for a vec)
 impl History {
     pub fn new() -> History {
         Self { data: vec![] }
@@ -29,5 +34,10 @@ impl History {
     /// Get entire history
     pub fn all(&self) -> &Vec<String> {
         &self.data
+    }
+
+    /// Query history with filters and tags
+    pub fn search(&self, query: &str) {
+        todo!()
     }
 }

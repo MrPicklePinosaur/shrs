@@ -266,8 +266,11 @@ impl Shell {
     }
 
     fn run_history_command(&self, args: &Vec<String>) -> anyhow::Result<Child> {
-        let hist = self.history.all();
-        println!("{:?}", hist);
+        let history = self.history.all();
+        for (i, h) in history.iter().enumerate() {
+            print!("{} {}", i, h);
+        }
+        stdout().flush()?;
         dummy_child()
     }
 

@@ -13,7 +13,7 @@ rust library to build your own shell
 - [x] file redirection
 - [ ] configuration scheme (config file? builder pattern?)
 - [ ] better logging + error reporting (different ways of displaying exit status)
-- [ ] background process + job control (&)
+- [x] background process + job control (&)
 - [ ] subshells
 - [ ] control flow
 - [ ] signals (^C, ^\, ^Z etc)

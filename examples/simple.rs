@@ -16,12 +16,12 @@ fn prompt_command() {
 }
 
 fn main() {
-    use shell::Shell;
+    use shell::{Hooks, Shell};
 
-    let mut myshell = Shell {
+    let hooks = Hooks {
         prompt_command,
-        error_command: simple_error,
-        exit_code_command: simple_exit_code,
+        ..Default::default()
     };
+    let mut myshell = Shell::new(hooks);
     myshell.run();
 }

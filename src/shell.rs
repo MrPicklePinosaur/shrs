@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, parser, signal::sig_handler};
+use crate::{ast, history::History, parser, signal::sig_handler};
 
 /// Default prompt
 pub fn simple_prompt() {
@@ -26,7 +26,8 @@ pub fn simple_exit_code(code: i32) {
 pub type PromptCommand = fn();
 pub type ErrorCommand = fn();
 pub type ExitCodeCommand = fn(i32);
-pub struct Shell {
+
+pub struct Hooks {
     /// User defined command that gets ran when we wish to print the prompt
     pub prompt_command: PromptCommand,
     /// User defined command for formatting shell error messages
@@ -35,17 +36,41 @@ pub struct Shell {
     pub exit_code_command: ExitCodeCommand,
 }
 
+impl Default for Hooks {
+    fn default() -> Self {
+        Hooks {
+            prompt_command: simple_prompt,
+            error_command: simple_error,
+            exit_code_command: simple_exit_code,
+        }
+    }
+}
+
+pub struct Shell {
+    history: History,
+    hooks: Hooks,
+}
+
 impl Shell {
+    pub fn new(hooks: Hooks) -> Self {
+        Shell {
+            history: History::new(),
+            hooks,
+        }
+    }
+
     pub fn run(&mut self) -> anyhow::Result<()> {
         sig_handler()?;
 
         loop {
-            (self.prompt_command)();
+            (self.hooks.prompt_command)();
 
             let mut line = String::new();
             if let Err(e) = stdin().read_line(&mut line) {
                 continue;
             }
+
+            self.history.add(line.clone());
 
             let mut parser = parser::ParserContext::new();
             match parser.parse(&line) {
@@ -150,6 +175,7 @@ impl Shell {
                 match cmd_name.as_str() {
                     "cd" => self.run_cd_command(&args),
                     "exit" => self.run_exit_command(&args),
+                    "history" => self.run_history_command(&args),
                     _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },
@@ -239,6 +265,15 @@ impl Shell {
         dummy_child()
     }
 
+    fn run_history_command(&self, args: &Vec<String>) -> anyhow::Result<Child> {
+        let history = self.history.all();
+        for (i, h) in history.iter().enumerate() {
+            print!("{} {}", i, h);
+        }
+        stdout().flush()?;
+        dummy_child()
+    }
+
     fn run_exit_command(&self, args: &Vec<String>) -> ! {
         std::process::exit(0)
     }
@@ -268,7 +303,7 @@ impl Shell {
         let cmd_output = cmd_handle.wait_with_output()?;
         print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
         stdout().flush()?;
-        (self.exit_code_command)(cmd_output.status.code().unwrap());
+        (self.hooks.exit_code_command)(cmd_output.status.code().unwrap());
         Ok(Some(cmd_output))
     }
 }

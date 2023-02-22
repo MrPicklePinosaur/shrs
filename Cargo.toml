@@ -14,6 +14,7 @@ regex = "1"
 signal-hook = "0.3"
 crossbeam-channel = "0.5"
 
+pino_argparse = "0.1"
 pino_deref = "0.1"
 
 thiserror = "1"

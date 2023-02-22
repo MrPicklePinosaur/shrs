@@ -365,6 +365,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
+name = "pino_argparse"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "900690173818c00c2a77695f9d391d1b6678ed1f2754e233be7570eee4cd2b71"
+
+[[package]]
 name = "pino_deref"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -477,6 +483,7 @@ dependencies = [
  "crossbeam-channel",
  "lalrpop",
  "lalrpop-util",
+ "pino_argparse",
  "pino_deref",
  "regex",
  "rexpect",

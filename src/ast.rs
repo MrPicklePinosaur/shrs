@@ -1,5 +1,25 @@
 use std::ops::{Deref, DerefMut};
 
+use pino_deref::Deref;
+
+#[derive(Debug)]
+pub struct Redirect {
+    pub n: Option<IONumber>,
+    pub file: Filename,
+    pub mode: RedirectMode,
+}
+
+#[derive(Debug)]
+pub enum RedirectMode {
+    Read,
+    Write,
+    ReadAppend,
+    WriteAppend,
+    ReadDup,
+    WriteDup,
+    ReadWrite,
+}
+
 #[derive(Debug)]
 pub enum Command {
     /// Basic command
@@ -7,7 +27,10 @@ pub enum Command {
     /// ```sh
     /// ls -al
     /// ```
-    Simple(Vec<Word>),
+    Simple {
+        redirects: Vec<Redirect>,
+        args: Vec<Word>,
+    },
 
     /// Two commands joined by a pipe
     ///
@@ -15,10 +38,40 @@ pub enum Command {
     /// cat .bashrc | wc -l
     /// ```
     Pipeline(Box<Command>, Box<Command>),
+
+    /// Compound command of And
+    And(Box<Command>, Box<Command>),
+
+    /// Compound command of Or
+    Or(Box<Command>, Box<Command>),
+
+    /// Negate the exit code of command
+    Not(Box<Command>),
+
+    /// Asynchronous list of commands
+    ///
+    /// ```sh
+    /// command1 & command2
+    /// ```
+    /// We do not wait for `command1` to finish executing before executing `command2`
+    AsyncList(Box<Command>, Option<Box<Command>>),
+
+    /// Sequential list of commands
+    /// ```sh
+    /// command1 ; command2
+    /// ```
+    /// We wait for `command1` to finish executing before executing `command2`
+    SeqList(Box<Command>, Option<Box<Command>>),
 }
 
 #[derive(Debug)]
 pub struct Word(pub String);
+
+#[derive(Deref, Debug)]
+pub struct Filename(pub String);
+
+#[derive(Deref, Debug)]
+pub struct IONumber(pub usize);
 
 impl Deref for Word {
     type Target = String;

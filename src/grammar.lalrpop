@@ -3,13 +3,54 @@ use crate::ast;
 
 grammar;
 
+pub CompleteCommand: ast::Command = {
+    <l:List> "&" => ast::Command::AsyncList(Box::new(l), None),
+    <l:List> ";" => ast::Command::SeqList(Box::new(l), None),
+    <l:List> => l,
+}
+
+pub List: ast::Command = {
+    <l:List> "&" <a:AndOr> => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
+    <l:List> ";" <a:AndOr> => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
+    <a:AndOr> => a,
+}
+
+pub AndOr: ast::Command = {
+    <a:AndOr> AND_IF "\n"* <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> OR_IF "\n"* <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
+    <p:Pipeline> => p,
+}
+
+pub Pipeline: ast::Command = {
+    "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ps)),
+    <ps:PipeSequence> => ps,
+}
+
 pub PipeSequence: ast::Command = {
-    <p:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(p), Box::new(s)),
+    <ps:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(ps), Box::new(s)),
     <s:Simple> => s,
 }
 
 pub Simple: ast::Command = {
-    <words: CommandWord+> => ast::Command::Simple(<>)
+    <prefix: Redirect*> <words: CommandWord+> <suffix: Redirect*> => {
+    	let redirects = prefix.into_iter().chain(suffix.into_iter()).collect();
+	ast::Command::Simple { redirects, args: words }
+    }
 }
 
-pub CommandWord: ast::Word = r"[a-zA-Z0-9]+" => ast::Word(<>.into());
+pub Redirect: ast::Redirect = {
+    <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
+    <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Write },
+    <n: IONumber?> "<<" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadAppend },
+    <n: IONumber?> ">>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteAppend },
+    <n: IONumber?> "<&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadDup },
+    <n: IONumber?> ">&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteDup },
+    <n: IONumber?> "<>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadWrite },
+}
+
+pub IONumber: ast::IONumber = r"[0-9]+" => ast::IONumber(usize::from_str(<>).unwrap());
+pub CommandWord: ast::Word = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Word(<>.into());
+pub Filename: ast::Filename = r"[a-zA-Z][a-zA-Z0-9]*" => ast::Filename(<>.into());
+
+pub AND_IF: () = "&&" => ();
+pub OR_IF: () = "||" => ();

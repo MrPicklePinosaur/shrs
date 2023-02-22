@@ -1,6 +1,6 @@
 use shrs::{
     prompt::{hostname, top_pwd, username},
-    shell::{self, simple_error, simple_exit_code},
+    shell::{self, simple_error, simple_exit_code, Context},
 };
 
 fn prompt_command() {
@@ -22,6 +22,7 @@ fn main() {
         prompt_command,
         ..Default::default()
     };
-    let mut myshell = Shell::new(hooks);
-    myshell.run();
+    let myshell = Shell::new(hooks);
+    let mut ctx = Context::new();
+    myshell.run(&mut ctx);
 }

@@ -189,6 +189,12 @@ impl Shell {
                 let cmd_handle = self.eval_command(*cmd, stdin, stdout, None)?;
                 Ok(cmd_handle)
             },
+            ast::Command::AsyncList(a_cmd, b_cmd) => {
+                todo!()
+            },
+            ast::Command::SeqList(a_cmd, b_cmd) => {
+                todo!()
+            },
         }
     }
 

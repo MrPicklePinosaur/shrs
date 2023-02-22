@@ -45,7 +45,23 @@ pub enum Command {
     /// Compound command of Or
     Or(Box<Command>, Box<Command>),
 
+    /// Negate the exit code of command
     Not(Box<Command>),
+
+    /// Asynchronous list of commands
+    ///
+    /// ```sh
+    /// command1 & command2
+    /// ```
+    /// We do not wait for `command1` to finish executing before executing `command2`
+    AsyncList(Box<Command>, Option<Box<Command>>),
+
+    /// Sequential list of commands
+    /// ```sh
+    /// command1 ; command2
+    /// ```
+    /// We wait for `command1` to finish executing before executing `command2`
+    SeqList(Box<Command>, Option<Box<Command>>),
 }
 
 #[derive(Debug)]

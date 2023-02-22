@@ -3,6 +3,18 @@ use crate::ast;
 
 grammar;
 
+pub CompleteCommand: ast::Command = {
+    <l:List> "&" => ast::Command::AsyncList(Box::new(l), None),
+    <l:List> ";" => ast::Command::SeqList(Box::new(l), None),
+    <l:List> => l,
+}
+
+pub List: ast::Command = {
+    <l:List> "&" <a:AndOr> => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
+    <l:List> ";" <a:AndOr> => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
+    <a:AndOr> => a,
+}
+
 pub AndOr: ast::Command = {
     <a:AndOr> AND_IF "\n"* <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
     <a:AndOr> OR_IF "\n"* <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),

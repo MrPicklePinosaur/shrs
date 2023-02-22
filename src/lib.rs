@@ -7,6 +7,7 @@ mod ast;
 mod parser;
 pub mod prompt;
 pub mod shell;
+mod signal;
 
 #[cfg(test)]
 mod tests {

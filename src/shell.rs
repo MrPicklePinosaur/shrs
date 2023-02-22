@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, parser};
+use crate::{ast, parser, signal::sig_handler};
 
 pub fn simple_prompt() {
     print!("> ");
@@ -32,6 +32,8 @@ impl Shell {
     // }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
+        sig_handler()?;
+
         loop {
             (self.prompt_command)();
 

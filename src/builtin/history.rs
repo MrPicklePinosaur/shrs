@@ -7,29 +7,45 @@ use std::{
     process::Child,
 };
 
-use pino_argparse::{Cli, Command, FlagParse};
+use clap::{Parser, Subcommand};
 
 use crate::shell::{dummy_child, Context, Shell};
 
-pub fn history_builtin(ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child> {
-    let cli = Cli {
-        program_name: "history",
-        synopsis: "query and modify shell history",
-        root_command: Command {
-            flags: vec![],
-            handler: move |flagparse: FlagParse| -> Result<(), Box<dyn std::error::Error>> {
-                // let history = ctx.history.all();
-                // for (i, h) in history.iter().enumerate() {
-                //     print!("{} {}", i, h);
-                // }
-                // stdout().flush()?;
-                Ok(())
-            },
-            ..Default::default()
-        },
-        ..Default::default()
-    };
+#[derive(Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
 
-    cli.run(args);
+#[derive(Subcommand)]
+enum Commands {
+    Clear,
+    Run { index: u32 },
+    Search { query: String },
+}
+
+pub fn history_builtin(ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child> {
+    // TODO hack
+    let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
+
+    match &cli.command {
+        None => {
+            let history = ctx.history.all();
+            for (i, h) in history.iter().enumerate() {
+                print!("{} {}", i, h);
+            }
+            stdout().flush()?;
+        },
+        Some(Commands::Clear) => {
+            ctx.history.clear();
+        },
+        Some(Commands::Run { index }) => {
+            todo!()
+        },
+        Some(Commands::Search { query }) => {
+            todo!()
+        },
+    }
+
     dummy_child()
 }

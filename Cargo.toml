@@ -13,8 +13,8 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 signal-hook = "0.3"
 crossbeam-channel = "0.5"
+clap = { version = "4.1", features = ["derive"] }
 
-pino_argparse = "0.1"
 pino_deref = "0.1"
 
 thiserror = "1"

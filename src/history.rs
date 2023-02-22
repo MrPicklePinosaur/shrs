@@ -25,4 +25,9 @@ impl History {
         }
         self.data.get(self.data.len() - 1)
     }
+
+    /// Get entire history
+    pub fn all(&self) -> &Vec<String> {
+        &self.data
+    }
 }

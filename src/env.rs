@@ -13,6 +13,14 @@ impl Env {
         }
     }
 
+    /// Initialize default values for environment variables
+    // could inherit all from calling shell for now
+    pub fn load(&mut self) {
+        for (var, val) in std::env::vars() {
+            self.set(&var, &val);
+        }
+    }
+
     pub fn get(&self, var: &str) -> Option<&String> {
         self.vars.get(&var.to_ascii_uppercase())
     }

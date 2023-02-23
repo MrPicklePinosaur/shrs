@@ -74,7 +74,9 @@ impl Shell {
     }
 
     pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
+        // init stuff
         sig_handler()?;
+        ctx.env.load();
 
         loop {
             (self.hooks.prompt_command)();

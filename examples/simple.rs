@@ -1,4 +1,5 @@
 use shrs::{
+    alias::Alias,
     builtin::Builtins,
     prompt::{hostname, top_pwd, username},
     shell::{self, simple_error, simple_exit_code, Context},
@@ -25,6 +26,12 @@ fn main() {
     };
     let builtins = Builtins::default();
     let myshell = Shell::new(hooks, builtins);
-    let mut ctx = Context::new();
+
+    let mut alias = Alias::new();
+    alias.set("ls", "ls -al");
+    let mut ctx = Context {
+        alias,
+        ..Default::default()
+    };
     myshell.run(&mut ctx);
 }

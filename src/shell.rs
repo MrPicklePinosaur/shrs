@@ -10,6 +10,7 @@ use std::{
 use anyhow::anyhow;
 
 use crate::{
+    alias::Alias,
     ast::{self, Assign},
     builtin::Builtins,
     env::Env,
@@ -64,13 +65,15 @@ pub struct Shell {
 pub struct Context {
     pub history: History,
     pub env: Env,
+    pub alias: Alias,
 }
 
-impl Context {
-    pub fn new() -> Self {
+impl Default for Context {
+    fn default() -> Self {
         Context {
             history: History::new(),
             env: Env::new(),
+            alias: Alias::new(),
         }
     }
 }
@@ -92,12 +95,19 @@ impl Shell {
             if let Err(e) = stdin().read_line(&mut line) {
                 continue;
             }
+            line = line.trim_end().to_string();
 
-            ctx.history.add(line.clone());
+            // strip newline
+
+            // attempt to expand alias
+            let expanded = ctx.alias.get(&line).unwrap_or(&line);
+
+            // wether the command pre-alias expansion or post should be added to history could be a configuration option
+            ctx.history.add(expanded.clone());
 
             // TODO rewrite the error handling here better
             let mut parser = parser::ParserContext::new();
-            let cmd = match parser.parse(&line) {
+            let cmd = match parser.parse(&expanded) {
                 Ok(cmd) => cmd,
                 Err(e) => {
                     eprintln!("{}", e);

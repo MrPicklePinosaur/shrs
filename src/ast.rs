@@ -21,6 +21,12 @@ pub enum RedirectMode {
 }
 
 #[derive(Debug)]
+pub struct Assign {
+    pub var: Word,
+    pub val: Word,
+}
+
+#[derive(Debug)]
 pub enum Command {
     /// Basic command
     ///
@@ -28,6 +34,7 @@ pub enum Command {
     /// ls -al
     /// ```
     Simple {
+        assigns: Vec<Assign>,
         redirects: Vec<Redirect>,
         args: Vec<Word>,
     },

@@ -3,9 +3,10 @@ extern crate lalrpop_util;
 
 lalrpop_mod!(pub grammar);
 
+pub mod alias;
 mod ast;
 pub mod builtin;
-mod env;
+pub mod env;
 mod history;
 mod parser;
 pub mod prompt;

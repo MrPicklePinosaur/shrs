@@ -198,6 +198,7 @@ impl Shell {
                     "cd" => self.builtins.cd.run(ctx, &args),
                     "exit" => self.builtins.exit.run(ctx, &args),
                     "history" => self.builtins.history.run(ctx, &args),
+                    "debug" => self.builtins.debug.run(ctx, &args),
                     _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },

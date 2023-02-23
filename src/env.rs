@@ -13,11 +13,15 @@ impl Env {
         }
     }
 
-    fn get(&self, var: &str) -> Option<&String> {
-        self.vars.get(var)
+    pub fn get(&self, var: &str) -> Option<&String> {
+        self.vars.get(&var.to_ascii_uppercase())
     }
 
-    fn set(&mut self, var: &str, val: &str) {
-        self.vars.insert(var.into(), val.into());
+    pub fn set(&mut self, var: &str, val: &str) {
+        self.vars.insert(var.to_ascii_uppercase(), val.into());
+    }
+
+    pub fn all(&self) -> &HashMap<String, String> {
+        &self.vars
     }
 }

@@ -7,6 +7,11 @@ rust library to build your own shell
 
 </div>
 
+## PROJECT GOALS
+
+- **hackable**: almost every aspect of the shell should be easily customizable and extendable
+- **pure rust**: down to the syscall level (rustix)
+
 ## TOOD
 
 - [x] pipes
@@ -14,6 +19,7 @@ rust library to build your own shell
 - [ ] configuration scheme (config file? builder pattern?)
 - [ ] better logging + error reporting (different ways of displaying exit status)
 - [x] background process + job control (&)
+- [ ] environment variables
 - [ ] subshells
 - [ ] control flow
 - [ ] signals (^C, ^\, ^Z etc)

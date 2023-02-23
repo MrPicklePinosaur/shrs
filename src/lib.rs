@@ -5,6 +5,7 @@ lalrpop_mod!(pub grammar);
 
 mod ast;
 pub mod builtin;
+mod env;
 mod history;
 mod parser;
 pub mod prompt;

@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, builtin::Builtins, history::History, parser, signal::sig_handler};
+use crate::{ast, builtin::Builtins, env::Env, history::History, parser, signal::sig_handler};
 
 /// Default prompt
 pub fn simple_prompt() {
@@ -26,6 +26,8 @@ pub fn simple_exit_code(code: i32) {
 pub type PromptCommand = fn();
 pub type ErrorCommand = fn();
 pub type ExitCodeCommand = fn(i32);
+// TODO ideas for hooks:
+//   - exit hook: print message when shell exits (by exit builtin)
 
 pub struct Hooks {
     /// User defined command that gets ran when we wish to print the prompt
@@ -54,12 +56,14 @@ pub struct Shell {
 // Runtime context for the shell
 pub struct Context {
     pub history: History,
+    pub env: Env,
 }
 
 impl Context {
     pub fn new() -> Self {
         Context {
             history: History::new(),
+            env: Env::new(),
         }
     }
 }
@@ -70,7 +74,9 @@ impl Shell {
     }
 
     pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
+        // init stuff
         sig_handler()?;
+        ctx.env.load();
 
         loop {
             (self.hooks.prompt_command)();
@@ -82,17 +88,24 @@ impl Shell {
 
             ctx.history.add(line.clone());
 
+            // TODO rewrite the error handling here better
             let mut parser = parser::ParserContext::new();
-            match parser.parse(&line) {
-                Ok(cmd) => {
-                    let cmd_handle =
-                        self.eval_command(ctx, cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                    self.command_output(cmd_handle)?;
-                },
+            let cmd = match parser.parse(&line) {
+                Ok(cmd) => cmd,
                 Err(e) => {
                     eprintln!("{}", e);
+                    continue;
                 },
-            }
+            };
+            let cmd_handle =
+                match self.eval_command(ctx, cmd, Stdio::inherit(), Stdio::piped(), None) {
+                    Ok(cmd_handle) => cmd_handle,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        continue;
+                    },
+                };
+            self.command_output(cmd_handle)?;
         }
     }
 
@@ -187,6 +200,7 @@ impl Shell {
                     "cd" => self.builtins.cd.run(ctx, &args),
                     "exit" => self.builtins.exit.run(ctx, &args),
                     "history" => self.builtins.history.run(ctx, &args),
+                    "debug" => self.builtins.debug.run(ctx, &args),
                     _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
                 }
             },

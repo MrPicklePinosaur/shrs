@@ -10,7 +10,8 @@ rust library to build your own shell
 ## PROJECT GOALS
 
 - **hackable**: almost every aspect of the shell should be easily customizable and extendable
-- **pure rust**: down to the syscall level (rustix)
+- **productive**: shell should encourage and facilitate an efficient workflow
+- **rusty**: implemented in rust down to the syscall level (rustix) and configurable in rust
 
 ## TOOD
 

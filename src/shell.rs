@@ -9,7 +9,14 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::{ast, builtin::Builtins, env::Env, history::History, parser, signal::sig_handler};
+use crate::{
+    ast::{self, Assign},
+    builtin::Builtins,
+    env::Env,
+    history::History,
+    parser,
+    signal::sig_handler,
+};
 
 /// Default prompt
 pub fn simple_prompt() {
@@ -120,11 +127,16 @@ impl Shell {
         pgid: Option<i32>,
     ) -> anyhow::Result<Child> {
         match cmd {
-            ast::Command::Simple { args, redirects } => {
+            ast::Command::Simple {
+                assigns,
+                args,
+                redirects,
+            } => {
                 if args.len() == 0 {
                     return Err(anyhow!("command is empty"));
                 }
                 // println!("redirects {:?}", redirects);
+                // println!("assigns {:?}", assigns);
 
                 // file redirections
                 // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of eariler ones
@@ -196,12 +208,15 @@ impl Shell {
 
                 // TODO which stdin var to use?, previous command or from file redirection?
 
+                // TODO currently don't support assignment for builtins (should it be supported even?)
                 match cmd_name.as_str() {
                     "cd" => self.builtins.cd.run(ctx, &args),
                     "exit" => self.builtins.exit.run(ctx, &args),
                     "history" => self.builtins.history.run(ctx, &args),
                     "debug" => self.builtins.debug.run(ctx, &args),
-                    _ => self.run_external_command(&cmd_name, &args, cur_stdin, cur_stdout, None),
+                    _ => self.run_external_command(
+                        &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                    ),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
@@ -284,14 +299,18 @@ impl Shell {
         stdin: Stdio,
         stdout: Stdio,
         pgid: Option<i32>,
+        assigns: Vec<Assign>,
     ) -> anyhow::Result<Child> {
         use std::process::Command;
+
+        let envs = assigns.iter().map(|word| (&word.var.0, &word.val.0));
 
         let child = Command::new(cmd)
             .args(args)
             .stdin(stdin)
             .stdout(stdout)
             .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
+            .envs(envs)
             .spawn()?;
 
         Ok(child)

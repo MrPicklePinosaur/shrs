@@ -63,7 +63,10 @@ pub SimpleCommand: ast::Command = {
 
 pub CompoundCommand: ast::Command = {
     <s:Subshell> => ast::Command::Subshell(Box::new(s)),
+    <i:IfClause> => i,
 }
+
+// SUBSHELL
 
 pub Subshell: ast::Command = {
     "(" <c:CompoundList> ")" => c,
@@ -91,6 +94,33 @@ pub Term: ast::Command = {
     <a:AndOr> => a,
 }
 
+// IF CLAUSE
+
+pub IfClause: ast::Command = {
+    IF <cond:CompoundList> THEN <body:CompoundList> <mut elifs:ElifBody*> <else_part:ElseBody?> FI => {
+
+	let mut conds = vec![
+	    ast::Condition {
+		cond: Box::new(cond),
+		body: Box::new(body),
+	    }
+	];
+	conds.append(&mut elifs);
+	// TODO prob can be done nicer
+	let else_part = match else_part {
+	    Some(else_part) => Some(Box::new(else_part)),
+	    None => None,
+	};
+	ast::Command::If {
+	    conds,
+	    else_part,
+	}
+    }
+}
+
+pub ElifBody: ast::Condition = ELIF <cond:CompoundList> THEN <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
+pub ElseBody: ast::Command = ELSE <body:CompoundList> => body;
+
 pub Redirect: ast::Redirect = {
     <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
     <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Write },
@@ -109,6 +139,13 @@ pub Assign: ast::Assign = <var:CommandWord> "=" <val:CommandWord> => ast::Assign
 
 pub AND_IF: () = "&&" => ();
 pub OR_IF: () = "||" => ();
+pub IF: () = "if" => ();
+pub THEN: () = "then" => ();
+pub ELSE: () = "else" => ();
+pub ELIF: () = "elif" => ();
+pub FI: () = "fi" => ();
+pub DO: () = "do" => ();
+pub DONE: () = "done" => ();
 
 pub Linebreak: () = NewlineList? => ();
 pub NewlineList: () = "\n"+ => ();

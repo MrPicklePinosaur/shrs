@@ -85,8 +85,20 @@ pub enum Command {
     /// ```
     Subshell(Box<Command>),
 
+    If {
+        conds: Vec<Condition>,
+        else_part: Option<Box<Command>>,
+    },
+
     /// No op
     None,
+}
+
+/// Corresponds to a condition followed by a body to execute in an 'if' or 'elif' block
+#[derive(Debug)]
+pub struct Condition {
+    pub cond: Box<Command>,
+    pub body: Box<Command>,
 }
 
 #[derive(Debug)]

@@ -310,6 +310,9 @@ impl Shell {
                     self.eval_command(&mut new_ctx, *cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(cmd_handle)
             },
+            ast::Command::If { conds, else_part } => {
+                todo!()
+            },
             ast::Command::None => dummy_child(),
         }
     }

@@ -1,3 +1,5 @@
+use std::default;
+
 use shrs::{
     alias::Alias,
     builtin::Builtins,
@@ -24,8 +26,10 @@ fn main() {
         prompt_command,
         ..Default::default()
     };
-    let builtins = Builtins::default();
-    let myshell = Shell::new(hooks, builtins);
+    let myshell = Shell {
+        hooks,
+        ..Default::default()
+    };
 
     let mut alias = Alias::new();
     alias.set("ls", "ls -al");

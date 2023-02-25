@@ -21,18 +21,18 @@ rust library to build your own shell
 - [ ] better logging + error reporting (different ways of displaying exit status)
 - [x] background process + job control (&)
 - [ ] environment variables
-- [*] subshells
+- [x] subshells
 - [ ] signals (^C, ^\, ^Z etc)
 - [ ] completion
 - [ ] history
 - [ ] alias
 - [ ] test suite to ensure posix compliant
 - [ ] control flow
-  - [x] for
+  - [ ] for
   - [ ] case
-  - [ ] if 
-  - [ ] while
-  - [ ] until
+  - [x] if 
+  - [x] while
+  - [x] until
 
 ## RESOURCES
 

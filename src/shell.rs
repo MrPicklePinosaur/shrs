@@ -16,6 +16,7 @@ use crate::{
     env::Env,
     history::History,
     parser,
+    prompt::CustomPrompt,
     signal::sig_handler,
 };
 
@@ -56,9 +57,11 @@ impl Default for Hooks {
     }
 }
 
+#[derive(Default)]
 pub struct Shell {
-    hooks: Hooks,
-    builtins: Builtins,
+    pub hooks: Hooks,
+    pub builtins: Builtins,
+    pub prompt: CustomPrompt,
 }
 
 // Runtime context for the shell
@@ -82,25 +85,26 @@ impl Default for Context {
 }
 
 impl Shell {
-    pub fn new(hooks: Hooks, builtins: Builtins) -> Self {
-        Shell { hooks, builtins }
-    }
-
     pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
+        use reedline::{Reedline, Signal};
+
         // init stuff
         sig_handler()?;
         ctx.env.load();
 
+        let mut line_editor = Reedline::create();
+
         loop {
-            (self.hooks.prompt_command)();
+            // (self.hooks.prompt_command)();
 
-            let mut line = String::new();
-            if let Err(e) = stdin().read_line(&mut line) {
-                continue;
-            }
-            line = line.trim_end().to_string();
-
-            // strip newline
+            let sig = line_editor.read_line(&self.prompt);
+            let line = match sig {
+                Ok(Signal::Success(buffer)) => buffer,
+                x => {
+                    println!("got event {:?}", x);
+                    continue;
+                },
+            };
 
             // attempt to expand alias
             let expanded = ctx.alias.get(&line).unwrap_or(&line);

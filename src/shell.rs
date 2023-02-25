@@ -20,11 +20,6 @@ use crate::{
     signal::sig_handler,
 };
 
-/// Default prompt
-pub fn simple_prompt() {
-    print!("> ");
-    stdout().flush();
-}
 pub fn simple_error() {}
 
 /// Default formmater for displaying the exit code of the previous command
@@ -32,15 +27,12 @@ pub fn simple_exit_code(code: i32) {
     println!("[exit +{}]", code);
 }
 
-pub type PromptCommand = fn();
 pub type ErrorCommand = fn();
 pub type ExitCodeCommand = fn(i32);
 // TODO ideas for hooks:
 //   - exit hook: print message when shell exits (by exit builtin)
 
 pub struct Hooks {
-    /// User defined command that gets ran when we wish to print the prompt
-    pub prompt_command: PromptCommand,
     /// User defined command for formatting shell error messages
     pub error_command: ErrorCommand,
     /// User defined command for formatting exit code of previous command
@@ -50,7 +42,6 @@ pub struct Hooks {
 impl Default for Hooks {
     fn default() -> Self {
         Hooks {
-            prompt_command: simple_prompt,
             error_command: simple_error,
             exit_code_command: simple_exit_code,
         }
@@ -86,13 +77,18 @@ impl Default for Context {
 
 impl Shell {
     pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
-        use reedline::{Reedline, Signal};
+        use reedline::{
+            default_vi_insert_keybindings, default_vi_normal_keybindings, Reedline, Signal, Vi,
+        };
 
         // init stuff
         sig_handler()?;
         ctx.env.load();
 
-        let mut line_editor = Reedline::create();
+        let mut line_editor = Reedline::create().with_edit_mode(Box::new(Vi::new(
+            default_vi_insert_keybindings(),
+            default_vi_normal_keybindings(),
+        )));
 
         loop {
             // (self.hooks.prompt_command)();

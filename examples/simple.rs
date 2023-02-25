@@ -23,7 +23,6 @@ fn main() {
     use shell::{Hooks, Shell};
 
     let hooks = Hooks {
-        prompt_command,
         ..Default::default()
     };
     let myshell = Shell {

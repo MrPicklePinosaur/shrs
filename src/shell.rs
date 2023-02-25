@@ -3,7 +3,7 @@ use std::{
     fs::File,
     io::{stdin, stdout, Write},
     os::unix::process::CommandExt,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Child, Output, Stdio},
 };
 
@@ -62,10 +62,12 @@ pub struct Shell {
 }
 
 // Runtime context for the shell
+#[derive(Clone)]
 pub struct Context {
     pub history: History,
     pub env: Env,
     pub alias: Alias,
+    pub working_dir: PathBuf,
 }
 
 impl Default for Context {
@@ -74,6 +76,7 @@ impl Default for Context {
             history: History::new(),
             env: Env::new(),
             alias: Alias::new(),
+            working_dir: std::env::current_dir().unwrap(),
         }
     }
 }
@@ -225,7 +228,7 @@ impl Shell {
                     "history" => self.builtins.history.run(ctx, &args),
                     "debug" => self.builtins.debug.run(ctx, &args),
                     _ => self.run_external_command(
-                        &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                        ctx, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
                     ),
                 }
             },
@@ -299,11 +302,21 @@ impl Shell {
                     },
                 }
             },
+            ast::Command::Subshell(cmd) => {
+                // TODO rn history is being copied too, history (and also alias?) really should be global
+                // maybe seperate out global context and runtime context into two structs?
+                let mut new_ctx = ctx.clone();
+                let cmd_handle =
+                    self.eval_command(&mut new_ctx, *cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                Ok(cmd_handle)
+            },
+            ast::Command::None => dummy_child(),
         }
     }
 
     fn run_external_command(
         &self,
+        ctx: &mut Context,
         cmd: &str,
         args: &Vec<String>,
         stdin: Stdio,
@@ -320,6 +333,7 @@ impl Shell {
             .stdin(stdin)
             .stdout(stdout)
             .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
+            .current_dir(ctx.working_dir.to_str().unwrap())
             .envs(envs)
             .spawn()?;
 

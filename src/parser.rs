@@ -16,7 +16,7 @@ impl ParserContext {
     }
 
     pub fn parse(&mut self, input: &str) -> Result<ast::Command, ParserError> {
-        grammar::CompleteCommandParser::new()
+        grammar::ProgramParser::new()
             .parse(input)
             .map_err(|e| ParserError::UnsuccessfulParse(e.to_string()))
     }
@@ -29,13 +29,13 @@ mod tests {
 
     #[test]
     fn parse() {
-        let res = grammar::CompleteCommandParser::new().parse("ls home | grep downloads");
+        let res = grammar::ProgramParser::new().parse("ls home | grep downloads");
         println!("{:?}", res);
     }
 
     #[test]
     fn and_or() {
-        let res = grammar::CompleteCommandParser::new().parse("ls home || grep downloads");
+        let res = grammar::ProgramParser::new().parse("ls home || grep downloads");
         println!("{:?}", res);
     }
 }

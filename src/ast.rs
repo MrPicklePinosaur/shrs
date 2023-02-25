@@ -26,6 +26,15 @@ pub struct Assign {
     pub val: Word,
 }
 
+/// Seperator character between commands
+#[derive(Debug)]
+pub enum SeperatorOp {
+    /// Ampersand (&)
+    Amp,
+    /// Semicolon (;)
+    Semi,
+}
+
 #[derive(Debug)]
 pub enum Command {
     /// Basic command
@@ -69,6 +78,15 @@ pub enum Command {
     /// ```
     /// We wait for `command1` to finish executing before executing `command2`
     SeqList(Box<Command>, Option<Box<Command>>),
+
+    /// Subshell for command to run
+    /// ```sh
+    /// (cd src && ls)
+    /// ```
+    Subshell(Box<Command>),
+
+    /// No op
+    None,
 }
 
 #[derive(Debug)]

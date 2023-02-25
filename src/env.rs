@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 /// Environment variables
 // currently just wrapper around hashmap
+#[derive(Clone)]
 pub struct Env {
     vars: HashMap<String, String>,
 }

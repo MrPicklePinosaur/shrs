@@ -2,6 +2,7 @@
 
 // TODO configuration for history like max history length and if duplicates should be stored
 
+#[derive(Clone)]
 pub struct History {
     // consider storing the parsed version of the command
     data: Vec<String>,

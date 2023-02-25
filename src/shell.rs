@@ -311,7 +311,34 @@ impl Shell {
                 Ok(cmd_handle)
             },
             ast::Command::If { conds, else_part } => {
-                todo!()
+                // TODO throw proper error here
+                assert!(conds.len() >= 1);
+
+                for ast::Condition { cond, body } in conds {
+                    let cond_handle =
+                        self.eval_command(ctx, *cond, Stdio::inherit(), Stdio::piped(), None)?;
+                    // TODO sorta similar to and statements
+                    if let Some(output) = self.command_output(cond_handle)? {
+                        if output.status.success() {
+                            let body_handle = self.eval_command(
+                                ctx,
+                                *body,
+                                Stdio::inherit(),
+                                Stdio::piped(),
+                                None,
+                            )?;
+                            return Ok(body_handle);
+                        }
+                    }
+                }
+
+                if let Some(else_part) = else_part {
+                    let else_handle =
+                        self.eval_command(ctx, *else_part, Stdio::inherit(), Stdio::piped(), None)?;
+                    return Ok(else_handle);
+                }
+
+                dummy_child()
             },
             ast::Command::None => dummy_child(),
         }

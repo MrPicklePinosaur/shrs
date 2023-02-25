@@ -85,6 +85,7 @@ pub enum Command {
     /// ```
     Subshell(Box<Command>),
 
+    /// If statements
     If {
         conds: Vec<Condition>,
         else_part: Option<Box<Command>>,

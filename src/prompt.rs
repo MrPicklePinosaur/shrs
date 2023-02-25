@@ -1,14 +1,11 @@
 //! Collection of utility functions for building a prompt
 
-use std::{ffi::OsString, process::Command};
+use std::{borrow::Cow, ffi::OsString, process::Command};
 
 use anyhow::anyhow;
-
-pub struct Prompt {}
-
-impl Prompt {
-    pub fn render(&self) {}
-}
+use reedline::{
+    Prompt, PromptEditMode, PromptHistorySearch, PromptHistorySearchStatus, Reedline, Signal,
+};
 
 /// Get the full working directory
 pub fn full_pwd() -> String {
@@ -48,4 +45,55 @@ pub fn hostname() -> anyhow::Result<String> {
         .unwrap()
         .to_string();
     Ok(encoded)
+}
+
+pub struct CustomPrompt {
+    pub prompt_indicator: String,
+    pub prompt_left: String,
+    pub prompt_right: String,
+    pub multiline_indicator: String,
+}
+
+impl Default for CustomPrompt {
+    fn default() -> Self {
+        CustomPrompt {
+            prompt_indicator: "> ".into(),
+            prompt_left: "sh".into(),
+            prompt_right: "shrs".into(),
+            multiline_indicator: "| ".into(),
+        }
+    }
+}
+
+impl Prompt for CustomPrompt {
+    fn render_prompt_left(&self) -> Cow<str> {
+        Cow::Owned(self.prompt_left.clone())
+    }
+
+    fn render_prompt_right(&self) -> Cow<str> {
+        Cow::Owned(self.prompt_right.clone())
+    }
+
+    fn render_prompt_indicator(&self, _edit_mode: PromptEditMode) -> Cow<str> {
+        Cow::Owned(self.prompt_indicator.clone())
+    }
+
+    fn render_prompt_multiline_indicator(&self) -> Cow<str> {
+        Cow::Borrowed(&self.multiline_indicator)
+    }
+
+    fn render_prompt_history_search_indicator(
+        &self,
+        history_search: PromptHistorySearch,
+    ) -> Cow<str> {
+        let prefix = match history_search.status {
+            PromptHistorySearchStatus::Passing => "",
+            PromptHistorySearchStatus::Failing => "failing ",
+        };
+
+        Cow::Owned(format!(
+            "({}reverse-search: {}) ",
+            prefix, history_search.term
+        ))
+    }
 }

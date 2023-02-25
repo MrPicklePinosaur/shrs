@@ -126,7 +126,7 @@ pub ElseBody: ast::Command = ELSE <body:CompoundList> => body;
 // WHILE/UNTIL CLAUSE
 
 pub WhileClause: ast::Command = {
-    WHILE <cond:CompoundList> DO <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
+    WHILE <cond:CompoundList> <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
 }
 
 pub UntilClause: ast::Command = {

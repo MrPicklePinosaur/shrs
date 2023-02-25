@@ -3,21 +3,39 @@ use crate::ast;
 
 grammar;
 
+pub Prgoram: ast::Command = {
+    Linebreak <cs:CompleteCommands> Linebreak => cs,
+    Linebreak => ast::Command::None,
+}
+
+pub CompleteCommands: ast::Command = {
+    <cs:CompleteCommands> NewlineList <c:CompleteCommand> => ast::Command::SeqList(Box::new(cs), Some(Box::new(c))), // double check seqlist is correct here
+    <c:CompleteCommand> => c,
+}
+
 pub CompleteCommand: ast::Command = {
-    <l:List> "&" => ast::Command::AsyncList(Box::new(l), None),
-    <l:List> ";" => ast::Command::SeqList(Box::new(l), None),
+    <l:List> <s:SeperatorOp> => {
+        match s {
+	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), None),
+	      ast::SeperatorOp::Semi => ast::Command::SeqList(Box::new(l), None),
+	} 
+    },
     <l:List> => l,
 }
 
 pub List: ast::Command = {
-    <l:List> "&" <a:AndOr> => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
-    <l:List> ";" <a:AndOr> => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
+    <l:List> <s:SeperatorOp> <a:AndOr> => {
+        match s {
+	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
+	      ast::SeperatorOp::Semi => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
+	} 
+    },
     <a:AndOr> => a,
 }
 
 pub AndOr: ast::Command = {
-    <a:AndOr> AND_IF "\n"* <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
-    <a:AndOr> OR_IF "\n"* <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
+    <a:AndOr> AND_IF Linebreak <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> OR_IF Linebreak <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
     <p:Pipeline> => p,
 }
 
@@ -27,7 +45,11 @@ pub Pipeline: ast::Command = {
 }
 
 pub PipeSequence: ast::Command = {
-    <ps:PipeSequence> "|" "\n"* <s:Simple> => ast::Command::Pipeline(Box::new(ps), Box::new(s)),
+    <ps:PipeSequence> "|" Linebreak <c:Command> => ast::Command::Pipeline(Box::new(ps), Box::new(c)),
+    <c:Command> => c,
+}
+
+pub Command: ast::Command = {
     <s:Simple> => s,
 }
 
@@ -56,3 +78,14 @@ pub Assign: ast::Assign = <var:CommandWord> "=" <val:CommandWord> => ast::Assign
 
 pub AND_IF: () = "&&" => ();
 pub OR_IF: () = "||" => ();
+
+pub Linebreak: () = NewlineList? => ();
+pub NewlineList: () = "\n"+ => ();
+pub Seperator: Option<ast::SeperatorOp> = {
+    <s:SeperatorOp> Linebreak => Some(s),
+    NewlineList => None,
+}
+pub SeperatorOp: ast::SeperatorOp = {
+    "&" => ast::SeperatorOp::Amp,
+    ";" => ast::SeperatorOp::Semi,
+}

@@ -299,6 +299,7 @@ impl Shell {
                     },
                 }
             },
+            ast::Command::None => dummy_child(),
         }
     }
 

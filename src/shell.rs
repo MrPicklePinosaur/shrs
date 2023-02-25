@@ -118,7 +118,7 @@ impl Shell {
                 },
             };
             let cmd_handle =
-                match self.eval_command(ctx, cmd, Stdio::inherit(), Stdio::piped(), None) {
+                match self.eval_command(ctx, &cmd, Stdio::inherit(), Stdio::piped(), None) {
                     Ok(cmd_handle) => cmd_handle,
                     Err(e) => {
                         eprintln!("{}", e);
@@ -134,7 +134,7 @@ impl Shell {
     pub fn eval_command(
         &self,
         ctx: &mut Context,
-        cmd: ast::Command,
+        cmd: &ast::Command,
         stdin: Stdio,
         stdout: Stdio,
         pgid: Option<i32>,
@@ -158,8 +158,8 @@ impl Shell {
                 for redirect in redirects {
                     let filename = Path::new(&*redirect.file);
                     // TODO not making use of file descriptor at all right now
-                    let n = match redirect.n {
-                        Some(n) => *n,
+                    let n = match &redirect.n {
+                        Some(n) => **n,
                         None => 1,
                     };
                     match redirect.mode {
@@ -212,11 +212,11 @@ impl Shell {
                 }
 
                 let mut it = args.into_iter();
-                let cmd_name = it.next().unwrap().0;
+                let cmd_name = &it.next().unwrap().0;
                 let args = it
                     .collect::<Vec<_>>()
                     .into_iter()
-                    .map(|a| a.clone())
+                    .map(|a| (*a).clone())
                     .collect();
 
                 // TODO which stdin var to use?, previous command or from file redirection?
@@ -235,54 +235,46 @@ impl Shell {
             ast::Command::Pipeline(a_cmd, b_cmd) => {
                 // TODO double check that pgid works properly for pipelines that are longer than one pipe (left recursiveness of parser might mess this up)
                 let mut a_cmd_handle =
-                    self.eval_command(ctx, *a_cmd, stdin, Stdio::piped(), None)?;
+                    self.eval_command(ctx, a_cmd, stdin, Stdio::piped(), None)?;
                 let piped_stdin = Stdio::from(a_cmd_handle.stdout.take().unwrap());
                 let pgid = a_cmd_handle.id();
                 let b_cmd_handle =
-                    self.eval_command(ctx, *b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
+                    self.eval_command(ctx, b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
                 Ok(b_cmd_handle)
             },
-            ast::Command::And(a_cmd, b_cmd) => {
+            ast::Command::Or(a_cmd, b_cmd) | ast::Command::And(a_cmd, b_cmd) => {
+                let negate = match cmd {
+                    ast::Command::Or { .. } => false,
+                    ast::Command::And { .. } => true,
+                    _ => unreachable!(),
+                };
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
-                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = self.command_output(a_cmd_handle)? {
-                    if !output.status.success() {
+                    if output.status.success() ^ negate {
                         // TODO return something better (indicate that command failed with exit code)
                         return dummy_child();
                     }
                 }
                 let b_cmd_handle =
-                    self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                Ok(b_cmd_handle)
-            },
-            // duplicate of And (could abstract a bit)
-            ast::Command::Or(a_cmd, b_cmd) => {
-                let a_cmd_handle =
-                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = self.command_output(a_cmd_handle)? {
-                    if output.status.success() {
-                        return dummy_child();
-                    }
-                }
-                let b_cmd_handle =
-                    self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             ast::Command::Not(cmd) => {
                 // TODO exit status negate
-                let cmd_handle = self.eval_command(ctx, *cmd, stdin, stdout, None)?;
+                let cmd_handle = self.eval_command(ctx, cmd, stdin, stdout, None)?;
                 Ok(cmd_handle)
             },
             ast::Command::AsyncList(a_cmd, b_cmd) => {
                 let a_cmd_handle =
-                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
                         let b_cmd_handle =
-                            self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                            self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -290,14 +282,14 @@ impl Shell {
             ast::Command::SeqList(a_cmd, b_cmd) => {
                 // TODO very similar to AsyncList
                 let a_cmd_handle =
-                    self.eval_command(ctx, *a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
                         self.command_output(a_cmd_handle)?;
                         let b_cmd_handle =
-                            self.eval_command(ctx, *b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                            self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -307,7 +299,7 @@ impl Shell {
                 // maybe seperate out global context and runtime context into two structs?
                 let mut new_ctx = ctx.clone();
                 let cmd_handle =
-                    self.eval_command(&mut new_ctx, *cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(&mut new_ctx, cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(cmd_handle)
             },
             ast::Command::If { conds, else_part } => {
@@ -316,13 +308,13 @@ impl Shell {
 
                 for ast::Condition { cond, body } in conds {
                     let cond_handle =
-                        self.eval_command(ctx, *cond, Stdio::inherit(), Stdio::piped(), None)?;
+                        self.eval_command(ctx, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
                     if let Some(output) = self.command_output(cond_handle)? {
                         if output.status.success() {
                             let body_handle = self.eval_command(
                                 ctx,
-                                *body,
+                                body,
                                 Stdio::inherit(),
                                 Stdio::piped(),
                                 None,
@@ -334,10 +326,40 @@ impl Shell {
 
                 if let Some(else_part) = else_part {
                     let else_handle =
-                        self.eval_command(ctx, *else_part, Stdio::inherit(), Stdio::piped(), None)?;
+                        self.eval_command(ctx, else_part, Stdio::inherit(), Stdio::piped(), None)?;
                     return Ok(else_handle);
                 }
 
+                dummy_child()
+            },
+            ast::Command::While { cond, body } | ast::Command::Until { cond, body } => {
+                let negate = match cmd {
+                    ast::Command::While { .. } => false,
+                    ast::Command::Until { .. } => true,
+                    _ => unreachable!(),
+                };
+
+                loop {
+                    let cond_handle =
+                        self.eval_command(ctx, cond, Stdio::inherit(), Stdio::piped(), None)?;
+                    // TODO sorta similar to if statements
+                    if let Some(output) = self.command_output(cond_handle)? {
+                        if output.status.success() ^ negate {
+                            let body_handle = self.eval_command(
+                                ctx,
+                                body,
+                                Stdio::inherit(),
+                                Stdio::piped(),
+                                None,
+                            )?;
+                            self.command_output(body_handle)?;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break; // TODO not sure if there should be break here
+                    }
+                }
                 dummy_child()
             },
             ast::Command::None => dummy_child(),
@@ -352,7 +374,7 @@ impl Shell {
         stdin: Stdio,
         stdout: Stdio,
         pgid: Option<i32>,
-        assigns: Vec<Assign>,
+        assigns: &Vec<Assign>,
     ) -> anyhow::Result<Child> {
         use std::process::Command;
 

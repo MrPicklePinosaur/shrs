@@ -28,7 +28,7 @@ rust library to build your own shell
 - [ ] alias
 - [ ] test suite to ensure posix compliant
 - [ ] control flow
-  - [ ] for
+  - [x] for
   - [ ] case
   - [ ] if 
   - [ ] while

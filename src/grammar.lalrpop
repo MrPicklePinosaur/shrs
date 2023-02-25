@@ -64,6 +64,8 @@ pub SimpleCommand: ast::Command = {
 pub CompoundCommand: ast::Command = {
     <s:Subshell> => ast::Command::Subshell(Box::new(s)),
     <i:IfClause> => i,
+    <w:WhileClause> => w,
+    <u:UntilClause> => u,
 }
 
 // SUBSHELL
@@ -121,6 +123,18 @@ pub IfClause: ast::Command = {
 pub ElifBody: ast::Condition = ELIF <cond:CompoundList> THEN <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
 pub ElseBody: ast::Command = ELSE <body:CompoundList> => body;
 
+// WHILE/UNTIL CLAUSE
+
+pub WhileClause: ast::Command = {
+    WHILE <cond:CompoundList> <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
+}
+
+pub UntilClause: ast::Command = {
+    UNTIL <cond:CompoundList> <d:DoGroup> => ast::Command::Until { cond: Box::new(cond), body: Box::new(d) },
+}
+
+pub DoGroup: ast::Command = DO <body:CompoundList> DONE => body;
+
 pub Redirect: ast::Redirect = {
     <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
     <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Write },
@@ -146,6 +160,12 @@ pub ELIF: () = "elif" => ();
 pub FI: () = "fi" => ();
 pub DO: () = "do" => ();
 pub DONE: () = "done" => ();
+
+pub CASE: () = "case" => ();
+pub ESAC: () = "esac" => ();
+pub WHILE: () = "while" => ();
+pub UNTIL: () = "until" => ();
+pub FOR: () = "for" => ();
 
 pub Linebreak: () = NewlineList? => ();
 pub NewlineList: () = "\n"+ => ();

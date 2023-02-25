@@ -18,8 +18,12 @@ impl BuiltinCmd for CdBuiltin {
         } else {
             "/"
         };
+
         let path = Path::new(raw_path);
-        env::set_current_dir(path)?;
+        let new_path = ctx.working_dir.join(path);
+        // env::set_current_dir(path)?; // env current dir should just remain as the directory the shell was started in
+        ctx.working_dir = new_path.clone();
+        ctx.env.set("PWD", new_path.to_str().unwrap());
 
         // return a dummy command
         dummy_child()

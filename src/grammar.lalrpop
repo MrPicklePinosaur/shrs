@@ -3,7 +3,7 @@ use crate::ast;
 
 grammar;
 
-pub Prgoram: ast::Command = {
+pub Program: ast::Command = {
     Linebreak <cs:CompleteCommands> Linebreak => cs,
     Linebreak => ast::Command::None,
 }
@@ -50,14 +50,45 @@ pub PipeSequence: ast::Command = {
 }
 
 pub Command: ast::Command = {
-    <s:Simple> => s,
+    <s:SimpleCommand> => s,
+    <c:CompoundCommand> => c,
 }
 
-pub Simple: ast::Command = {
+pub SimpleCommand: ast::Command = {
     <assigns: Assign*> <prefix: Redirect*> <words: CommandWord+> <suffix: Redirect*> => {
     	let redirects = prefix.into_iter().chain(suffix.into_iter()).collect();
 	ast::Command::Simple { assigns, redirects, args: words }
     }
+}
+
+pub CompoundCommand: ast::Command = {
+    <s:Subshell> => ast::Command::Subshell(Box::new(s)),
+}
+
+pub Subshell: ast::Command = {
+    "(" <c:CompoundList> ")" => c,
+}
+
+pub CompoundList: ast::Command = {
+    Linebreak <t:Term> => t,
+    Linebreak <t:Term> <s:Seperator> => {
+	match s {
+	      None => t,
+	      Some(ast::SeperatorOp::Amp) => ast::Command::AsyncList(Box::new(t), None),
+	      Some(ast::SeperatorOp::Semi) => ast::Command::SeqList(Box::new(t), None),
+	}
+    }
+}
+
+pub Term: ast::Command = {
+    <t:Term> <s:Seperator> <a:AndOr> => {
+	match s {
+	      None => t,
+	      Some(ast::SeperatorOp::Amp) => ast::Command::AsyncList(Box::new(t), Some(Box::new(a))),
+	      Some(ast::SeperatorOp::Semi) => ast::Command::SeqList(Box::new(t), Some(Box::new(a))),
+	}
+    },
+    <a:AndOr> => a,
 }
 
 pub Redirect: ast::Redirect = {

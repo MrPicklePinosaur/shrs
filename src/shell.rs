@@ -299,6 +299,12 @@ impl Shell {
                     },
                 }
             },
+            ast::Command::Subshell(cmd) => {
+                // TODO actually implement subshell behavior
+                let cmd_handle =
+                    self.eval_command(ctx, *cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                Ok(cmd_handle)
+            },
             ast::Command::None => dummy_child(),
         }
     }

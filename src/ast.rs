@@ -79,6 +79,12 @@ pub enum Command {
     /// We wait for `command1` to finish executing before executing `command2`
     SeqList(Box<Command>, Option<Box<Command>>),
 
+    /// Subshell for command to run
+    /// ```sh
+    /// (cd src && ls)
+    /// ```
+    Subshell(Box<Command>),
+
     /// No op
     None,
 }

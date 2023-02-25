@@ -91,6 +91,18 @@ pub enum Command {
         else_part: Option<Box<Command>>,
     },
 
+    /// While statements
+    While {
+        cond: Box<Command>,
+        body: Box<Command>,
+    },
+
+    /// Until statements
+    Until {
+        cond: Box<Command>,
+        body: Box<Command>,
+    },
+
     /// No op
     None,
 }

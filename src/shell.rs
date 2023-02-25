@@ -340,6 +340,12 @@ impl Shell {
 
                 dummy_child()
             },
+            ast::Command::While { cond, body } => {
+                todo!()
+            },
+            ast::Command::Until { cond, body } => {
+                todo!()
+            },
             ast::Command::None => dummy_child(),
         }
     }

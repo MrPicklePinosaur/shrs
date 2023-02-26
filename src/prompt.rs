@@ -74,6 +74,22 @@ impl Display for Hostname {
     }
 }
 
+pub struct Rust;
+
+impl Display for Rust {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO grab info from Cargo.toml
+
+        // look for Cargo.toml
+        for path in std::fs::read_dir("./").unwrap() {
+            if path.unwrap().file_name() == "Cargo.toml" {
+                return write!(f, "rust");
+            }
+        }
+        write!(f, "")
+    }
+}
+
 // prompt for reedline
 
 pub struct CustomPrompt {
@@ -137,5 +153,11 @@ mod tests {
         let hostname = Hostname;
         let workdir = WorkDir::Top;
         println!("{username}@{hostname} {workdir} > ");
+    }
+
+    #[test]
+    fn rust_prompt() {
+        let rust = Rust;
+        println!("{rust} > ");
     }
 }

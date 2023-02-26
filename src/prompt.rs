@@ -1,51 +1,80 @@
 //! Collection of utility functions for building a prompt
 
-use std::{borrow::Cow, ffi::OsString, process::Command};
+use std::{borrow::Cow, ffi::OsString, fmt::Display, process::Command};
 
 use anyhow::anyhow;
 use reedline::{
     Prompt, PromptEditMode, PromptHistorySearch, PromptHistorySearchStatus, Reedline, Signal,
 };
 
-/// Get the full working directory
-pub fn full_pwd() -> String {
-    std::env::current_dir()
-        .unwrap()
-        .into_os_string()
-        .into_string()
-        .unwrap()
+// pub trait Section {
+// }
+
+// pub struct ShowSection<T>(pub T);
+// impl<T> std::fmt::Display for ShowSection<T>
+// where T: Section
+// {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+// 	write!(f, "{}", self.0.render())
+//     }
+// }
+
+pub enum WorkDir {
+    Full,
+    Top,
 }
 
-/// Get the top level working directory
-pub fn top_pwd() -> String {
-    std::env::current_dir()
-        .unwrap()
-        .file_name()
-        .unwrap()
-        .to_os_string()
-        .into_string()
-        .unwrap()
+impl Display for WorkDir {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            WorkDir::Full => std::env::current_dir()
+                .unwrap()
+                .into_os_string()
+                .into_string()
+                .unwrap(),
+            WorkDir::Top => std::env::current_dir()
+                .unwrap()
+                .file_name()
+                .unwrap()
+                .to_os_string()
+                .into_string()
+                .unwrap(),
+        };
+        write!(f, "{}", str)
+    }
 }
 
-// TODO this is very linux specific, could use crate that abstracts
-// TODO this function is disgusting
-pub fn username() -> anyhow::Result<String> {
-    let username = Command::new("whoami").output()?.stdout;
-    let encoded = std::str::from_utf8(&username)?
-        .strip_suffix("\n")
-        .unwrap()
-        .to_string();
-    Ok(encoded)
+pub struct Username;
+
+impl Display for Username {
+    // TODO this is very linux specific, could use crate that abstracts
+    // TODO this function is disgusting
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let username = Command::new("whoami").output().unwrap().stdout;
+        let str = std::str::from_utf8(&username)
+            .unwrap()
+            .strip_suffix("\n")
+            .unwrap()
+            .to_string();
+        write!(f, "{}", str)
+    }
 }
 
-pub fn hostname() -> anyhow::Result<String> {
-    let username = Command::new("hostname").output()?.stdout;
-    let encoded = std::str::from_utf8(&username)?
-        .strip_suffix("\n")
-        .unwrap()
-        .to_string();
-    Ok(encoded)
+pub struct Hostname;
+
+impl Display for Hostname {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let username = Command::new("hostname").output().unwrap().stdout;
+        let str = std::str::from_utf8(&username)
+            .unwrap()
+            .strip_suffix("\n")
+            .unwrap()
+            .to_string();
+        write!(f, "{}", str)
+    }
 }
+
+// prompt for reedline
 
 pub struct CustomPrompt {
     pub prompt_indicator: String,
@@ -95,5 +124,18 @@ impl Prompt for CustomPrompt {
             "({}reverse-search: {}) ",
             prefix, history_search.term
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prompt::*;
+
+    #[test]
+    fn simple_prompt() {
+        let username = Username;
+        let hostname = Hostname;
+        let workdir = WorkDir::Top;
+        println!("{username}@{hostname} {workdir} > ");
     }
 }

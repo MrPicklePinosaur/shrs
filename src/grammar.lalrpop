@@ -1,7 +1,16 @@
 use std::str::FromStr;
-use crate::ast;
+use crate::{ast, lexer};
 
 grammar;
+
+// extern {
+//     type Location = usize;
+//     type Error = lexer::Error;
+// 
+//     enum Lexer::Token {
+//     
+//     }
+// }
 
 pub Program: ast::Command = {
     Linebreak <cs:CompleteCommands> Linebreak => cs,

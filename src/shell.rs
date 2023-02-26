@@ -8,6 +8,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use reedline::Prompt;
 
 use crate::{
     alias::Alias,
@@ -16,7 +17,7 @@ use crate::{
     env::Env,
     history::History,
     parser,
-    prompt::CustomPrompt,
+    prompt::{CustomPrompt, PromptWrapper, SimplePrompt},
     signal::sig_handler,
 };
 
@@ -48,11 +49,20 @@ impl Default for Hooks {
     }
 }
 
-#[derive(Default)]
 pub struct Shell {
     pub hooks: Hooks,
     pub builtins: Builtins,
-    pub prompt: CustomPrompt,
+    pub prompt: Box<dyn Prompt>,
+}
+
+impl Default for Shell {
+    fn default() -> Self {
+        Shell {
+            hooks: Hooks::default(),
+            builtins: Builtins::default(),
+            prompt: Box::new(PromptWrapper(SimplePrompt)),
+        }
+    }
 }
 
 // Runtime context for the shell
@@ -93,7 +103,7 @@ impl Shell {
         loop {
             // (self.hooks.prompt_command)();
 
-            let sig = line_editor.read_line(&self.prompt);
+            let sig = line_editor.read_line(&*self.prompt);
             let line = match sig {
                 Ok(Signal::Success(buffer)) => buffer,
                 x => {

@@ -44,6 +44,7 @@ impl Display for WorkDir {
     }
 }
 
+// TODO could technically cache username and hostname as they are unlikely to change
 pub struct Username;
 
 impl Display for Username {
@@ -92,39 +93,52 @@ impl Display for Rust {
 
 // prompt for reedline
 
-pub struct CustomPrompt {
-    pub prompt_indicator: String,
-    pub prompt_left: String,
-    pub prompt_right: String,
-    pub multiline_indicator: String,
+pub trait CustomPrompt: Send {
+    fn prompt_indicator(&self) -> String;
+    fn prompt_left(&self) -> String;
+    fn prompt_right(&self) -> String;
+    fn multiline_indicator(&self) -> String;
 }
 
-impl Default for CustomPrompt {
-    fn default() -> Self {
-        CustomPrompt {
-            prompt_indicator: "> ".into(),
-            prompt_left: "sh".into(),
-            prompt_right: "shrs".into(),
-            multiline_indicator: "| ".into(),
-        }
+pub struct SimplePrompt;
+
+impl CustomPrompt for SimplePrompt {
+    fn prompt_indicator(&self) -> String {
+        "> ".into()
+    }
+    fn prompt_left(&self) -> String {
+        let username = Username;
+        let hostname = Hostname;
+        let workdir = WorkDir::Top;
+        format!("{username}@{hostname} {workdir} > ")
+    }
+    fn prompt_right(&self) -> String {
+        "".into()
+    }
+    fn multiline_indicator(&self) -> String {
+        "| ".into()
     }
 }
 
-impl Prompt for CustomPrompt {
+pub struct PromptWrapper<T>(pub T);
+impl<T> Prompt for PromptWrapper<T>
+where
+    T: CustomPrompt,
+{
     fn render_prompt_left(&self) -> Cow<str> {
-        Cow::Owned(self.prompt_left.clone())
+        Cow::Owned(self.0.prompt_left())
     }
 
     fn render_prompt_right(&self) -> Cow<str> {
-        Cow::Owned(self.prompt_right.clone())
+        Cow::Owned(self.0.prompt_right())
     }
 
     fn render_prompt_indicator(&self, _edit_mode: PromptEditMode) -> Cow<str> {
-        Cow::Owned(self.prompt_indicator.clone())
+        Cow::Owned(self.0.prompt_indicator())
     }
 
     fn render_prompt_multiline_indicator(&self) -> Cow<str> {
-        Cow::Borrowed(&self.multiline_indicator)
+        Cow::Owned(self.0.multiline_indicator())
     }
 
     fn render_prompt_history_search_indicator(

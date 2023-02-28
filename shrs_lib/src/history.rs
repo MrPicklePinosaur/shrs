@@ -44,21 +44,22 @@ impl MemHistory {
     }
 }
 
-/*
+use reedline::Result;
 impl reedline::History for MemHistory {
-    fn save(&mut self, h: reedline::HistoryItem) -> anyhow::Result<reedline::HistoryItem> {
-    Ok(self.add(h.command_line))
-    }
-
-    fn load(&self, id: reedline::HistoryItemId) -> anyhow::Result<reedline::HistoryItem> {
+    fn save(&mut self, h: reedline::HistoryItem) -> Result<reedline::HistoryItem> {
+        // Ok(self.add(h.command_line))
         todo!()
     }
 
-    fn count(&self, query: reedline::SearchQuery) -> anyhow::Result<i64> {
+    fn load(&self, id: reedline::HistoryItemId) -> Result<reedline::HistoryItem> {
         todo!()
     }
 
-    fn search(&self, query: reedline::SearchQuery) -> anyhow::Result<Vec<reedline::HistoryItem>> {
+    fn count(&self, query: reedline::SearchQuery) -> Result<i64> {
+        todo!()
+    }
+
+    fn search(&self, query: reedline::SearchQuery) -> Result<Vec<reedline::HistoryItem>> {
         todo!()
     }
 
@@ -66,15 +67,15 @@ impl reedline::History for MemHistory {
         &mut self,
         id: reedline::HistoryItemId,
         updater: &dyn Fn(reedline::HistoryItem) -> reedline::HistoryItem,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         todo!()
     }
 
-    fn clear(&mut self) -> anyhow::Result<()> {
+    fn clear(&mut self) -> Result<()> {
         todo!()
     }
 
-    fn delete(&mut self, h: reedline::HistoryItemId) -> anyhow::Result<()> {
+    fn delete(&mut self, h: reedline::HistoryItemId) -> Result<()> {
         todo!()
     }
 
@@ -82,5 +83,3 @@ impl reedline::History for MemHistory {
         todo!()
     }
 }
-
-*/

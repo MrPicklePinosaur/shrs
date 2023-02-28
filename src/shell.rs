@@ -15,6 +15,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     history::History,
+    lexer::Lexer,
     parser,
     prompt::CustomPrompt,
     signal::sig_handler,
@@ -103,14 +104,15 @@ impl Shell {
             };
 
             // attempt to expand alias
-            let expanded = ctx.alias.get(&line).unwrap_or(&line);
+            let expanded = ctx.alias.get(&line).unwrap_or(&line).clone();
 
             // wether the command pre-alias expansion or post should be added to history could be a configuration option
             ctx.history.add(expanded.clone());
 
             // TODO rewrite the error handling here better
+            let lexer = Lexer::new(&expanded);
             let mut parser = parser::ParserContext::new();
-            let cmd = match parser.parse(&expanded) {
+            let cmd = match parser.parse(lexer) {
                 Ok(cmd) => cmd,
                 Err(e) => {
                     eprintln!("{}", e);
@@ -159,7 +161,7 @@ impl Shell {
                     let filename = Path::new(&*redirect.file);
                     // TODO not making use of file descriptor at all right now
                     let n = match &redirect.n {
-                        Some(n) => **n,
+                        Some(n) => *n,
                         None => 1,
                     };
                     match redirect.mode {
@@ -212,7 +214,7 @@ impl Shell {
                 }
 
                 let mut it = args.into_iter();
-                let cmd_name = &it.next().unwrap().0;
+                let cmd_name = &it.next().unwrap();
                 let args = it
                     .collect::<Vec<_>>()
                     .into_iter()
@@ -378,7 +380,7 @@ impl Shell {
     ) -> anyhow::Result<Child> {
         use std::process::Command;
 
-        let envs = assigns.iter().map(|word| (&word.var.0, &word.val.0));
+        let envs = assigns.iter().map(|word| (&word.var, &word.val));
 
         let child = Command::new(cmd)
             .args(args)

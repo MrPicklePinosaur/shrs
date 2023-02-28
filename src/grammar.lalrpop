@@ -1,19 +1,79 @@
 use std::str::FromStr;
-use crate::ast;
+use crate::{ast, lexer};
 
-grammar;
+grammar<'input>(text: &'input str);
 
-pub Program: ast::Command = {
+extern {
+    type Location = usize;
+    type Error = lexer::Error;
+
+    enum lexer::Token<'input> {
+
+	"\n" => lexer::Token::NEWLINE,
+	";" => lexer::Token::SEMI,
+	"&" => lexer::Token::AMP,
+	"|" => lexer::Token::PIPE,
+	"`" => lexer::Token::BACKTICK,
+	"$" => lexer::Token::DOLLAR,
+	"=" => lexer::Token::EQUAL,
+	"\\" => lexer::Token::BACKSLASH,
+	"'" => lexer::Token::SINGLEQUOTE,
+	"\"" => lexer::Token::DOUBLEQUOTE,
+	"<" => lexer::Token::LESS,
+	">" => lexer::Token::GREAT,
+
+	"(" => lexer::Token::LPAREN,
+	")" => lexer::Token::RPAREN,
+	"{" => lexer::Token::LBRACE,
+	"}" => lexer::Token::RBRACE,
+	"!" => lexer::Token::BANG,
+
+	"&&" => lexer::Token::AND_IF,
+	"||" => lexer::Token::OR_IF,
+	";;" => lexer::Token::DSEMI,
+
+	"<<" => lexer::Token::DLESS,
+	">>" => lexer::Token::DGREAT,
+	"<&" => lexer::Token::LESSAND,
+	">&" => lexer::Token::GREATAND,
+	"<>" => lexer::Token::LESSGREAT,
+	"<<-" => lexer::Token::DLESSDASH,
+	">|" => lexer::Token::CLOBBER,
+
+	"if" => lexer::Token::IF,
+	"then" => lexer::Token::THEN,
+	"else" => lexer::Token::ELSE,
+	"elif" => lexer::Token::ELIF,
+	"fi" => lexer::Token::FI,
+	"do" => lexer::Token::DO,
+	"done" => lexer::Token::DONE,
+
+	"case" => lexer::Token::CASE,
+	"easc" => lexer::Token::ESAC,
+	"while" => lexer::Token::WHILE,
+	"until" => lexer::Token::UNTIL,
+	"for" => lexer::Token::FOR,
+	"in" => lexer::Token::IN,
+
+	"WORD" => lexer::Token::WORD(<&'input str>),
+	"ASSIGNMENT_WORD" => lexer::Token::ASSIGNMENT_WORD(<&'input str>),
+	"NAME" => lexer::Token::NAME(<&'input str>),
+	"IO_NUMBER" => lexer::Token::IO_NUMBER(<&'input str>),
+    
+    }
+}
+
+pub Program: ast::Command<'input> = {
     Linebreak <cs:CompleteCommands> Linebreak => cs,
     Linebreak => ast::Command::None,
 }
 
-pub CompleteCommands: ast::Command = {
+pub CompleteCommands: ast::Command<'input> = {
     <cs:CompleteCommands> NewlineList <c:CompleteCommand> => ast::Command::SeqList(Box::new(cs), Some(Box::new(c))), // double check seqlist is correct here
     <c:CompleteCommand> => c,
 }
 
-pub CompleteCommand: ast::Command = {
+pub CompleteCommand: ast::Command<'input> = {
     <l:List> <s:SeperatorOp> => {
         match s {
 	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), None),
@@ -23,7 +83,7 @@ pub CompleteCommand: ast::Command = {
     <l:List> => l,
 }
 
-pub List: ast::Command = {
+pub List: ast::Command<'input> = {
     <l:List> <s:SeperatorOp> <a:AndOr> => {
         match s {
 	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
@@ -33,35 +93,35 @@ pub List: ast::Command = {
     <a:AndOr> => a,
 }
 
-pub AndOr: ast::Command = {
-    <a:AndOr> AND_IF Linebreak <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
-    <a:AndOr> OR_IF Linebreak <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
+pub AndOr: ast::Command<'input> = {
+    <a:AndOr> "&&" Linebreak <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
+    <a:AndOr> "||" Linebreak <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
     <p:Pipeline> => p,
 }
 
-pub Pipeline: ast::Command = {
+pub Pipeline: ast::Command<'input> = {
     "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ps)),
     <ps:PipeSequence> => ps,
 }
 
-pub PipeSequence: ast::Command = {
+pub PipeSequence: ast::Command<'input> = {
     <ps:PipeSequence> "|" Linebreak <c:Command> => ast::Command::Pipeline(Box::new(ps), Box::new(c)),
     <c:Command> => c,
 }
 
-pub Command: ast::Command = {
+pub Command: ast::Command<'input> = {
     <s:SimpleCommand> => s,
     <c:CompoundCommand> => c,
 }
 
-pub SimpleCommand: ast::Command = {
-    <assigns: Assign*> <prefix: Redirect*> <words: CommandWord+> <suffix: Redirect*> => {
+pub SimpleCommand: ast::Command<'input> = {
+    <assigns: Assign*> <prefix: Redirect*> <words: "WORD"+> <suffix: Redirect*> => {
     	let redirects = prefix.into_iter().chain(suffix.into_iter()).collect();
-	ast::Command::Simple { assigns, redirects, args: words }
+	ast::Command::Simple { assigns, redirects, args: words.iter().map(|x| x.to_string()).collect::<Vec<_>>() }
     }
 }
 
-pub CompoundCommand: ast::Command = {
+pub CompoundCommand: ast::Command<'input> = {
     <s:Subshell> => ast::Command::Subshell(Box::new(s)),
     <i:IfClause> => i,
     <w:WhileClause> => w,
@@ -70,11 +130,11 @@ pub CompoundCommand: ast::Command = {
 
 // SUBSHELL
 
-pub Subshell: ast::Command = {
+pub Subshell: ast::Command<'input> = {
     "(" <c:CompoundList> ")" => c,
 }
 
-pub CompoundList: ast::Command = {
+pub CompoundList: ast::Command<'input> = {
     Linebreak <t:Term> => t,
     Linebreak <t:Term> <s:Seperator> => {
 	match s {
@@ -85,7 +145,7 @@ pub CompoundList: ast::Command = {
     }
 }
 
-pub Term: ast::Command = {
+pub Term: ast::Command<'input> = {
     <t:Term> <s:Seperator> <a:AndOr> => {
 	match s {
 	      None => t,
@@ -98,8 +158,8 @@ pub Term: ast::Command = {
 
 // IF CLAUSE
 
-pub IfClause: ast::Command = {
-    IF <cond:CompoundList> THEN <body:CompoundList> <mut elifs:ElifBody*> <else_part:ElseBody?> FI => {
+pub IfClause: ast::Command<'input> = {
+    "if" <cond:CompoundList> "then" <body:CompoundList> <mut elifs:ElifBody*> <else_part:ElseBody?> "fi" => {
 
 	let mut conds = vec![
 	    ast::Condition {
@@ -120,52 +180,32 @@ pub IfClause: ast::Command = {
     }
 }
 
-pub ElifBody: ast::Condition = ELIF <cond:CompoundList> THEN <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
-pub ElseBody: ast::Command = ELSE <body:CompoundList> => body;
+pub ElifBody: ast::Condition<'input> = "elif" <cond:CompoundList> "then" <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
+pub ElseBody: ast::Command<'input> = "else" <body:CompoundList> => body;
 
 // WHILE/UNTIL CLAUSE
 
-pub WhileClause: ast::Command = {
-    WHILE <cond:CompoundList> <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
+pub WhileClause: ast::Command<'input> = {
+    "while" <cond:CompoundList> <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
 }
 
-pub UntilClause: ast::Command = {
-    UNTIL <cond:CompoundList> <d:DoGroup> => ast::Command::Until { cond: Box::new(cond), body: Box::new(d) },
+pub UntilClause: ast::Command<'input> = {
+    "until" <cond:CompoundList> <d:DoGroup> => ast::Command::Until { cond: Box::new(cond), body: Box::new(d) },
 }
 
-pub DoGroup: ast::Command = DO <body:CompoundList> DONE => body;
+pub DoGroup: ast::Command<'input> = "do" <body:CompoundList> "done" => body;
 
-pub Redirect: ast::Redirect = {
-    <n: IONumber?> "<"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Read },
-    <n: IONumber?> ">"  <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::Write },
-    <n: IONumber?> "<<" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadAppend },
-    <n: IONumber?> ">>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteAppend },
-    <n: IONumber?> "<&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadDup },
-    <n: IONumber?> ">&" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::WriteDup },
-    <n: IONumber?> "<>" <file: Filename> => ast::Redirect { n, file, mode: ast::RedirectMode::ReadWrite },
+pub Redirect: ast::Redirect<'input> = {
+    <n: "IO_NUMBER"?> "<"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::Read },
+    <n: "IO_NUMBER"?> ">"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::Write },
+    <n: "IO_NUMBER"?> "<<" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadAppend },
+    <n: "IO_NUMBER"?> ">>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::WriteAppend },
+    <n: "IO_NUMBER"?> "<&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadDup },
+    <n: "IO_NUMBER"?> ">&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::WriteDup },
+    <n: "IO_NUMBER"?> "<>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadWrite },
 }
 
-pub IONumber: ast::IONumber = r"[0-9]+" => ast::IONumber(usize::from_str(<>).unwrap());
-pub CommandWord: ast::Word = r"[\-a-zA-Z][\-a-zA-Z0-9]*" => ast::Word(<>.into());
-pub Filename: ast::Filename = r"[\-a-zA-Z][\-a-zA-Z0-9]*" => ast::Filename(<>.into());
-
-pub Assign: ast::Assign = <var:CommandWord> "=" <val:CommandWord> => ast::Assign { var, val };
-
-pub AND_IF: () = "&&" => ();
-pub OR_IF: () = "||" => ();
-pub IF: () = "if" => ();
-pub THEN: () = "then" => ();
-pub ELSE: () = "else" => ();
-pub ELIF: () = "elif" => ();
-pub FI: () = "fi" => ();
-pub DO: () = "do" => ();
-pub DONE: () = "done" => ();
-
-pub CASE: () = "case" => ();
-pub ESAC: () = "esac" => ();
-pub WHILE: () = "while" => ();
-pub UNTIL: () = "until" => ();
-pub FOR: () = "for" => ();
+pub Assign: ast::Assign<'input> = <var:"WORD"> "=" <val:"WORD"> => ast::Assign { var, val };
 
 pub Linebreak: () = NewlineList? => ();
 pub NewlineList: () = "\n"+ => ();

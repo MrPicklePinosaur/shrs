@@ -1,11 +1,11 @@
 use thiserror::Error;
 
-use crate::{ast, grammar};
+use crate::{ast, grammar, lexer::Lexer};
 
 #[derive(Error, Debug)]
 pub enum ParserError {
     #[error("unsuccessful parse")]
-    UnsuccessfulParse(String),
+    UnsuccessfulParse,
 }
 
 pub struct ParserContext {}
@@ -15,10 +15,10 @@ impl ParserContext {
         ParserContext {}
     }
 
-    pub fn parse(&mut self, input: &str) -> Result<ast::Command, ParserError> {
+    pub fn parse<'a>(&mut self, lexer: Lexer<'a>) -> Result<ast::Command<'a>, ParserError> {
         grammar::ProgramParser::new()
-            .parse(input)
-            .map_err(|e| ParserError::UnsuccessfulParse(e.to_string()))
+            .parse(lexer.input(), lexer)
+            .map_err(|e| ParserError::UnsuccessfulParse)
     }
 }
 

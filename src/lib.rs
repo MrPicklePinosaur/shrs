@@ -8,6 +8,7 @@ mod ast;
 pub mod builtin;
 pub mod env;
 mod history;
+mod lexer;
 mod parser;
 pub mod prompt;
 pub mod shell;

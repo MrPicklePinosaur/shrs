@@ -2,15 +2,16 @@
 
 // TODO configuration for history like max history length and if duplicates should be stored
 
+/// Simple history that keeps the history only for as long as program is running
 #[derive(Clone)]
-pub struct History {
+pub struct MemHistory {
     // consider storing the parsed version of the command
     data: Vec<String>,
 }
 
 // TODO sketch up a better History library (this current one is stupid and is just a wrapper for a vec)
-impl History {
-    pub fn new() -> History {
+impl MemHistory {
+    pub fn new() -> MemHistory {
         Self { data: vec![] }
     }
 
@@ -42,3 +43,44 @@ impl History {
         todo!()
     }
 }
+
+/*
+impl reedline::History for MemHistory {
+    fn save(&mut self, h: reedline::HistoryItem) -> anyhow::Result<reedline::HistoryItem> {
+    Ok(self.add(h.command_line))
+    }
+
+    fn load(&self, id: reedline::HistoryItemId) -> anyhow::Result<reedline::HistoryItem> {
+        todo!()
+    }
+
+    fn count(&self, query: reedline::SearchQuery) -> anyhow::Result<i64> {
+        todo!()
+    }
+
+    fn search(&self, query: reedline::SearchQuery) -> anyhow::Result<Vec<reedline::HistoryItem>> {
+        todo!()
+    }
+
+    fn update(
+        &mut self,
+        id: reedline::HistoryItemId,
+        updater: &dyn Fn(reedline::HistoryItem) -> reedline::HistoryItem,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    fn clear(&mut self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    fn delete(&mut self, h: reedline::HistoryItemId) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    fn sync(&mut self) -> std::io::Result<()> {
+        todo!()
+    }
+}
+
+*/

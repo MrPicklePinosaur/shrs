@@ -14,7 +14,7 @@ use crate::{
     ast::{self, Assign},
     builtin::Builtins,
     env::Env,
-    history::History,
+    history::MemHistory,
     lexer::Lexer,
     parser,
     prompt::CustomPrompt,
@@ -59,7 +59,7 @@ pub struct Shell {
 // Runtime context for the shell
 #[derive(Clone)]
 pub struct Context {
-    pub history: History,
+    pub history: MemHistory,
     pub env: Env,
     pub alias: Alias,
     pub working_dir: PathBuf,
@@ -68,7 +68,7 @@ pub struct Context {
 impl Default for Context {
     fn default() -> Self {
         Context {
-            history: History::new(),
+            history: MemHistory::new(),
             env: Env::new(),
             alias: Alias::new(),
             working_dir: std::env::current_dir().unwrap(),

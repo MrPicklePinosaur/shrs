@@ -20,7 +20,7 @@ extern {
 	"'" => lexer::Token::SINGLEQUOTE,
 	"\"" => lexer::Token::DOUBLEQUOTE,
 	"<" => lexer::Token::LESS,
-	">" => lexer::Token::GREATER,
+	">" => lexer::Token::GREAT,
 
 	"(" => lexer::Token::LPAREN,
 	")" => lexer::Token::RPAREN,

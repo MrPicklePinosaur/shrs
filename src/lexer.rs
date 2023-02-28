@@ -20,7 +20,7 @@ pub enum Token<'input> {
     SINGLEQUOTE,
     DOUBLEQUOTE,
     LESS,
-    GREATER,
+    GREAT,
 
     LPAREN,
     RPAREN,
@@ -122,7 +122,7 @@ impl<'input> Lexer<'input> {
             "while" => Token::WHILE,
             "until" => Token::UNTIL,
             "for" => Token::FOR,
-            _ => todo!(),
+            word => Token::WORD(word),
         };
         Ok((start, token, end))
     }
@@ -182,10 +182,74 @@ impl<'input> Iterator for Lexer<'input> {
     // TODO create proc macro to generate all this?
     fn next(&mut self) -> Option<Self::Item> {
         while let Some((start, ch, end)) = self.advance() {
+            // TODO see if this could be generated with macro
             let token = match ch {
+                '\n' => Some(Ok((start, Token::NEWLINE, end))),
+                ';' => match self.lookahead {
+                    Some((_, ';', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::DSEMI, new_end)))
+                    },
+                    _ => Some(Ok((start, Token::SEMI, end))),
+                },
+                '&' => match self.lookahead {
+                    Some((_, '&', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::AND_IF, new_end)))
+                    },
+                    _ => Some(Ok((start, Token::AMP, end))),
+                },
+                '|' => match self.lookahead {
+                    Some((_, '|', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::OR_IF, new_end)))
+                    },
+                    _ => Some(Ok((start, Token::PIPE, end))),
+                },
+                '`' => Some(Ok((start, Token::BACKTICK, end))),
+                '$' => Some(Ok((start, Token::DOLLAR, end))),
+                '=' => Some(Ok((start, Token::EQUAL, end))),
+                '\\' => Some(Ok((start, Token::BACKSLASH, end))),
+                '\'' => Some(Ok((start, Token::SINGLEQUOTE, end))),
+                '"' => Some(Ok((start, Token::DOUBLEQUOTE, end))),
+                '<' => match self.lookahead {
+                    // TODO current doesn't support <<-
+                    Some((_, '<', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::DLESS, new_end)))
+                    },
+                    Some((_, '&', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::LESSAND, new_end)))
+                    },
+                    Some((_, '>', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::LESSGREAT, new_end)))
+                    },
+                    _ => Some(Ok((start, Token::LESS, end))),
+                },
+                '>' => match self.lookahead {
+                    Some((_, '>', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::DGREAT, new_end)))
+                    },
+                    Some((_, '&', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::GREATAND, new_end)))
+                    },
+                    Some((_, '|', new_end)) => {
+                        self.advance();
+                        Some(Ok((start, Token::CLOBBER, new_end)))
+                    },
+                    _ => Some(Ok((start, Token::GREAT, end))),
+                },
+
+                '(' => Some(Ok((start, Token::LPAREN, end))),
+                ')' => Some(Ok((start, Token::RPAREN, end))),
+                '{' => Some(Ok((start, Token::LBRACE, end))),
+                '}' => Some(Ok((start, Token::RBRACE, end))),
                 '!' => Some(Ok((start, Token::BANG, end))),
-                '\'' => Some(self.single_quote(start, end)),
-                '"' => Some(self.double_quote(start, end)),
+
                 ch if is_word_start(ch) => Some(self.keyword(start, end)),
                 ch if ch.is_whitespace() => continue,
                 ch => return Some(Err(Error::UnrecognizedChar(start, ch, end))),

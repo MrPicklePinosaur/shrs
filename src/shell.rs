@@ -382,6 +382,8 @@ impl Shell {
 
         let envs = assigns.iter().map(|word| (&word.var, &word.val));
 
+        // perform env substition on arguments
+
         let child = Command::new(cmd)
             .args(args)
             .stdin(stdin)
@@ -409,3 +411,7 @@ pub fn dummy_child() -> anyhow::Result<Child> {
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)
 }
+
+/// Performs environment substition on a string
+// TODO regex replace might not be the best way. could also recognize the env var during parsing
+fn envsubst(ctx: &mut Context, arg: &mut str) {}

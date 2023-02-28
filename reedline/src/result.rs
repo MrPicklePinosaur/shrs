@@ -18,11 +18,20 @@ pub(crate) enum ReedlineErrorVariants {
     },
     #[error("I/O error: {0}")]
     IOError(std::io::Error),
+    #[error("public user thrown error")]
+    DummyError,
 }
 
 /// separate struct to not expose anything to the public (for now)
 #[derive(Debug)]
 pub struct ReedlineError(pub(crate) ReedlineErrorVariants);
+
+// hack to allow those not in this crate to implement History trait
+impl ReedlineError {
+    pub fn dummy() -> ReedlineError {
+        ReedlineError(ReedlineErrorVariants::DummyError)
+    }
+}
 
 impl Display for ReedlineError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

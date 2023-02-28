@@ -2,10 +2,32 @@
 
 use std::str::CharIndices;
 
+use thiserror::Error;
+
 pub type Spanned<Token, Loc, Error> = Result<(Loc, Token, Loc), Error>;
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token<'input> {
+    NEWLINE,
+    SEMI,
+    AMP,
+    PIPE,
+    BACKTICK,
+    DOLLAR,
+    EQUAL,
+    BACKSLASH,
+    SINGLEQUOTE,
+    DOUBLEQUOTE,
+    LESS,
+    GREATER,
+
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    BANG,
+
     AND_IF,
     OR_IF,
     DSEMI,
@@ -31,10 +53,6 @@ pub enum Token<'input> {
     WHILE,
     UNTIL,
     FOR,
-
-    LBRACE,
-    RBRACE,
-    BANG,
     IN,
 
     WORD(&'input str),
@@ -43,12 +61,14 @@ pub enum Token<'input> {
     IO_NUMBER(&'input str),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Error)]
 pub enum Error {
+    #[error("unrecognized character {1} in range {0}:{2}")]
     UnrecognizedChar(usize, char, usize),
 }
 
 // TODO could technically make EOF a token so we don't need to do Result<Option> shinengans
+#[derive(Clone)]
 pub struct Lexer<'input> {
     input: &'input str,
     chars: CharIndices<'input>,
@@ -65,6 +85,10 @@ impl<'input> Lexer<'input> {
             chars,
             lookahead,
         }
+    }
+
+    pub fn input(&self) -> &'input str {
+        &self.input
     }
 
     fn advance(&mut self) -> Option<(usize, char, usize)> {
@@ -186,5 +210,22 @@ fn is_word_continue(ch: char) -> bool {
         ';' | ')' | '(' | '`' | '!' | '=' | '\\' | '\'' | '"' | '>' | '<' | '&' | '|' | '{'
         | '}' | '*' => false,
         _ => !ch.is_whitespace(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Lexer, Token};
+
+    #[test]
+    fn single_quote() {
+        let mut lexer = Lexer::new("'hello world'");
+        assert_eq!(lexer.next(), Some(Ok((0, Token::WORD("hello world"), 12))));
+    }
+
+    #[test]
+    fn keywords() {
+        let mut lexer = Lexer::new("case");
+        assert_eq!(lexer.next(), Some(Ok((0, Token::CASE, 4))));
     }
 }

@@ -1,0 +1,32 @@
+[package]
+name = "shrs"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "modular library to build your own shell in rust"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+build = "build.rs"
+
+[dependencies]
+lalrpop-util = { version = "0.19.8", features = ["lexer"] }
+regex = "1"
+signal-hook = "0.3"
+crossbeam-channel = "0.5"
+clap = { version = "4.1", features = ["derive"] }
+
+reedline = { path = "../reedline" }
+
+pino_deref = "0.1"
+
+thiserror = "1"
+anyhow = "1"
+
+[dev-dependencies]
+rexpect = "0.5"
+
+[build-dependencies]
+lalrpop = { version = "0.19.8", features = ["lexer"] }
+
+[[example]]
+name = "simple"

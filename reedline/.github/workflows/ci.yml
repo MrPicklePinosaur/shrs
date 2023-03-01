@@ -1,0 +1,65 @@
+on:
+  pull_request:
+  push: # Run CI on the main branch after every merge. This is important to fill the GitHub Actions cache in a way that pull requests can see it
+    branches:
+      - main
+
+name: continuous-integration
+
+jobs:
+  build-lint-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest]
+        rust:
+          - stable
+        # Define the feature sets that will be built here (for caching you define a separate name)
+        style: [bashisms, default, sqlite, basqlite, external_printer]
+        include:
+          - style: bashisms
+            flags: "--features bashisms"
+          - style: external_printer
+            flags: "--features external_printer"
+          - style: default
+            flags: ""
+          - style: sqlite
+            flags: "--features sqlite"
+          - style: basqlite
+            flags: "--features bashisms,sqlite"
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1.3.4
+
+      - name: Setup nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Rustfmt
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Clippy
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: clippy
+          args: ${{ matrix.flags }} --all -- -D warnings
+
+
+      - name: Tests
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: nextest
+          args: run --all ${{ matrix.flags }}
+
+      - name: Doctests
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: test
+          args: --doc ${{ matrix.flags }}

@@ -419,8 +419,11 @@ impl Shell {
 
         let envs = assigns.iter().map(|word| (&word.var, &word.val));
 
+        let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
+
+        // TODO might need to do subst on cmd too
         let child = Command::new(cmd)
-            .args(args)
+            .args(subst_args)
             .stdin(stdin)
             .stdout(stdout)
             .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
@@ -445,4 +448,56 @@ pub fn dummy_child() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)
+}
+
+/// Performs environment substition on a string
+// TODO regex replace might not be the best way. could also recognize the env var during parsing
+// TODO handle escaped characters
+fn envsubst(rt: &mut Runtime, arg: &str) -> String {
+    use regex::Regex;
+
+    // TODO precompile regex in lazy_static
+    let r_0 = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
+    let r_1 = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
+
+    let mut subst = arg.to_string();
+
+    for cap in r_0.captures_iter(arg) {
+        // look up env var
+        let var = &cap["env"];
+        // TODO stupid code
+        let val = match rt.env.get(var) {
+            Some(val) => val.clone(),
+            None => String::new(),
+        };
+        let fmt_env = format!("${}", var); // format $VAR
+        subst = subst.as_str().replace(&fmt_env, &val);
+    }
+
+    // TODO this is dumb stupid and bad repeated code
+    for cap in r_1.captures_iter(arg) {
+        let var = &cap["env"];
+        let val = match rt.env.get(var) {
+            Some(val) => val.clone(),
+            None => String::new(),
+        };
+        let fmt_env = format!("${{{}}}", var); // format ${VAR}
+        subst = subst.as_str().replace(&fmt_env, &val);
+    }
+    subst
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{envsubst, Runtime};
+
+    #[test]
+    fn envsubst_test() {
+        let mut rt = Runtime::default();
+        rt.env.set("EDITOR", "vim");
+        rt.env.set("SHELL", "/bin/shrs");
+        let text = "$SHELL ${EDITOR}";
+        let subst = envsubst(&mut rt, text);
+        assert_eq!(subst, String::from("/bin/shrs vim"));
+    }
 }

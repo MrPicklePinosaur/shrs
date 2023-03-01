@@ -6,7 +6,7 @@ mod history;
 use std::process::Child;
 
 use self::{cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin, history::HistoryBuiltin};
-use crate::shell::Context;
+use crate::shell::{Context, Runtime};
 
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
@@ -29,5 +29,6 @@ impl Default for Builtins {
 }
 
 pub trait BuiltinCmd {
-    fn run(&self, ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child>;
+    fn run(&self, ctx: &mut Context, rt: &mut Runtime, args: &Vec<String>)
+        -> anyhow::Result<Child>;
 }

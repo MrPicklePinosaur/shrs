@@ -8,6 +8,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use reedline::{History, HistoryItem};
 
 use crate::{
     alias::Alias,
@@ -56,35 +57,46 @@ pub struct Shell {
     pub prompt: CustomPrompt,
 }
 
-// Runtime context for the shell
-#[derive(Clone)]
+// (shared) shell context
 pub struct Context {
-    pub history: MemHistory,
-    pub env: Env,
+    pub history: Box<dyn History>,
     pub alias: Alias,
-    pub working_dir: PathBuf,
 }
 
 impl Default for Context {
     fn default() -> Self {
         Context {
-            history: MemHistory::new(),
-            env: Env::new(),
+            history: Box::new(MemHistory::new()),
             alias: Alias::new(),
+        }
+    }
+}
+
+// Runtime context for the shell
+#[derive(Clone)]
+pub struct Runtime {
+    pub working_dir: PathBuf,
+    pub env: Env,
+}
+
+impl Default for Runtime {
+    fn default() -> Self {
+        Runtime {
+            env: Env::new(),
             working_dir: std::env::current_dir().unwrap(),
         }
     }
 }
 
 impl Shell {
-    pub fn run(&self, ctx: &mut Context) -> anyhow::Result<()> {
+    pub fn run(&self, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
         use reedline::{
             default_vi_insert_keybindings, default_vi_normal_keybindings, Reedline, Signal, Vi,
         };
 
         // init stuff
         sig_handler()?;
-        ctx.env.load();
+        rt.env.load();
 
         let mut line_editor = Reedline::create().with_edit_mode(Box::new(Vi::new(
             default_vi_insert_keybindings(),
@@ -106,9 +118,6 @@ impl Shell {
             // attempt to expand alias
             let expanded = ctx.alias.get(&line).unwrap_or(&line).clone();
 
-            // wether the command pre-alias expansion or post should be added to history could be a configuration option
-            ctx.history.add(expanded.clone());
-
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
             let mut parser = parser::ParserContext::new();
@@ -120,7 +129,7 @@ impl Shell {
                 },
             };
             let cmd_handle =
-                match self.eval_command(ctx, &cmd, Stdio::inherit(), Stdio::piped(), None) {
+                match self.eval_command(ctx, rt, &cmd, Stdio::inherit(), Stdio::piped(), None) {
                     Ok(cmd_handle) => cmd_handle,
                     Err(e) => {
                         eprintln!("{}", e);
@@ -136,6 +145,7 @@ impl Shell {
     pub fn eval_command(
         &self,
         ctx: &mut Context,
+        rt: &mut Runtime,
         cmd: &ast::Command,
         stdin: Stdio,
         stdout: Stdio,
@@ -225,23 +235,23 @@ impl Shell {
 
                 // TODO currently don't support assignment for builtins (should it be supported even?)
                 match cmd_name.as_str() {
-                    "cd" => self.builtins.cd.run(ctx, &args),
-                    "exit" => self.builtins.exit.run(ctx, &args),
-                    "history" => self.builtins.history.run(ctx, &args),
-                    "debug" => self.builtins.debug.run(ctx, &args),
+                    "cd" => self.builtins.cd.run(ctx, rt, &args),
+                    "exit" => self.builtins.exit.run(ctx, rt, &args),
+                    "history" => self.builtins.history.run(ctx, rt, &args),
+                    "debug" => self.builtins.debug.run(ctx, rt, &args),
                     _ => self.run_external_command(
-                        ctx, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                        ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
                     ),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
                 // TODO double check that pgid works properly for pipelines that are longer than one pipe (left recursiveness of parser might mess this up)
                 let mut a_cmd_handle =
-                    self.eval_command(ctx, a_cmd, stdin, Stdio::piped(), None)?;
+                    self.eval_command(ctx, rt, a_cmd, stdin, Stdio::piped(), None)?;
                 let piped_stdin = Stdio::from(a_cmd_handle.stdout.take().unwrap());
                 let pgid = a_cmd_handle.id();
                 let b_cmd_handle =
-                    self.eval_command(ctx, b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
+                    self.eval_command(ctx, rt, b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
                 Ok(b_cmd_handle)
             },
             ast::Command::Or(a_cmd, b_cmd) | ast::Command::And(a_cmd, b_cmd) => {
@@ -252,7 +262,7 @@ impl Shell {
                 };
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
-                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 if let Some(output) = self.command_output(a_cmd_handle)? {
                     if output.status.success() ^ negate {
                         // TODO return something better (indicate that command failed with exit code)
@@ -260,23 +270,29 @@ impl Shell {
                     }
                 }
                 let b_cmd_handle =
-                    self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, rt, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                 Ok(b_cmd_handle)
             },
             ast::Command::Not(cmd) => {
                 // TODO exit status negate
-                let cmd_handle = self.eval_command(ctx, cmd, stdin, stdout, None)?;
+                let cmd_handle = self.eval_command(ctx, rt, cmd, stdin, stdout, None)?;
                 Ok(cmd_handle)
             },
             ast::Command::AsyncList(a_cmd, b_cmd) => {
                 let a_cmd_handle =
-                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        let b_cmd_handle =
-                            self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                        let b_cmd_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            b_cmd,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -284,14 +300,20 @@ impl Shell {
             ast::Command::SeqList(a_cmd, b_cmd) => {
                 // TODO very similar to AsyncList
                 let a_cmd_handle =
-                    self.eval_command(ctx, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
                         self.command_output(a_cmd_handle)?;
-                        let b_cmd_handle =
-                            self.eval_command(ctx, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                        let b_cmd_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            b_cmd,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
                         Ok(b_cmd_handle)
                     },
                 }
@@ -299,9 +321,15 @@ impl Shell {
             ast::Command::Subshell(cmd) => {
                 // TODO rn history is being copied too, history (and also alias?) really should be global
                 // maybe seperate out global context and runtime context into two structs?
-                let mut new_ctx = ctx.clone();
-                let cmd_handle =
-                    self.eval_command(&mut new_ctx, cmd, Stdio::inherit(), Stdio::piped(), None)?;
+                let mut new_rt = rt.clone();
+                let cmd_handle = self.eval_command(
+                    ctx,
+                    &mut new_rt,
+                    cmd,
+                    Stdio::inherit(),
+                    Stdio::piped(),
+                    None,
+                )?;
                 Ok(cmd_handle)
             },
             ast::Command::If { conds, else_part } => {
@@ -310,12 +338,13 @@ impl Shell {
 
                 for ast::Condition { cond, body } in conds {
                     let cond_handle =
-                        self.eval_command(ctx, cond, Stdio::inherit(), Stdio::piped(), None)?;
+                        self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
                     if let Some(output) = self.command_output(cond_handle)? {
                         if output.status.success() {
                             let body_handle = self.eval_command(
                                 ctx,
+                                rt,
                                 body,
                                 Stdio::inherit(),
                                 Stdio::piped(),
@@ -327,8 +356,14 @@ impl Shell {
                 }
 
                 if let Some(else_part) = else_part {
-                    let else_handle =
-                        self.eval_command(ctx, else_part, Stdio::inherit(), Stdio::piped(), None)?;
+                    let else_handle = self.eval_command(
+                        ctx,
+                        rt,
+                        else_part,
+                        Stdio::inherit(),
+                        Stdio::piped(),
+                        None,
+                    )?;
                     return Ok(else_handle);
                 }
 
@@ -343,12 +378,13 @@ impl Shell {
 
                 loop {
                     let cond_handle =
-                        self.eval_command(ctx, cond, Stdio::inherit(), Stdio::piped(), None)?;
+                        self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to if statements
                     if let Some(output) = self.command_output(cond_handle)? {
                         if output.status.success() ^ negate {
                             let body_handle = self.eval_command(
                                 ctx,
+                                rt,
                                 body,
                                 Stdio::inherit(),
                                 Stdio::piped(),
@@ -371,6 +407,7 @@ impl Shell {
     fn run_external_command(
         &self,
         ctx: &mut Context,
+        rt: &mut Runtime,
         cmd: &str,
         args: &Vec<String>,
         stdin: Stdio,
@@ -387,7 +424,7 @@ impl Shell {
             .stdin(stdin)
             .stdout(stdout)
             .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
-            .current_dir(ctx.working_dir.to_str().unwrap())
+            .current_dir(rt.working_dir.to_str().unwrap())
             .envs(envs)
             .spawn()?;
 

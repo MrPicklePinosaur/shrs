@@ -4,7 +4,7 @@ use shrs::{
     alias::Alias,
     builtin::Builtins,
     prompt::{hostname, top_pwd, username},
-    shell::{self, simple_error, simple_exit_code, Context},
+    shell::{self, simple_error, simple_exit_code, Context, Runtime},
 };
 
 fn prompt_command() {
@@ -36,5 +36,8 @@ fn main() {
         alias,
         ..Default::default()
     };
-    myshell.run(&mut ctx);
+    let mut rt = Runtime {
+        ..Default::default()
+    };
+    myshell.run(&mut ctx, &mut rt);
 }

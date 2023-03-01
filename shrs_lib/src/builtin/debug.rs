@@ -8,7 +8,7 @@ use std::{
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
-use crate::shell::{dummy_child, Context, Shell};
+use crate::shell::{dummy_child, Context, Runtime, Shell};
 
 #[derive(Parser)]
 struct Cli {
@@ -25,7 +25,12 @@ enum Commands {
 pub struct DebugBuiltin {}
 
 impl BuiltinCmd for DebugBuiltin {
-    fn run(&self, ctx: &mut Context, args: &Vec<String>) -> anyhow::Result<Child> {
+    fn run(
+        &self,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        args: &Vec<String>,
+    ) -> anyhow::Result<Child> {
         let cli = Cli::parse_from(vec!["debug".to_string()].iter().chain(args.iter()));
 
         match &cli.command {
@@ -33,7 +38,7 @@ impl BuiltinCmd for DebugBuiltin {
                 println!("debug utility");
             },
             Some(Commands::Env) => {
-                for (var, val) in ctx.env.all() {
+                for (var, val) in rt.env.all() {
                     println!("{} = {}", var, val);
                 }
             },

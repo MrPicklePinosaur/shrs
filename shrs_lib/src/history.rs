@@ -44,11 +44,22 @@ impl MemHistory {
     }
 }
 
-use reedline::Result;
+use reedline::{HistoryItem, Result};
 impl reedline::History for MemHistory {
     fn save(&mut self, h: reedline::HistoryItem) -> Result<reedline::HistoryItem> {
-        // Ok(self.add(h.command_line))
-        todo!()
+        // TODO make use of HistoryItemId
+        self.add(h.command_line.clone());
+        Ok(HistoryItem {
+            id: None,
+            start_timestamp: None,
+            command_line: h.command_line,
+            session_id: None,
+            hostname: None,
+            cwd: None,
+            duration: None,
+            exit_status: None,
+            more_info: None, // this seems to be some private type we can't use
+        })
     }
 
     fn load(&self, id: reedline::HistoryItemId) -> Result<reedline::HistoryItem> {
@@ -72,14 +83,16 @@ impl reedline::History for MemHistory {
     }
 
     fn clear(&mut self) -> Result<()> {
-        todo!()
+        self.clear();
+        Ok(())
     }
 
     fn delete(&mut self, h: reedline::HistoryItemId) -> Result<()> {
-        todo!()
+        // TODO curently NO OP
+        Ok(())
     }
 
     fn sync(&mut self) -> std::io::Result<()> {
-        todo!()
+        Ok(())
     }
 }

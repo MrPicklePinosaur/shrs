@@ -14,7 +14,6 @@ extern {
 	"&" => lexer::Token::AMP,
 	"|" => lexer::Token::PIPE,
 	"`" => lexer::Token::BACKTICK,
-	"$" => lexer::Token::DOLLAR,
 	"=" => lexer::Token::EQUAL,
 	"\\" => lexer::Token::BACKSLASH,
 	"'" => lexer::Token::SINGLEQUOTE,

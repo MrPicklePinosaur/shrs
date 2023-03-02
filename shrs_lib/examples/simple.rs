@@ -7,18 +7,6 @@ use shrs::{
     shell::{self, simple_error, simple_exit_code, Context, Runtime},
 };
 
-fn prompt_command() {
-    use std::io::{stdout, Write};
-
-    print!(
-        "{}@{} {} > ",
-        username().unwrap(),
-        hostname().unwrap(),
-        top_pwd()
-    );
-    stdout().flush();
-}
-
 fn main() {
     use shell::{Hooks, Shell};
 

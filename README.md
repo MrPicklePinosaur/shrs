@@ -19,7 +19,7 @@ rust library to build your own shell
 
 ## FEATURES
 
-Project is currently very much VIP, below lists the current feature statuses:
+Project is currently very much WIP, below lists the current feature statuses:
 
 | Feature | Status |
 | --- | --- |
@@ -28,10 +28,10 @@ Project is currently very much VIP, below lists the current feature statuses:
 | aliases | mvp |
 | completion | mvp |
 | readline | using reedline |
-| hooks | TODO |
-| keybindings | TODO |
-| syntax highlighting | TODO |
-| shell scripts | TODO |
+| hooks | todo |
+| keybindings | todo |
+| syntax highlighting | todo |
+| shell scripts | todo |
 
 ## RESOURCES
 

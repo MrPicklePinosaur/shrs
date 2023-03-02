@@ -1,0 +1,93 @@
+# The URL the site will be built for
+base_url = "https://mrpicklepinosaur.github.io/shrs/"
+title = "shrs"
+description = ""
+
+theme = "adidoks"
+default_language = "en"
+compile_sass = true
+generate_feed = true
+minify_html = false
+taxonomies = [
+  {name = "authors"},
+]
+
+build_search_index = true
+
+[search]
+include_title = true
+include_description = false
+include_content = true
+
+[markdown]
+highlight_code = true
+
+[extra]
+author = ""
+github = ""
+twitter = ""
+email = ""
+
+is_netlify = false
+language_code = "en-US"
+theme_color = "#fff"
+title_separator = "|"
+title_addition = "a rusty shell"
+
+timeformat = "%B %e, %Y" # e.g. June 14, 2021
+timezone = "America/New_York"
+
+edit_page = false
+docs_repo = "https://github.com/MrPicklePinosaur/shrs"
+repo_branch = "master"
+
+## Math settings
+# options: true, false. Enable math support globally,
+# default: false. You can always enable math on a per page.
+math = false
+library = "katex"  # options: "katex", "mathjax". default is "katex".
+
+[extra.open]
+enable = true
+# this image will be used as fallback if a page has no image of its own
+image = "doks.png"
+twitter_site = ""
+twitter_creator = ""
+facebook_author = ""
+facebook_publisher = ""
+og_locale = "en_US"
+
+## JSON-LD
+[extra.schema]
+type = "Organization"
+logo = "logo-doks.png"
+twitter = ""
+linked_in = ""
+github = ""
+section = "blog" # see config.extra.main~url
+## Sitelinks Search Box
+site_links_search_box = false
+
+
+# Menu items
+[[extra.menu.main]]
+name = "Docs"
+section = "docs"
+url = "/docs/getting-started/introduction/"
+weight = 10
+
+[[extra.menu.social]]
+name = "GitHub"
+pre = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>'
+url = "https://github.com/MrPicklePinosaur/shrs"
+post = "v0.1.0"
+weight = 20
+
+# Footer contents
+[extra.footer]
+info = 'Powered by <a href="https://www.getzola.org/">Zola</a> and <a href="https://github.com/aaranxu/adidoks">AdiDoks</a>'
+
+[[extra.footer.nav]]
+name = "Privacy"
+url = "/privacy-policy/"
+weight = 10

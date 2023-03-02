@@ -120,8 +120,6 @@ impl Shell {
             .with_menu(ReedlineMenu::EngineCompleter(completion_menu));
 
         loop {
-            // (self.hooks.prompt_command)();
-
             let sig = line_editor.read_line(&self.prompt);
             let line = match sig {
                 Ok(Signal::Success(buffer)) => buffer,

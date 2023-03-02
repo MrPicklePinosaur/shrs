@@ -28,7 +28,7 @@ Project is currently very much WIP, below lists the current feature statuses:
 | aliases | mvp |
 | completion | mvp |
 | readline | using reedline |
-| hooks | todo |
+| hooks | wip |
 | keybindings | todo |
 | syntax highlighting | todo |
 | shell scripts | todo |

@@ -4,17 +4,13 @@ use shrs::{
     alias::Alias,
     builtin::Builtins,
     prompt::{hostname, top_pwd, username},
-    shell::{self, simple_error, simple_exit_code, Context, Runtime},
+    shell::{self, Context, Runtime},
 };
 
 fn main() {
-    use shell::{Hooks, Shell};
+    use shell::Shell;
 
-    let hooks = Hooks {
-        ..Default::default()
-    };
     let myshell = Shell {
-        hooks,
         ..Default::default()
     };
 

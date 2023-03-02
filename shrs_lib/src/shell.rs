@@ -16,39 +16,12 @@ use crate::{
     builtin::Builtins,
     env::Env,
     history::MemHistory,
+    hooks::{Hooks, StartupHookCtx},
     lexer::Lexer,
     parser,
     prompt::CustomPrompt,
     signal::sig_handler,
 };
-
-pub fn simple_error() {}
-
-/// Default formmater for displaying the exit code of the previous command
-pub fn simple_exit_code(code: i32) {
-    println!("[exit +{}]", code);
-}
-
-pub type ErrorCommand = fn();
-pub type ExitCodeCommand = fn(i32);
-// TODO ideas for hooks:
-//   - exit hook: print message when shell exits (by exit builtin)
-
-pub struct Hooks {
-    /// User defined command for formatting shell error messages
-    pub error_command: ErrorCommand,
-    /// User defined command for formatting exit code of previous command
-    pub exit_code_command: ExitCodeCommand,
-}
-
-impl Default for Hooks {
-    fn default() -> Self {
-        Hooks {
-            error_command: simple_error,
-            exit_code_command: simple_exit_code,
-        }
-    }
-}
 
 #[derive(Default)]
 pub struct Shell {
@@ -118,6 +91,8 @@ impl Shell {
             .with_edit_mode(Box::new(Vi::new(insert_bindings, normal_bindings)))
             .with_completer(completer)
             .with_menu(ReedlineMenu::EngineCompleter(completion_menu));
+
+        (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 
         loop {
             let sig = line_editor.read_line(&self.prompt);
@@ -453,7 +428,7 @@ impl Shell {
         let cmd_output = cmd_handle.wait_with_output()?;
         print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
         stdout().flush()?;
-        (self.hooks.exit_code_command)(cmd_output.status.code().unwrap());
+        (self.hooks.exit_code)(cmd_output.status.code().unwrap());
         Ok(Some(cmd_output))
     }
 }

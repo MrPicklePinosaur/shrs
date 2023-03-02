@@ -3,11 +3,16 @@ extern crate lalrpop_util;
 
 lalrpop_mod!(pub grammar);
 
+// TODO refactor to
+// mod <mod>
+// pub use <mod>::{ ... }
+
 pub mod alias;
 mod ast;
 pub mod builtin;
 pub mod env;
 mod history;
+pub mod hooks;
 mod lexer;
 mod parser;
 pub mod prompt;

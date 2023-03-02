@@ -400,6 +400,17 @@ impl Shell {
                 }
                 dummy_child()
             },
+            ast::Command::For {
+                name,
+                wordlist,
+                body,
+            } => {
+                // expand wordlist
+
+                // execute body
+
+                todo!()
+            },
             ast::Command::None => dummy_child(),
         }
     }

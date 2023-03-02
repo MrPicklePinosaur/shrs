@@ -125,6 +125,7 @@ pub CompoundCommand: ast::Command<'input> = {
     <i:IfClause> => i,
     <w:WhileClause> => w,
     <u:UntilClause> => u,
+    <f:ForClause> => f,
 }
 
 // SUBSHELL
@@ -192,6 +193,15 @@ pub UntilClause: ast::Command<'input> = {
     "until" <cond:CompoundList> <d:DoGroup> => ast::Command::Until { cond: Box::new(cond), body: Box::new(d) },
 }
 
+// FOR CLAUSE
+
+// TODO actually use "NAME" token
+pub ForClause: ast::Command<'input> = {
+    "for" <name: "WORD"> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
+    "for" <name: "WORD"> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
+    "for" <name: "WORD"> Linebreak "in" <wordlist: "WORD"*> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist, body: Box::new(d) },
+}
+
 pub DoGroup: ast::Command<'input> = "do" <body:CompoundList> "done" => body;
 
 pub Redirect: ast::Redirect<'input> = {
@@ -215,4 +225,8 @@ pub Seperator: Option<ast::SeperatorOp> = {
 pub SeperatorOp: ast::SeperatorOp = {
     "&" => ast::SeperatorOp::Amp,
     ";" => ast::SeperatorOp::Semi,
+}
+pub SequentialSep: () = {
+    ";" Linebreak => (),
+    NewlineList => (),
 }

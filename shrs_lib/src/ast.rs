@@ -99,6 +99,13 @@ pub enum Command<'input> {
         body: Box<Command<'input>>,
     },
 
+    /// For loops
+    For {
+        name: &'input str,
+        wordlist: Vec<&'input str>,
+        body: Box<Command<'input>>,
+    },
+
     /// No op
     None,
 }

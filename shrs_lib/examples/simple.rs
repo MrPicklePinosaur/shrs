@@ -3,6 +3,7 @@ use std::default;
 use shrs::{
     alias::Alias,
     builtin::Builtins,
+    env::Env,
     prompt::{hostname, top_pwd, username},
     shell::{self, Context, Runtime},
 };

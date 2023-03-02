@@ -406,10 +406,24 @@ impl Shell {
                 body,
             } => {
                 // expand wordlist
+                let mut expanded = vec![];
+                for word in wordlist {
+                    // TODO use IFS variable for this
+                    for subword in word.split(" ") {
+                        expanded.push(subword);
+                    }
+                }
 
                 // execute body
+                for word in expanded {
+                    // TODO should have seperate variable struct instead of env
+                    rt.env.set(name, word); // TODO unset the var after the loop?
+                    let body_handle =
+                        self.eval_command(ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
+                    self.command_output(rt, body_handle)?;
+                }
 
-                todo!()
+                dummy_child()
             },
             ast::Command::None => dummy_child(),
         }

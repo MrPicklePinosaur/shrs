@@ -121,6 +121,7 @@ impl<'input> Lexer<'input> {
             "while" => Token::WHILE,
             "until" => Token::UNTIL,
             "for" => Token::FOR,
+            "in" => Token::IN,
             word => Token::WORD(word),
         };
         Ok((start, token, end))

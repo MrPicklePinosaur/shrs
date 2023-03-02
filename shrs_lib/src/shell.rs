@@ -50,6 +50,12 @@ impl Default for Context {
 pub struct Runtime {
     pub working_dir: PathBuf,
     pub env: Env,
+    /// Name of the shell or shell script
+    pub name: String,
+    /// Arguments this shell was called with
+    pub args: Vec<String>,
+    /// Exit status of most recent pipeline
+    pub exit_status: i32,
 }
 
 impl Default for Runtime {
@@ -57,6 +63,11 @@ impl Default for Runtime {
         Runtime {
             env: Env::new(),
             working_dir: std::env::current_dir().unwrap(),
+            // TODO currently hardcoded
+            name: "shrs".into(),
+            // TDOO currently unused (since we have not implemented functions etc)
+            args: vec![],
+            exit_status: 0,
         }
     }
 }
@@ -125,7 +136,7 @@ impl Shell {
                         continue;
                     },
                 };
-            self.command_output(cmd_handle)?;
+            self.command_output(rt, cmd_handle)?;
         }
     }
 
@@ -252,7 +263,7 @@ impl Shell {
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = self.command_output(a_cmd_handle)? {
+                if let Some(output) = self.command_output(rt, a_cmd_handle)? {
                     if output.status.success() ^ negate {
                         // TODO return something better (indicate that command failed with exit code)
                         return dummy_child();
@@ -294,7 +305,7 @@ impl Shell {
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        self.command_output(a_cmd_handle)?;
+                        self.command_output(rt, a_cmd_handle)?;
                         let b_cmd_handle = self.eval_command(
                             ctx,
                             rt,
@@ -329,7 +340,7 @@ impl Shell {
                     let cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
-                    if let Some(output) = self.command_output(cond_handle)? {
+                    if let Some(output) = self.command_output(rt, cond_handle)? {
                         if output.status.success() {
                             let body_handle = self.eval_command(
                                 ctx,
@@ -369,7 +380,7 @@ impl Shell {
                     let cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to if statements
-                    if let Some(output) = self.command_output(cond_handle)? {
+                    if let Some(output) = self.command_output(rt, cond_handle)? {
                         if output.status.success() ^ negate {
                             let body_handle = self.eval_command(
                                 ctx,
@@ -379,7 +390,7 @@ impl Shell {
                                 Stdio::piped(),
                                 None,
                             )?;
-                            self.command_output(body_handle)?;
+                            self.command_output(rt, body_handle)?;
                         } else {
                             break;
                         }
@@ -424,11 +435,17 @@ impl Shell {
     }
 
     /// Small wrapper that outputs command output if exists
-    fn command_output(&self, cmd_handle: Child) -> anyhow::Result<Option<Output>> {
+    fn command_output(
+        &self,
+        rt: &mut Runtime,
+        cmd_handle: Child,
+    ) -> anyhow::Result<Option<Output>> {
         let cmd_output = cmd_handle.wait_with_output()?;
         print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
         stdout().flush()?;
-        (self.hooks.exit_code)(cmd_output.status.code().unwrap());
+        let exit_code = cmd_output.status.code().unwrap();
+        rt.exit_status = exit_code;
+        (self.hooks.exit_code)(exit_code);
         Ok(Some(cmd_output))
     }
 }
@@ -445,11 +462,16 @@ pub fn dummy_child() -> anyhow::Result<Child> {
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     use regex::Regex;
 
+    let mut subst = arg.to_string();
+
+    // substitute special parameters first
+    subst = subst.as_str().replace("$?", &rt.exit_status.to_string());
+    subst = subst.as_str().replace("$#", &rt.args.len().to_string());
+    subst = subst.as_str().replace("$0", &rt.name);
+
     // TODO precompile regex in lazy_static
     let r_0 = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
     let r_1 = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
-
-    let mut subst = arg.to_string();
 
     for cap in r_0.captures_iter(arg) {
         // look up env var

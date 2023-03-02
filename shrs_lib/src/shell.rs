@@ -90,18 +90,34 @@ impl Default for Runtime {
 
 impl Shell {
     pub fn run(&self, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
-        use reedline::{
-            default_vi_insert_keybindings, default_vi_normal_keybindings, Reedline, Signal, Vi,
-        };
+        use reedline::*;
 
         // init stuff
         sig_handler()?;
         rt.env.load();
 
-        let mut line_editor = Reedline::create().with_edit_mode(Box::new(Vi::new(
-            default_vi_insert_keybindings(),
-            default_vi_normal_keybindings(),
-        )));
+        // for now complete command names only
+        let completions = find_executables_in_path(rt.env.get("PATH").unwrap());
+
+        let completer = Box::new(DefaultCompleter::new_with_wordlen(completions, 2));
+        let completion_menu = Box::new(ColumnarMenu::default().with_name("completion_menu"));
+
+        let mut insert_bindings = default_vi_insert_keybindings();
+        insert_bindings.add_binding(
+            KeyModifiers::NONE,
+            KeyCode::Tab,
+            ReedlineEvent::UntilFound(vec![
+                ReedlineEvent::Menu("completion_menu".to_string()),
+                ReedlineEvent::MenuNext,
+            ]),
+        );
+
+        let normal_bindings = default_vi_normal_keybindings();
+
+        let mut line_editor = Reedline::create()
+            .with_edit_mode(Box::new(Vi::new(insert_bindings, normal_bindings)))
+            .with_completer(completer)
+            .with_menu(ReedlineMenu::EngineCompleter(completion_menu));
 
         loop {
             // (self.hooks.prompt_command)();
@@ -487,9 +503,32 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     subst
 }
 
+/// Looks through each directory in path and finds executables
+fn find_executables_in_path(path_str: &str) -> Vec<String> {
+    use std::{fs, os::unix::fs::PermissionsExt};
+
+    let mut execs = vec![];
+    for path in path_str.split(":") {
+        let dir = match fs::read_dir(path) {
+            Ok(dir) => dir,
+            Err(_) => continue,
+        };
+        for file in dir {
+            if let Ok(dir_entry) = file {
+                // check if file is executable
+                if dir_entry.metadata().unwrap().permissions().mode() & 0o111 != 0 {
+                    execs.push(dir_entry.file_name().to_str().unwrap().into());
+                }
+            }
+        }
+    }
+    execs
+}
+
 #[cfg(test)]
 mod tests {
     use super::{envsubst, Runtime};
+    use crate::shell::find_executables_in_path;
 
     #[test]
     fn envsubst_test() {
@@ -499,5 +538,10 @@ mod tests {
         let text = "$SHELL ${EDITOR}";
         let subst = envsubst(&mut rt, text);
         assert_eq!(subst, String::from("/bin/shrs vim"));
+    }
+
+    #[test]
+    fn path_execs_test() {
+        println!("{:?}", find_executables_in_path("/usr/bin:/usr/local/bin"));
     }
 }

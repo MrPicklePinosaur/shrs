@@ -5,7 +5,11 @@
 
 rust library to build your own shell
 
+[![book](https://img.shields.io/badge/book-website-orange)](#)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#)
+
 </div>
+<!-- [![build](https://github.com/MrPicklePinosaur/shrs/workflows/Deploy/badge.svg)](https://github.com/MrPicklePinosaur/shrs/actions) -->
 
 ## PROJECT GOALS
 
@@ -13,26 +17,21 @@ rust library to build your own shell
 - **productive**: shell should encourage and facilitate an efficient workflow
 - **rusty**: implemented in rust down to the syscall level (rustix) and configurable in rust
 
-## TOOD
+## FEATURES
 
-- [x] pipes
-- [x] file redirection
-- [ ] configuration scheme (config file? builder pattern?)
-- [ ] better logging + error reporting (different ways of displaying exit status)
-- [x] background process + job control (&)
-- [ ] environment variables
-- [x] subshells
-- [ ] signals (^C, ^\, ^Z etc)
-- [ ] completion
-- [ ] history
-- [ ] alias
-- [ ] test suite to ensure posix compliant
-- [ ] control flow
-  - [ ] for
-  - [ ] case
-  - [x] if 
-  - [x] while
-  - [x] until
+Project is currently very much VIP, below lists the current feature statuses:
+
+| Feature | Status |
+| --- | --- |
+| posix shell | wip |
+| history | mvp |
+| aliases | mvp |
+| completion | mvp |
+| readline | using reedline |
+| hooks | TODO |
+| keybindings | TODO |
+| syntax highlighting | TODO |
+| shell scripts | TODO |
 
 ## RESOURCES
 

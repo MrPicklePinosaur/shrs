@@ -425,6 +425,10 @@ impl Shell {
 
                 dummy_child()
             },
+            ast::Command::Case { word, arms } => {
+                println!("word {:?}, arms {:?}", word, arms);
+                dummy_child()
+            },
             ast::Command::None => dummy_child(),
         }
     }

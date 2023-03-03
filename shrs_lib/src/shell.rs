@@ -426,7 +426,25 @@ impl Shell {
                 dummy_child()
             },
             ast::Command::Case { word, arms } => {
-                println!("word {:?}, arms {:?}", word, arms);
+                // println!("word {:?}, arms {:?}", word, arms);
+
+                let subst_word = envsubst(rt, word);
+
+                for ast::CaseArm { pattern, body } in arms {
+                    if pattern.iter().any(|x| x == &subst_word) {
+                        let body_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            body,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
+                        self.command_output(rt, body_handle)?;
+                        // TODO should we break? (should multiple match arms be matched?)
+                    }
+                }
+
                 dummy_child()
             },
             ast::Command::None => dummy_child(),

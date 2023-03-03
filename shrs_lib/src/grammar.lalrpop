@@ -121,6 +121,7 @@ pub SimpleCommand: ast::Command<'input> = {
 }
 
 pub CompoundCommand: ast::Command<'input> = {
+    <b:BraceGroup> => b,
     <s:Subshell> => ast::Command::Subshell(Box::new(s)),
     <i:IfClause> => i,
     <w:WhileClause> => w,
@@ -128,6 +129,10 @@ pub CompoundCommand: ast::Command<'input> = {
     <f:ForClause> => f,
     <c:CaseClause> => c,
 }
+
+// BRACE GROUP
+
+pub BraceGroup: ast::Command<'input> = "{" <c:CompoundList> "}" => c;
 
 // SUBSHELL
 

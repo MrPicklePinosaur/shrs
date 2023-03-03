@@ -48,7 +48,7 @@ extern {
 	"done" => lexer::Token::DONE,
 
 	"case" => lexer::Token::CASE,
-	"easc" => lexer::Token::ESAC,
+	"esac" => lexer::Token::ESAC,
 	"while" => lexer::Token::WHILE,
 	"until" => lexer::Token::UNTIL,
 	"for" => lexer::Token::FOR,
@@ -126,6 +126,7 @@ pub CompoundCommand: ast::Command<'input> = {
     <w:WhileClause> => w,
     <u:UntilClause> => u,
     <f:ForClause> => f,
+    <c:CaseClause> => c,
 }
 
 // SUBSHELL
@@ -200,6 +201,37 @@ pub ForClause: ast::Command<'input> = {
     "for" <name: "WORD"> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
     "for" <name: "WORD"> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
     "for" <name: "WORD"> Linebreak "in" <wordlist: "WORD"*> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist, body: Box::new(d) },
+}
+
+// CASE CLAUSE
+
+pub CaseClause: ast::Command<'input> = {
+    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseList> "esac" => ast::Command::Case { word: w, arms: c },
+    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseListNs> "esac" => ast::Command::Case { word: w, arms: c },
+    "case" <w: "WORD"> Linebreak "in" Linebreak "esac" => ast::Command::Case { word: w, arms: vec![] },
+}
+
+pub CaseListNs: Vec<ast::CaseArm<'input>> = <mut cs:CaseItem*> <c:CaseItemNs> => {
+    cs.push(c);
+    cs
+};
+pub CaseList: Vec<ast::CaseArm<'input>> = <cs:CaseItem+> => cs;
+
+pub CaseItemNs: ast::CaseArm<'input> = {
+    "("? <p:Pattern> ")" Linebreak => ast::CaseArm { pattern: p, body: Box::new(ast::Command::None) },
+    "("? <p:Pattern> ")" <c:CompoundList> => ast::CaseArm { pattern: p, body: Box::new(c) },
+}
+pub CaseItem: ast::CaseArm<'input> = {
+    "("? <p:Pattern> ")" Linebreak ";;" Linebreak => ast::CaseArm { pattern: p, body: Box::new(ast::Command::None) },
+    "("? <p:Pattern> ")" <c:CompoundList> ";;" Linebreak => ast::CaseArm { pattern: p, body: Box::new(c) },
+}
+
+pub Pattern: Vec<&'input str> = {
+    <w: "WORD"> => vec![w],
+    <mut p:Pattern> "|" <w: "WORD"> => {
+    	p.push(w);
+	p
+    }
 }
 
 pub DoGroup: ast::Command<'input> = "do" <body:CompoundList> "done" => body;

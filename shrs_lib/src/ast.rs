@@ -106,8 +106,20 @@ pub enum Command<'input> {
         body: Box<Command<'input>>,
     },
 
+    /// Case statements
+    Case {
+        word: &'input str,
+        arms: Vec<CaseArm<'input>>,
+    },
+
     /// No op
     None,
+}
+
+#[derive(Debug)]
+pub struct CaseArm<'input> {
+    pub pattern: Vec<&'input str>,
+    pub body: Box<Command<'input>>,
 }
 
 /// Corresponds to a condition followed by a body to execute in an 'if' or 'elif' block

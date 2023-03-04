@@ -53,6 +53,8 @@ impl Line {
         enable_raw_mode()?;
         execute!(stdout(), Show);
 
+        painter.paint("").unwrap();
+
         loop {
             if poll(Duration::from_millis(1000))? {
                 let event = read()?;
@@ -146,8 +148,8 @@ impl Painter {
     fn paint(&mut self, buf: &str) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
-        self.out.queue(cursor::MoveToColumn(0))?;
-        self.out.queue(Clear(terminal::ClearType::CurrentLine))?;
+        self.out.queue(cursor::MoveTo(0, self.cursor_pos.1))?;
+        self.out.queue(Clear(terminal::ClearType::FromCursorDown))?;
 
         self.out.queue(Print(">> "))?;
         self.out.queue(Print(buf))?;

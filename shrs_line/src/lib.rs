@@ -1,9 +1,11 @@
 //! Readline implementation for shrs
 
 #![feature(linked_list_cursors)]
+#![feature(slice_pattern)]
 pub mod completion;
 pub mod prompt;
 
+use core::slice::SlicePattern;
 use std::{collections::LinkedList, time::Duration};
 
 use crossterm::{
@@ -29,14 +31,14 @@ impl Line {
         stdout().flush().unwrap();
 
         // get line
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
+        let input = read_events().unwrap();
+        println!("[input] {}", input);
 
         input
     }
 }
 
-pub fn read_events() -> crossterm::Result<()> {
+pub fn read_events() -> crossterm::Result<String> {
     let mut buf: LinkedList<u8> = LinkedList::new();
     let mut cursor = buf.cursor_front_mut();
 
@@ -46,9 +48,10 @@ pub fn read_events() -> crossterm::Result<()> {
             let event = read()?;
             match event {
                 Event::Key(KeyEvent {
-                    code: KeyCode::Esc,
+                    code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
                 }) => {
+                    // accept current input
                     break;
                 },
                 Event::Key(KeyEvent {
@@ -72,12 +75,17 @@ pub fn read_events() -> crossterm::Result<()> {
                 _ => {},
             }
 
-            println!("got event {:?}\r", event);
+            // println!("got event {:?}\r", event);
         }
     }
-    println!("buffer {:?}\r", buf);
+    // println!("buffer {:?}\r", buf);
     disable_raw_mode()?;
-    Ok(())
+
+    let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
+    let res = std::str::from_utf8(buf_slice.as_slice())
+        .unwrap()
+        .to_string();
+    Ok(res)
 }
 
 #[cfg(test)]

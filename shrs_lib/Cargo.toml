@@ -22,6 +22,8 @@ pino_deref = "0.1"
 thiserror = "1"
 anyhow = "1"
 
+shrs_line = { path = "../shrs_line" }
+
 [dev-dependencies]
 rexpect = "0.5"
 

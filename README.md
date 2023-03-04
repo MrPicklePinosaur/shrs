@@ -28,10 +28,17 @@ Project is currently very much WIP, below lists the current feature statuses:
 | aliases | mvp |
 | completion | mvp |
 | readline | using reedline |
-| hooks | wip |
+| hooks | mvp |
 | keybindings | todo |
 | syntax highlighting | todo |
 | shell scripts | todo |
+
+
+## RELATED PROJECTS
+
+- [nsh](https://github.com/nuta/nsh)
+- [nushell](https://github.com/nushell/nushell)
+- [rushell](https://github.com/hiking90/rushell)
 
 ## RESOURCES
 

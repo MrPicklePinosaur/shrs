@@ -1,28 +1,22 @@
 //! Readline implementation for shrs
+pub mod completion;
+pub mod prompt;
 
-pub trait Prompt {
-    fn prompt_left(&self) -> String;
+use std::time::Duration;
+
+use crossterm::{
+    event::{poll, read, Event, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
+use prompt::Prompt;
+
+pub struct Line {
+    buf: Vec<u8>,
 }
-
-pub struct DefaultPrompt {}
-
-impl DefaultPrompt {
-    pub fn new() -> Self {
-        DefaultPrompt {}
-    }
-}
-
-impl Prompt for DefaultPrompt {
-    fn prompt_left(&self) -> String {
-        String::from("> ")
-    }
-}
-
-pub struct Line {}
 
 impl Line {
     pub fn new() -> Self {
-        Line {}
+        Line { buf: vec![] }
     }
 
     pub fn read_line(&self, prompt: &impl Prompt) -> String {
@@ -38,6 +32,35 @@ impl Line {
 
         input
     }
+}
+
+pub fn read_events() -> crossterm::Result<()> {
+    let mut point = 0;
+    let mut buf: Vec<u8> = vec![];
+
+    enable_raw_mode()?;
+    loop {
+        if poll(Duration::from_millis(1000))? {
+            let event = read()?;
+            println!("got event {:?}\r", event);
+            match event {
+                Event::Key(keycode) => {
+                    // handle special characters
+                    if keycode == KeyCode::Esc.into() {
+                        break;
+                    }
+
+                    if keycode == KeyCode::Left {}
+                    if keycode == KeyCode::Right {}
+
+                    // otherwise we can append inputted character to buffer
+                },
+                _ => {},
+            }
+        }
+    }
+    disable_raw_mode()?;
+    Ok(())
 }
 
 #[cfg(test)]

@@ -30,19 +30,13 @@ impl Line {
     }
 
     pub fn read_line(&self, prompt: &impl Prompt) -> String {
-        use std::io::{stdin, stdout, Write};
-
-        // TODO temp prompt (look into terminal repainting)
-        // print!("{}", prompt.prompt_left());
-        // stdout().flush().unwrap();
-
         // get line
-        let input = self.read_events().unwrap();
+        let input = self.read_events(prompt).unwrap();
 
         input
     }
 
-    fn read_events(&self) -> crossterm::Result<String> {
+    fn read_events(&self, prompt: &impl Prompt) -> crossterm::Result<String> {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
 
@@ -50,7 +44,7 @@ impl Line {
 
         enable_raw_mode()?;
 
-        painter.paint("", ind as usize).unwrap();
+        painter.paint(prompt, "", ind as usize).unwrap();
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -60,6 +54,7 @@ impl Line {
                         code: KeyCode::Enter,
                         modifiers: KeyModifiers::NONE,
                     }) => {
+                        painter.newline()?;
                         break;
                     },
                     Event::Key(KeyEvent {
@@ -109,12 +104,10 @@ impl Line {
                     .unwrap()
                     .to_string();
 
-                painter.paint(&res, ind as usize).unwrap();
-
-                // println!("got event {:?}\r", event);
+                painter.paint(prompt, &res, ind as usize).unwrap();
             }
         }
-        // println!("buffer {:?}\r", buf);
+
         let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
         let res = std::str::from_utf8(buf_slice.as_slice())
             .unwrap()
@@ -146,7 +139,12 @@ impl Painter {
         })
     }
 
-    fn paint(&mut self, buf: &str, cursor_ind: usize) -> crossterm::Result<()> {
+    pub fn paint(
+        &mut self,
+        prompt: &impl Prompt,
+        buf: &str,
+        cursor_ind: usize,
+    ) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
         // clean up current line first
@@ -156,7 +154,7 @@ impl Painter {
 
         // render line
         self.out
-            .queue(Print(">> "))?
+            .queue(Print(prompt.prompt_left()))?
             .queue(Print(&buf[..cursor_ind]))?
             .queue(cursor::SavePosition)?
             .queue(Print(&buf[cursor_ind..]))?;
@@ -165,6 +163,12 @@ impl Painter {
         self.out.queue(cursor::Show)?;
         self.out.flush()?;
 
+        Ok(())
+    }
+
+    pub fn newline(&mut self) -> crossterm::Result<()> {
+        self.out.queue(Print("\r\n"))?;
+        self.out.flush()?;
         Ok(())
     }
 }

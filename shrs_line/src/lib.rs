@@ -13,7 +13,7 @@ use std::{
 };
 
 use crossterm::{
-    cursor::{self, position, Show},
+    cursor::{self, position, RestorePosition, SavePosition, Show},
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
     execute,
     style::Print,
@@ -38,7 +38,6 @@ impl Line {
 
         // get line
         let input = self.read_events().unwrap();
-        println!("[input] {}", input);
 
         input
     }
@@ -46,14 +45,12 @@ impl Line {
     fn read_events(&self) -> crossterm::Result<String> {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
-        // let mut cursor = buf.cursor_front_mut();
 
         let mut painter = Painter::new().unwrap();
 
         enable_raw_mode()?;
-        execute!(stdout(), Show);
 
-        painter.paint("").unwrap();
+        painter.paint("", ind as usize).unwrap();
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -63,7 +60,6 @@ impl Line {
                         code: KeyCode::Enter,
                         modifiers: KeyModifiers::NONE,
                     }) => {
-                        // accept current input
                         break;
                     },
                     Event::Key(KeyEvent {
@@ -71,7 +67,15 @@ impl Line {
                         modifiers: KeyModifiers::NONE,
                     }) => {
                         ind = (ind - 1).max(0);
-                        // cursor.move_prev();
+                    },
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Backspace,
+                        modifiers: KeyModifiers::NONE,
+                    }) => {
+                        if !buf.is_empty() {
+                            ind = (ind - 1).max(0);
+                            buf.remove(ind as usize);
+                        }
                     },
                     Event::Key(KeyEvent {
                         code: KeyCode::Right,
@@ -82,7 +86,6 @@ impl Line {
                         } else {
                             (ind + 1).min(buf.len() as i32)
                         };
-                        // cursor.move_next();
                     },
                     Event::Key(KeyEvent {
                         code: KeyCode::Char(c),
@@ -94,7 +97,6 @@ impl Line {
                         } else {
                             (ind + 1).min(buf.len() as i32)
                         };
-                        // cursor.insert_before(c as u8);
                     },
                     _ => {},
                 }
@@ -107,13 +109,12 @@ impl Line {
                     .unwrap()
                     .to_string();
 
-                painter.paint(&res).unwrap();
+                painter.paint(&res, ind as usize).unwrap();
 
                 // println!("got event {:?}\r", event);
             }
         }
         // println!("buffer {:?}\r", buf);
-        // painter.paint(&res).unwrap();
         let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
         let res = std::str::from_utf8(buf_slice.as_slice())
             .unwrap()
@@ -145,15 +146,22 @@ impl Painter {
         })
     }
 
-    fn paint(&mut self, buf: &str) -> crossterm::Result<()> {
+    fn paint(&mut self, buf: &str, cursor_ind: usize) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
-        self.out.queue(cursor::MoveTo(0, self.cursor_pos.1))?;
-        self.out.queue(Clear(terminal::ClearType::FromCursorDown))?;
+        // clean up current line first
+        self.out
+            .queue(cursor::MoveTo(0, self.cursor_pos.1))?
+            .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
-        self.out.queue(Print(">> "))?;
-        self.out.queue(Print(buf))?;
+        // render line
+        self.out
+            .queue(Print(">> "))?
+            .queue(Print(&buf[..cursor_ind]))?
+            .queue(cursor::SavePosition)?
+            .queue(Print(&buf[cursor_ind..]))?;
 
+        self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::Show)?;
         self.out.flush()?;
 

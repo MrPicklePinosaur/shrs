@@ -103,12 +103,13 @@ impl Shell {
             .with_completer(completer)
             .with_menu(ReedlineMenu::EngineCompleter(completion_menu));
 
+        let prompt = shrs_line::DefaultPrompt::new();
         let readline = shrs_line::Line::new();
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 
         loop {
-            let line = readline.read_line();
+            let line = readline.read_line(&prompt);
 
             // attempt to expand alias
             let expanded = ctx.alias.get(&line).unwrap_or(&line).clone();

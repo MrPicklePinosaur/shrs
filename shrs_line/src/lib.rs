@@ -13,7 +13,7 @@ use std::{
 };
 
 use crossterm::{
-    cursor::{self, position, Show},
+    cursor::{self, position, RestorePosition, SavePosition, Show},
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
     execute,
     style::Print,
@@ -49,9 +49,8 @@ impl Line {
         let mut painter = Painter::new().unwrap();
 
         enable_raw_mode()?;
-        execute!(stdout(), Show);
 
-        painter.paint("").unwrap();
+        painter.paint("", ind as usize).unwrap();
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -110,7 +109,7 @@ impl Line {
                     .unwrap()
                     .to_string();
 
-                painter.paint(&res).unwrap();
+                painter.paint(&res, ind as usize).unwrap();
 
                 // println!("got event {:?}\r", event);
             }
@@ -147,15 +146,22 @@ impl Painter {
         })
     }
 
-    fn paint(&mut self, buf: &str) -> crossterm::Result<()> {
+    fn paint(&mut self, buf: &str, cursor_ind: usize) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
-        self.out.queue(cursor::MoveTo(0, self.cursor_pos.1))?;
-        self.out.queue(Clear(terminal::ClearType::FromCursorDown))?;
+        // clean up current line first
+        self.out
+            .queue(cursor::MoveTo(0, self.cursor_pos.1))?
+            .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
-        self.out.queue(Print(">> "))?;
-        self.out.queue(Print(buf))?;
+        // render line
+        self.out
+            .queue(Print(">> "))?
+            .queue(Print(&buf[..cursor_ind]))?
+            .queue(cursor::SavePosition)?
+            .queue(Print(&buf[cursor_ind..]))?;
 
+        self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::Show)?;
         self.out.flush()?;
 

@@ -24,14 +24,15 @@ Project is currently very much WIP, below lists the current feature statuses:
 | Feature | Status |
 | --- | --- |
 | posix shell | wip |
-| history | mvp |
+| history | wip |
 | aliases | mvp |
-| completion | mvp |
-| readline | using reedline |
+| completion | todo |
+| readline | wip |
 | hooks | mvp |
 | keybindings | todo |
 | syntax highlighting | todo |
 | shell scripts | todo |
+| docs | todo |
 
 
 ## RELATED PROJECTS

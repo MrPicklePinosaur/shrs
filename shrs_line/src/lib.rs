@@ -38,7 +38,6 @@ impl Line {
 
         // get line
         let input = self.read_events().unwrap();
-        println!("[input] {}", input);
 
         input
     }
@@ -46,7 +45,6 @@ impl Line {
     fn read_events(&self) -> crossterm::Result<String> {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
-        // let mut cursor = buf.cursor_front_mut();
 
         let mut painter = Painter::new().unwrap();
 
@@ -63,7 +61,6 @@ impl Line {
                         code: KeyCode::Enter,
                         modifiers: KeyModifiers::NONE,
                     }) => {
-                        // accept current input
                         break;
                     },
                     Event::Key(KeyEvent {
@@ -71,7 +68,15 @@ impl Line {
                         modifiers: KeyModifiers::NONE,
                     }) => {
                         ind = (ind - 1).max(0);
-                        // cursor.move_prev();
+                    },
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Backspace,
+                        modifiers: KeyModifiers::NONE,
+                    }) => {
+                        if !buf.is_empty() {
+                            ind = (ind - 1).max(0);
+                            buf.remove(ind as usize);
+                        }
                     },
                     Event::Key(KeyEvent {
                         code: KeyCode::Right,
@@ -82,7 +87,6 @@ impl Line {
                         } else {
                             (ind + 1).min(buf.len() as i32)
                         };
-                        // cursor.move_next();
                     },
                     Event::Key(KeyEvent {
                         code: KeyCode::Char(c),
@@ -94,7 +98,6 @@ impl Line {
                         } else {
                             (ind + 1).min(buf.len() as i32)
                         };
-                        // cursor.insert_before(c as u8);
                     },
                     _ => {},
                 }
@@ -113,7 +116,6 @@ impl Line {
             }
         }
         // println!("buffer {:?}\r", buf);
-        // painter.paint(&res).unwrap();
         let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
         let res = std::str::from_utf8(buf_slice.as_slice())
             .unwrap()

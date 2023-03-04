@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 // currently just wrapper around hashmap
-#[derive(Clone)]
 pub struct Alias {
     aliases: HashMap<String, String>,
 }

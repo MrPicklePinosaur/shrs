@@ -1187,9 +1187,14 @@ dependencies = [
  "reedline",
  "regex",
  "rexpect",
+ "shrs_line",
  "signal-hook",
  "thiserror",
 ]
+
+[[package]]
+name = "shrs_line"
+version = "0.1.0"
 
 [[package]]
 name = "signal-hook"

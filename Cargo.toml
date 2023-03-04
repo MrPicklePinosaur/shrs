@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "shrs_lib",
+    "shrs_line",
     "reedline"
 ]

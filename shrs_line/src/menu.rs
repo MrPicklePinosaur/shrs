@@ -68,5 +68,6 @@ impl Menu for DefaultMenu {
     fn set_items(&mut self, mut items: Vec<Self::MenuItem>) {
         self.selections.clear();
         self.selections.append(&mut items);
+        self.cursor = 0;
     }
 }

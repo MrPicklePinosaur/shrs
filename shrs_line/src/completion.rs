@@ -10,7 +10,7 @@ pub struct Completion {}
 // - known hosts
 
 pub trait Completer {
-    fn complete(&self, buf: &str, cursor_pos: usize) -> Vec<String>;
+    fn complete(&self, buf: &str) -> Vec<String>;
 }
 
 pub struct DefaultCompleter {
@@ -34,7 +34,7 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, buf: &str, cursor_pos: usize) -> Vec<String> {
+    fn complete(&self, buf: &str) -> Vec<String> {
         if buf.is_empty() {
             return vec![];
         }

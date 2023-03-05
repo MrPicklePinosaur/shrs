@@ -51,6 +51,9 @@ impl Line {
 
         let mut painter = Painter::new().unwrap();
 
+        // TODO this is temp, find better way to store prefix of current word
+        let mut current_word = String::new();
+
         enable_raw_mode()?;
 
         painter.paint(prompt, &self.menu, "", ind as usize).unwrap();
@@ -67,8 +70,7 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                         }) => {
                             let accepted = self.menu.accept();
-                            // TODO buf.len() is not correct, should only be using up to last word
-                            accepted.chars().skip(buf.len()).for_each(|c| {
+                            accepted.chars().skip(current_word.len()).for_each(|c| {
                                 // TODO find way to insert multiple items in one operation
                                 buf.insert(ind as usize, c as u8);
                                 ind = (ind + 1).min(buf.len() as i32);
@@ -111,7 +113,14 @@ impl Line {
                         }) => {
                             self.menu.activate();
                             let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
-                            let completions = self.completer.complete(&res, ind as usize);
+
+                            // TODO IFS
+                            current_word = res.as_str()[..ind as usize]
+                                .split(' ')
+                                .last()
+                                .unwrap_or("")
+                                .to_string();
+                            let completions = self.completer.complete(&current_word);
                             let owned = completions
                                 .iter()
                                 .map(|x| x.to_string())

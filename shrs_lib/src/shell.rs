@@ -80,31 +80,13 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        // for now complete command names only
-        let completions = find_executables_in_path(rt.env.get("PATH").unwrap());
-
-        let completer = Box::new(DefaultCompleter::new_with_wordlen(completions, 2));
-        let completion_menu = Box::new(ColumnarMenu::default().with_name("completion_menu"));
-
-        let mut insert_bindings = default_vi_insert_keybindings();
-        insert_bindings.add_binding(
-            KeyModifiers::NONE,
-            KeyCode::Tab,
-            ReedlineEvent::UntilFound(vec![
-                ReedlineEvent::Menu("completion_menu".to_string()),
-                ReedlineEvent::MenuNext,
-            ]),
-        );
-
-        let normal_bindings = default_vi_normal_keybindings();
-
-        let mut line_editor = Reedline::create()
-            .with_edit_mode(Box::new(Vi::new(insert_bindings, normal_bindings)))
-            .with_completer(completer)
-            .with_menu(ReedlineMenu::EngineCompleter(completion_menu));
-
         let prompt = shrs_line::prompt::DefaultPrompt::new();
-        let readline = shrs_line::Line::new();
+
+        // for now complete command names only
+        let completions: Vec<String> = find_executables_in_path(rt.env.get("PATH").unwrap());
+        let completer = shrs_line::completion::DefaultCompleter::new(completions);
+        let menu = shrs_line::menu::DefaultMenu::new();
+        let mut readline = shrs_line::Line::new(menu, completer);
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 

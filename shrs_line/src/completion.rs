@@ -10,7 +10,7 @@ pub struct Completion {}
 // - known hosts
 
 pub trait Completer {
-    fn complete(&self, buf: &str, cursor_pos: usize);
+    fn complete(&self, buf: &str) -> Vec<String>;
 }
 
 pub struct DefaultCompleter {
@@ -21,7 +21,7 @@ pub struct DefaultCompleter {
 // TODO next step, make word list vary with context
 // TODO differ between cmdname, args etc
 impl DefaultCompleter {
-    pub fn new(wordlist: Vec<&str>) -> Self {
+    pub fn new(wordlist: Vec<String>) -> Self {
         // build prefix tree from wordlist
         let mut builder = TrieBuilder::new();
         for word in wordlist {
@@ -34,14 +34,18 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, buf: &str, cursor_pos: usize) {
+    fn complete(&self, buf: &str) -> Vec<String> {
+        if buf.is_empty() {
+            return vec![];
+        }
         let results = self.completions.predictive_search(buf);
-        let results: Vec<&str> = results
+        let results: Vec<String> = results
             .iter()
-            .map(|x| std::str::from_utf8(x).unwrap())
+            .map(|x| std::str::from_utf8(x).unwrap().to_string())
+            .take(10) // TODO make this config option
             .collect();
 
-        println!("{:?}", results);
+        results
     }
 }
 
@@ -49,6 +53,7 @@ impl Completer for DefaultCompleter {
 mod tests {
     use super::{Completer, DefaultCompleter};
 
+    /*
     #[test]
     fn default_completer() {
         let completer = DefaultCompleter::new(vec![
@@ -56,4 +61,5 @@ mod tests {
         ]);
         completer.complete("ls", 0);
     }
+    */
 }

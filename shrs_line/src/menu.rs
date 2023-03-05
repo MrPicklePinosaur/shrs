@@ -36,7 +36,11 @@ impl Menu for DefaultMenu {
     type MenuItem = String;
 
     fn next(&mut self) {
-        self.cursor = (self.cursor + 1).min(self.selections.len() as i32);
+        self.cursor = if self.selections.is_empty() {
+            0
+        } else {
+            (self.cursor + 1).min(self.selections.len() as i32 - 1)
+        };
     }
     fn previous(&mut self) {
         self.cursor = (self.cursor - 1).max(0);

@@ -173,6 +173,8 @@ impl Painter {
     ) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
+        self.cursor_pos = cursor::position()?;
+
         // clean up current line first
         self.out
             .queue(cursor::MoveTo(0, self.cursor_pos.1))?
@@ -197,9 +199,11 @@ impl Painter {
 
                 self.out.queue(SetAttribute(Attribute::NoBold))?;
             }
+            // move cursor back up equal to height of menu
+            self.out
+                .queue(cursor::MoveUp(menu.items().len() as u16 + 1))?;
         }
 
-        self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::Show)?;
         self.out.flush()?;
 

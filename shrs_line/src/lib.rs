@@ -1,6 +1,7 @@
 //! Readline implementation for shrs
 
 pub mod completion;
+pub mod history;
 pub mod menu;
 pub mod prompt;
 
@@ -19,22 +20,26 @@ use crossterm::{
     terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
     ExecutableCommand, QueueableCommand,
 };
+use history::History;
 use menu::{DefaultMenu, Menu};
 use prompt::Prompt;
 
 pub struct Line {
     menu: Box<dyn Menu<MenuItem = String>>,
     completer: Box<dyn Completer>,
+    history: Box<dyn History<HistoryItem = String>>,
 }
 
 impl Line {
     pub fn new(
         menu: impl Menu<MenuItem = String> + 'static,
         completer: impl Completer + 'static,
+        history: impl History<HistoryItem = String> + 'static,
     ) -> Self {
         Line {
             menu: Box::new(menu),
             completer: Box::new(completer),
+            history: Box::new(history),
         }
     }
 
@@ -53,6 +58,9 @@ impl Line {
 
         // TODO this is temp, find better way to store prefix of current word
         let mut current_word = String::new();
+
+        // TODO dumping history index here for now
+        let mut history_ind: i32 = -1;
 
         enable_raw_mode()?;
 
@@ -134,6 +142,12 @@ impl Line {
                             ind = (ind - 1).max(0);
                         },
                         Event::Key(KeyEvent {
+                            code: KeyCode::Right,
+                            modifiers: KeyModifiers::NONE,
+                        }) => {
+                            ind = (ind + 1).min(buf.len() as i32);
+                        },
+                        Event::Key(KeyEvent {
                             code: KeyCode::Backspace,
                             modifiers: KeyModifiers::NONE,
                         }) => {
@@ -143,10 +157,34 @@ impl Line {
                             }
                         },
                         Event::Key(KeyEvent {
-                            code: KeyCode::Right,
+                            code: KeyCode::Down,
                             modifiers: KeyModifiers::NONE,
                         }) => {
-                            ind = (ind + 1).min(buf.len() as i32);
+                            history_ind = (history_ind - 1).max(0);
+                            if let Some(history_item) = self.history.get(history_ind as usize) {
+                                buf.clear();
+                                let mut history_item =
+                                    history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
+                                buf.append(&mut history_item);
+                                ind = buf.len() as i32;
+                            }
+                        },
+                        Event::Key(KeyEvent {
+                            code: KeyCode::Up,
+                            modifiers: KeyModifiers::NONE,
+                        }) => {
+                            history_ind = if self.history.len() == 0 {
+                                0
+                            } else {
+                                (history_ind + 1).min(self.history.len() as i32 - 1)
+                            };
+                            if let Some(history_item) = self.history.get(history_ind as usize) {
+                                buf.clear();
+                                let mut history_item =
+                                    history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
+                                buf.append(&mut history_item);
+                                ind = buf.len() as i32;
+                            }
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Char(c),
@@ -170,6 +208,7 @@ impl Line {
         disable_raw_mode()?;
 
         let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
+        self.history.add(res.clone());
         Ok(res)
     }
 }

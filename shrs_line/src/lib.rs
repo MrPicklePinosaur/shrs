@@ -10,6 +10,7 @@ use std::{
     time::Duration,
 };
 
+use completion::{Completer, DefaultCompleter};
 use crossterm::{
     cursor::{self, position, RestorePosition, SavePosition, Show},
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
@@ -21,43 +22,51 @@ use crossterm::{
 use menu::{DefaultMenu, Menu};
 use prompt::Prompt;
 
-pub struct Line {}
+pub struct Line {
+    menu: Box<dyn Menu<MenuItem = String>>,
+    completer: Box<dyn Completer>,
+}
 
 impl Line {
-    pub fn new() -> Self {
-        Line {}
+    pub fn new(
+        menu: impl Menu<MenuItem = String> + 'static,
+        completer: impl Completer + 'static,
+    ) -> Self {
+        Line {
+            menu: Box::new(menu),
+            completer: Box::new(completer),
+        }
     }
 
-    pub fn read_line(&self, prompt: &impl Prompt) -> String {
+    pub fn read_line(&mut self, prompt: &impl Prompt) -> String {
         // get line
         let input = self.read_events(prompt).unwrap();
 
         input
     }
 
-    fn read_events(&self, prompt: &impl Prompt) -> crossterm::Result<String> {
+    fn read_events(&mut self, prompt: &impl Prompt) -> crossterm::Result<String> {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
 
         let mut painter = Painter::new().unwrap();
-        let mut menu = DefaultMenu::new();
 
         enable_raw_mode()?;
 
-        painter.paint(prompt, &menu, "", ind as usize).unwrap();
+        painter.paint(prompt, &self.menu, "", ind as usize).unwrap();
 
         loop {
             if poll(Duration::from_millis(1000))? {
                 let event = read()?;
 
                 // handle menu events
-                if menu.is_active() {
+                if self.menu.is_active() {
                     match event {
                         Event::Key(KeyEvent {
                             code: KeyCode::Enter,
                             modifiers: KeyModifiers::NONE,
                         }) => {
-                            let accepted = menu.accept();
+                            let accepted = self.menu.accept();
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Tab,
@@ -67,7 +76,7 @@ impl Line {
                             code: KeyCode::Up,
                             modifiers: KeyModifiers::NONE,
                         }) => {
-                            menu.previous();
+                            self.menu.previous();
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Tab,
@@ -77,7 +86,7 @@ impl Line {
                             code: KeyCode::Down,
                             modifiers: KeyModifiers::NONE,
                         }) => {
-                            menu.next();
+                            self.menu.next();
                         },
                         _ => {},
                     }
@@ -94,8 +103,14 @@ impl Line {
                             code: KeyCode::Tab,
                             modifiers: KeyModifiers::NONE,
                         }) => {
-                            menu.activate();
-                            menu.set_items(vec!["a".into(), "b".into(), "c".into()])
+                            self.menu.activate();
+                            let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
+                            let completions = self.completer.complete(&res, ind as usize);
+                            let owned = completions
+                                .iter()
+                                .map(|x| x.to_string())
+                                .collect::<Vec<_>>();
+                            self.menu.set_items(owned);
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Left,
@@ -129,11 +144,11 @@ impl Line {
                     }
                 }
 
-                let buf_cp = buf.clone();
-
                 let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
-                painter.paint(prompt, &menu, &res, ind as usize).unwrap();
+                painter
+                    .paint(prompt, &self.menu, &res, ind as usize)
+                    .unwrap();
             }
         }
 
@@ -167,7 +182,7 @@ impl Painter {
     pub fn paint(
         &mut self,
         prompt: &impl Prompt,
-        menu: &impl Menu,
+        menu: &Box<dyn Menu<MenuItem = String>>,
         buf: &str,
         cursor_ind: usize,
     ) -> crossterm::Result<()> {

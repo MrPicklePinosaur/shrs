@@ -1,11 +1,8 @@
 //! Readline implementation for shrs
 
-#![feature(linked_list_cursors)]
-#![feature(slice_pattern)]
 pub mod completion;
 pub mod prompt;
 
-use core::slice::SlicePattern;
 use std::{
     collections::LinkedList,
     io::{stdout, BufWriter, Write},
@@ -98,23 +95,15 @@ impl Line {
 
                 let buf_cp = buf.clone();
 
-                // TODO dup code
-                let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
-                let res = std::str::from_utf8(buf_slice.as_slice())
-                    .unwrap()
-                    .to_string();
+                let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                 painter.paint(prompt, &res, ind as usize).unwrap();
             }
         }
 
-        let buf_slice = buf.iter().map(|x| *x).collect::<Vec<_>>();
-        let res = std::str::from_utf8(buf_slice.as_slice())
-            .unwrap()
-            .to_string();
-
         disable_raw_mode()?;
 
+        let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
         Ok(res)
     }
 }

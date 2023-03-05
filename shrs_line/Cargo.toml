@@ -9,3 +9,4 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
 crossterm = "0.23"
+trie-rs = "0.1"

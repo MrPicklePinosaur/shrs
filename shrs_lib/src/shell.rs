@@ -86,7 +86,8 @@ impl Shell {
         let completions: Vec<String> = find_executables_in_path(rt.env.get("PATH").unwrap());
         let completer = shrs_line::completion::DefaultCompleter::new(completions);
         let menu = shrs_line::menu::DefaultMenu::new();
-        let mut readline = shrs_line::Line::new(menu, completer);
+        let history = shrs_line::history::DefaultHistory::new();
+        let mut readline = shrs_line::Line::new(menu, completer, history);
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 

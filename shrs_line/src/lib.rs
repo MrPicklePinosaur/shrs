@@ -67,6 +67,12 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                         }) => {
                             let accepted = self.menu.accept();
+                            // TODO buf.len() is not correct, should only be using up to last word
+                            accepted.chars().skip(buf.len()).for_each(|c| {
+                                // TODO find way to insert multiple items in one operation
+                                buf.insert(ind as usize, c as u8);
+                                ind = (ind + 1).min(buf.len() as i32);
+                            });
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Tab,

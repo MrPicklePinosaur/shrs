@@ -35,10 +35,14 @@ impl DefaultCompleter {
 
 impl Completer for DefaultCompleter {
     fn complete(&self, buf: &str, cursor_pos: usize) -> Vec<String> {
+        if buf.is_empty() {
+            return vec![];
+        }
         let results = self.completions.predictive_search(buf);
         let results: Vec<String> = results
             .iter()
             .map(|x| std::str::from_utf8(x).unwrap().to_string())
+            .take(10) // TODO make this config option
             .collect();
 
         results

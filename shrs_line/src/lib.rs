@@ -199,6 +199,7 @@ impl Painter {
 
                 self.out.queue(SetAttribute(Attribute::NoBold))?;
             }
+
             // move cursor back up equal to height of menu
             self.out
                 .queue(cursor::MoveUp(menu.items().len() as u16 + 1))?;

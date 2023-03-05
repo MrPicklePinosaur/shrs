@@ -11,3 +11,8 @@ Some things we should support
 
 - [Anatomy of Command Completion](https://hackaday.com/2018/01/19/linux-fu-custom-bash-command-completion/)
 
+## Background: How does fish do it?
+
+Fish completions are quite good
+
+- [Fish: writing your own completions](https://fishshell.com/docs/current/completions.html)

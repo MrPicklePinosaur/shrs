@@ -11,7 +11,6 @@ pub mod alias;
 mod ast;
 pub mod builtin;
 pub mod env;
-mod history;
 pub mod hooks;
 mod lexer;
 mod parser;

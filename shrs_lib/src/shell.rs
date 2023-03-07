@@ -8,18 +8,19 @@ use std::{
 };
 
 use anyhow::anyhow;
-use reedline::{History, HistoryItem};
+use shrs_line::{
+    history::{DefaultHistory, History},
+    prompt::{DefaultPrompt, Prompt},
+};
 
 use crate::{
     alias::Alias,
     ast::{self, Assign},
     builtin::Builtins,
     env::Env,
-    history::MemHistory,
     hooks::{Hooks, StartupHookCtx},
     lexer::Lexer,
     parser,
-    prompt::CustomPrompt,
     signal::sig_handler,
 };
 
@@ -27,20 +28,21 @@ use crate::{
 pub struct Shell {
     pub hooks: Hooks,
     pub builtins: Builtins,
-    pub prompt: CustomPrompt,
 }
 
 // (shared) shell context
 pub struct Context {
-    pub history: Box<dyn History>,
+    pub history: Box<dyn History<HistoryItem = String>>,
     pub alias: Alias,
+    pub prompt: Box<dyn Prompt>,
 }
 
 impl Default for Context {
     fn default() -> Self {
         Context {
-            history: Box::new(MemHistory::new()),
+            history: Box::new(DefaultHistory::new()),
             alias: Alias::new(),
+            prompt: Box::new(DefaultPrompt::new()),
         }
     }
 }
@@ -74,8 +76,6 @@ impl Default for Runtime {
 
 impl Shell {
     pub fn run(&self, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
-        use reedline::*;
-
         // init stuff
         sig_handler()?;
         rt.env.load();

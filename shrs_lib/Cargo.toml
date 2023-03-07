@@ -15,8 +15,6 @@ signal-hook = "0.3"
 crossbeam-channel = "0.5"
 clap = { version = "4.1", features = ["derive"] }
 
-reedline = { path = "../reedline" }
-
 pino_deref = "0.1"
 
 thiserror = "1"

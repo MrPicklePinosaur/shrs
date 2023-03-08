@@ -99,7 +99,8 @@ impl Shell {
         let completer = shrs_line::completion::DefaultCompleter::new(completions);
         let menu = shrs_line::menu::DefaultMenu::new();
         let history = shrs_line::history::DefaultHistory::new();
-        let mut readline = shrs_line::Line::new(menu, completer, history);
+        let highlight = shrs_line::highlight::DefaultHighlight::new();
+        let mut readline = shrs_line::Line::new(menu, completer, history, highlight);
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 

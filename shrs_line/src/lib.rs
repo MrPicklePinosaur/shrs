@@ -1,6 +1,7 @@
 //! Readline implementation for shrs
 
 pub mod completion;
+pub mod highlight;
 pub mod history;
 pub mod menu;
 pub mod prompt;
@@ -20,7 +21,8 @@ use crossterm::{
     terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
     ExecutableCommand, QueueableCommand,
 };
-use history::History;
+use highlight::{DefaultHighlight, Highlight};
+use history::{DefaultHistory, History};
 use menu::{DefaultMenu, Menu};
 use prompt::Prompt;
 
@@ -28,6 +30,18 @@ pub struct Line {
     menu: Box<dyn Menu<MenuItem = String>>,
     completer: Box<dyn Completer>,
     history: Box<dyn History<HistoryItem = String>>,
+    highlight: Box<dyn Highlight>,
+}
+
+impl Default for Line {
+    fn default() -> Self {
+        Line::new(
+            DefaultMenu::new(),
+            DefaultCompleter::new(vec![]),
+            DefaultHistory::new(),
+            DefaultHighlight::new(),
+        )
+    }
 }
 
 impl Line {
@@ -35,11 +49,13 @@ impl Line {
         menu: impl Menu<MenuItem = String> + 'static,
         completer: impl Completer + 'static,
         history: impl History<HistoryItem = String> + 'static,
+        highlight: impl Highlight + 'static,
     ) -> Self {
         Line {
             menu: Box::new(menu),
             completer: Box::new(completer),
             history: Box::new(history),
+            highlight: Box::new(highlight),
         }
     }
 

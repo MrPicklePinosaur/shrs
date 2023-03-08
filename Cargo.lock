@@ -744,6 +744,7 @@ dependencies = [
  "anyhow",
  "clap",
  "crossbeam-channel",
+ "crossterm",
  "lalrpop",
  "lalrpop-util",
  "pino_deref",

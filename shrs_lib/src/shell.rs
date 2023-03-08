@@ -1,13 +1,14 @@
 use std::{
     env,
     fs::File,
-    io::{stdin, stdout, Write},
+    io::{stdin, stdout, BufWriter, Write},
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
 };
 
 use anyhow::anyhow;
+use crossterm::{style::Print, QueueableCommand};
 use shrs_line::{
     history::{DefaultHistory, History},
     prompt::{DefaultPrompt, Prompt},
@@ -24,10 +25,18 @@ use crate::{
     signal::sig_handler,
 };
 
-#[derive(Default)]
 pub struct Shell {
     pub hooks: Hooks,
     pub builtins: Builtins,
+}
+
+impl Default for Shell {
+    fn default() -> Self {
+        Shell {
+            hooks: Hooks::default(),
+            builtins: Builtins::default(),
+        }
+    }
 }
 
 // (shared) shell context
@@ -35,6 +44,8 @@ pub struct Context {
     pub history: Box<dyn History<HistoryItem = String>>,
     pub alias: Alias,
     pub prompt: Box<dyn Prompt>,
+    /// Output stream
+    pub out: BufWriter<std::io::Stdout>,
 }
 
 impl Default for Context {
@@ -43,6 +54,7 @@ impl Default for Context {
             history: Box::new(DefaultHistory::new()),
             alias: Alias::new(),
             prompt: Box::new(DefaultPrompt::new()),
+            out: BufWriter::new(stdout()),
         }
     }
 }
@@ -115,7 +127,7 @@ impl Shell {
                         continue;
                     },
                 };
-            self.command_output(rt, cmd_handle)?;
+            self.command_output(ctx, rt, cmd_handle)?;
         }
     }
 
@@ -242,7 +254,7 @@ impl Shell {
                 // TODO double check if these stdin and stdou params are correct
                 let a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = self.command_output(rt, a_cmd_handle)? {
+                if let Some(output) = self.command_output(ctx, rt, a_cmd_handle)? {
                     if output.status.success() ^ negate {
                         // TODO return something better (indicate that command failed with exit code)
                         return dummy_child();
@@ -284,7 +296,7 @@ impl Shell {
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        self.command_output(rt, a_cmd_handle)?;
+                        self.command_output(ctx, rt, a_cmd_handle)?;
                         let b_cmd_handle = self.eval_command(
                             ctx,
                             rt,
@@ -319,7 +331,7 @@ impl Shell {
                     let cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
-                    if let Some(output) = self.command_output(rt, cond_handle)? {
+                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
                         if output.status.success() {
                             let body_handle = self.eval_command(
                                 ctx,
@@ -359,7 +371,7 @@ impl Shell {
                     let cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to if statements
-                    if let Some(output) = self.command_output(rt, cond_handle)? {
+                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
                         if output.status.success() ^ negate {
                             let body_handle = self.eval_command(
                                 ctx,
@@ -369,7 +381,7 @@ impl Shell {
                                 Stdio::piped(),
                                 None,
                             )?;
-                            self.command_output(rt, body_handle)?;
+                            self.command_output(ctx, rt, body_handle)?;
                         } else {
                             break;
                         }
@@ -399,7 +411,7 @@ impl Shell {
                     rt.env.set(name, word); // TODO unset the var after the loop?
                     let body_handle =
                         self.eval_command(ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                    self.command_output(rt, body_handle)?;
+                    self.command_output(ctx, rt, body_handle)?;
                 }
 
                 dummy_child()
@@ -419,7 +431,7 @@ impl Shell {
                             Stdio::piped(),
                             None,
                         )?;
-                        self.command_output(rt, body_handle)?;
+                        self.command_output(ctx, rt, body_handle)?;
                         // TODO should we break? (should multiple match arms be matched?)
                     }
                 }
@@ -463,15 +475,20 @@ impl Shell {
     /// Small wrapper that outputs command output if exists
     fn command_output(
         &self,
+        ctx: &mut Context,
         rt: &mut Runtime,
         cmd_handle: Child,
     ) -> anyhow::Result<Option<Output>> {
         let cmd_output = cmd_handle.wait_with_output()?;
-        print!("{}", std::str::from_utf8(&cmd_output.stdout)?);
-        stdout().flush()?;
+        let utf8_output = std::str::from_utf8(&cmd_output.stdout)?;
+
+        ctx.out.queue(Print(utf8_output))?;
+
         let exit_code = cmd_output.status.code().unwrap();
         rt.exit_status = exit_code;
         (self.hooks.exit_code)(exit_code);
+
+        ctx.out.flush()?;
         Ok(Some(cmd_output))
     }
 }

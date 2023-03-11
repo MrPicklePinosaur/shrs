@@ -188,7 +188,7 @@ impl Line {
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Char(c),
-                            modifiers: KeyModifiers::NONE,
+                            ..
                         }) => {
                             buf.insert(ind as usize, c as u8);
                             ind = (ind + 1).min(buf.len() as i32);

@@ -1,11 +1,11 @@
-#[derive(Debug)]
-pub struct Redirect<'input> {
+#[derive(Debug, Clone)]
+pub struct Redirect {
     pub n: Option<usize>,
-    pub file: &'input str,
+    pub file: String,
     pub mode: RedirectMode,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RedirectMode {
     Read,
     Write,
@@ -16,14 +16,14 @@ pub enum RedirectMode {
     ReadWrite,
 }
 
-#[derive(Debug)]
-pub struct Assign<'input> {
-    pub var: &'input str,
-    pub val: &'input str,
+#[derive(Debug, Clone)]
+pub struct Assign {
+    pub var: String,
+    pub val: String,
 }
 
 /// Seperator character between commands
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SeperatorOp {
     /// Ampersand (&)
     Amp,
@@ -31,16 +31,16 @@ pub enum SeperatorOp {
     Semi,
 }
 
-#[derive(Debug)]
-pub enum Command<'input> {
+#[derive(Debug, Clone)]
+pub enum Command {
     /// Basic command
     ///
     /// ```sh
     /// ls -al
     /// ```
     Simple {
-        assigns: Vec<Assign<'input>>,
-        redirects: Vec<Redirect<'input>>,
+        assigns: Vec<Assign>,
+        redirects: Vec<Redirect>,
         args: Vec<String>,
     },
 
@@ -49,16 +49,16 @@ pub enum Command<'input> {
     /// ```sh
     /// cat .bashrc | wc -l
     /// ```
-    Pipeline(Box<Command<'input>>, Box<Command<'input>>),
+    Pipeline(Box<Command>, Box<Command>),
 
     /// Compound command of And
-    And(Box<Command<'input>>, Box<Command<'input>>),
+    And(Box<Command>, Box<Command>),
 
     /// Compound command of Or
-    Or(Box<Command<'input>>, Box<Command<'input>>),
+    Or(Box<Command>, Box<Command>),
 
     /// Negate the exit code of command
-    Not(Box<Command<'input>>),
+    Not(Box<Command>),
 
     /// Asynchronous list of commands
     ///
@@ -66,70 +66,70 @@ pub enum Command<'input> {
     /// command1 & command2
     /// ```
     /// We do not wait for `command1` to finish executing before executing `command2`
-    AsyncList(Box<Command<'input>>, Option<Box<Command<'input>>>),
+    AsyncList(Box<Command>, Option<Box<Command>>),
 
     /// Sequential list of commands
     /// ```sh
     /// command1 ; command2
     /// ```
     /// We wait for `command1` to finish executing before executing `command2`
-    SeqList(Box<Command<'input>>, Option<Box<Command<'input>>>),
+    SeqList(Box<Command>, Option<Box<Command>>),
 
     /// Subshell for command to run
     /// ```sh
     /// (cd src && ls)
     /// ```
-    Subshell(Box<Command<'input>>),
+    Subshell(Box<Command>),
 
     /// If statements
     If {
-        conds: Vec<Condition<'input>>,
-        else_part: Option<Box<Command<'input>>>,
+        conds: Vec<Condition>,
+        else_part: Option<Box<Command>>,
     },
 
     /// While statements
     While {
-        cond: Box<Command<'input>>,
-        body: Box<Command<'input>>,
+        cond: Box<Command>,
+        body: Box<Command>,
     },
 
     /// Until statements
     Until {
-        cond: Box<Command<'input>>,
-        body: Box<Command<'input>>,
+        cond: Box<Command>,
+        body: Box<Command>,
     },
 
     /// For loops
     For {
-        name: &'input str,
-        wordlist: Vec<&'input str>,
-        body: Box<Command<'input>>,
+        name: String,
+        wordlist: Vec<String>,
+        body: Box<Command>,
     },
 
     /// Case statements
     Case {
-        word: &'input str,
-        arms: Vec<CaseArm<'input>>,
+        word: String,
+        arms: Vec<CaseArm>,
     },
 
     Fn {
-        fname: &'input str,
-        body: Box<Command<'input>>,
+        fname: String,
+        body: Box<Command>,
     },
 
     /// No op
     None,
 }
 
-#[derive(Debug)]
-pub struct CaseArm<'input> {
-    pub pattern: Vec<&'input str>,
-    pub body: Box<Command<'input>>,
+#[derive(Debug, Clone)]
+pub struct CaseArm {
+    pub pattern: Vec<String>,
+    pub body: Box<Command>,
 }
 
 /// Corresponds to a condition followed by a body to execute in an 'if' or 'elif' block
-#[derive(Debug)]
-pub struct Condition<'input> {
-    pub cond: Box<Command<'input>>,
-    pub body: Box<Command<'input>>,
+#[derive(Debug, Clone)]
+pub struct Condition {
+    pub cond: Box<Command>,
+    pub body: Box<Command>,
 }

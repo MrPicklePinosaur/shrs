@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     fs::File,
     io::{stdin, stdout, BufWriter, Write},
@@ -70,6 +71,8 @@ pub struct Runtime {
     pub args: Vec<String>,
     /// Exit status of most recent pipeline
     pub exit_status: i32,
+    /// List of defined functions
+    pub functions: HashMap<String, Box<ast::Command>>,
 }
 
 impl Default for Runtime {
@@ -82,6 +85,7 @@ impl Default for Runtime {
             // TDOO currently unused (since we have not implemented functions etc)
             args: vec![],
             exit_status: 0,
+            functions: HashMap::new(),
         }
     }
 }
@@ -439,6 +443,13 @@ impl Shell {
                 dummy_child()
             },
             ast::Command::Fn { fname, body } => {
+                // TODO make sure function name is not reserved
+
+                if rt.functions.contains_key(fname) {
+                    // TODO return error for duplicate function name (or override old value?)
+                }
+
+                rt.functions.insert(fname.to_string(), body.to_owned());
                 todo!()
             },
             ast::Command::None => dummy_child(),

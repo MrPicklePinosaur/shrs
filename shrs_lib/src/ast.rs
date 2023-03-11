@@ -112,6 +112,11 @@ pub enum Command<'input> {
         arms: Vec<CaseArm<'input>>,
     },
 
+    Fn {
+        fname: &'input str,
+        body: Box<Command<'input>>,
+    },
+
     /// No op
     None,
 }

@@ -438,6 +438,9 @@ impl Shell {
 
                 dummy_child()
             },
+            ast::Command::Fn { fname, body } => {
+                todo!()
+            },
             ast::Command::None => dummy_child(),
         }
     }

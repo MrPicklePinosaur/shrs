@@ -57,6 +57,7 @@ pub enum Token<'input> {
     WORD(&'input str),
     ASSIGNMENT_WORD(&'input str),
     NAME(&'input str),
+    FNAME(&'input str),
     IO_NUMBER(&'input str),
 }
 

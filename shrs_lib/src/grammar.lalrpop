@@ -57,6 +57,7 @@ extern {
 	"WORD" => lexer::Token::WORD(<&'input str>),
 	"ASSIGNMENT_WORD" => lexer::Token::ASSIGNMENT_WORD(<&'input str>),
 	"NAME" => lexer::Token::NAME(<&'input str>),
+	"FNAME" => lexer::Token::FNAME(<&'input str>),
 	"IO_NUMBER" => lexer::Token::IO_NUMBER(<&'input str>),
     
     }
@@ -111,6 +112,7 @@ pub PipeSequence: ast::Command<'input> = {
 pub Command: ast::Command<'input> = {
     <s:SimpleCommand> => s,
     <c:CompoundCommand> => c,
+    <f:FunctionDefinition> => f,
 }
 
 pub SimpleCommand: ast::Command<'input> = {
@@ -128,6 +130,13 @@ pub CompoundCommand: ast::Command<'input> = {
     <u:UntilClause> => u,
     <f:ForClause> => f,
     <c:CaseClause> => c,
+}
+
+// TODO use FNAME token
+pub FunctionDefinition: ast::Command<'input> = <fname:"WORD"> "(" ")" Linebreak <body:FunctionBody> => ast::Command::Fn { fname, body: Box::new(body) };
+
+pub FunctionBody: ast::Command<'input> = {
+    <c:CompoundCommand> => c,
 }
 
 // BRACE GROUP

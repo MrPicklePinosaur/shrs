@@ -21,7 +21,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{Hooks, StartupHookCtx},
-    lexer::Lexer,
+    lexer::{Lexer, RESERVED_WORDS},
     parser,
     signal::sig_handler,
 };
@@ -234,9 +234,23 @@ impl Shell {
                     "exit" => self.builtins.exit.run(ctx, rt, &args),
                     "history" => self.builtins.history.run(ctx, rt, &args),
                     "debug" => self.builtins.debug.run(ctx, rt, &args),
-                    _ => self.run_external_command(
-                        ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
-                    ),
+                    cmd_name @ _ => {
+                        // look for defined functions
+                        let cmd_body = rt.functions.get(cmd_name).cloned();
+                        match cmd_body {
+                            Some(ref cmd_body) => self.eval_command(
+                                ctx,
+                                rt,
+                                cmd_body,
+                                Stdio::inherit(),
+                                Stdio::piped(),
+                                None,
+                            ),
+                            None => self.run_external_command(
+                                ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                            ),
+                        }
+                    },
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
@@ -443,14 +457,15 @@ impl Shell {
                 dummy_child()
             },
             ast::Command::Fn { fname, body } => {
-                // TODO make sure function name is not reserved
-
-                if rt.functions.contains_key(fname) {
-                    // TODO return error for duplicate function name (or override old value?)
+                if RESERVED_WORDS.contains(&fname.as_str()) {
+                    eprintln!("function nane cannot be a reserved keyword");
+                    return dummy_child(); // TODO come up with better return value
                 }
 
+                // TODO hook for redefining function?
                 rt.functions.insert(fname.to_string(), body.to_owned());
-                todo!()
+
+                dummy_child()
             },
             ast::Command::None => dummy_child(),
         }

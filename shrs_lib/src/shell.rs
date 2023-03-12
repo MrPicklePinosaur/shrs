@@ -229,28 +229,21 @@ impl Shell {
                 // TODO which stdin var to use?, previous command or from file redirection?
 
                 // TODO currently don't support assignment for builtins (should it be supported even?)
-                match cmd_name.as_str() {
-                    "cd" => self.builtins.cd.run(ctx, rt, &args),
-                    "exit" => self.builtins.exit.run(ctx, rt, &args),
-                    "history" => self.builtins.history.run(ctx, rt, &args),
-                    "debug" => self.builtins.debug.run(ctx, rt, &args),
-                    cmd_name @ _ => {
-                        // look for defined functions
-                        let cmd_body = rt.functions.get(cmd_name).cloned();
-                        match cmd_body {
-                            Some(ref cmd_body) => self.eval_command(
-                                ctx,
-                                rt,
-                                cmd_body,
-                                Stdio::inherit(),
-                                Stdio::piped(),
-                                None,
-                            ),
-                            None => self.run_external_command(
-                                ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
-                            ),
-                        }
+                for (builtin_name, builtin_cmd) in self.builtins.builtins.iter() {
+                    if builtin_name == &cmd_name.as_str() {
+                        return builtin_cmd.run(ctx, rt, &args);
+                    }
+                }
+
+                // otherwise look for defined functions
+                let cmd_body = rt.functions.get(cmd_name.as_str()).cloned();
+                match cmd_body {
+                    Some(ref cmd_body) => {
+                        self.eval_command(ctx, rt, cmd_body, Stdio::inherit(), Stdio::piped(), None)
                     },
+                    None => self.run_external_command(
+                        ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                    ),
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {

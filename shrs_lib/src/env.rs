@@ -33,4 +33,8 @@ impl Env {
     pub fn all(&self) -> &HashMap<String, String> {
         &self.vars
     }
+
+    pub fn remove(&mut self, var: &str) {
+        self.vars.remove(var);
+    }
 }

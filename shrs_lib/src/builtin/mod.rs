@@ -1,29 +1,57 @@
 mod cd;
 mod debug;
 mod exit;
+mod export;
 mod history;
 
-use std::process::Child;
+use std::{collections::HashMap, process::Child};
 
-use self::{cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin, history::HistoryBuiltin};
+use self::{
+    cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin, export::ExportBuiltin,
+    history::HistoryBuiltin,
+};
 use crate::shell::{Context, Runtime};
+
+macro_rules! hashmap (
+    { $($key:expr => $value:expr),+ } => {
+	{
+	    let mut m = std::collections::HashMap::new();
+	    $(
+		m.insert($key, $value);
+	    )+
+	    m
+	}
+    };
+);
 
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 pub struct Builtins {
-    pub history: Box<dyn BuiltinCmd>,
-    pub exit: Box<dyn BuiltinCmd>,
-    pub cd: Box<dyn BuiltinCmd>,
-    pub debug: Box<dyn BuiltinCmd>,
+    pub builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
 }
 
 impl Default for Builtins {
     fn default() -> Self {
         Builtins {
-            history: Box::new(HistoryBuiltin::default()),
-            exit: Box::new(ExitBuiltin::default()),
-            cd: Box::new(CdBuiltin::default()),
-            debug: Box::new(DebugBuiltin::default()),
+            builtins: HashMap::from([
+                (
+                    "history",
+                    Box::new(HistoryBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "exit",
+                    Box::new(ExitBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                ("cd", Box::new(CdBuiltin::default()) as Box<dyn BuiltinCmd>),
+                (
+                    "debug",
+                    Box::new(DebugBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "export",
+                    Box::new(ExportBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+            ]),
         }
     }
 }

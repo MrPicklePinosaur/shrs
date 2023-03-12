@@ -15,7 +15,7 @@ impl ParserContext {
         ParserContext {}
     }
 
-    pub fn parse<'a>(&mut self, lexer: Lexer<'a>) -> Result<ast::Command<'a>, ParserError> {
+    pub fn parse(&mut self, lexer: Lexer) -> Result<ast::Command, ParserError> {
         grammar::ProgramParser::new()
             .parse(lexer.input(), lexer)
             .map_err(|e| ParserError::UnsuccessfulParse)

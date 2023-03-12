@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     fs::File,
     io::{stdin, stdout, BufWriter, Write},
@@ -20,7 +21,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{Hooks, StartupHookCtx},
-    lexer::Lexer,
+    lexer::{Lexer, RESERVED_WORDS},
     parser,
     signal::sig_handler,
 };
@@ -70,6 +71,8 @@ pub struct Runtime {
     pub args: Vec<String>,
     /// Exit status of most recent pipeline
     pub exit_status: i32,
+    /// List of defined functions
+    pub functions: HashMap<String, Box<ast::Command>>,
 }
 
 impl Default for Runtime {
@@ -82,6 +85,7 @@ impl Default for Runtime {
             // TDOO currently unused (since we have not implemented functions etc)
             args: vec![],
             exit_status: 0,
+            functions: HashMap::new(),
         }
     }
 }
@@ -230,9 +234,23 @@ impl Shell {
                     "exit" => self.builtins.exit.run(ctx, rt, &args),
                     "history" => self.builtins.history.run(ctx, rt, &args),
                     "debug" => self.builtins.debug.run(ctx, rt, &args),
-                    _ => self.run_external_command(
-                        ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
-                    ),
+                    cmd_name @ _ => {
+                        // look for defined functions
+                        let cmd_body = rt.functions.get(cmd_name).cloned();
+                        match cmd_body {
+                            Some(ref cmd_body) => self.eval_command(
+                                ctx,
+                                rt,
+                                cmd_body,
+                                Stdio::inherit(),
+                                Stdio::piped(),
+                                None,
+                            ),
+                            None => self.run_external_command(
+                                ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                            ),
+                        }
+                    },
                 }
             },
             ast::Command::Pipeline(a_cmd, b_cmd) => {
@@ -435,6 +453,17 @@ impl Shell {
                         // TODO should we break? (should multiple match arms be matched?)
                     }
                 }
+
+                dummy_child()
+            },
+            ast::Command::Fn { fname, body } => {
+                if RESERVED_WORDS.contains(&fname.as_str()) {
+                    eprintln!("function nane cannot be a reserved keyword");
+                    return dummy_child(); // TODO come up with better return value
+                }
+
+                // TODO hook for redefining function?
+                rt.functions.insert(fname.to_string(), body.to_owned());
 
                 dummy_child()
             },

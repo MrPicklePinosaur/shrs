@@ -57,22 +57,23 @@ extern {
 	"WORD" => lexer::Token::WORD(<&'input str>),
 	"ASSIGNMENT_WORD" => lexer::Token::ASSIGNMENT_WORD(<&'input str>),
 	"NAME" => lexer::Token::NAME(<&'input str>),
+	"FNAME" => lexer::Token::FNAME(<&'input str>),
 	"IO_NUMBER" => lexer::Token::IO_NUMBER(<&'input str>),
     
     }
 }
 
-pub Program: ast::Command<'input> = {
+pub Program: ast::Command = {
     Linebreak <cs:CompleteCommands> Linebreak => cs,
     Linebreak => ast::Command::None,
 }
 
-pub CompleteCommands: ast::Command<'input> = {
+pub CompleteCommands: ast::Command = {
     <cs:CompleteCommands> NewlineList <c:CompleteCommand> => ast::Command::SeqList(Box::new(cs), Some(Box::new(c))), // double check seqlist is correct here
     <c:CompleteCommand> => c,
 }
 
-pub CompleteCommand: ast::Command<'input> = {
+pub CompleteCommand: ast::Command = {
     <l:List> <s:SeperatorOp> => {
         match s {
 	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), None),
@@ -82,7 +83,7 @@ pub CompleteCommand: ast::Command<'input> = {
     <l:List> => l,
 }
 
-pub List: ast::Command<'input> = {
+pub List: ast::Command = {
     <l:List> <s:SeperatorOp> <a:AndOr> => {
         match s {
 	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
@@ -92,35 +93,36 @@ pub List: ast::Command<'input> = {
     <a:AndOr> => a,
 }
 
-pub AndOr: ast::Command<'input> = {
+pub AndOr: ast::Command = {
     <a:AndOr> "&&" Linebreak <p:Pipeline> => ast::Command::And(Box::new(a), Box::new(p)),
     <a:AndOr> "||" Linebreak <p:Pipeline> => ast::Command::Or(Box::new(a), Box::new(p)),
     <p:Pipeline> => p,
 }
 
-pub Pipeline: ast::Command<'input> = {
+pub Pipeline: ast::Command = {
     "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ps)),
     <ps:PipeSequence> => ps,
 }
 
-pub PipeSequence: ast::Command<'input> = {
+pub PipeSequence: ast::Command = {
     <ps:PipeSequence> "|" Linebreak <c:Command> => ast::Command::Pipeline(Box::new(ps), Box::new(c)),
     <c:Command> => c,
 }
 
-pub Command: ast::Command<'input> = {
+pub Command: ast::Command = {
     <s:SimpleCommand> => s,
     <c:CompoundCommand> => c,
+    <f:FunctionDefinition> => f,
 }
 
-pub SimpleCommand: ast::Command<'input> = {
+pub SimpleCommand: ast::Command = {
     <assigns: Assign*> <prefix: Redirect*> <words: "WORD"+> <suffix: Redirect*> => {
     	let redirects = prefix.into_iter().chain(suffix.into_iter()).collect();
 	ast::Command::Simple { assigns, redirects, args: words.iter().map(|x| x.to_string()).collect::<Vec<_>>() }
     }
 }
 
-pub CompoundCommand: ast::Command<'input> = {
+pub CompoundCommand: ast::Command = {
     <b:BraceGroup> => b,
     <s:Subshell> => ast::Command::Subshell(Box::new(s)),
     <i:IfClause> => i,
@@ -130,17 +132,24 @@ pub CompoundCommand: ast::Command<'input> = {
     <c:CaseClause> => c,
 }
 
+// TODO use FNAME token
+pub FunctionDefinition: ast::Command = <fname:"WORD"> "(" ")" Linebreak <body:FunctionBody> => ast::Command::Fn { fname: fname.to_string(), body: Box::new(body) };
+
+pub FunctionBody: ast::Command = {
+    <c:CompoundCommand> => c,
+}
+
 // BRACE GROUP
 
-pub BraceGroup: ast::Command<'input> = "{" <c:CompoundList> "}" => c;
+pub BraceGroup: ast::Command = "{" <c:CompoundList> "}" => c;
 
 // SUBSHELL
 
-pub Subshell: ast::Command<'input> = {
+pub Subshell: ast::Command = {
     "(" <c:CompoundList> ")" => c,
 }
 
-pub CompoundList: ast::Command<'input> = {
+pub CompoundList: ast::Command = {
     Linebreak <t:Term> => t,
     Linebreak <t:Term> <s:Seperator> => {
 	match s {
@@ -151,7 +160,7 @@ pub CompoundList: ast::Command<'input> = {
     }
 }
 
-pub Term: ast::Command<'input> = {
+pub Term: ast::Command = {
     <t:Term> <s:Seperator> <a:AndOr> => {
 	match s {
 	      None => t,
@@ -164,7 +173,7 @@ pub Term: ast::Command<'input> = {
 
 // IF CLAUSE
 
-pub IfClause: ast::Command<'input> = {
+pub IfClause: ast::Command = {
     "if" <cond:CompoundList> "then" <body:CompoundList> <mut elifs:ElifBody*> <else_part:ElseBody?> "fi" => {
 
 	let mut conds = vec![
@@ -186,72 +195,72 @@ pub IfClause: ast::Command<'input> = {
     }
 }
 
-pub ElifBody: ast::Condition<'input> = "elif" <cond:CompoundList> "then" <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
-pub ElseBody: ast::Command<'input> = "else" <body:CompoundList> => body;
+pub ElifBody: ast::Condition = "elif" <cond:CompoundList> "then" <body:CompoundList> => ast::Condition { cond: Box::new(cond), body: Box::new(body) };
+pub ElseBody: ast::Command = "else" <body:CompoundList> => body;
 
 // WHILE/UNTIL CLAUSE
 
-pub WhileClause: ast::Command<'input> = {
+pub WhileClause: ast::Command = {
     "while" <cond:CompoundList> <d:DoGroup> => ast::Command::While { cond: Box::new(cond), body: Box::new(d) },
 }
 
-pub UntilClause: ast::Command<'input> = {
+pub UntilClause: ast::Command = {
     "until" <cond:CompoundList> <d:DoGroup> => ast::Command::Until { cond: Box::new(cond), body: Box::new(d) },
 }
 
 // FOR CLAUSE
 
 // TODO actually use "NAME" token
-pub ForClause: ast::Command<'input> = {
-    "for" <name: "WORD"> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
-    "for" <name: "WORD"> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist: vec![], body: Box::new(d) },
-    "for" <name: "WORD"> Linebreak "in" <wordlist: "WORD"*> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name, wordlist, body: Box::new(d) },
+pub ForClause: ast::Command = {
+    "for" <name: "WORD"> <d:DoGroup> => ast::Command::For { name: name.to_string(), wordlist: vec![], body: Box::new(d) },
+    "for" <name: "WORD"> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name: name.to_string(), wordlist: vec![], body: Box::new(d) },
+    "for" <name: "WORD"> Linebreak "in" <wordlist: "WORD"*> <s:SequentialSep> <d:DoGroup> => ast::Command::For { name: name.to_string(), wordlist: wordlist.iter().map(|x| x.to_string()).collect::<Vec<_>>(), body: Box::new(d) },
 }
 
 // CASE CLAUSE
 
-pub CaseClause: ast::Command<'input> = {
-    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseList> "esac" => ast::Command::Case { word: w, arms: c },
-    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseListNs> "esac" => ast::Command::Case { word: w, arms: c },
-    "case" <w: "WORD"> Linebreak "in" Linebreak "esac" => ast::Command::Case { word: w, arms: vec![] },
+pub CaseClause: ast::Command = {
+    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseList> "esac" => ast::Command::Case { word: w.to_string(), arms: c },
+    "case" <w: "WORD"> Linebreak "in" Linebreak <c:CaseListNs> "esac" => ast::Command::Case { word: w.to_string(), arms: c },
+    "case" <w: "WORD"> Linebreak "in" Linebreak "esac" => ast::Command::Case { word: w.to_string(), arms: vec![] },
 }
 
-pub CaseListNs: Vec<ast::CaseArm<'input>> = <mut cs:CaseItem*> <c:CaseItemNs> => {
+pub CaseListNs: Vec<ast::CaseArm> = <mut cs:CaseItem*> <c:CaseItemNs> => {
     cs.push(c);
     cs
 };
-pub CaseList: Vec<ast::CaseArm<'input>> = <cs:CaseItem+> => cs;
+pub CaseList: Vec<ast::CaseArm> = <cs:CaseItem+> => cs;
 
-pub CaseItemNs: ast::CaseArm<'input> = {
+pub CaseItemNs: ast::CaseArm = {
     "("? <p:Pattern> ")" Linebreak => ast::CaseArm { pattern: p, body: Box::new(ast::Command::None) },
     "("? <p:Pattern> ")" <c:CompoundList> => ast::CaseArm { pattern: p, body: Box::new(c) },
 }
-pub CaseItem: ast::CaseArm<'input> = {
+pub CaseItem: ast::CaseArm = {
     "("? <p:Pattern> ")" Linebreak ";;" Linebreak => ast::CaseArm { pattern: p, body: Box::new(ast::Command::None) },
     "("? <p:Pattern> ")" <c:CompoundList> ";;" Linebreak => ast::CaseArm { pattern: p, body: Box::new(c) },
 }
 
-pub Pattern: Vec<&'input str> = {
-    <w: "WORD"> => vec![w],
+pub Pattern: Vec<String> = {
+    <w: "WORD"> => vec![w.to_string()],
     <mut p:Pattern> "|" <w: "WORD"> => {
-    	p.push(w);
+    	p.push(w.to_string());
 	p
     }
 }
 
-pub DoGroup: ast::Command<'input> = "do" <body:CompoundList> "done" => body;
+pub DoGroup: ast::Command = "do" <body:CompoundList> "done" => body;
 
-pub Redirect: ast::Redirect<'input> = {
-    <n: "IO_NUMBER"?> "<"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::Read },
-    <n: "IO_NUMBER"?> ">"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::Write },
-    <n: "IO_NUMBER"?> "<<" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadAppend },
-    <n: "IO_NUMBER"?> ">>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::WriteAppend },
-    <n: "IO_NUMBER"?> "<&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadDup },
-    <n: "IO_NUMBER"?> ">&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::WriteDup },
-    <n: "IO_NUMBER"?> "<>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file, mode: ast::RedirectMode::ReadWrite },
+pub Redirect: ast::Redirect = {
+    <n: "IO_NUMBER"?> "<"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::Read },
+    <n: "IO_NUMBER"?> ">"  <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::Write },
+    <n: "IO_NUMBER"?> "<<" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::ReadAppend },
+    <n: "IO_NUMBER"?> ">>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::WriteAppend },
+    <n: "IO_NUMBER"?> "<&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::ReadDup },
+    <n: "IO_NUMBER"?> ">&" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::WriteDup },
+    <n: "IO_NUMBER"?> "<>" <file: "WORD"> => ast::Redirect { n: n.and_then(|x| str::parse::<usize>(x).ok()), file: file.to_string(), mode: ast::RedirectMode::ReadWrite },
 }
 
-pub Assign: ast::Assign<'input> = <var:"WORD"> "=" <val:"WORD"> => ast::Assign { var, val };
+pub Assign: ast::Assign = <var:"WORD"> "=" <val:"WORD"> => ast::Assign { var: var.to_string(), val: val.to_string() };
 
 pub Linebreak: () = NewlineList? => ();
 pub NewlineList: () = "\n"+ => ();

@@ -2,7 +2,15 @@
 
 use std::str::CharIndices;
 
+use lazy_static::lazy_static;
 use thiserror::Error;
+
+lazy_static! {
+    pub static ref RESERVED_WORDS: Vec<&'static str> = vec![
+        "!", "{", "}", "case", "do", "done", "elif", "else", "esac", "fi", "for", "if", "in",
+        "then", "until", "while"
+    ];
+}
 
 pub type Spanned<Token, Loc, Error> = Result<(Loc, Token, Loc), Error>;
 
@@ -56,6 +64,7 @@ pub enum Token<'input> {
 
     WORD(&'input str),
     ASSIGNMENT_WORD(&'input str),
+    FNAME(&'input str),
     NAME(&'input str),
     IO_NUMBER(&'input str),
 }

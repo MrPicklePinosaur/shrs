@@ -20,6 +20,7 @@ pino_deref = "0.1"
 
 thiserror = "1"
 anyhow = "1"
+lazy_static = "1.4"
 
 shrs_line = { path = "../shrs_line" }
 

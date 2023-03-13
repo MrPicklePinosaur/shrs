@@ -1,14 +1,16 @@
+mod alias;
 mod cd;
 mod debug;
 mod exit;
 mod export;
 mod history;
+mod unalias;
 
 use std::{collections::HashMap, process::Child};
 
 use self::{
-    cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin, export::ExportBuiltin,
-    history::HistoryBuiltin,
+    alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
+    export::ExportBuiltin, history::HistoryBuiltin, unalias::UnaliasBuiltin,
 };
 use crate::shell::{Context, Runtime};
 
@@ -50,6 +52,14 @@ impl Default for Builtins {
                 (
                     "export",
                     Box::new(ExportBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "alias",
+                    Box::new(AliasBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "unalias",
+                    Box::new(UnaliasBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
             ]),
         }

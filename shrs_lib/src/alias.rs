@@ -23,4 +23,8 @@ impl Alias {
     pub fn unset(&mut self, alias: &str) {
         self.aliases.remove(alias);
     }
+
+    pub fn clear(&mut self) {
+        self.aliases.clear();
+    }
 }

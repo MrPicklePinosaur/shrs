@@ -74,7 +74,9 @@ impl Line {
 
         enable_raw_mode()?;
 
-        painter.paint(prompt, &self.menu, "", ind as usize).unwrap();
+        painter
+            .paint(prompt, &self.menu, "", ind as usize, &self.cursor)
+            .unwrap();
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -222,7 +224,7 @@ impl Line {
                 let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                 painter
-                    .paint(prompt, &self.menu, &res, ind as usize)
+                    .paint(prompt, &self.menu, &res, ind as usize, &self.cursor)
                     .unwrap();
             }
         }
@@ -261,6 +263,7 @@ impl Painter {
         menu: &Box<dyn Menu<MenuItem = String>>,
         buf: &str,
         cursor_ind: usize,
+        cursor: &Box<dyn Cursor>,
     ) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
@@ -298,6 +301,7 @@ impl Painter {
 
         self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::Show)?;
+        self.out.queue(cursor.get_cursor())?;
         self.out.flush()?;
 
         Ok(())

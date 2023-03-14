@@ -12,6 +12,7 @@ use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use shrs_line::{
     history::{DefaultHistory, History},
+    line::Line,
     prompt::{DefaultPrompt, Prompt},
 };
 
@@ -41,7 +42,9 @@ impl Default for Shell {
 }
 
 // (shared) shell context
+// TODO can technically unify shell and context
 pub struct Context {
+    pub readline: Line,
     pub history: Box<dyn History<HistoryItem = String>>,
     pub alias: Alias,
     pub prompt: Box<dyn Prompt>,
@@ -52,6 +55,7 @@ pub struct Context {
 impl Default for Context {
     fn default() -> Self {
         Context {
+            readline: Line::default(),
             history: Box::new(DefaultHistory::new()),
             alias: Alias::new(),
             prompt: Box::new(DefaultPrompt::new()),
@@ -96,22 +100,16 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
+        // TODO use actual ctx.prompt
         let prompt = shrs_line::prompt::DefaultPrompt::new();
-
-        // for now complete command names only
-        let completions: Vec<String> = find_executables_in_path(rt.env.get("PATH").unwrap());
-        let completer = shrs_line::completion::DefaultCompleter::new(completions);
-        let menu = shrs_line::menu::DefaultMenu::new();
-        let history = shrs_line::history::DefaultHistory::new();
-        let mut readline = shrs_line::Line::new(menu, completer, history);
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 
         loop {
-            let line = readline.read_line(&prompt);
+            let line = ctx.readline.read_line(&prompt);
 
             // attempt to expand alias
-            let expanded = ctx.alias.get(&line).unwrap_or(&line).clone();
+            let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);

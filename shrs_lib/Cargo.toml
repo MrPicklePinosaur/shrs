@@ -14,7 +14,7 @@ regex = "1"
 signal-hook = "0.3"
 crossbeam-channel = "0.5"
 clap = { version = "4.1", features = ["derive"] }
-crossterm = "0.23"
+crossterm = "0.26"
 
 pino_deref = "0.1"
 

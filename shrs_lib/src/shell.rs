@@ -12,6 +12,7 @@ use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use shrs_line::{
     history::{DefaultHistory, History},
+    line::Line,
     prompt::{DefaultPrompt, Prompt},
 };
 
@@ -103,7 +104,8 @@ impl Shell {
         let completer = shrs_line::completion::DefaultCompleter::new(completions);
         let menu = shrs_line::menu::DefaultMenu::new();
         let history = shrs_line::history::DefaultHistory::new();
-        let mut readline = shrs_line::Line::new(menu, completer, history);
+        let cursor = shrs_line::cursor::DefaultCursor::default();
+        let mut readline = shrs_line::line::Line::new(menu, completer, history, cursor);
 
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 
@@ -111,7 +113,7 @@ impl Shell {
             let line = readline.read_line(&prompt);
 
             // attempt to expand alias
-            let expanded = ctx.alias.get(&line).unwrap_or(&line).clone();
+            let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);

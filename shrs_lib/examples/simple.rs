@@ -36,8 +36,13 @@ fn main() {
         ..Default::default()
     };
 
-    let mut alias = Alias::new();
-    alias.set("ls", "ls -al");
+    let alias = Alias::from_iter([
+        ("l".into(), "ls".into()),
+        ("c".into(), "cd".into()),
+        ("g".into(), "git".into()),
+        ("v".into(), "vim".into()),
+        ("la".into(), "ls -a".into()),
+    ]);
     let mut ctx = Context {
         readline,
         alias,

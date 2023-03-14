@@ -22,7 +22,7 @@ impl BuiltinCmd for CdBuiltin {
 
         let path = Path::new(raw_path);
         let new_path = rt.working_dir.join(path);
-        // env::set_current_dir(path)?; // env current dir should just remain as the directory the shell was started in
+        env::set_current_dir(path)?; // TODO should env current dir remain as the directory the shell was started in?
         rt.working_dir = new_path.clone();
         rt.env.set("PWD", new_path.to_str().unwrap());
 

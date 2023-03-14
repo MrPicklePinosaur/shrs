@@ -29,6 +29,7 @@ use crate::{
 
 pub struct Shell {
     pub hooks: Hooks,
+    /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
 }
 
@@ -47,6 +48,7 @@ pub struct Context {
     pub readline: Line,
     pub history: Box<dyn History<HistoryItem = String>>,
     pub alias: Alias,
+    /// Custom prompt
     pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
@@ -67,7 +69,9 @@ impl Default for Context {
 // Runtime context for the shell
 #[derive(Clone)]
 pub struct Runtime {
+    /// Current working directory
     pub working_dir: PathBuf,
+    /// Environment variables
     pub env: Env,
     /// Name of the shell or shell script
     pub name: String,
@@ -100,13 +104,10 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        // TODO use actual ctx.prompt
-        let prompt = shrs_line::prompt::DefaultPrompt::new();
-
         (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
 
         loop {
-            let line = ctx.readline.read_line(&prompt);
+            let line = ctx.readline.read_line(&ctx.prompt);
 
             // attempt to expand alias
             let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
@@ -562,7 +563,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
 }
 
 /// Looks through each directory in path and finds executables
-fn find_executables_in_path(path_str: &str) -> Vec<String> {
+pub fn find_executables_in_path(path_str: &str) -> Vec<String> {
     use std::{fs, os::unix::fs::PermissionsExt};
 
     let mut execs = vec![];

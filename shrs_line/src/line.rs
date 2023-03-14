@@ -53,14 +53,17 @@ impl Line {
         }
     }
 
-    pub fn read_line(&mut self, prompt: &impl Prompt) -> String {
+    pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
         // get line
         let input = self.read_events(prompt).unwrap();
 
         input
     }
 
-    fn read_events(&mut self, prompt: &impl Prompt) -> crossterm::Result<String> {
+    fn read_events<T: Prompt + ?Sized>(
+        &mut self,
+        prompt: impl AsRef<T>,
+    ) -> crossterm::Result<String> {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
 
@@ -75,7 +78,7 @@ impl Line {
         enable_raw_mode()?;
 
         painter
-            .paint(prompt, &self.menu, "", ind as usize, &self.cursor)
+            .paint(&prompt, &self.menu, "", ind as usize, &self.cursor)
             .unwrap();
 
         loop {
@@ -224,7 +227,7 @@ impl Line {
                 let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                 painter
-                    .paint(prompt, &self.menu, &res, ind as usize, &self.cursor)
+                    .paint(&prompt, &self.menu, &res, ind as usize, &self.cursor)
                     .unwrap();
             }
         }
@@ -257,9 +260,9 @@ impl Painter {
         })
     }
 
-    pub fn paint(
+    pub fn paint<T: Prompt + ?Sized>(
         &mut self,
-        prompt: &impl Prompt,
+        prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = String>>,
         buf: &str,
         cursor_ind: usize,
@@ -276,7 +279,7 @@ impl Painter {
 
         // render line
         self.out
-            .queue(Print(prompt.prompt_left()))?
+            .queue(Print(prompt.as_ref().prompt_left()))?
             .queue(Print(&buf[..cursor_ind]))?
             .queue(cursor::SavePosition)?
             .queue(Print(&buf[cursor_ind..]))?;

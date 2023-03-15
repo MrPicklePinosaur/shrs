@@ -22,7 +22,7 @@ use crate::{
     ast::{self, Assign},
     builtin::Builtins,
     env::Env,
-    hooks::{Hooks, StartupHookCtx},
+    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupHookCtx},
     lexer::{Lexer, RESERVED_WORDS},
     parser,
     signal::sig_handler,
@@ -154,6 +154,13 @@ impl Shell {
 
             // attempt to expand alias
             let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
+
+            // TODO not sure if hook should run here (since not all vars are expanded yet)
+            let hook_ctx = BeforeCommandCtx {
+                raw_command: line.clone(),
+                command: expanded.clone(),
+            };
+            (self.hooks.before_command)(&mut ctx.out, hook_ctx)?;
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
@@ -550,7 +557,12 @@ impl Shell {
 
         let exit_code = cmd_output.status.code().unwrap();
         rt.exit_status = exit_code;
-        (self.hooks.exit_code)(exit_code);
+
+        let hook_ctx = AfterCommandCtx {
+            exit_code,
+            cmd_time: 0.0,
+        };
+        (self.hooks.after_command)(&mut ctx.out, hook_ctx)?;
 
         ctx.out.flush()?;
         Ok(Some(cmd_output))

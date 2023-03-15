@@ -218,8 +218,6 @@ impl<'input> Iterator for Lexer<'input> {
                 '`' => Some(Ok((start, Token::BACKTICK, end))),
                 '=' => Some(Ok((start, Token::EQUAL, end))),
                 '\\' => Some(Ok((start, Token::BACKSLASH, end))),
-                '\'' => Some(Ok((start, Token::SINGLEQUOTE, end))),
-                '"' => Some(Ok((start, Token::DOUBLEQUOTE, end))),
                 '<' => match self.lookahead {
                     // TODO current doesn't support <<-
                     Some((_, '<', new_end)) => {
@@ -257,7 +255,8 @@ impl<'input> Iterator for Lexer<'input> {
                 '{' => Some(Ok((start, Token::LBRACE, end))),
                 '}' => Some(Ok((start, Token::RBRACE, end))),
                 '!' => Some(Ok((start, Token::BANG, end))),
-
+                '\'' => Some(self.single_quote(start, end)),
+                '"' => Some(self.double_quote(start, end)),
                 ch if is_word_start(ch) => Some(self.keyword(start, end)),
                 ch if ch.is_whitespace() => continue,
                 ch => return Some(Err(Error::UnrecognizedChar(start, ch, end))),

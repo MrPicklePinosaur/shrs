@@ -4,6 +4,7 @@ use shrs::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
+    hooks::{Hooks, StartupHookCtx},
     prompt::{hostname, top_pwd, username},
     shell::{self, find_executables_in_path, Context, Runtime, ShellConfig},
 };
@@ -50,6 +51,15 @@ fn main() {
         ("v".into(), "vim".into()),
         ("la".into(), "ls -a".into()),
     ]);
+
+    // TODO also display the build version
+    let hooks = Hooks {
+        startup: |_ctx: StartupHookCtx| {
+            println!("Welcome to shrs build");
+            println!("----------------");
+        },
+        ..Default::default()
+    };
 
     let myshell = ShellConfigBuilder::default()
         .with_env(env)

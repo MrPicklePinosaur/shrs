@@ -2,4 +2,5 @@
 members = [
     "shrs_lib",
     "shrs_line",
+    "shrs_example",
 ]

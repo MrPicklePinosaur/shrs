@@ -1,0 +1,17 @@
+[package]
+name = "shrs_example"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "example shell built using shrs"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+# build = "build.rs"
+
+[dependencies]
+shrs = { path = "../shrs_lib" }
+shrs_line = { path = "../shrs_line" }
+
+[[bin]]
+name = "shrs"
+path = "src/main.rs"

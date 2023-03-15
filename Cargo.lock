@@ -842,6 +842,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_example"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+ "shrs_line",
+]
+
+[[package]]
 name = "shrs_line"
 version = "0.1.0"
 dependencies = [

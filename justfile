@@ -2,7 +2,10 @@
 default: debug
 
 debug:
-    cargo +nightly run --example simple
+    cargo +nightly run shrs_example
+
+install:
+    cargo install --path shrs_example
 
 devsetup:
     cp dev/hooks/* .git/hooks

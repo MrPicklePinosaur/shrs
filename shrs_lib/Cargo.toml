@@ -30,6 +30,3 @@ rexpect = "0.5"
 
 [build-dependencies]
 lalrpop = { version = "0.19.8", features = ["lexer"] }
-
-[[example]]
-name = "simple"

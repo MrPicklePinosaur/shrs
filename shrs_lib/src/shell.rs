@@ -76,6 +76,10 @@ impl ShellConfigBuilder {
 
 impl ShellConfig {
     pub fn run(self) -> anyhow::Result<()> {
+        // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
+        // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
+        // up implementing Default for Context and Runtime
+
         let mut ctx = Context {
             readline: self.readline,
             history: self.history,

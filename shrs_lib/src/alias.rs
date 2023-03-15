@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 // currently just wrapper around hashmap
+#[derive(Clone)]
 pub struct Alias {
     aliases: HashMap<String, String>,
 }
@@ -26,5 +27,13 @@ impl Alias {
 
     pub fn clear(&mut self) {
         self.aliases.clear();
+    }
+}
+
+impl FromIterator<(String, String)> for Alias {
+    fn from_iter<T: IntoIterator<Item = (String, String)>>(iter: T) -> Self {
+        Alias {
+            aliases: HashMap::from_iter(iter),
+        }
     }
 }

@@ -20,6 +20,7 @@ fn _exit_code_hook(code: i32) {
     println!("[exit +{}]", code);
 }
 
+#[derive(Clone)]
 pub struct Hooks {
     /// Runs before first prompt is shown
     pub startup: StartupHook,

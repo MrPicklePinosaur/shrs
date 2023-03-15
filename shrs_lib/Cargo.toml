@@ -15,6 +15,7 @@ signal-hook = "0.3"
 crossbeam-channel = "0.5"
 clap = { version = "4.1", features = ["derive"] }
 crossterm = "0.26"
+derive_builder = "0.12"
 
 pino_deref = "0.1"
 

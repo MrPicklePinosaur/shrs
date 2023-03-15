@@ -6,6 +6,7 @@ use std::{
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
+    rc::Rc,
 };
 
 use anyhow::anyhow;
@@ -27,19 +28,84 @@ use crate::{
     signal::sig_handler,
 };
 
+/// Unified shell config struct
+#[derive(Builder)]
+#[builder(pattern = "owned")]
+#[builder(setter(prefix = "with"))]
+pub struct ShellConfig {
+    #[builder(default = "Hooks::default()")]
+    hooks: Hooks,
+
+    #[builder(default = "Builtins::default()")]
+    builtins: Builtins,
+
+    #[builder(default = "Line::default()")]
+    readline: Line,
+
+    #[builder(default = "Box::new(DefaultHistory::new())")]
+    #[builder(setter(custom))]
+    history: Box<dyn History<HistoryItem = String>>,
+
+    #[builder(default = "Alias::new()")]
+    alias: Alias,
+
+    /// Custom prompt
+    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(setter(custom))]
+    prompt: Box<dyn Prompt>,
+
+    /// Environment variables
+    #[builder(default = "Env::new()")]
+    env: Env,
+
+    /// List of defined functions
+    #[builder(default = "HashMap::new()")]
+    functions: HashMap<String, Box<ast::Command>>,
+}
+
+impl ShellConfigBuilder {
+    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
+        self.prompt = Some(Box::new(prompt));
+        self
+    }
+    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
+        self.history = Some(Box::new(history));
+        self
+    }
+}
+
+impl ShellConfig {
+    pub fn run(self) -> anyhow::Result<()> {
+        let mut ctx = Context {
+            readline: self.readline,
+            history: self.history,
+            alias: self.alias,
+            prompt: self.prompt,
+            out: BufWriter::new(stdout()),
+        };
+        let mut rt = Runtime {
+            env: self.env,
+            working_dir: std::env::current_dir().unwrap(),
+            // TODO currently hardcoded
+            name: "shrs".into(),
+            // TDOO currently unused (since we have not implemented functions etc)
+            args: vec![],
+            exit_status: 0,
+            functions: self.functions,
+        };
+        let shell = Shell {
+            builtins: self.builtins,
+            hooks: self.hooks,
+        };
+
+        shell.run(&mut ctx, &mut rt)
+    }
+}
+
 pub struct Shell {
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
-}
-
-impl Default for Shell {
-    fn default() -> Self {
-        Shell {
-            hooks: Hooks::default(),
-            builtins: Builtins::default(),
-        }
-    }
 }
 
 // (shared) shell context
@@ -52,18 +118,6 @@ pub struct Context {
     pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Context {
-            readline: Line::default(),
-            history: Box::new(DefaultHistory::new()),
-            alias: Alias::new(),
-            prompt: Box::new(DefaultPrompt::new()),
-            out: BufWriter::new(stdout()),
-        }
-    }
 }
 
 // Runtime context for the shell
@@ -81,21 +135,6 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
-}
-
-impl Default for Runtime {
-    fn default() -> Self {
-        Runtime {
-            env: Env::new(),
-            working_dir: std::env::current_dir().unwrap(),
-            // TODO currently hardcoded
-            name: "shrs".into(),
-            // TDOO currently unused (since we have not implemented functions etc)
-            args: vec![],
-            exit_status: 0,
-            functions: HashMap::new(),
-        }
-    }
 }
 
 impl Shell {

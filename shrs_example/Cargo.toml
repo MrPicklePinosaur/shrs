@@ -6,11 +6,14 @@ license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "example shell built using shrs"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
-# build = "build.rs"
+build = "build.rs"
 
 [dependencies]
 shrs = { path = "../shrs_lib" }
 shrs_line = { path = "../shrs_line" }
+
+[build-dependencies]
+chrono = "0.4"
 
 [[bin]]
 name = "shrs"

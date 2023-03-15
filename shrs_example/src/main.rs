@@ -55,13 +55,15 @@ fn main() {
     // TODO also display the build version
     let hooks = Hooks {
         startup: |_ctx: StartupHookCtx| {
-            println!("Welcome to shrs build");
-            println!("----------------");
+            let welcome_str = format!("shrs | version {}", env!("SHRS_VERSION"));
+            println!("{}", welcome_str);
+            println!("{}", "-".repeat(welcome_str.len()));
         },
         ..Default::default()
     };
 
     let myshell = ShellConfigBuilder::default()
+        .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)
         .with_readline(readline)

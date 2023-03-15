@@ -5,7 +5,7 @@ pub trait Menu {
 
     fn next(&mut self);
     fn previous(&mut self);
-    fn accept(&mut self) -> &Self::MenuItem;
+    fn accept(&mut self) -> Option<&Self::MenuItem>;
     fn cursor(&self) -> i32;
     fn is_active(&self) -> bool;
     fn activate(&mut self);
@@ -45,9 +45,9 @@ impl Menu for DefaultMenu {
     fn previous(&mut self) {
         self.cursor = (self.cursor - 1).max(0);
     }
-    fn accept(&mut self) -> &String {
+    fn accept(&mut self) -> Option<&String> {
         self.disactivate();
-        &self.selections[self.cursor as usize]
+        self.selections.get(self.cursor as usize)
     }
     fn cursor(&self) -> i32 {
         self.cursor

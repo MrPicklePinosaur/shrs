@@ -43,6 +43,7 @@ pub struct ShellConfig {
     readline: Line,
 
     #[builder(default = "Box::new(DefaultHistory::new())")]
+    #[builder(setter(custom))]
     history: Box<dyn History<HistoryItem = String>>,
 
     #[builder(default = "Alias::new()")]
@@ -65,6 +66,10 @@ pub struct ShellConfig {
 impl ShellConfigBuilder {
     pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
         self.prompt = Some(Box::new(prompt));
+        self
+    }
+    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
+        self.history = Some(Box::new(history));
         self
     }
 }

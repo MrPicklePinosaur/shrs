@@ -18,7 +18,7 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    use shell::{Shell, ShellConfigBuilder};
+    use shell::ShellConfigBuilder;
 
     let mut env = Env::new();
     env.load();

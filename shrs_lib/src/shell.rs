@@ -81,17 +81,21 @@ impl ShellConfig {
             history: self.history,
             alias: self.alias,
             prompt: self.prompt,
-            ..Default::default()
+            out: BufWriter::new(stdout()),
         };
         let mut rt = Runtime {
             env: self.env,
+            working_dir: std::env::current_dir().unwrap(),
+            // TODO currently hardcoded
+            name: "shrs".into(),
+            // TDOO currently unused (since we have not implemented functions etc)
+            args: vec![],
+            exit_status: 0,
             functions: self.functions,
-            ..Default::default()
         };
         let shell = Shell {
             builtins: self.builtins,
             hooks: self.hooks,
-            ..Default::default()
         };
 
         shell.run(&mut ctx, &mut rt)
@@ -104,15 +108,6 @@ pub struct Shell {
     pub builtins: Builtins,
 }
 
-impl Default for Shell {
-    fn default() -> Self {
-        Shell {
-            hooks: Hooks::default(),
-            builtins: Builtins::default(),
-        }
-    }
-}
-
 // (shared) shell context
 // TODO can technically unify shell and context
 pub struct Context {
@@ -123,18 +118,6 @@ pub struct Context {
     pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Context {
-            readline: Line::default(),
-            history: Box::new(DefaultHistory::new()),
-            alias: Alias::new(),
-            prompt: Box::new(DefaultPrompt::new()),
-            out: BufWriter::new(stdout()),
-        }
-    }
 }
 
 // Runtime context for the shell
@@ -152,21 +135,6 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
-}
-
-impl Default for Runtime {
-    fn default() -> Self {
-        Runtime {
-            env: Env::new(),
-            working_dir: std::env::current_dir().unwrap(),
-            // TODO currently hardcoded
-            name: "shrs".into(),
-            // TDOO currently unused (since we have not implemented functions etc)
-            args: vec![],
-            exit_status: 0,
-            functions: HashMap::new(),
-        }
-    }
 }
 
 impl Shell {

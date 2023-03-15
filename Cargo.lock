@@ -846,6 +846,7 @@ name = "shrs_line"
 version = "0.1.0"
 dependencies = [
  "crossterm",
+ "derive_builder",
  "trie-rs",
 ]
 

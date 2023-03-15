@@ -7,7 +7,10 @@ use shrs::{
     prompt::{hostname, top_pwd, username},
     shell::{self, find_executables_in_path, Context, Runtime, ShellConfig},
 };
-use shrs_line::{line::Line, prompt::Prompt};
+use shrs_line::{
+    line::{Line, LineBuilder},
+    prompt::Prompt,
+};
 
 struct MyPrompt;
 
@@ -23,14 +26,22 @@ fn main() {
     let mut env = Env::new();
     env.load();
 
+    // configure line
     let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
     let completer = shrs_line::completion::DefaultCompleter::new(completions);
     let menu = shrs_line::menu::DefaultMenu::new();
     let history = shrs_line::history::DefaultHistory::new();
     let cursor = shrs_line::cursor::DefaultCursor::default();
 
+    let readline = LineBuilder::default()
+        .with_cursor(cursor)
+        .with_completer(completer)
+        .with_menu(menu)
+        .with_history(history)
+        .build()
+        .unwrap();
+
     let prompt = MyPrompt;
-    let readline = Line::new(menu, completer, history, cursor);
 
     let alias = Alias::from_iter([
         ("l".into(), "ls".into()),

@@ -6,6 +6,7 @@ use std::{
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
+    rc::Rc,
 };
 
 use anyhow::anyhow;
@@ -26,6 +27,71 @@ use crate::{
     parser,
     signal::sig_handler,
 };
+
+/// Unified shell config struct
+#[derive(Builder)]
+#[builder(pattern = "owned")]
+#[builder(setter(prefix = "with"))]
+pub struct ShellConfig {
+    #[builder(default = "Hooks::default()")]
+    hooks: Hooks,
+
+    #[builder(default = "Builtins::default()")]
+    builtins: Builtins,
+
+    #[builder(default = "Line::default()")]
+    readline: Line,
+
+    #[builder(default = "Box::new(DefaultHistory::new())")]
+    history: Box<dyn History<HistoryItem = String>>,
+
+    #[builder(default = "Alias::new()")]
+    alias: Alias,
+
+    /// Custom prompt
+    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(setter(custom))]
+    prompt: Box<dyn Prompt>,
+
+    /// Environment variables
+    #[builder(default = "Env::new()")]
+    env: Env,
+
+    /// List of defined functions
+    #[builder(default = "HashMap::new()")]
+    functions: HashMap<String, Box<ast::Command>>,
+}
+
+impl ShellConfigBuilder {
+    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
+        self.prompt = Some(Box::new(prompt));
+        self
+    }
+}
+
+impl ShellConfig {
+    pub fn run(self) -> anyhow::Result<()> {
+        let mut ctx = Context {
+            readline: self.readline,
+            history: self.history,
+            alias: self.alias,
+            prompt: self.prompt,
+            ..Default::default()
+        };
+        let mut rt = Runtime {
+            env: self.env,
+            functions: self.functions,
+            ..Default::default()
+        };
+        let shell = Shell {
+            builtins: self.builtins,
+            hooks: self.hooks,
+            ..Default::default()
+        };
+
+        shell.run(&mut ctx, &mut rt)
+    }
+}
 
 pub struct Shell {
     pub hooks: Hooks,

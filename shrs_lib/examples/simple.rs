@@ -5,7 +5,7 @@ use shrs::{
     builtin::Builtins,
     env::Env,
     prompt::{hostname, top_pwd, username},
-    shell::{self, find_executables_in_path, Context, Runtime},
+    shell::{self, find_executables_in_path, Context, Runtime, ShellConfig},
 };
 use shrs_line::{line::Line, prompt::Prompt};
 
@@ -18,7 +18,7 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    use shell::Shell;
+    use shell::{Shell, ShellConfigBuilder};
 
     let mut env = Env::new();
     env.load();
@@ -32,10 +32,6 @@ fn main() {
     let prompt = MyPrompt;
     let readline = Line::new(menu, completer, history, cursor);
 
-    let myshell = Shell {
-        ..Default::default()
-    };
-
     let alias = Alias::from_iter([
         ("l".into(), "ls".into()),
         ("c".into(), "cd".into()),
@@ -43,15 +39,14 @@ fn main() {
         ("v".into(), "vim".into()),
         ("la".into(), "ls -a".into()),
     ]);
-    let mut ctx = Context {
-        readline,
-        alias,
-        prompt: Box::new(prompt),
-        ..Default::default()
-    };
-    let mut rt = Runtime {
-        env,
-        ..Default::default()
-    };
-    myshell.run(&mut ctx, &mut rt);
+
+    let myshell = ShellConfigBuilder::default()
+        .with_env(env)
+        .with_alias(alias)
+        .with_readline(readline)
+        .with_prompt(prompt)
+        .build()
+        .unwrap();
+
+    myshell.run();
 }

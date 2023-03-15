@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate lalrpop_util;
 
+#[macro_use]
+extern crate derive_builder;
+
 lalrpop_mod!(pub grammar);
 
 // TODO refactor to

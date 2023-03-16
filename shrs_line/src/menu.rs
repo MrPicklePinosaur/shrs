@@ -56,7 +56,8 @@ impl Menu for DefaultMenu {
         self.active
     }
     fn activate(&mut self) {
-        self.active = true;
+        // dont activate if menu is empty
+        self.active = !self.selections.is_empty();
     }
     fn disactivate(&mut self) {
         self.active = false;

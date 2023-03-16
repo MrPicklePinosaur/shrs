@@ -157,7 +157,6 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                             ..
                         }) => {
-                            self.menu.activate();
                             let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                             // TODO IFS
@@ -172,6 +171,7 @@ impl Line {
                                 .map(|x| x.to_string())
                                 .collect::<Vec<_>>();
                             self.menu.set_items(owned);
+                            self.menu.activate();
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Left,
@@ -261,18 +261,14 @@ struct Painter {
     out: BufWriter<std::io::Stdout>,
     /// Dimensions of current terminal window
     term_size: (u16, u16),
-    /// Position of the cursor
-    cursor_pos: (u16, u16),
 }
 
 impl Painter {
     pub fn new() -> crossterm::Result<Self> {
         let term_size = terminal::size()?;
-        let cursor_pos = cursor::position()?;
         Ok(Painter {
             out: BufWriter::new(stdout()),
             term_size,
-            cursor_pos,
         })
     }
 
@@ -286,11 +282,10 @@ impl Painter {
     ) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
-        self.cursor_pos = cursor::position()?;
-
         // clean up current line first
+        let cursor_pos = cursor::position()?;
         self.out
-            .queue(cursor::MoveTo(0, self.cursor_pos.1))?
+            .queue(cursor::MoveTo(0, cursor_pos.1))?
             .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
         // render line
@@ -312,10 +307,6 @@ impl Painter {
 
                 self.out.queue(SetAttribute(Attribute::NoBold))?;
             }
-
-            // move cursor back up equal to height of menu
-            self.out
-                .queue(cursor::MoveUp(menu.items().len() as u16 + 1))?;
         }
 
         self.out.queue(cursor::RestorePosition)?;

@@ -269,18 +269,16 @@ impl Shell {
 
                 let mut it = args.into_iter();
                 let cmd_name = &it.next().unwrap();
-                let args = it
-                    .collect::<Vec<_>>()
-                    .into_iter()
-                    .map(|a| (*a).clone())
-                    .collect();
+                let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
 
                 // TODO which stdin var to use?, previous command or from file redirection?
 
-                // TODO currently don't support assignment for builtins (should it be supported even?)
+                // TODO doing args subst here is a waste if we evaluating function body
+                let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
+
                 for (builtin_name, builtin_cmd) in self.builtins.builtins.iter() {
                     if builtin_name == &cmd_name.as_str() {
-                        return builtin_cmd.run(ctx, rt, &args);
+                        return builtin_cmd.run(ctx, rt, &subst_args);
                     }
                 }
 
@@ -291,7 +289,14 @@ impl Shell {
                         self.eval_command(ctx, rt, cmd_body, Stdio::inherit(), Stdio::piped(), None)
                     },
                     None => self.run_external_command(
-                        ctx, rt, &cmd_name, &args, cur_stdin, cur_stdout, None, assigns,
+                        ctx,
+                        rt,
+                        &cmd_name,
+                        &subst_args,
+                        cur_stdin,
+                        cur_stdout,
+                        None,
+                        assigns,
                     ),
                 }
             },
@@ -528,11 +533,9 @@ impl Shell {
 
         let envs = assigns.iter().map(|word| (&word.var, &word.val));
 
-        let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
-
         // TODO might need to do subst on cmd too
         let child = Command::new(cmd)
-            .args(subst_args)
+            .args(args)
             .stdin(stdin)
             .stdout(stdout)
             .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
@@ -591,6 +594,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     // TODO precompile regex in lazy_static
     let r_0 = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
     let r_1 = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
+    let r_2 = Regex::new(r"~").unwrap(); // tilde
 
     for cap in r_0.captures_iter(arg) {
         // look up env var
@@ -614,6 +618,14 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
         let fmt_env = format!("${{{}}}", var); // format ${VAR}
         subst = subst.as_str().replace(&fmt_env, &val);
     }
+
+    // tilde substitution
+    let home = match rt.env.get("HOME") {
+        Some(home) => home.as_str(),
+        None => "",
+    };
+    let subst = r_2.replace_all(&subst, home).to_string();
+
     subst
 }
 

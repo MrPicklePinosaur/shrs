@@ -1,15 +1,8 @@
-use std::{
-    collections::LinkedList,
-    io::{stdout, BufWriter, Write},
-    time::Duration,
-};
+use std::{io::Write, time::Duration};
 
 use crossterm::{
-    cursor,
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::{Attribute, Print, SetAttribute},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ClearType},
-    QueueableCommand,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 use crate::{
@@ -71,9 +64,8 @@ impl LineBuilder {
 impl Line {
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
         // get line
-        let input = self.read_events(prompt).unwrap();
 
-        input
+        self.read_events(prompt).unwrap()
     }
 
     fn read_events<T: Prompt + ?Sized>(

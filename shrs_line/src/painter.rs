@@ -1,24 +1,13 @@
-use std::{
-    collections::LinkedList,
-    io::{stdout, BufWriter, Write},
-    time::Duration,
-};
+use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
     cursor,
-    event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
     style::{Attribute, Print, SetAttribute},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ClearType},
+    terminal::{self, Clear},
     QueueableCommand,
 };
 
-use crate::{
-    completion::{Completer, DefaultCompleter},
-    cursor::{Cursor, DefaultCursor},
-    history::{DefaultHistory, History},
-    menu::{DefaultMenu, Menu},
-    prompt::Prompt,
-};
+use crate::{cursor::Cursor, menu::Menu, prompt::Prompt};
 
 pub struct Painter {
     /// The output buffer
@@ -42,8 +31,8 @@ impl Painter {
     /// Clear screen and move prompt to the top
     pub fn init<T: Prompt + ?Sized>(
         &mut self,
-        prompt: impl AsRef<T>,
-        menu: &Box<dyn Menu<MenuItem = String>>,
+        _prompt: impl AsRef<T>,
+        _menu: &Box<dyn Menu<MenuItem = String>>,
     ) -> crossterm::Result<()> {
         self.out.queue(Clear(terminal::ClearType::All))?;
         self.prompt_line = 0;

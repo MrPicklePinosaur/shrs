@@ -51,7 +51,6 @@ impl Completer for DefaultCompleter {
 
 #[cfg(test)]
 mod tests {
-    use super::{Completer, DefaultCompleter};
 
     /*
     #[test]

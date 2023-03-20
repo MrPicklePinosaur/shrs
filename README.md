@@ -26,7 +26,7 @@ Project is currently very much WIP, below lists the current feature statuses:
 | posix shell | wip |
 | history | wip |
 | aliases | mvp |
-| completion | todo |
+| completion | wip |
 | readline | wip |
 | hooks | mvp |
 | keybindings | todo |

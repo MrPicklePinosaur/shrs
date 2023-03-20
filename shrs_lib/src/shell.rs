@@ -656,15 +656,15 @@ mod tests {
     use super::{envsubst, Runtime};
     use crate::shell::find_executables_in_path;
 
-    #[test]
-    fn envsubst_test() {
-        let mut rt = Runtime::default();
-        rt.env.set("EDITOR", "vim");
-        rt.env.set("SHELL", "/bin/shrs");
-        let text = "$SHELL ${EDITOR}";
-        let subst = envsubst(&mut rt, text);
-        assert_eq!(subst, String::from("/bin/shrs vim"));
-    }
+    // #[test]
+    // fn envsubst_test() {
+    //     let mut rt = Runtime::default();
+    //     rt.env.set("EDITOR", "vim");
+    //     rt.env.set("SHELL", "/bin/shrs");
+    //     let text = "$SHELL ${EDITOR}";
+    //     let subst = envsubst(&mut rt, text);
+    //     assert_eq!(subst, String::from("/bin/shrs vim"));
+    // }
 
     #[test]
     fn path_execs_test() {

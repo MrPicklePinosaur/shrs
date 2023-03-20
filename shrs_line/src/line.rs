@@ -6,7 +6,7 @@ use crossterm::{
 };
 
 use crate::{
-    completion::{Completer, DefaultCompleter},
+    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
@@ -102,8 +102,17 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                             ..
                         }) => {
+                            // TODO this code is dumb
                             if let Some(accepted) = self.menu.accept() {
-                                accepted.chars().skip(current_word.len()).for_each(|c| {
+                                // first remove current word
+                                buf.drain(
+                                    (ind as usize).saturating_sub(current_word.len())
+                                        ..(ind as usize),
+                                );
+                                ind = (ind as usize).saturating_sub(current_word.len()) as i32;
+
+                                // then replace with the completion word
+                                accepted.clone().chars().for_each(|c| {
                                     // TODO find way to insert multiple items in one operation
                                     buf.insert(ind as usize, c as u8);
                                     ind = (ind + 1).min(buf.len() as i32);
@@ -161,15 +170,17 @@ impl Line {
                             let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                             // TODO IFS
-                            current_word = res.as_str()[..ind as usize]
-                                .split(' ')
-                                .last()
-                                .unwrap_or("")
-                                .to_string();
-                            let completions = self.completer.complete(&current_word);
+                            let args = res.as_str()[..ind as usize].split(' ');
+                            current_word = args.clone().last().unwrap_or("").to_string();
+
+                            let ctx = CompletionCtx {
+                                arg_num: args.count(),
+                            };
+                            let completions = self.completer.complete(&current_word, ctx);
                             let owned = completions
                                 .iter()
                                 .map(|x| x.to_string())
+                                .take(10) // TODO make this config
                                 .collect::<Vec<_>>();
                             self.menu.set_items(owned);
                             self.menu.activate();

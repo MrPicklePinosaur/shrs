@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use trie_rs::{Trie, TrieBuilder};
 
@@ -56,9 +56,21 @@ impl Completer for DefaultCompleter {
 
             return results;
         } else {
-            // TODO not sure if should rely on env working dir
-            let pwd = std::env::current_dir().unwrap();
-            let files = all_files_completion(pwd.as_path()).unwrap();
+            let buf_path = PathBuf::from(buf);
+            // convert to absolute
+            let dir = if buf_path.is_absolute() {
+                buf_path.to_owned()
+            } else {
+                // TODO not sure if should rely on env working dir
+                let pwd = std::env::current_dir().unwrap();
+                pwd.join(buf_path)
+            };
+
+            let suffix = dir.file_name().unwrap();
+            let prefix = dir.parent().unwrap_or(&dir);
+            // println!("prefix {:?}", prefix);
+
+            let files = all_files_completion(prefix).unwrap();
 
             // TODO is this too expensive?
             let mut builder = TrieBuilder::new();
@@ -68,7 +80,7 @@ impl Completer for DefaultCompleter {
             let trie = builder.build();
 
             // TODO this is dumb
-            let results = trie.predictive_search(buf);
+            let results = trie.predictive_search(suffix.to_str().unwrap());
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())

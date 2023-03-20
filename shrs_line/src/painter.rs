@@ -1,9 +1,9 @@
 use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
-    cursor,
+    cursor::{self, MoveUp},
     style::{Attribute, Print, SetAttribute},
-    terminal::{self, Clear},
+    terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
 
@@ -19,27 +19,33 @@ pub struct Painter {
 }
 
 impl Painter {
-    pub fn new() -> crossterm::Result<Self> {
-        let term_size = terminal::size()?;
-        Ok(Painter {
+    pub fn new() -> Self {
+        Painter {
             out: BufWriter::new(stdout()),
-            term_size,
+            term_size: (0, 0),
             prompt_line: 0,
-        })
+        }
     }
 
     /// Clear screen and move prompt to the top
-    pub fn init<T: Prompt + ?Sized>(
-        &mut self,
-        _prompt: impl AsRef<T>,
-        _menu: &Box<dyn Menu<MenuItem = String>>,
-    ) -> crossterm::Result<()> {
-        self.out.queue(Clear(terminal::ClearType::All))?;
+    pub fn init(&mut self) -> crossterm::Result<()> {
         self.prompt_line = 0;
+        self.term_size = terminal::size()?;
 
-        self.out.flush()?;
+        // advance to next row if cursor in middle of line
+        let (c, r) = cursor::position()?;
+        let r = if c > 0 { r + 1 } else { r };
+
+        self.prompt_line = r;
+
+        // self.out.queue(Clear(terminal::ClearType::All))?;
+        // self.out.flush()?;
 
         Ok(())
+    }
+
+    fn remaining_lines(&self) -> u16 {
+        self.term_size.1.saturating_sub(self.prompt_line)
     }
 
     pub fn paint<T: Prompt + ?Sized>(
@@ -52,10 +58,17 @@ impl Painter {
     ) -> crossterm::Result<()> {
         self.out.queue(cursor::Hide)?;
 
+        // scroll up if we need more lines
+        let required_lines = menu.items().len() as u16;
+        if required_lines > self.remaining_lines() {
+            let extra_lines = required_lines.saturating_sub(self.remaining_lines());
+            self.out.queue(ScrollUp(extra_lines.try_into().unwrap()))?;
+            self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
+        }
+
         // clean up current line first
-        let cursor_pos = cursor::position()?;
         self.out
-            .queue(cursor::MoveTo(0, cursor_pos.1))?
+            .queue(cursor::MoveTo(0, self.prompt_line))?
             .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
         // render line
@@ -74,9 +87,10 @@ impl Painter {
                 }
 
                 self.out.queue(Print(menu_item))?.queue(Print("\r\n"))?;
-
                 self.out.queue(SetAttribute(Attribute::NoBold))?;
             }
+            self.out
+                .queue(MoveUp(menu.items().len().saturating_sub(1) as u16))?;
         }
 
         self.out.queue(cursor::RestorePosition)?;

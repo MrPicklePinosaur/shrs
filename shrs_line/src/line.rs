@@ -75,7 +75,8 @@ impl Line {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
 
-        let mut painter = Painter::new().unwrap();
+        let mut painter = Painter::new();
+        painter.init().unwrap();
 
         // TODO this is temp, find better way to store prefix of current word
         let mut current_word = String::new();
@@ -85,7 +86,6 @@ impl Line {
 
         enable_raw_mode()?;
 
-        painter.init(&prompt, &self.menu).unwrap();
         painter
             .paint(&prompt, &self.menu, "", ind as usize, &self.cursor)
             .unwrap();

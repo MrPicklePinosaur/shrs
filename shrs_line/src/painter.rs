@@ -59,11 +59,13 @@ impl Painter {
         self.out.queue(cursor::Hide)?;
 
         // scroll up if we need more lines
-        let required_lines = menu.items().len() as u16;
-        if required_lines > self.remaining_lines() {
-            let extra_lines = required_lines.saturating_sub(self.remaining_lines());
-            self.out.queue(ScrollUp(extra_lines.try_into().unwrap()))?;
-            self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
+        if menu.is_active() {
+            let required_lines = menu.items().len() as u16 + 1;
+            if required_lines > self.remaining_lines() {
+                let extra_lines = required_lines.saturating_sub(self.remaining_lines());
+                self.out.queue(ScrollUp(extra_lines.try_into().unwrap()))?;
+                self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
+            }
         }
 
         // clean up current line first
@@ -80,13 +82,13 @@ impl Painter {
 
         // render menu
         if menu.is_active() {
-            self.out.queue(Print("\r\n"))?;
             for (i, menu_item) in menu.items().iter().enumerate() {
+                self.out.queue(Print("\r\n"))?;
                 if menu.cursor() == i as i32 {
                     self.out.queue(SetAttribute(Attribute::Bold))?;
                 }
 
-                self.out.queue(Print(menu_item))?.queue(Print("\r\n"))?;
+                self.out.queue(Print(menu_item))?;
                 self.out.queue(SetAttribute(Attribute::NoBold))?;
             }
             self.out

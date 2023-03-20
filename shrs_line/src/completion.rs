@@ -80,11 +80,19 @@ impl Completer for DefaultCompleter {
             let trie = builder.build();
 
             // TODO this is dumb
+            let mut display_prefix = buf_path.parent().unwrap().display().to_string();
+            // append backslash to end if non empty
+            if !display_prefix.is_empty() {
+                display_prefix.push('/');
+            }
+
+            // TODO can also append slash to end if directory
+
             let results = trie.predictive_search(suffix.to_str().unwrap());
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
-                .map(|x| format!("{}/{}", prefix.display(), x))
+                .map(|x| format!("{}{}", display_prefix, x))
                 .collect();
             return results;
         }

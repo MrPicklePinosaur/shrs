@@ -57,18 +57,18 @@ impl Completer for DefaultCompleter {
             return results;
         } else {
             let buf_path = PathBuf::from(buf);
+
             // convert to absolute
             let dir = if buf_path.is_absolute() {
-                buf_path.to_owned()
+                buf_path.clone()
             } else {
                 // TODO not sure if should rely on env working dir
                 let pwd = std::env::current_dir().unwrap();
-                pwd.join(buf_path)
+                pwd.join(buf_path.clone())
             };
 
             let suffix = dir.file_name().unwrap();
             let prefix = dir.parent().unwrap_or(&dir);
-            // println!("prefix {:?}", prefix);
 
             let files = all_files_completion(prefix).unwrap();
 
@@ -84,6 +84,7 @@ impl Completer for DefaultCompleter {
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
+                .map(|x| format!("{}/{}", prefix.display(), x))
                 .collect();
             return results;
         }

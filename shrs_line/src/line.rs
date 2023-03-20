@@ -102,8 +102,17 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                             ..
                         }) => {
+                            // TODO this code is dumb
                             if let Some(accepted) = self.menu.accept() {
-                                accepted.chars().skip(current_word.len()).for_each(|c| {
+                                // first remove current word
+                                buf.drain(
+                                    (ind as usize).saturating_sub(current_word.len())
+                                        ..(ind as usize),
+                                );
+                                ind = (ind as usize).saturating_sub(current_word.len()) as i32;
+
+                                // then replace with the completion word
+                                accepted.clone().chars().for_each(|c| {
                                     // TODO find way to insert multiple items in one operation
                                     buf.insert(ind as usize, c as u8);
                                     ind = (ind + 1).min(buf.len() as i32);

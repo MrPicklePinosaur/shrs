@@ -6,7 +6,7 @@ use crossterm::{
 };
 
 use crate::{
-    completion::{Completer, DefaultCompleter},
+    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
@@ -161,12 +161,13 @@ impl Line {
                             let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                             // TODO IFS
-                            current_word = res.as_str()[..ind as usize]
-                                .split(' ')
-                                .last()
-                                .unwrap_or("")
-                                .to_string();
-                            let completions = self.completer.complete(&current_word);
+                            let args = res.as_str()[..ind as usize].split(' ');
+                            current_word = args.clone().last().unwrap_or("").to_string();
+
+                            let ctx = CompletionCtx {
+                                arg_num: args.count(),
+                            };
+                            let completions = self.completer.complete(&current_word, ctx);
                             let owned = completions
                                 .iter()
                                 .map(|x| x.to_string())

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use trie_rs::{Trie, TrieBuilder};
 
 pub struct Completion {}
@@ -9,8 +11,13 @@ pub struct Completion {}
 // - filename regex
 // - known hosts
 
+pub struct CompletionCtx {
+    /// The current argument we are on
+    pub arg_num: usize,
+}
+
 pub trait Completer {
-    fn complete(&self, buf: &str) -> Vec<String>;
+    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String>;
 }
 
 pub struct DefaultCompleter {
@@ -34,21 +41,44 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, buf: &str) -> Vec<String> {
+    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
         if buf.is_empty() {
             return vec![];
         }
-        let results = self.completions.predictive_search(buf);
-        let results: Vec<String> = results
-            .iter()
-            .map(|x| std::str::from_utf8(x).unwrap().to_string())
-            .collect();
 
-        results
+        if ctx.arg_num == 1 {
+            // complete command name from path if is first argument
+            let results = self.completions.predictive_search(buf);
+            let results: Vec<String> = results
+                .iter()
+                .map(|x| std::str::from_utf8(x).unwrap().to_string())
+                .collect();
+
+            return results;
+        } else {
+            // TODO not sure if should rely on env working dir
+            let pwd = std::env::current_dir().unwrap();
+            let files = all_files_completion(pwd.as_path()).unwrap();
+
+            // TODO is this too expensive?
+            let mut builder = TrieBuilder::new();
+            for file in files {
+                builder.push(file);
+            }
+            let trie = builder.build();
+
+            // TODO this is dumb
+            let results = trie.predictive_search(buf);
+            let results: Vec<String> = results
+                .iter()
+                .map(|x| std::str::from_utf8(x).unwrap().to_string())
+                .collect();
+            return results;
+        }
     }
 }
 
-pub fn filepath_completion_p<P>(dir: &str, predicate: P) -> std::io::Result<Vec<String>>
+pub fn filepath_completion_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
 where
     P: FnMut(&std::fs::DirEntry) -> bool,
 {
@@ -64,15 +94,15 @@ where
     Ok(out)
 }
 
-pub fn all_files_completion(dir: &str) -> std::io::Result<Vec<String>> {
+pub fn all_files_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     filepath_completion_p(dir, |_| true)
 }
 
-pub fn exectuable_completion(dir: &str) -> std::io::Result<Vec<String>> {
+pub fn exectuable_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 
-pub fn ssh_completion(dir: &str) -> std::io::Result<Vec<String>> {
+pub fn ssh_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 

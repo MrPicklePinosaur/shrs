@@ -1,15 +1,8 @@
-use std::{
-    collections::LinkedList,
-    io::{stdout, BufWriter, Write},
-    time::Duration,
-};
+use std::{io::Write, time::Duration};
 
 use crossterm::{
-    cursor,
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::{Attribute, Print, SetAttribute},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
-    QueueableCommand,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 use crate::{
@@ -17,6 +10,7 @@ use crate::{
     cursor::{Cursor, DefaultCursor},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
+    painter::Painter,
     prompt::Prompt,
 };
 
@@ -70,9 +64,8 @@ impl LineBuilder {
 impl Line {
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
         // get line
-        let input = self.read_events(prompt).unwrap();
 
-        input
+        self.read_events(prompt).unwrap()
     }
 
     fn read_events<T: Prompt + ?Sized>(
@@ -82,7 +75,8 @@ impl Line {
         let mut buf: Vec<u8> = Vec::new();
         let mut ind: i32 = 0;
 
-        let mut painter = Painter::new().unwrap();
+        let mut painter = Painter::new();
+        painter.init().unwrap();
 
         // TODO this is temp, find better way to store prefix of current word
         let mut current_word = String::new();
@@ -157,7 +151,6 @@ impl Line {
                             modifiers: KeyModifiers::NONE,
                             ..
                         }) => {
-                            self.menu.activate();
                             let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
 
                             // TODO IFS
@@ -172,6 +165,7 @@ impl Line {
                                 .map(|x| x.to_string())
                                 .collect::<Vec<_>>();
                             self.menu.set_items(owned);
+                            self.menu.activate();
                         },
                         Event::Key(KeyEvent {
                             code: KeyCode::Left,
@@ -253,82 +247,5 @@ impl Line {
         let res = std::str::from_utf8(buf.as_slice()).unwrap().to_string();
         self.history.add(res.clone());
         Ok(res)
-    }
-}
-
-struct Painter {
-    /// The output buffer
-    out: BufWriter<std::io::Stdout>,
-    /// Dimensions of current terminal window
-    term_size: (u16, u16),
-    /// Position of the cursor
-    cursor_pos: (u16, u16),
-}
-
-impl Painter {
-    pub fn new() -> crossterm::Result<Self> {
-        let term_size = terminal::size()?;
-        let cursor_pos = cursor::position()?;
-        Ok(Painter {
-            out: BufWriter::new(stdout()),
-            term_size,
-            cursor_pos,
-        })
-    }
-
-    pub fn paint<T: Prompt + ?Sized>(
-        &mut self,
-        prompt: impl AsRef<T>,
-        menu: &Box<dyn Menu<MenuItem = String>>,
-        buf: &str,
-        cursor_ind: usize,
-        cursor: &Box<dyn Cursor>,
-    ) -> crossterm::Result<()> {
-        self.out.queue(cursor::Hide)?;
-
-        self.cursor_pos = cursor::position()?;
-
-        // clean up current line first
-        self.out
-            .queue(cursor::MoveTo(0, self.cursor_pos.1))?
-            .queue(Clear(terminal::ClearType::FromCursorDown))?;
-
-        // render line
-        self.out
-            .queue(Print(prompt.as_ref().prompt_left()))?
-            .queue(Print(&buf[..cursor_ind]))?
-            .queue(cursor::SavePosition)?
-            .queue(Print(&buf[cursor_ind..]))?;
-
-        // render menu
-        if menu.is_active() {
-            self.out.queue(Print("\r\n"))?;
-            for (i, menu_item) in menu.items().iter().enumerate() {
-                if menu.cursor() == i as i32 {
-                    self.out.queue(SetAttribute(Attribute::Bold))?;
-                }
-
-                self.out.queue(Print(menu_item))?.queue(Print("\r\n"))?;
-
-                self.out.queue(SetAttribute(Attribute::NoBold))?;
-            }
-
-            // move cursor back up equal to height of menu
-            self.out
-                .queue(cursor::MoveUp(menu.items().len() as u16 + 1))?;
-        }
-
-        self.out.queue(cursor::RestorePosition)?;
-        self.out.queue(cursor::Show)?;
-        self.out.queue(cursor.get_cursor())?;
-        self.out.flush()?;
-
-        Ok(())
-    }
-
-    pub fn newline(&mut self) -> crossterm::Result<()> {
-        self.out.queue(Print("\r\n"))?;
-        self.out.flush()?;
-        Ok(())
     }
 }

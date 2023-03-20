@@ -36,7 +36,7 @@ impl History for DefaultHistory {
     //     todo!()
     // }
 
-    fn search(&self, query: &str) -> Option<&Self::HistoryItem> {
+    fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
         todo!()
     }
 

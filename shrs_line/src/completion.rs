@@ -42,11 +42,38 @@ impl Completer for DefaultCompleter {
         let results: Vec<String> = results
             .iter()
             .map(|x| std::str::from_utf8(x).unwrap().to_string())
-            .take(10) // TODO make this config option
             .collect();
 
         results
     }
+}
+
+pub fn filepath_completion_p<P>(dir: &str, predicate: P) -> std::io::Result<Vec<String>>
+where
+    P: FnMut(&std::fs::DirEntry) -> bool,
+{
+    use std::fs;
+
+    let out: Vec<String> = fs::read_dir(dir)?
+        .filter_map(|f| f.ok())
+        .filter(predicate)
+        .map(|f| f.file_name().into_string())
+        .filter_map(|f| f.ok())
+        .collect();
+
+    Ok(out)
+}
+
+pub fn all_files_completion(dir: &str) -> std::io::Result<Vec<String>> {
+    filepath_completion_p(dir, |_| true)
+}
+
+pub fn exectuable_completion(dir: &str) -> std::io::Result<Vec<String>> {
+    todo!()
+}
+
+pub fn ssh_completion(dir: &str) -> std::io::Result<Vec<String>> {
+    todo!()
 }
 
 #[cfg(test)]
@@ -61,4 +88,12 @@ mod tests {
         completer.complete("ls", 0);
     }
     */
+
+    use super::filepath_completion_p;
+
+    #[test]
+    fn test_filepath_completion() {
+        let out = filepath_completion_p("/home/pinosaur", |f| f.file_type().unwrap().is_file());
+        println!("{:?}", out);
+    }
 }

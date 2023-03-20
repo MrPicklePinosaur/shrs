@@ -170,6 +170,7 @@ impl Line {
                             let owned = completions
                                 .iter()
                                 .map(|x| x.to_string())
+                                .take(10) // TODO make this config
                                 .collect::<Vec<_>>();
                             self.menu.set_items(owned);
                             self.menu.activate();

@@ -1,24 +1,34 @@
 use std::fmt::Display;
 
+use crossterm::{
+    execute,
+    style::{Color, ResetColor, SetBackgroundColor, SetForegroundColor},
+};
+
+pub type Out = std::io::BufWriter<std::io::Stdout>;
+
 pub trait Menu {
     type MenuItem: Display;
 
     fn next(&mut self);
     fn previous(&mut self);
     fn accept(&mut self) -> Option<&Self::MenuItem>;
-    fn cursor(&self) -> i32;
+    fn cursor(&self) -> u32;
     fn is_active(&self) -> bool;
     fn activate(&mut self);
     fn disactivate(&mut self);
     fn items(&self) -> Vec<&Self::MenuItem>;
     fn set_items(&mut self, items: Vec<Self::MenuItem>);
+
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
 }
 
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
     selections: Vec<String>,
     /// Currently selected item
-    cursor: i32,
+    cursor: u32,
     active: bool,
 }
 
@@ -39,17 +49,17 @@ impl Menu for DefaultMenu {
         self.cursor = if self.selections.is_empty() {
             0
         } else {
-            (self.cursor + 1).min(self.selections.len() as i32 - 1)
+            (self.cursor + 1).min(self.selections.len() as u32 - 1)
         };
     }
     fn previous(&mut self) {
-        self.cursor = (self.cursor - 1).max(0);
+        self.cursor = self.cursor.saturating_sub(1);
     }
     fn accept(&mut self) -> Option<&String> {
         self.disactivate();
         self.selections.get(self.cursor as usize)
     }
-    fn cursor(&self) -> i32 {
+    fn cursor(&self) -> u32 {
         self.cursor
     }
     fn is_active(&self) -> bool {
@@ -70,5 +80,19 @@ impl Menu for DefaultMenu {
         self.selections.clear();
         self.selections.append(&mut items);
         self.cursor = 0;
+    }
+
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(
+            out,
+            SetBackgroundColor(Color::White),
+            SetForegroundColor(Color::Black),
+        )?;
+        Ok(())
+    }
+
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(out, ResetColor,)?;
+        Ok(())
     }
 }

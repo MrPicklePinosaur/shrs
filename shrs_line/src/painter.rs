@@ -38,14 +38,7 @@ impl Painter {
 
         self.prompt_line = r;
 
-        // self.out.queue(Clear(terminal::ClearType::All))?;
-        // self.out.flush()?;
-
         Ok(())
-    }
-
-    fn remaining_lines(&self) -> u16 {
-        self.term_size.1.saturating_sub(self.prompt_line)
     }
 
     pub fn paint<T: Prompt + ?Sized>(
@@ -61,8 +54,9 @@ impl Painter {
         // scroll up if we need more lines
         if menu.is_active() {
             let required_lines = menu.items().len() as u16 + 1;
-            if required_lines > self.remaining_lines() {
-                let extra_lines = required_lines.saturating_sub(self.remaining_lines());
+            let remaining_lines = self.term_size.1.saturating_sub(self.prompt_line);
+            if required_lines > remaining_lines {
+                let extra_lines = required_lines.saturating_sub(remaining_lines);
                 self.out.queue(ScrollUp(extra_lines.try_into().unwrap()))?;
                 self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
             }

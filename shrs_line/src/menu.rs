@@ -1,5 +1,12 @@
 use std::fmt::Display;
 
+use crossterm::{
+    execute,
+    style::{Color, ResetColor, SetBackgroundColor, SetForegroundColor},
+};
+
+pub type Out = std::io::BufWriter<std::io::Stdout>;
+
 pub trait Menu {
     type MenuItem: Display;
 
@@ -12,6 +19,9 @@ pub trait Menu {
     fn disactivate(&mut self);
     fn items(&self) -> Vec<&Self::MenuItem>;
     fn set_items(&mut self, items: Vec<Self::MenuItem>);
+
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
 }
 
 /// Simple menu that prompts user for a selection
@@ -70,5 +80,19 @@ impl Menu for DefaultMenu {
         self.selections.clear();
         self.selections.append(&mut items);
         self.cursor = 0;
+    }
+
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(
+            out,
+            SetBackgroundColor(Color::White),
+            SetForegroundColor(Color::Black),
+        )?;
+        Ok(())
+    }
+
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(out, ResetColor,)?;
+        Ok(())
     }
 }

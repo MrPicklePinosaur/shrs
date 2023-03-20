@@ -111,6 +111,13 @@ impl Line {
                             }
                         },
                         Event::Key(KeyEvent {
+                            code: KeyCode::Esc,
+                            modifiers: KeyModifiers::NONE,
+                            ..
+                        }) => {
+                            self.menu.disactivate();
+                        },
+                        Event::Key(KeyEvent {
                             code: KeyCode::Tab,
                             modifiers: KeyModifiers::SHIFT,
                             ..

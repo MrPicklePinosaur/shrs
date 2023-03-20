@@ -79,7 +79,7 @@ impl Painter {
             menu.unselected_style(&mut self.out)?;
             for (i, menu_item) in menu.items().iter().enumerate() {
                 self.out.queue(Print("\r\n"))?;
-                if menu.cursor() == i as i32 {
+                if menu.cursor() as usize == i {
                     menu.selected_style(&mut self.out)?;
                 }
 

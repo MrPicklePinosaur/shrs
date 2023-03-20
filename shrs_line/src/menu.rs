@@ -13,7 +13,7 @@ pub trait Menu {
     fn next(&mut self);
     fn previous(&mut self);
     fn accept(&mut self) -> Option<&Self::MenuItem>;
-    fn cursor(&self) -> i32;
+    fn cursor(&self) -> u32;
     fn is_active(&self) -> bool;
     fn activate(&mut self);
     fn disactivate(&mut self);
@@ -28,7 +28,7 @@ pub trait Menu {
 pub struct DefaultMenu {
     selections: Vec<String>,
     /// Currently selected item
-    cursor: i32,
+    cursor: u32,
     active: bool,
 }
 
@@ -49,17 +49,17 @@ impl Menu for DefaultMenu {
         self.cursor = if self.selections.is_empty() {
             0
         } else {
-            (self.cursor + 1).min(self.selections.len() as i32 - 1)
+            (self.cursor + 1).min(self.selections.len() as u32 - 1)
         };
     }
     fn previous(&mut self) {
-        self.cursor = (self.cursor - 1).max(0);
+        self.cursor = self.cursor.saturating_sub(1);
     }
     fn accept(&mut self) -> Option<&String> {
         self.disactivate();
         self.selections.get(self.cursor as usize)
     }
-    fn cursor(&self) -> i32 {
+    fn cursor(&self) -> u32 {
         self.cursor
     }
     fn is_active(&self) -> bool {

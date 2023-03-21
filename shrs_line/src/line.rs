@@ -80,11 +80,25 @@ impl Line {
         &mut self,
         prompt: impl AsRef<T>,
     ) -> crossterm::Result<String> {
+        // ensure we are always cleaning up whenever we leave this scope
+        struct CleanUp;
+        impl Drop for CleanUp {
+            fn drop(&mut self) {
+                disable_raw_mode();
+            }
+        }
+        let _cleanup = CleanUp;
+
+        enable_raw_mode()?;
+
         let mut painter = Painter::new();
         painter.init().unwrap();
 
         // TODO dumping history index here for now
         let mut history_ind: i32 = -1;
+        self.buf = Vec::new();
+        self.ind = 0;
+        self.current_word = String::new();
 
         painter.paint(&prompt, &self.menu, "", self.ind as usize, &self.cursor)?;
 

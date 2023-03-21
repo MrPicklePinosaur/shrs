@@ -21,7 +21,7 @@ pub trait Completer {
 }
 
 pub struct DefaultCompleter {
-    completions: Trie<u8>,
+    wordlist: Vec<String>,
 }
 
 /// Very basic completer that uses prefix tree to match on a predefined word list
@@ -29,26 +29,27 @@ pub struct DefaultCompleter {
 // TODO differ between cmdname, args etc
 impl DefaultCompleter {
     pub fn new(wordlist: Vec<String>) -> Self {
-        // build prefix tree from wordlist
-        let mut builder = TrieBuilder::new();
-        for word in wordlist {
-            builder.push(word);
-        }
-        let trie = builder.build();
-
-        DefaultCompleter { completions: trie }
+        DefaultCompleter { wordlist }
     }
 }
 
 impl Completer for DefaultCompleter {
     fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
-        if buf.is_empty() {
-            return vec![];
-        }
-
         if ctx.arg_num == 1 {
+            // Return all results if empty query
+            if buf.is_empty() {
+                return self.wordlist.clone();
+            }
+
+            // TODO waste to keep building wordlist
+            let mut builder = TrieBuilder::new();
+            for word in &self.wordlist {
+                builder.push(word);
+            }
+            let trie = builder.build();
+
             // complete command name from path if is first argument
-            let results = self.completions.predictive_search(buf);
+            let results = trie.predictive_search(buf);
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
@@ -56,6 +57,11 @@ impl Completer for DefaultCompleter {
 
             return results;
         } else {
+            // Return all results if empty query
+            if buf.is_empty() {
+                return all_files_completion(&std::env::current_dir().unwrap()).unwrap();
+            }
+
             let buf_path = PathBuf::from(buf);
 
             // convert to absolute

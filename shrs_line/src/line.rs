@@ -73,7 +73,6 @@ impl LineBuilder {
 impl Line {
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
         // get line
-
         self.read_events(prompt).unwrap()
     }
 
@@ -87,11 +86,7 @@ impl Line {
         // TODO dumping history index here for now
         let mut history_ind: i32 = -1;
 
-        enable_raw_mode()?;
-
-        painter
-            .paint(&prompt, &self.menu, "", self.ind as usize, &self.cursor)
-            .unwrap();
+        painter.paint(&prompt, &self.menu, "", self.ind as usize, &self.cursor)?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -255,13 +250,9 @@ impl Line {
                     .unwrap()
                     .to_string();
 
-                painter
-                    .paint(&prompt, &self.menu, &res, self.ind as usize, &self.cursor)
-                    .unwrap();
+                painter.paint(&prompt, &self.menu, &res, self.ind as usize, &self.cursor)?;
             }
         }
-
-        disable_raw_mode()?;
 
         let res = std::str::from_utf8(self.buf.as_slice())
             .unwrap()

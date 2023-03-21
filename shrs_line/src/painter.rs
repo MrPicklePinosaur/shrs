@@ -3,7 +3,7 @@ use std::io::{stdout, BufWriter, Write};
 use crossterm::{
     cursor::{self, MoveUp},
     style::{Attribute, Print, SetAttribute},
-    terminal::{self, Clear, ScrollUp},
+    terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ScrollUp},
     QueueableCommand,
 };
 
@@ -49,6 +49,16 @@ impl Painter {
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,
     ) -> crossterm::Result<()> {
+        // ensure we are always cleaning up whenever we leave this scope
+        struct CleanUp;
+        impl Drop for CleanUp {
+            fn drop(&mut self) {
+                disable_raw_mode();
+            }
+        }
+        let _cleanup = CleanUp;
+
+        enable_raw_mode()?;
         self.out.queue(cursor::Hide)?;
 
         // scroll up if we need more lines

@@ -5,16 +5,19 @@ use std::ops::RangeBounds;
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum Error {
     #[error("Invalid relative offset {0}")]
     InvalidRelativeLocation(isize),
     #[error("Invalid absolute index {0}")]
     InvalidAbsoluteLocation(usize),
+    #[error("Deleting past end of buffer")]
+    DeletingTooMuch,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Location {
     /// Absolute location
     Abs(usize),
@@ -71,23 +74,58 @@ impl CursorBuffer {
         }
     }
 
+    /// Create new `CursorBuffer` from string an sets cursor location to beginning
+    pub fn from_str(text: &str) -> Self {
+        CursorBuffer {
+            data: Rope::from_str(text),
+            cursor: 0,
+        }
+    }
+
     /// Move the cursor using a location selector
     pub fn move_cursor(&mut self, loc: Location) -> Result<()> {
         self.cursor = self.to_absolute(loc)?;
         Ok(())
     }
 
-    /// Insert text and advance cursor
-    pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
-        self.append(loc, text)?;
+    /// Insert text and advance cursor to after the text inserted
+    pub fn cursor_insert(&mut self, loc: Location, text: &str) -> Result<()> {
+        self.insert(loc, text)?;
+        self.move_cursor(loc)?;
         self.move_cursor(Location::Rel(text.len() as isize))?;
         Ok(())
     }
 
-    /// Insert text without advancing cursor
-    pub fn append(&mut self, loc: Location, text: &str) -> Result<()> {
+    /// Insert text without moving cursor
+    pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
         self.data.insert(self.to_absolute(loc)?, text);
         Ok(())
+    }
+
+    /// Delete a length of text starting from location and move cursor to start of deleted text
+    pub fn cursor_delete(&mut self, loc: Location, len: usize) -> Result<()> {
+        let start = self.to_absolute(loc)?;
+        if start + len > self.len() {
+            return Err(Error::DeletingTooMuch);
+        }
+        self.data.remove(start..start + len);
+        self.move_cursor(Location::Abs(start))?;
+        Ok(())
+    }
+
+    /// Delete a length of text starting from location and offset the cursor accordingly such that
+    /// it points to the same text
+    ///
+    /// In the case that cursor was pointing at deleted text, the behavior is the same as
+    /// `cursor_delete`
+    pub fn delete(&mut self, loc: Location, len: usize) -> Result<()> {
+        todo!()
+    }
+
+    /// Delete a length of text ending at location
+    // TODO handle panic
+    pub fn delete_before(&mut self, loc: Location, len: usize) -> Result<()> {
+        todo!()
     }
 
     /// Get a slice of the text
@@ -101,6 +139,11 @@ impl CursorBuffer {
     /// Getter for the current index of the cursor
     pub fn cursor(&self) -> usize {
         self.cursor
+    }
+
+    /// Get the length of the text in number of characters
+    pub fn len(&self) -> usize {
+        self.data.len_chars()
     }
 
     /// Converts `Location` to an absolute index into the buffer. Performs bounds checking
@@ -129,22 +172,39 @@ impl CursorBuffer {
 
     /// Predicate if an index is a valid cursor into the buffer
     fn bounds_check(&self, i: isize) -> bool {
-        i >= 0 && i <= self.data.len_chars() as isize
+        i >= 0 && i <= self.len() as isize
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CursorBuffer, Location, Result};
+    use super::{CursorBuffer, Error, Location, Result};
 
     #[test]
-    fn cursor_buffer() -> Result<()> {
+    /// Basic insert and delete test
+    fn basic_insert_delete() -> Result<()> {
         let mut cb = CursorBuffer::new();
 
-        cb.insert(Location::Cursor(), "hello world")?;
+        cb.cursor_insert(Location::Cursor(), "hello world")?;
         assert_eq!(cb.slice(..), "hello world");
         assert_eq!(cb.cursor(), 11);
 
+        cb.cursor_delete(Location::Front(), 6)?;
+        assert_eq!(cb.slice(..), "world");
+        assert_eq!(cb.cursor(), 0);
+
+        Ok(())
+    }
+
+    #[test]
+    /// Test overdeleting buffer
+    fn over_delete() -> Result<()> {
+        let mut cb = CursorBuffer::from_str("hello");
+
+        assert_eq!(
+            cb.cursor_delete(Location::Cursor(), 200),
+            Err(Error::DeletingTooMuch)
+        );
         Ok(())
     }
 }

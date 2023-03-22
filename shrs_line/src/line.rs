@@ -8,11 +8,21 @@ use crossterm::{
 use crate::{
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
+    cursor_buffer::{CursorBuffer, Location},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
     painter::Painter,
     prompt::Prompt,
+    vi::ViAction,
 };
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LineMode {
+    /// Vi insert mode
+    Insert,
+    /// Vi normal mode
+    Normal,
+}
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
@@ -35,18 +45,34 @@ pub struct Line {
     cursor: Box<dyn Cursor>,
 
     // ignored fields
+    #[builder(default = "Painter::new()")]
     #[builder(setter(skip))]
-    buf: Vec<u8>,
-    #[builder(setter(skip))]
-    ind: i32,
-    // TODO this is temp, find better way to store prefix of current word
-    #[builder(setter(skip))]
-    current_word: String,
+    painter: Painter,
 }
 
 impl Default for Line {
     fn default() -> Self {
         LineBuilder::default().build().unwrap()
+    }
+}
+
+pub struct LineCtx {
+    cb: CursorBuffer,
+    // TODO this is temp, find better way to store prefix of current word
+    current_word: String,
+    // TODO dumping history index here for now
+    history_ind: i32,
+    mode: LineMode,
+}
+
+impl Default for LineCtx {
+    fn default() -> Self {
+        LineCtx {
+            cb: CursorBuffer::new(),
+            current_word: String::new(),
+            history_ind: -1,
+            mode: LineMode::Insert,
+        }
     }
 }
 
@@ -72,14 +98,15 @@ impl LineBuilder {
 
 impl Line {
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
-        // get line
-        self.read_events(prompt).unwrap()
+        let mut ctx = LineCtx::default();
+        self.read_events(&mut ctx, prompt).unwrap()
     }
 
     fn read_events<T: Prompt + ?Sized>(
         &mut self,
+        ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
-    ) -> crossterm::Result<String> {
+    ) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -91,16 +118,10 @@ impl Line {
 
         enable_raw_mode()?;
 
-        let mut painter = Painter::new();
-        painter.init().unwrap();
+        self.painter.init().unwrap();
 
-        // TODO dumping history index here for now
-        let mut history_ind: i32 = -1;
-        self.buf = Vec::new();
-        self.ind = 0;
-        self.current_word = String::new();
-
-        painter.paint(&prompt, &self.menu, "", self.ind as usize, &self.cursor)?;
+        self.painter
+            .paint(&prompt, &self.menu, "", ctx.cb.cursor(), &self.cursor)?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -108,187 +129,264 @@ impl Line {
 
                 // handle menu events
                 if self.menu.is_active() {
-                    match event {
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Enter,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            let accepted = self.menu.accept().cloned();
-                            if let Some(accepted) = accepted {
-                                self.accept_completion(&accepted);
-                            }
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Esc,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            self.menu.disactivate();
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Tab,
-                            modifiers: KeyModifiers::SHIFT,
-                            ..
-                        })
-                        | Event::Key(KeyEvent {
-                            code: KeyCode::Up,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            self.menu.previous();
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Tab,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        })
-                        | Event::Key(KeyEvent {
-                            code: KeyCode::Down,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            self.menu.next();
-                        },
-                        _ => {},
-                    }
+                    self.handle_menu_keys(ctx, event)?;
                 } else {
-                    match event {
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Enter,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            painter.newline()?;
-                            break;
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Tab,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            let res = std::str::from_utf8(self.buf.as_slice())
-                                .unwrap()
-                                .to_string();
-
-                            // TODO IFS
-                            let args = res.as_str()[..self.ind as usize].split(' ');
-                            self.current_word = args.clone().last().unwrap_or("").to_string();
-
-                            let ctx = CompletionCtx {
-                                arg_num: args.count(),
-                            };
-                            let completions = self.completer.complete(&self.current_word, ctx);
-                            let owned = completions
-                                .iter()
-                                .map(|x| x.to_string())
-                                .take(10) // TODO make this config
-                                .collect::<Vec<_>>();
-
-                            // if completions only has one entry, automatically select it
-                            if owned.len() == 1 {
-                                self.accept_completion(owned.get(0).unwrap());
-                            } else {
-                                self.menu.set_items(owned);
-                                self.menu.activate();
+                    // TODO bit hacky bubbling up control flow from funtion
+                    match ctx.mode {
+                        LineMode::Insert => {
+                            let should_break = self.handle_insert_keys(ctx, event)?;
+                            if should_break {
+                                break;
                             }
                         },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Left,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            self.ind = (self.ind - 1).max(0);
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Right,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            self.ind = (self.ind + 1).min(self.buf.len() as i32);
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Backspace,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            if !self.buf.is_empty() {
-                                self.ind = (self.ind - 1).max(0);
-                                self.buf.remove(self.ind as usize);
-                            }
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Down,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            history_ind = (history_ind - 1).max(0);
-                            if let Some(history_item) = self.history.get(history_ind as usize) {
-                                self.buf.clear();
-                                let mut history_item =
-                                    history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                                self.buf.append(&mut history_item);
-                                self.ind = self.buf.len() as i32;
-                            }
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Up,
-                            modifiers: KeyModifiers::NONE,
-                            ..
-                        }) => {
-                            history_ind = if self.history.len() == 0 {
-                                0
-                            } else {
-                                (history_ind + 1).min(self.history.len() as i32 - 1)
-                            };
-                            if let Some(history_item) = self.history.get(history_ind as usize) {
-                                self.buf.clear();
-                                let mut history_item =
-                                    history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                                self.buf.append(&mut history_item);
-                                self.ind = self.buf.len() as i32;
-                            }
-                        },
-                        Event::Key(KeyEvent {
-                            code: KeyCode::Char(c),
-                            ..
-                        }) => {
-                            self.buf.insert(self.ind as usize, c as u8);
-                            self.ind = (self.ind + 1).min(self.buf.len() as i32);
-                        },
-                        _ => {},
+                        LineMode::Normal => self.handle_normal_keys(ctx, event)?,
                     }
                 }
 
-                let res = std::str::from_utf8(self.buf.as_slice())
-                    .unwrap()
-                    .to_string();
+                let res = ctx.cb.slice(..).as_str().unwrap();
 
-                painter.paint(&prompt, &self.menu, &res, self.ind as usize, &self.cursor)?;
+                self.painter
+                    .paint(&prompt, &self.menu, &res, ctx.cb.cursor(), &self.cursor)?;
             }
         }
 
-        let res = std::str::from_utf8(self.buf.as_slice())
-            .unwrap()
-            .to_string();
+        let res = ctx.cb.slice(..).as_str().unwrap().to_string();
         self.history.add(res.clone());
         Ok(res)
     }
 
+    fn handle_menu_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+        match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                let accepted = self.menu.accept().cloned();
+                if let Some(accepted) = accepted {
+                    self.accept_completion(ctx, &accepted);
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Esc,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.menu.disactivate();
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Tab,
+                modifiers: KeyModifiers::SHIFT,
+                ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Up,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.menu.previous();
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Tab,
+                modifiers: KeyModifiers::NONE,
+                ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Down,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.menu.next();
+            },
+            _ => {},
+        };
+        Ok(())
+    }
+
+    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
+        match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.painter.newline()?;
+                return Ok(true);
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Tab,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                /*
+                let res = ctx.cb.slice(..).as_str().unwrap().to_string();
+
+                // TODO IFS
+                let args = res.as_str()[..ctx.cb.cursor()].split(' ');
+                ctx.current_word = args.clone().last().unwrap_or("").to_string();
+
+                let comp_ctx = CompletionCtx {
+                    arg_num: args.count(),
+                };
+                let completions = self.completer.complete(&ctx.current_word, comp_ctx);
+                let owned = completions
+                    .iter()
+                    .map(|x| x.to_string())
+                    .take(10) // TODO make this config
+                    .collect::<Vec<_>>();
+
+                // if completions only has one entry, automatically select it
+                if owned.len() == 1 {
+                    self.accept_completion(ctx, owned.get(0).unwrap());
+                } else {
+                    self.menu.set_items(owned);
+                    self.menu.activate();
+                }
+                */
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.cursor() > 0 {
+                    ctx.cb.move_cursor(Location::Before())?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.cursor() < ctx.cb.len() {
+                    ctx.cb.move_cursor(Location::After())?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                    ctx.cb.cursor_delete(Location::Before(), 1)?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Down,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                /*
+                ctx.history_ind = (ctx.history_ind - 1).max(0);
+                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+                    ctx.buf.clear();
+                    let mut history_item =
+                        history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
+                    ctx.buf.append(&mut history_item);
+                    ctx.ind = ctx.buf.len() as i32;
+                }
+                */
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Up,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                /*
+                ctx.history_ind = if self.history.len() == 0 {
+                    0
+                } else {
+                    (ctx.history_ind + 1).min(self.history.len() as i32 - 1)
+                };
+                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+                    ctx.buf.clear();
+                    let mut history_item =
+                        history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
+                    ctx.buf.append(&mut history_item);
+                    ctx.ind = ctx.buf.len() as i32;
+                }
+                */
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Esc, ..
+            }) => {
+                ctx.mode = LineMode::Normal;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char(c),
+                ..
+            }) => {
+                ctx.cb.cursor_insert(Location::Cursor(), &c.to_string())?;
+            },
+            _ => {},
+        };
+        Ok(false)
+    }
+
+    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+        // TODO write better system to support key combinations
+        match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('i'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.mode = LineMode::Insert;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                // TODO having to do these bounds checks are not nice, should implement some sort
+                // of cb.move_cursor_clamp
+                if ctx.cb.cursor() > 0 {
+                    ViAction::MoveLeft.execute(&mut ctx.cb)?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('l'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.cursor() < ctx.cb.len() {
+                    ViAction::MoveRight.execute(&mut ctx.cb)?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('^'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ViAction::MoveStart.execute(&mut ctx.cb)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('$'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ViAction::MoveEnd.execute(&mut ctx.cb)?;
+            },
+            _ => {},
+        }
+        Ok(())
+    }
+
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(&mut self, accepted: &str) {
+    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) {
+        /*
         // TODO this code is dumb
         // first remove current word
-        self.buf.drain(
-            (self.ind as usize).saturating_sub(self.current_word.len())..(self.ind as usize),
-        );
-        self.ind = (self.ind as usize).saturating_sub(self.current_word.len()) as i32;
+        ctx.buf
+            .drain((ctx.ind as usize).saturating_sub(ctx.current_word.len())..(ctx.ind as usize));
+        ctx.ind = (ctx.ind as usize).saturating_sub(ctx.current_word.len()) as i32;
 
         // then replace with the completion word
         accepted.clone().chars().for_each(|c| {
             // TODO find way to insert multiple items in one operation
-            self.buf.insert(self.ind as usize, c as u8);
-            self.ind = (self.ind + 1).min(self.buf.len() as i32);
+            ctx.buf.insert(ctx.ind as usize, c as u8);
+            ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
         });
+        */
     }
 }

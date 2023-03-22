@@ -103,18 +103,23 @@ impl CursorBuffer {
         Ok(())
     }
 
+    /// Move the cursor using a location selector, clamping the cursor if it were to move to
+    /// invalid position
+    pub fn move_cursor_clamp(&mut self, loc: Location) {
+        todo!()
+    }
+
     /// Insert text and advance cursor to after the text inserted
     pub fn cursor_insert(&mut self, loc: Location, text: &str) -> Result<()> {
-        self.insert(loc, text)?;
+        self.data.insert(self.to_absolute(loc)?, text);
         self.move_cursor(loc)?;
         self.move_cursor(Location::Rel(text.len() as isize))?;
         Ok(())
     }
 
-    /// Insert text without moving cursor
+    /// Insert text and offset cursor to point to same text
     pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
-        self.data.insert(self.to_absolute(loc)?, text);
-        Ok(())
+        todo!()
     }
 
     /// Delete a length of text starting from location and move cursor to start of deleted text

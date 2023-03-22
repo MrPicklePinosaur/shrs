@@ -13,7 +13,16 @@ use crate::{
     menu::{DefaultMenu, Menu},
     painter::Painter,
     prompt::Prompt,
+    vi::ViAction,
 };
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LineMode {
+    /// Vi insert mode
+    Insert,
+    /// Vi normal mode
+    Normal,
+}
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
@@ -53,6 +62,7 @@ pub struct LineCtx {
     current_word: String,
     // TODO dumping history index here for now
     history_ind: i32,
+    mode: LineMode,
 }
 
 impl Default for LineCtx {
@@ -61,6 +71,7 @@ impl Default for LineCtx {
             cb: CursorBuffer::new(),
             current_word: String::new(),
             history_ind: -1,
+            mode: LineMode::Insert,
         }
     }
 }
@@ -121,9 +132,14 @@ impl Line {
                     self.handle_menu_keys(ctx, event)?;
                 } else {
                     // TODO bit hacky bubbling up control flow from funtion
-                    let should_break = self.handle_insert_keys(ctx, event)?;
-                    if should_break {
-                        break;
+                    match ctx.mode {
+                        LineMode::Insert => {
+                            let should_break = self.handle_insert_keys(ctx, event)?;
+                            if should_break {
+                                break;
+                            }
+                        },
+                        LineMode::Normal => self.handle_normal_keys(ctx, event)?,
                     }
                 }
 
@@ -292,6 +308,11 @@ impl Line {
                 */
             },
             Event::Key(KeyEvent {
+                code: KeyCode::Esc, ..
+            }) => {
+                ctx.mode = LineMode::Normal;
+            },
+            Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {
@@ -300,6 +321,55 @@ impl Line {
             _ => {},
         };
         Ok(false)
+    }
+
+    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+        // TODO write better system to support key combinations
+        match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('i'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.mode = LineMode::Insert;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                // TODO having to do these bounds checks are not nice, should implement some sort
+                // of cb.move_cursor_clamp
+                if ctx.cb.cursor() > 0 {
+                    ViAction::MoveLeft.execute(&mut ctx.cb)?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('l'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.cursor() < ctx.cb.len() {
+                    ViAction::MoveRight.execute(&mut ctx.cb)?;
+                }
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('^'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ViAction::MoveStart.execute(&mut ctx.cb)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('$'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ViAction::MoveEnd.execute(&mut ctx.cb)?;
+            },
+            _ => {},
+        }
+        Ok(())
     }
 
     // replace word at cursor with accepted word (used in automcompletion)

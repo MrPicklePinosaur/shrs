@@ -17,7 +17,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Location {
     /// Absolute location
     Abs(usize),
@@ -25,6 +25,14 @@ pub enum Location {
     Rel(isize),
 }
 
+impl Default for Location {
+    fn default() -> Self {
+        Location::Cursor()
+    }
+}
+
+// NOTE: something to consider, if we create a `Location` object using a reference to `CursorBuffer`, the `Location` may become invalidated if we modify the `CursorBuffer`. Should find way to invalidate a `Location` whenever `CursorBuffer` is mutated
+// TODO: implement Add and Sub for location?
 #[allow(non_snake_case)]
 impl Location {
     /// Location at the cursor, alias of `Location::Rel(0)`
@@ -47,8 +55,15 @@ impl Location {
         Location::Abs(0)
     }
 
-    pub fn Back() -> Location {
-        todo!()
+    /// Location at end of buffer
+    pub fn Back(cb: &CursorBuffer) -> Location {
+        Location::Abs(cb.len())
+    }
+
+    /// Location of the next occurance of character
+    pub fn FindChar(cb: &CursorBuffer, c: char) -> Option<Location> {
+        let ind = cb.chars(Location::Cursor()).unwrap().position(|ch| ch == c);
+        ind.map(|i| Location::Abs(i))
     }
 }
 
@@ -136,6 +151,12 @@ impl CursorBuffer {
         self.data.slice(char_range)
     }
 
+    /// Create forward iterator from a location
+    // TODO: maybe wrap `ropey::iter::Chars` in a newtype
+    pub fn chars(&self, loc: Location) -> Result<ropey::iter::Chars<'_>> {
+        Ok(self.data.chars_at(self.to_absolute(loc)?))
+    }
+
     /// Getter for the current index of the cursor
     pub fn cursor(&self) -> usize {
         self.cursor
@@ -205,6 +226,15 @@ mod tests {
             cb.cursor_delete(Location::Cursor(), 200),
             Err(Error::DeletingTooMuch)
         );
+        Ok(())
+    }
+
+    #[test]
+    fn find_char() -> Result<()> {
+        let cb = CursorBuffer::from_str("hello");
+
+        assert_eq!(Location::FindChar(&cb, 'l'), Some(Location::Abs(2)));
+        assert_eq!(Location::FindChar(&cb, 'x'), None);
         Ok(())
     }
 }

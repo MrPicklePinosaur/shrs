@@ -11,6 +11,7 @@ pub mod line;
 pub mod menu;
 pub mod painter;
 pub mod prompt;
+pub mod vi;
 
 #[cfg(test)]
 mod tests {}

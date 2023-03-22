@@ -34,28 +34,35 @@ pub struct Line {
     #[builder(setter(custom))]
     cursor: Box<dyn Cursor>,
 
-    // TODO: takes these fields below and abstract out into ontext struct
-
     // ignored fields
-    #[builder(setter(skip))]
-    buf: Vec<u8>,
-    #[builder(setter(skip))]
-    ind: i32,
-    // TODO this is temp, find better way to store prefix of current word
-    #[builder(setter(skip))]
-    current_word: String,
     #[builder(default = "Painter::new()")]
     #[builder(setter(skip))]
     painter: Painter,
-    #[builder(default = "-1")]
-    #[builder(setter(skip))]
-    // TODO dumping history index here for now
-    history_ind: i32,
 }
 
 impl Default for Line {
     fn default() -> Self {
         LineBuilder::default().build().unwrap()
+    }
+}
+
+pub struct LineCtx {
+    buf: Vec<u8>,
+    ind: i32,
+    // TODO this is temp, find better way to store prefix of current word
+    current_word: String,
+    // TODO dumping history index here for now
+    history_ind: i32,
+}
+
+impl Default for LineCtx {
+    fn default() -> Self {
+        LineCtx {
+            buf: vec![],
+            ind: 0,
+            current_word: String::new(),
+            history_ind: -1,
+        }
     }
 }
 
@@ -81,12 +88,13 @@ impl LineBuilder {
 
 impl Line {
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
-        // get line
-        self.read_events(prompt).unwrap()
+        let mut ctx = LineCtx::default();
+        self.read_events(&mut ctx, prompt).unwrap()
     }
 
     fn read_events<T: Prompt + ?Sized>(
         &mut self,
+        ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
     ) -> crossterm::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
@@ -102,13 +110,8 @@ impl Line {
 
         self.painter.init().unwrap();
 
-        self.buf = Vec::new();
-        self.ind = 0;
-        self.current_word = String::new();
-        self.history_ind = -1;
-
         self.painter
-            .paint(&prompt, &self.menu, "", self.ind as usize, &self.cursor)?;
+            .paint(&prompt, &self.menu, "", ctx.ind as usize, &self.cursor)?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -116,32 +119,28 @@ impl Line {
 
                 // handle menu events
                 if self.menu.is_active() {
-                    self.handle_menu_keys(event)?;
+                    self.handle_menu_keys(ctx, event)?;
                 } else {
                     // TODO bit hacky bubbling up control flow from funtion
-                    let should_break = self.handle_insert_keys(event)?;
+                    let should_break = self.handle_insert_keys(ctx, event)?;
                     if should_break {
                         break;
                     }
                 }
 
-                let res = std::str::from_utf8(self.buf.as_slice())
-                    .unwrap()
-                    .to_string();
+                let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
 
                 self.painter
-                    .paint(&prompt, &self.menu, &res, self.ind as usize, &self.cursor)?;
+                    .paint(&prompt, &self.menu, &res, ctx.ind as usize, &self.cursor)?;
             }
         }
 
-        let res = std::str::from_utf8(self.buf.as_slice())
-            .unwrap()
-            .to_string();
+        let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
         self.history.add(res.clone());
         Ok(res)
     }
 
-    fn handle_menu_keys(&mut self, event: Event) -> crossterm::Result<()> {
+    fn handle_menu_keys(&mut self, ctx: &mut LineCtx, event: Event) -> crossterm::Result<()> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -150,7 +149,7 @@ impl Line {
             }) => {
                 let accepted = self.menu.accept().cloned();
                 if let Some(accepted) = accepted {
-                    self.accept_completion(&accepted);
+                    self.accept_completion(ctx, &accepted);
                 }
             },
             Event::Key(KeyEvent {
@@ -189,7 +188,7 @@ impl Line {
         Ok(())
     }
 
-    fn handle_insert_keys(&mut self, event: Event) -> crossterm::Result<bool> {
+    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> crossterm::Result<bool> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -204,18 +203,16 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                let res = std::str::from_utf8(self.buf.as_slice())
-                    .unwrap()
-                    .to_string();
+                let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
 
                 // TODO IFS
-                let args = res.as_str()[..self.ind as usize].split(' ');
-                self.current_word = args.clone().last().unwrap_or("").to_string();
+                let args = res.as_str()[..ctx.ind as usize].split(' ');
+                ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
-                let ctx = CompletionCtx {
+                let comp_ctx = CompletionCtx {
                     arg_num: args.count(),
                 };
-                let completions = self.completer.complete(&self.current_word, ctx);
+                let completions = self.completer.complete(&ctx.current_word, comp_ctx);
                 let owned = completions
                     .iter()
                     .map(|x| x.to_string())
@@ -224,7 +221,7 @@ impl Line {
 
                 // if completions only has one entry, automatically select it
                 if owned.len() == 1 {
-                    self.accept_completion(owned.get(0).unwrap());
+                    self.accept_completion(ctx, owned.get(0).unwrap());
                 } else {
                     self.menu.set_items(owned);
                     self.menu.activate();
@@ -235,23 +232,23 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.ind = (self.ind - 1).max(0);
+                ctx.ind = (ctx.ind - 1).max(0);
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.ind = (self.ind + 1).min(self.buf.len() as i32);
+                ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if !self.buf.is_empty() {
-                    self.ind = (self.ind - 1).max(0);
-                    self.buf.remove(self.ind as usize);
+                if !ctx.buf.is_empty() {
+                    ctx.ind = (ctx.ind - 1).max(0);
+                    ctx.buf.remove(ctx.ind as usize);
                 }
             },
             Event::Key(KeyEvent {
@@ -259,13 +256,13 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_ind = (self.history_ind - 1).max(0);
-                if let Some(history_item) = self.history.get(self.history_ind as usize) {
-                    self.buf.clear();
+                ctx.history_ind = (ctx.history_ind - 1).max(0);
+                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+                    ctx.buf.clear();
                     let mut history_item =
                         history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                    self.buf.append(&mut history_item);
-                    self.ind = self.buf.len() as i32;
+                    ctx.buf.append(&mut history_item);
+                    ctx.ind = ctx.buf.len() as i32;
                 }
             },
             Event::Key(KeyEvent {
@@ -273,25 +270,25 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_ind = if self.history.len() == 0 {
+                ctx.history_ind = if self.history.len() == 0 {
                     0
                 } else {
-                    (self.history_ind + 1).min(self.history.len() as i32 - 1)
+                    (ctx.history_ind + 1).min(self.history.len() as i32 - 1)
                 };
-                if let Some(history_item) = self.history.get(self.history_ind as usize) {
-                    self.buf.clear();
+                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+                    ctx.buf.clear();
                     let mut history_item =
                         history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                    self.buf.append(&mut history_item);
-                    self.ind = self.buf.len() as i32;
+                    ctx.buf.append(&mut history_item);
+                    ctx.ind = ctx.buf.len() as i32;
                 }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {
-                self.buf.insert(self.ind as usize, c as u8);
-                self.ind = (self.ind + 1).min(self.buf.len() as i32);
+                ctx.buf.insert(ctx.ind as usize, c as u8);
+                ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
             },
             _ => {},
         };
@@ -299,19 +296,18 @@ impl Line {
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(&mut self, accepted: &str) {
+    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) {
         // TODO this code is dumb
         // first remove current word
-        self.buf.drain(
-            (self.ind as usize).saturating_sub(self.current_word.len())..(self.ind as usize),
-        );
-        self.ind = (self.ind as usize).saturating_sub(self.current_word.len()) as i32;
+        ctx.buf
+            .drain((ctx.ind as usize).saturating_sub(ctx.current_word.len())..(ctx.ind as usize));
+        ctx.ind = (ctx.ind as usize).saturating_sub(ctx.current_word.len()) as i32;
 
         // then replace with the completion word
         accepted.clone().chars().for_each(|c| {
             // TODO find way to insert multiple items in one operation
-            self.buf.insert(self.ind as usize, c as u8);
-            self.ind = (self.ind + 1).min(self.buf.len() as i32);
+            ctx.buf.insert(ctx.ind as usize, c as u8);
+            ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
         });
     }
 }

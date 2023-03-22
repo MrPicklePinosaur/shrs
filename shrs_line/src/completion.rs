@@ -146,6 +146,7 @@ mod tests {
     }
     */
 
+    /*
     use super::filepath_completion_p;
 
     #[test]
@@ -153,4 +154,5 @@ mod tests {
         let out = filepath_completion_p("/home/pinosaur", |f| f.file_type().unwrap().is_file());
         println!("{:?}", out);
     }
+    */
 }

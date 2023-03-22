@@ -8,6 +8,7 @@ use crossterm::{
 use crate::{
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
+    cursor_buffer::{CursorBuffer, Location},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
     painter::Painter,
@@ -47,8 +48,7 @@ impl Default for Line {
 }
 
 pub struct LineCtx {
-    buf: Vec<u8>,
-    ind: i32,
+    cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
     // TODO dumping history index here for now
@@ -58,8 +58,7 @@ pub struct LineCtx {
 impl Default for LineCtx {
     fn default() -> Self {
         LineCtx {
-            buf: vec![],
-            ind: 0,
+            cb: CursorBuffer::new(),
             current_word: String::new(),
             history_ind: -1,
         }
@@ -96,7 +95,7 @@ impl Line {
         &mut self,
         ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
-    ) -> crossterm::Result<String> {
+    ) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -111,7 +110,7 @@ impl Line {
         self.painter.init().unwrap();
 
         self.painter
-            .paint(&prompt, &self.menu, "", ctx.ind as usize, &self.cursor)?;
+            .paint(&prompt, &self.menu, "", ctx.cb.cursor(), &self.cursor)?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -128,19 +127,19 @@ impl Line {
                     }
                 }
 
-                let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
+                let res = ctx.cb.slice(..).as_str().unwrap();
 
                 self.painter
-                    .paint(&prompt, &self.menu, &res, ctx.ind as usize, &self.cursor)?;
+                    .paint(&prompt, &self.menu, &res, ctx.cb.cursor(), &self.cursor)?;
             }
         }
 
-        let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
+        let res = ctx.cb.slice(..).as_str().unwrap().to_string();
         self.history.add(res.clone());
         Ok(res)
     }
 
-    fn handle_menu_keys(&mut self, ctx: &mut LineCtx, event: Event) -> crossterm::Result<()> {
+    fn handle_menu_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -188,7 +187,7 @@ impl Line {
         Ok(())
     }
 
-    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> crossterm::Result<bool> {
+    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -203,10 +202,11 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                let res = std::str::from_utf8(ctx.buf.as_slice()).unwrap().to_string();
+                /*
+                let res = ctx.cb.slice(..).as_str().unwrap().to_string();
 
                 // TODO IFS
-                let args = res.as_str()[..ctx.ind as usize].split(' ');
+                let args = res.as_str()[..ctx.cb.cursor()].split(' ');
                 ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
                 let comp_ctx = CompletionCtx {
@@ -226,29 +226,33 @@ impl Line {
                     self.menu.set_items(owned);
                     self.menu.activate();
                 }
+                */
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ctx.ind = (ctx.ind - 1).max(0);
+                if ctx.cb.cursor() > 0 {
+                    ctx.cb.move_cursor(Location::Before())?;
+                }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
+                if ctx.cb.cursor() < ctx.cb.len() {
+                    ctx.cb.move_cursor(Location::After())?;
+                }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if !ctx.buf.is_empty() {
-                    ctx.ind = (ctx.ind - 1).max(0);
-                    ctx.buf.remove(ctx.ind as usize);
+                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                    ctx.cb.cursor_delete(Location::Before(), 1)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -256,6 +260,7 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
+                /*
                 ctx.history_ind = (ctx.history_ind - 1).max(0);
                 if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
                     ctx.buf.clear();
@@ -264,12 +269,14 @@ impl Line {
                     ctx.buf.append(&mut history_item);
                     ctx.ind = ctx.buf.len() as i32;
                 }
+                */
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
+                /*
                 ctx.history_ind = if self.history.len() == 0 {
                     0
                 } else {
@@ -282,13 +289,13 @@ impl Line {
                     ctx.buf.append(&mut history_item);
                     ctx.ind = ctx.buf.len() as i32;
                 }
+                */
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {
-                ctx.buf.insert(ctx.ind as usize, c as u8);
-                ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
+                ctx.cb.cursor_insert(Location::Cursor(), &c.to_string())?;
             },
             _ => {},
         };
@@ -297,6 +304,7 @@ impl Line {
 
     // replace word at cursor with accepted word (used in automcompletion)
     fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) {
+        /*
         // TODO this code is dumb
         // first remove current word
         ctx.buf
@@ -309,5 +317,6 @@ impl Line {
             ctx.buf.insert(ctx.ind as usize, c as u8);
             ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
         });
+        */
     }
 }

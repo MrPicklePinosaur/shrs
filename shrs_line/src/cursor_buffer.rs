@@ -143,6 +143,12 @@ impl CursorBuffer {
         todo!()
     }
 
+    /// Empties all text and resets cursor
+    pub fn clear(&mut self) {
+        self.data.remove(..);
+        self.cursor = 0;
+    }
+
     /// Get a slice of the text
     pub fn slice<R>(&self, char_range: R) -> RopeSlice<'_>
     where

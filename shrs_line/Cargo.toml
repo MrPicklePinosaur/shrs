@@ -11,5 +11,7 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 crossterm = "0.26"
 trie-rs = "0.1"
 derive_builder = "0.12"
+ropey = "1.6"
 
 anyhow = "1"
+thiserror = "1"

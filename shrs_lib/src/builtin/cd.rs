@@ -14,17 +14,16 @@ impl BuiltinCmd for CdBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
         // if empty default to root (for now)
-        let raw_path = if let Some(path) = args.get(0) {
-            path
+        let path = if let Some(path) = args.get(0) {
+            rt.working_dir.join(Path::new(path))
         } else {
-            "/"
+            let home_dir = rt.env.get("HOME").unwrap();
+            Path::new(home_dir).to_path_buf()
         };
 
-        let path = Path::new(raw_path);
-        let new_path = rt.working_dir.join(path);
-        env::set_current_dir(path)?; // TODO should env current dir remain as the directory the shell was started in?
-        rt.working_dir = new_path.clone();
-        rt.env.set("PWD", new_path.to_str().unwrap());
+        env::set_current_dir(path.clone())?; // TODO should env current dir remain as the directory the shell was started in?
+        rt.working_dir = path.clone();
+        rt.env.set("PWD", path.to_str().unwrap());
 
         // return a dummy command
         dummy_child()

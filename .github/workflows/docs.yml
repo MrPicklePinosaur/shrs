@@ -1,4 +1,9 @@
-on: push
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: {}
+
 name: Build and deploy GH Pages
 jobs:
   build:
@@ -13,4 +18,4 @@ jobs:
           PAGES_BRANCH: gh-pages
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_DIR: docs
-          BUILD_THEMES: true
+          BUILD_THEMES: false

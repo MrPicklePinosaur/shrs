@@ -71,8 +71,9 @@ impl Location {
         Self: Sized,
         P: FnMut(char) -> bool,
     {
+        println!("{:?}", cb.to_absolute(Location::Cursor()));
         let ind = cb.chars(Location::Cursor()).unwrap().position(predicate);
-        ind.map(|i| Location::Abs(i))
+        ind.map(|i| Location::Abs(cb.cursor() + i))
     }
 
     /// Location of the previous occurrence of character
@@ -89,7 +90,7 @@ impl Location {
         let mut it = cb.chars(Location::Cursor()).unwrap();
         it.reverse();
         let ind = it.position(predicate);
-        ind.map(|i| Location::Abs(cb.len().saturating_sub(i + 1)))
+        ind.map(|i| Location::Abs(cb.cursor().saturating_sub(i + 1)))
     }
 }
 
@@ -243,7 +244,7 @@ impl CursorBuffer {
     /// Converts `Location` to an absolute index into the buffer. Performs bounds checking
     // TODO to absolute would be much nice semantically if it was a method on `Location`, however
     // we need access to `data.len_chars()` and `cursor` to perform the conversion
-    fn to_absolute(&self, loc: Location) -> Result<usize> {
+    pub fn to_absolute(&self, loc: Location) -> Result<usize> {
         match loc {
             Location::Abs(i) => {
                 if self.bounds_check(i as isize) {

@@ -315,7 +315,7 @@ impl Line {
                 // TODO having to do these bounds checks are not nice, should implement some sort
                 // of cb.move_cursor_clamp
                 if ctx.cb.cursor() > 0 {
-                    ctx.cb.execute(ViAction::MoveLeft)?;
+                    ctx.cb.execute_vi(ViAction::MoveLeft)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -324,7 +324,7 @@ impl Line {
                 ..
             }) => {
                 if ctx.cb.cursor() < ctx.cb.len() {
-                    ctx.cb.execute(ViAction::MoveRight)?;
+                    ctx.cb.execute_vi(ViAction::MoveRight)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -346,14 +346,14 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ctx.cb.execute(ViAction::MoveStart)?;
+                ctx.cb.execute_vi(ViAction::MoveStart)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char('$'),
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ctx.cb.execute(ViAction::MoveEnd)?;
+                ctx.cb.execute_vi(ViAction::MoveEnd)?;
             },
             _ => {},
         }

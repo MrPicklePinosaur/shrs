@@ -276,36 +276,14 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                /*
-                ctx.history_ind = (ctx.history_ind - 1).max(0);
-                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-                    ctx.buf.clear();
-                    let mut history_item =
-                        history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                    ctx.buf.append(&mut history_item);
-                    ctx.ind = ctx.buf.len() as i32;
-                }
-                */
+                self.history_down(ctx)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                /*
-                ctx.history_ind = if self.history.len() == 0 {
-                    0
-                } else {
-                    (ctx.history_ind + 1).min(self.history.len() as i32 - 1)
-                };
-                if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-                    ctx.buf.clear();
-                    let mut history_item =
-                        history_item.chars().map(|x| x as u8).collect::<Vec<_>>();
-                    ctx.buf.append(&mut history_item);
-                    ctx.ind = ctx.buf.len() as i32;
-                }
-                */
+                self.history_up(ctx)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
@@ -354,6 +332,20 @@ impl Line {
                 }
             },
             Event::Key(KeyEvent {
+                code: KeyCode::Char('j'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.history_down(ctx)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('k'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.history_up(ctx)?;
+            },
+            Event::Key(KeyEvent {
                 code: KeyCode::Char('^'),
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -388,5 +380,27 @@ impl Line {
             ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
         });
         */
+    }
+
+    fn history_up(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+        // TODO make this logic nicer
+        ctx.history_ind = (ctx.history_ind + 1).min(self.history.len().saturating_sub(1) as i32);
+
+        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+            ctx.cb.clear();
+            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+        }
+        Ok(())
+    }
+
+    fn history_down(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+        ctx.history_ind = (ctx.history_ind - 1).max(0);
+
+        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
+            ctx.cb.clear();
+            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+        }
+
+        Ok(())
     }
 }

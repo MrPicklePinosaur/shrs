@@ -268,7 +268,7 @@ impl Line {
                 ..
             }) => {
                 if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
-                    ctx.cb.cursor_delete(Location::Before(), 1)?;
+                    ctx.cb.delete(Location::Before(), 1)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -294,7 +294,7 @@ impl Line {
                 code: KeyCode::Char(c),
                 ..
             }) => {
-                ctx.cb.cursor_insert(Location::Cursor(), &c.to_string())?;
+                ctx.cb.insert(Location::Cursor(), &c.to_string())?;
             },
             _ => {},
         };
@@ -388,7 +388,7 @@ impl Line {
 
         if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
             ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+            ctx.cb.insert(Location::Cursor(), history_item)?;
         }
         Ok(())
     }
@@ -398,7 +398,7 @@ impl Line {
 
         if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
             ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+            ctx.cb.insert(Location::Cursor(), history_item)?;
         }
 
         Ok(())

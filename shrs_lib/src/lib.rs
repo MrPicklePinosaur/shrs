@@ -1,3 +1,5 @@
+//! sh.rs - a rusty shell library
+
 #[macro_use]
 extern crate lalrpop_util;
 

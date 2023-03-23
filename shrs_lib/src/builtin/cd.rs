@@ -35,6 +35,7 @@ impl BuiltinCmd for CdBuiltin {
 
         rt.env
             .set("OLDPWD", &env::current_dir().unwrap().display().to_string());
+
         env::set_current_dir(path.clone())?; // TODO should env current dir remain as the directory the shell was started in?
         rt.working_dir = path.clone();
         rt.env.set("PWD", path.to_str().unwrap());

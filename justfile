@@ -15,3 +15,6 @@ fmt:
 
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo
+
+docs:
+    cd docs && zola serve

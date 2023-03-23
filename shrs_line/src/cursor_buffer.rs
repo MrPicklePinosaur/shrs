@@ -1,6 +1,6 @@
 //! Friendly wrapper around Rope data structure that includes a cursor as well as relative and
 //! absolute indexing
-use std::ops::RangeBounds;
+use std::ops::{Add, RangeBounds};
 
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;
@@ -79,6 +79,7 @@ impl Location {
     pub fn FindCharBack(cb: &CursorBuffer, c: char) -> Option<Location> {
         Location::FindBack(cb, |ch| ch == c)
     }
+
     /// Location of the previous occurrence of predicate
     pub fn FindBack<P>(cb: &CursorBuffer, predicate: P) -> Option<Location>
     where
@@ -89,6 +90,28 @@ impl Location {
         it.reverse();
         let ind = it.position(predicate);
         ind.map(|i| Location::Abs(cb.len().saturating_sub(i + 1)))
+    }
+}
+
+impl Add for Location {
+    type Output = Location;
+
+    // TODO handle case where l is ABS, r is REL and |l| < |-r|
+    fn add(self, rhs: Self) -> Self::Output {
+        match self {
+            Location::Abs(l) => match rhs {
+                Location::Abs(r) => Location::Abs(l + r),
+                Location::Rel(r) => {
+                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r) as usize)
+                },
+            },
+            Location::Rel(l) => match rhs {
+                Location::Abs(r) => {
+                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()) as usize)
+                },
+                Location::Rel(r) => Location::Rel(l + r),
+            },
+        }
     }
 }
 
@@ -187,16 +210,12 @@ impl CursorBuffer {
         self.data.slice(char_range)
     }
 
-    /// Create forward iterator from a location
+    /// Create forward iterator of chars from a location
     // TODO: maybe wrap `ropey::iter::Chars` in a newtype
     pub fn chars(&self, loc: Location) -> Result<ropey::iter::Chars<'_>> {
         Ok(self.data.chars_at(self.to_absolute(loc)?))
     }
 
-    // /// Create backwards iterator from a location
-    // pub fn chars_back(&self, loc: Location) -> Result<ropey::iter::Chars<'_>> {
-    //     Ok(self.data.chars_at(self.to_absolute(loc)?))
-    // }
     /// Getter for the current index of the cursor
     pub fn cursor(&self) -> usize {
         self.cursor
@@ -205,6 +224,20 @@ impl CursorBuffer {
     /// Get the length of the text in number of characters
     pub fn len(&self) -> usize {
         self.data.len_chars()
+    }
+
+    /// Get char at position
+    pub fn char_at(&self, loc: Location) -> Option<char> {
+        self.to_absolute(loc)
+            .ok()
+            .and_then(|ind| self.data.get_char(ind))
+    }
+
+    /// Get reference to underlying rope structure
+    // TODO only exposing internals to allow extensibility (perhaps disable or hide behind feature
+    // flag)
+    pub fn rope(&self) -> &Rope {
+        &self.data
     }
 
     /// Converts `Location` to an absolute index into the buffer. Performs bounds checking

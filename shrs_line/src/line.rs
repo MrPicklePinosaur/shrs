@@ -355,6 +355,20 @@ impl Line {
             }) => {
                 ctx.cb.execute_vi(ViAction::MoveEnd)?;
             },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('w'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.cb.execute_vi(ViAction::MoveNextWord)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('b'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.cb.execute_vi(ViAction::MoveBackWord)?;
+            },
             _ => {},
         }
         Ok(())

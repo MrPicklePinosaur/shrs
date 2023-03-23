@@ -71,7 +71,6 @@ impl Location {
         Self: Sized,
         P: FnMut(char) -> bool,
     {
-        println!("{:?}", cb.to_absolute(Location::Cursor()));
         let ind = cb.chars(Location::Cursor()).unwrap().position(predicate);
         ind.map(|i| Location::Abs(cb.cursor() + i))
     }
@@ -318,7 +317,7 @@ mod tests {
         cb.move_cursor(Location::Back(&cb))?;
 
         assert_eq!(Location::FindCharBack(&cb, 'l'), Some(Location::Abs(3)));
-        assert_eq!(Location::FindChar(&cb, 'x'), None);
+        assert_eq!(Location::FindCharBack(&cb, 'x'), None);
         Ok(())
     }
 }

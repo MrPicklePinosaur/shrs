@@ -11,6 +11,7 @@ pub enum ViAction {
     /// Move cursor to point to the next character found
     MoveFindChar(char),
     MoveNextWord,
+    MoveBackWord,
 }
 
 pub trait ViCursorBuffer {
@@ -36,8 +37,42 @@ impl ViCursorBuffer for CursorBuffer {
                             Location::Find(self, |ch| ch.is_whitespace()).unwrap_or_default(),
                         )?;
                     }
-                    let loc = Location::Find(self, |ch| !ch.is_whitespace()).unwrap_or_default();
-                    self.move_cursor(loc)
+                    self.move_cursor(
+                        Location::Find(self, |ch| !ch.is_whitespace()).unwrap_or_default(),
+                    )
+                } else {
+                    Ok(())
+                }
+            },
+            ViAction::MoveBackWord => {
+                // TODO logic is getting comlpicatied, need more predicates to test location of
+                // cursor (is cursor on first char of word, last char of word etc)
+
+                // Move to the beginning of previous word
+                if let Some(cur_char) = self.char_at(Location::Cursor()) {
+                    if cur_char.is_whitespace() {
+                        // if whitespace seek back to word first
+                        self.move_cursor(
+                            Location::FindBack(self, |ch| !ch.is_whitespace()).unwrap_or_default(),
+                        )?;
+                    } else {
+                        // and if is first letter of word
+                        if let Some(before) = self.char_at(Location::Before()) {
+                            if before.is_whitespace() {
+                                self.move_cursor(Location::Before())?;
+                                // if whitespace seek back to word first
+                                self.move_cursor(
+                                    Location::FindBack(self, |ch| !ch.is_whitespace())
+                                        .unwrap_or_default(),
+                                )?;
+                            }
+                        }
+                    }
+
+                    self.move_cursor(
+                        Location::FindBack(self, |ch| ch.is_whitespace()).unwrap_or_default()
+                            + Location::After(),
+                    )
                 } else {
                     Ok(())
                 }
@@ -52,13 +87,29 @@ mod tests {
     use crate::cursor_buffer::{CursorBuffer, Location, Result};
 
     #[test]
-    fn word_motions() -> Result<()> {
+    fn move_next_word() -> Result<()> {
         let mut cb = CursorBuffer::from_str("hello world goodbye world");
 
         cb.execute_vi(ViAction::MoveNextWord)?;
         assert_eq!(cb.cursor(), 6);
 
         cb.execute_vi(ViAction::MoveNextWord)?;
+        assert_eq!(cb.cursor(), 12);
+
+        Ok(())
+    }
+
+    #[test]
+    fn move_back_word() -> Result<()> {
+        let mut cb = CursorBuffer::from_str("hello world goodbye world");
+        cb.execute_vi(ViAction::MoveEnd)?;
+        cb.execute_vi(ViAction::MoveLeft)?;
+        assert_eq!(cb.cursor(), 24);
+
+        cb.execute_vi(ViAction::MoveBackWord)?;
+        assert_eq!(cb.cursor(), 20);
+
+        cb.execute_vi(ViAction::MoveBackWord)?;
         assert_eq!(cb.cursor(), 12);
 
         Ok(())

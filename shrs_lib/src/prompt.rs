@@ -15,13 +15,12 @@ pub fn full_pwd() -> String {
 
 /// Get the top level working directory
 pub fn top_pwd() -> String {
-    std::env::current_dir()
-        .unwrap()
-        .file_name()
-        .unwrap()
-        .to_os_string()
-        .into_string()
-        .unwrap()
+    if let Some(file_name) = std::env::current_dir().unwrap().file_name() {
+        file_name.to_os_string().into_string().unwrap()
+    } else {
+        // special case for when in root directory
+        String::from("/")
+    }
 }
 
 // TODO this is very linux specific, could use crate that abstracts

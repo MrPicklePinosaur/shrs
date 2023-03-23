@@ -28,6 +28,7 @@ Project is currently very much WIP, below lists the current feature statuses:
 | aliases | mvp |
 | completion | wip |
 | readline | wip |
+| vi mode | wip |
 | hooks | mvp |
 | keybindings | todo |
 | syntax highlighting | todo |

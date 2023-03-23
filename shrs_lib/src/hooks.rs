@@ -32,8 +32,8 @@ pub fn before_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
     ctx: BeforeCommandCtx,
 ) -> anyhow::Result<()> {
-    let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
-    out.queue(Print(expanded_cmd))?;
+    // let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
+    // out.queue(Print(expanded_cmd))?;
     Ok(())
 }
 
@@ -50,8 +50,8 @@ pub fn after_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
     ctx: AfterCommandCtx,
 ) -> anyhow::Result<()> {
-    let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
-    out.queue(Print(exit_code_str))?;
+    // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
+    // out.queue(Print(exit_code_str))?;
     Ok(())
 }
 

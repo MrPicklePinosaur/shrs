@@ -1,6 +1,6 @@
 //! Friendly wrapper around Rope data structure that includes a cursor as well as relative and
 //! absolute indexing
-use std::ops::RangeBounds;
+use std::ops::{Add, RangeBounds};
 
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;
@@ -60,10 +60,58 @@ impl Location {
         Location::Abs(cb.len())
     }
 
-    /// Location of the next occurance of character
+    /// Location of the next occurrence of character
     pub fn FindChar(cb: &CursorBuffer, c: char) -> Option<Location> {
-        let ind = cb.chars(Location::Cursor()).unwrap().position(|ch| ch == c);
-        ind.map(|i| Location::Abs(i))
+        Location::Find(cb, |ch| ch == c)
+    }
+
+    /// Location of the next occurrence of predicate
+    pub fn Find<P>(cb: &CursorBuffer, predicate: P) -> Option<Location>
+    where
+        Self: Sized,
+        P: FnMut(char) -> bool,
+    {
+        let ind = cb.chars(Location::Cursor()).unwrap().position(predicate);
+        ind.map(|i| Location::Abs(cb.cursor() + i))
+    }
+
+    /// Location of the previous occurrence of character
+    pub fn FindCharBack(cb: &CursorBuffer, c: char) -> Option<Location> {
+        Location::FindBack(cb, |ch| ch == c)
+    }
+
+    /// Location of the previous occurrence of predicate
+    pub fn FindBack<P>(cb: &CursorBuffer, predicate: P) -> Option<Location>
+    where
+        Self: Sized,
+        P: FnMut(char) -> bool,
+    {
+        let mut it = cb.chars(Location::Cursor()).unwrap();
+        it.reverse();
+        let ind = it.position(predicate);
+        ind.map(|i| Location::Abs(cb.cursor().saturating_sub(i + 1)))
+    }
+}
+
+impl Add for Location {
+    type Output = Location;
+
+    // TODO handle case where l is ABS, r is REL and |l| < |-r|
+    fn add(self, rhs: Self) -> Self::Output {
+        match self {
+            Location::Abs(l) => match rhs {
+                Location::Abs(r) => Location::Abs(l + r),
+                Location::Rel(r) => {
+                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r) as usize)
+                },
+            },
+            Location::Rel(l) => match rhs {
+                Location::Abs(r) => {
+                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()) as usize)
+                },
+                Location::Rel(r) => Location::Rel(l + r),
+            },
+        }
     }
 }
 
@@ -110,7 +158,7 @@ impl CursorBuffer {
     }
 
     /// Insert text and advance cursor to after the text inserted
-    pub fn cursor_insert(&mut self, loc: Location, text: &str) -> Result<()> {
+    pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
         self.data.insert(self.to_absolute(loc)?, text);
         self.move_cursor(loc)?;
         self.move_cursor(Location::Rel(text.len() as isize))?;
@@ -118,12 +166,12 @@ impl CursorBuffer {
     }
 
     /// Insert text and offset cursor to point to same text
-    pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
+    pub fn insert_inplace(&mut self, loc: Location, text: &str) -> Result<()> {
         todo!()
     }
 
     /// Delete a length of text starting from location and move cursor to start of deleted text
-    pub fn cursor_delete(&mut self, loc: Location, len: usize) -> Result<()> {
+    pub fn delete(&mut self, loc: Location, len: usize) -> Result<()> {
         let start = self.to_absolute(loc)?;
         if start + len > self.len() {
             return Err(Error::DeletingTooMuch);
@@ -137,8 +185,8 @@ impl CursorBuffer {
     /// it points to the same text
     ///
     /// In the case that cursor was pointing at deleted text, the behavior is the same as
-    /// `cursor_delete`
-    pub fn delete(&mut self, loc: Location, len: usize) -> Result<()> {
+    /// `delete`
+    pub fn delete_inplace(&mut self, loc: Location, len: usize) -> Result<()> {
         todo!()
     }
 
@@ -162,7 +210,7 @@ impl CursorBuffer {
         self.data.slice(char_range)
     }
 
-    /// Create forward iterator from a location
+    /// Create forward iterator of chars from a location
     // TODO: maybe wrap `ropey::iter::Chars` in a newtype
     pub fn chars(&self, loc: Location) -> Result<ropey::iter::Chars<'_>> {
         Ok(self.data.chars_at(self.to_absolute(loc)?))
@@ -178,10 +226,24 @@ impl CursorBuffer {
         self.data.len_chars()
     }
 
+    /// Get char at position
+    pub fn char_at(&self, loc: Location) -> Option<char> {
+        self.to_absolute(loc)
+            .ok()
+            .and_then(|ind| self.data.get_char(ind))
+    }
+
+    /// Get reference to underlying rope structure
+    // TODO only exposing internals to allow extensibility (perhaps disable or hide behind feature
+    // flag)
+    pub fn rope(&self) -> &Rope {
+        &self.data
+    }
+
     /// Converts `Location` to an absolute index into the buffer. Performs bounds checking
     // TODO to absolute would be much nice semantically if it was a method on `Location`, however
     // we need access to `data.len_chars()` and `cursor` to perform the conversion
-    fn to_absolute(&self, loc: Location) -> Result<usize> {
+    pub fn to_absolute(&self, loc: Location) -> Result<usize> {
         match loc {
             Location::Abs(i) => {
                 if self.bounds_check(i as isize) {
@@ -217,11 +279,11 @@ mod tests {
     fn basic_insert_delete() -> Result<()> {
         let mut cb = CursorBuffer::new();
 
-        cb.cursor_insert(Location::Cursor(), "hello world")?;
+        cb.insert(Location::Cursor(), "hello world")?;
         assert_eq!(cb.slice(..), "hello world");
         assert_eq!(cb.cursor(), 11);
 
-        cb.cursor_delete(Location::Front(), 6)?;
+        cb.delete(Location::Front(), 6)?;
         assert_eq!(cb.slice(..), "world");
         assert_eq!(cb.cursor(), 0);
 
@@ -234,7 +296,7 @@ mod tests {
         let mut cb = CursorBuffer::from_str("hello");
 
         assert_eq!(
-            cb.cursor_delete(Location::Cursor(), 200),
+            cb.delete(Location::Cursor(), 200),
             Err(Error::DeletingTooMuch)
         );
         Ok(())
@@ -246,6 +308,16 @@ mod tests {
 
         assert_eq!(Location::FindChar(&cb, 'l'), Some(Location::Abs(2)));
         assert_eq!(Location::FindChar(&cb, 'x'), None);
+        Ok(())
+    }
+
+    #[test]
+    fn find_char_back() -> Result<()> {
+        let mut cb = CursorBuffer::from_str("hello");
+        cb.move_cursor(Location::Back(&cb))?;
+
+        assert_eq!(Location::FindCharBack(&cb, 'l'), Some(Location::Abs(3)));
+        assert_eq!(Location::FindCharBack(&cb, 'x'), None);
         Ok(())
     }
 }

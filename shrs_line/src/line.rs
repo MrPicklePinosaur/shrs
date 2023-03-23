@@ -13,7 +13,7 @@ use crate::{
     menu::{DefaultMenu, Menu},
     painter::Painter,
     prompt::Prompt,
-    vi::ViAction,
+    vi::{ViAction, ViCursorBuffer},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -264,7 +264,7 @@ impl Line {
                 ..
             }) => {
                 if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
-                    ctx.cb.cursor_delete(Location::Before(), 1)?;
+                    ctx.cb.delete(Location::Before(), 1)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -290,7 +290,7 @@ impl Line {
                 code: KeyCode::Char(c),
                 ..
             }) => {
-                ctx.cb.cursor_insert(Location::Cursor(), &c.to_string())?;
+                ctx.cb.insert(Location::Cursor(), &c.to_string())?;
             },
             _ => {},
         };
@@ -315,7 +315,7 @@ impl Line {
                 // TODO having to do these bounds checks are not nice, should implement some sort
                 // of cb.move_cursor_clamp
                 if ctx.cb.cursor() > 0 {
-                    ViAction::MoveLeft.execute(&mut ctx.cb)?;
+                    ctx.cb.execute_vi(ViAction::MoveLeft)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -324,7 +324,7 @@ impl Line {
                 ..
             }) => {
                 if ctx.cb.cursor() < ctx.cb.len() {
-                    ViAction::MoveRight.execute(&mut ctx.cb)?;
+                    ctx.cb.execute_vi(ViAction::MoveRight)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -346,14 +346,28 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ViAction::MoveStart.execute(&mut ctx.cb)?;
+                ctx.cb.execute_vi(ViAction::MoveStart)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char('$'),
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ViAction::MoveEnd.execute(&mut ctx.cb)?;
+                ctx.cb.execute_vi(ViAction::MoveEnd)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('w'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.cb.execute_vi(ViAction::MoveNextWord)?;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('b'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                ctx.cb.execute_vi(ViAction::MoveBackWord)?;
             },
             _ => {},
         }
@@ -366,11 +380,10 @@ impl Line {
         // TODO could implement a delete_before
         ctx.cb
             .move_cursor(Location::Rel(-1 * ctx.current_word.len() as isize))?;
-        ctx.cb
-            .cursor_delete(Location::Cursor(), ctx.current_word.len())?;
+        ctx.cb.delete(Location::Cursor(), ctx.current_word.len())?;
 
         // then replace with the completion word
-        ctx.cb.cursor_insert(Location::Cursor(), accepted)?;
+        ctx.cb.insert(Location::Cursor(), accepted)?;
 
         Ok(())
     }
@@ -381,7 +394,7 @@ impl Line {
 
         if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
             ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+            ctx.cb.insert(Location::Cursor(), history_item)?;
         }
         Ok(())
     }
@@ -391,29 +404,7 @@ impl Line {
 
         if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
             ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
-        }
-
-        Ok(())
-    }
-
-    fn history_up(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
-        // TODO make this logic nicer
-        ctx.history_ind = (ctx.history_ind + 1).min(self.history.len().saturating_sub(1) as i32);
-
-        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-            ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
-        }
-        Ok(())
-    }
-
-    fn history_down(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
-        ctx.history_ind = (ctx.history_ind - 1).max(0);
-
-        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-            ctx.cb.clear();
-            ctx.cb.cursor_insert(Location::Cursor(), history_item)?;
+            ctx.cb.insert(Location::Cursor(), history_item)?;
         }
 
         Ok(())

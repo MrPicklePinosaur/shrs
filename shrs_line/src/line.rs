@@ -164,7 +164,7 @@ impl Line {
             }) => {
                 let accepted = self.menu.accept().cloned();
                 if let Some(accepted) = accepted {
-                    self.accept_completion(ctx, &accepted);
+                    self.accept_completion(ctx, &accepted)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -218,11 +218,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                /*
-                let res = ctx.cb.slice(..).as_str().unwrap().to_string();
-
                 // TODO IFS
-                let args = res.as_str()[..ctx.cb.cursor()].split(' ');
+                let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
                 ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
                 let comp_ctx = CompletionCtx {
@@ -237,12 +234,11 @@ impl Line {
 
                 // if completions only has one entry, automatically select it
                 if owned.len() == 1 {
-                    self.accept_completion(ctx, owned.get(0).unwrap());
+                    self.accept_completion(ctx, owned.get(0).unwrap())?;
                 } else {
                     self.menu.set_items(owned);
                     self.menu.activate();
                 }
-                */
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
@@ -365,21 +361,18 @@ impl Line {
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) {
-        /*
-        // TODO this code is dumb
+    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) -> anyhow::Result<()> {
         // first remove current word
-        ctx.buf
-            .drain((ctx.ind as usize).saturating_sub(ctx.current_word.len())..(ctx.ind as usize));
-        ctx.ind = (ctx.ind as usize).saturating_sub(ctx.current_word.len()) as i32;
+        // TODO could implement a delete_before
+        ctx.cb
+            .move_cursor(Location::Rel(-1 * ctx.current_word.len() as isize))?;
+        ctx.cb
+            .cursor_delete(Location::Cursor(), ctx.current_word.len())?;
 
         // then replace with the completion word
-        accepted.clone().chars().for_each(|c| {
-            // TODO find way to insert multiple items in one operation
-            ctx.buf.insert(ctx.ind as usize, c as u8);
-            ctx.ind = (ctx.ind + 1).min(ctx.buf.len() as i32);
-        });
-        */
+        ctx.cb.cursor_insert(Location::Cursor(), accepted)?;
+
+        Ok(())
     }
 
     fn history_up(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {

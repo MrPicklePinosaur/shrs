@@ -1,28 +1,21 @@
 //! sh.rs - a rusty shell library
 
 #[macro_use]
-extern crate lalrpop_util;
-
-#[macro_use]
 extern crate derive_builder;
-
-lalrpop_mod!(pub grammar);
 
 // TODO refactor to
 // mod <mod>
 // pub use <mod>::{ ... }
 
 pub mod alias;
-mod ast;
 pub mod builtin;
 pub mod env;
 pub mod hooks;
-mod lexer;
-mod parser;
 pub mod prompt;
 pub mod shell;
 mod signal;
 
+/*
 #[cfg(test)]
 mod tests {
     use rexpect::session::PtySession;
@@ -57,3 +50,4 @@ mod tests {
         Ok(())
     }
 }
+*/

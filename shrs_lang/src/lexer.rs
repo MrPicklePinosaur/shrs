@@ -1,3 +1,5 @@
+//! Custom lexer
+
 // heavily inspired by https://github.com/nixpulvis/oursh/blob/develop/src/program/posix/lex.rs
 
 use std::str::CharIndices;

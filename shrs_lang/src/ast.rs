@@ -1,3 +1,6 @@
+//! Structs that make up the parsed AST of the POSIX shell language
+
+/// File redirection
 #[derive(Debug, Clone)]
 pub struct Redirect {
     pub n: Option<usize>,
@@ -5,6 +8,7 @@ pub struct Redirect {
     pub mode: RedirectMode,
 }
 
+/// File redirection modes
 #[derive(Debug, Clone)]
 pub enum RedirectMode {
     Read,
@@ -16,6 +20,7 @@ pub enum RedirectMode {
     ReadWrite,
 }
 
+/// Assignment
 #[derive(Debug, Clone)]
 pub struct Assign {
     pub var: String,
@@ -107,20 +112,16 @@ pub enum Command {
     },
 
     /// Case statements
-    Case {
-        word: String,
-        arms: Vec<CaseArm>,
-    },
+    Case { word: String, arms: Vec<CaseArm> },
 
-    Fn {
-        fname: String,
-        body: Box<Command>,
-    },
+    /// Function definition
+    Fn { fname: String, body: Box<Command> },
 
     /// No op
     None,
 }
 
+/// Represents each match arm in case statement
 #[derive(Debug, Clone)]
 pub struct CaseArm {
     pub pattern: Vec<String>,

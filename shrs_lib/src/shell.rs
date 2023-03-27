@@ -11,6 +11,7 @@ use std::{
 
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
+use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
 use shrs_line::{
     history::{DefaultHistory, History},
     line::Line,
@@ -19,12 +20,9 @@ use shrs_line::{
 
 use crate::{
     alias::Alias,
-    ast::{self, Assign},
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupHookCtx},
-    lexer::{Lexer, RESERVED_WORDS},
-    parser,
     signal::sig_handler,
 };
 
@@ -164,7 +162,7 @@ impl Shell {
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
-            let mut parser = parser::ParserContext::new();
+            let mut parser = Parser::new();
             let cmd = match parser.parse(lexer) {
                 Ok(cmd) => cmd,
                 Err(e) => {
@@ -527,7 +525,7 @@ impl Shell {
         stdin: Stdio,
         stdout: Stdio,
         pgid: Option<i32>,
-        assigns: &Vec<Assign>,
+        assigns: &Vec<ast::Assign>,
     ) -> anyhow::Result<Child> {
         use std::process::Command;
 

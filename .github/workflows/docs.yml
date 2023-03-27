@@ -4,6 +4,9 @@ on:
       - master
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 name: Build and deploy GH Pages
 jobs:
   build:

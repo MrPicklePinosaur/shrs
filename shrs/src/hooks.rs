@@ -1,3 +1,7 @@
+//! Shell runtime hooks
+//!
+//! Hooks are user provided functions that are called on a variety of events that occur in the
+//! shell. Some additional context is provided to these hooks.
 // ideas for hooks
 // - on start
 // - after prompt
@@ -10,15 +14,19 @@ use std::io::BufWriter;
 
 use crossterm::{style::Print, QueueableCommand};
 
+/// Context for [StartupHook]
 pub struct StartupHookCtx {
+    /// How much time it has taken for the shell to initialize
     pub startup_time: usize,
 }
 
 pub type StartupHook = fn(ctx: StartupHookCtx);
+/// Default [StartupHook]
 pub fn startup_hook(_ctx: StartupHookCtx) {
     println!("welcome to shrs!");
 }
 
+/// Context for [BeforeCommandHook]
 pub struct BeforeCommandCtx {
     /// Literal command entered by user
     pub raw_command: String,
@@ -27,7 +35,7 @@ pub struct BeforeCommandCtx {
 }
 pub type BeforeCommandHook =
     fn(out: &mut BufWriter<std::io::Stdout>, ctx: BeforeCommandCtx) -> anyhow::Result<()>;
-
+/// Default [BeforeCommandHook]
 pub fn before_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
     ctx: BeforeCommandCtx,
@@ -37,6 +45,7 @@ pub fn before_command_hook(
     Ok(())
 }
 
+/// Context for [AfterCommandHook]
 pub struct AfterCommandCtx {
     /// Exit code of previous command
     pub exit_code: i32,
@@ -46,6 +55,7 @@ pub struct AfterCommandCtx {
 pub type AfterCommandHook =
     fn(out: &mut BufWriter<std::io::Stdout>, ctx: AfterCommandCtx) -> anyhow::Result<()>;
 
+/// Default [AfterCommandHook]
 pub fn after_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
     ctx: AfterCommandCtx,
@@ -55,11 +65,14 @@ pub fn after_command_hook(
     Ok(())
 }
 
+/// Collection of all the hooks that are avaliable
 #[derive(Clone)]
 pub struct Hooks {
     /// Runs before first prompt is shown
     pub startup: StartupHook,
+    /// Runs before each command is executed
     pub before_command: BeforeCommandHook,
+    /// Runs after each command is executed
     pub after_command: AfterCommandHook,
 }
 

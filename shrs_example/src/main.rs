@@ -1,12 +1,11 @@
 use std::default;
 
 use shrs::{
-    alias::Alias,
     builtin::Builtins,
-    env::Env,
+    find_executables_in_path,
     hooks::{Hooks, StartupHookCtx},
     prompt::{hostname, top_pwd, username},
-    shell::{self, find_executables_in_path, Context, Runtime, ShellConfig},
+    Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
 };
 use shrs_line::{
     line::{Line, LineBuilder},
@@ -22,8 +21,6 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    use shell::ShellConfigBuilder;
-
     let mut env = Env::new();
     env.load();
 

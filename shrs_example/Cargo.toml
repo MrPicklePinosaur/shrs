@@ -9,12 +9,12 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 build = "build.rs"
 
 [dependencies]
-shrs = { path = "../shrs_lib" }
+shrs = { path = "../shrs" }
 shrs_line = { path = "../shrs_line" }
 
 [build-dependencies]
 chrono = "0.4"
 
 [[bin]]
-name = "shrs"
+name = "shrs_example"
 path = "src/main.rs"

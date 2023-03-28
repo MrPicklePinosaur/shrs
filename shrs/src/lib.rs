@@ -1,4 +1,6 @@
 //! sh.rs - a rusty shell library
+//!
+//!
 
 #[macro_use]
 extern crate derive_builder;
@@ -7,12 +9,24 @@ extern crate derive_builder;
 // mod <mod>
 // pub use <mod>::{ ... }
 
-pub mod alias;
+mod alias;
+pub use alias::Alias;
+
 pub mod builtin;
-pub mod env;
+
+mod env;
+pub use env::Env;
+
 pub mod hooks;
+
 pub mod prompt;
-pub mod shell;
+
+mod shell;
+pub use shell::{
+    dummy_child, find_executables_in_path, Context, Runtime, Shell, ShellConfig,
+    ShellConfigBuilder, ShellConfigBuilderError,
+};
+
 mod signal;
 
 /*

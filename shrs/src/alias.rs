@@ -1,5 +1,22 @@
+//! Shell aliasing
+
 use std::collections::HashMap;
 
+/*
+// NOTE this probably does not need to be a trait since alias is a builtin, any special
+// functionality can probaly be implemented in the builtin itself?
+pub trait Alias {
+    fn get(&self, alias: &str) -> Option<&String>;
+    fn set(&mut self, alias: &str, cmd: &str);
+    fn unset(&mut self, alias: &str);
+    fn clear(&mut self);
+}
+*/
+
+/// Query and set aliases
+///
+/// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
+/// but upon substition the error is emitted. This may be changed in the future.
 // currently just wrapper around hashmap
 #[derive(Clone)]
 pub struct Alias {
@@ -13,18 +30,26 @@ impl Alias {
         }
     }
 
+    /// Fetch an alias by name
     pub fn get(&self, alias: &str) -> Option<&String> {
         self.aliases.get(alias)
     }
 
+    /// Set an alias
+    ///
+    /// Overrides previously defined aliases
     pub fn set(&mut self, alias: &str, cmd: &str) {
         self.aliases.insert(alias.into(), cmd.into());
     }
 
+    /// Remove an alias
+    ///
+    /// NOOP if alias was not previously defined
     pub fn unset(&mut self, alias: &str) {
         self.aliases.remove(alias);
     }
 
+    /// Remove all defined aliases
     pub fn clear(&mut self) {
         self.aliases.clear();
     }

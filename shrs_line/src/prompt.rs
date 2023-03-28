@@ -1,7 +1,10 @@
+//! Shell prompt
+
 pub trait Prompt {
     fn prompt_left(&self) -> String;
 }
 
+/// Default implementation for [Prompt]
 pub struct DefaultPrompt {}
 
 impl DefaultPrompt {

@@ -3,15 +3,26 @@
 #[macro_use]
 extern crate derive_builder;
 
+mod line;
+pub use line::{Line, LineBuilder, LineBuilderError, LineMode};
+
+mod cursor;
+pub use cursor::{Cursor, DefaultCursor};
+
+mod history;
+pub use history::{DefaultHistory, History};
+
+mod menu;
+pub use menu::{DefaultMenu, Menu};
+
+mod prompt;
+pub use prompt::{DefaultPrompt, Prompt};
+
 pub mod completion;
-pub mod cursor;
-pub mod cursor_buffer;
-pub mod history;
-pub mod line;
-pub mod menu;
-pub mod painter;
-pub mod prompt;
 pub mod vi;
+
+mod cursor_buffer;
+mod painter;
 
 #[cfg(test)]
 mod tests {}

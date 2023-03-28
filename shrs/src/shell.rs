@@ -14,11 +14,7 @@ use std::{
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
-use shrs_line::{
-    history::{DefaultHistory, History},
-    line::Line,
-    prompt::{DefaultPrompt, Prompt},
-};
+use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
 
 use crate::{
     alias::Alias,

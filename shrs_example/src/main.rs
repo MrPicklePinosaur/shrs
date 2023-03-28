@@ -4,12 +4,12 @@ use shrs::{
     builtin::Builtins,
     find_executables_in_path,
     hooks::{Hooks, StartupHookCtx},
+    line::{
+        completion::DefaultCompleter, DefaultCursor, DefaultHistory, DefaultMenu, Line,
+        LineBuilder, Prompt,
+    },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
-};
-use shrs_line::{
-    line::{Line, LineBuilder},
-    prompt::Prompt,
 };
 
 struct MyPrompt;
@@ -26,10 +26,10 @@ fn main() {
 
     // configure line
     let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
-    let completer = shrs_line::completion::DefaultCompleter::new(completions);
-    let menu = shrs_line::menu::DefaultMenu::new();
-    let history = shrs_line::history::DefaultHistory::new();
-    let cursor = shrs_line::cursor::DefaultCursor::default();
+    let completer = DefaultCompleter::new(completions);
+    let menu = DefaultMenu::new();
+    let history = DefaultHistory::new();
+    let cursor = DefaultCursor::default();
 
     let readline = LineBuilder::default()
         .with_cursor(cursor)

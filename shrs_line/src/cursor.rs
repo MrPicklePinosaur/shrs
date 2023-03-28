@@ -1,9 +1,12 @@
+//! Configuration for cursor
+
 use crossterm::cursor::SetCursorStyle;
 
 pub trait Cursor {
     fn get_cursor(&self) -> SetCursorStyle;
 }
 
+/// Default provided implementation of [Cursor]
 pub struct DefaultCursor {
     style: SetCursorStyle,
 }

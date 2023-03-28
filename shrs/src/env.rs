@@ -16,7 +16,9 @@ impl Env {
         }
     }
 
-    /// Initialize default values for environment variables
+    /// Load environment variables into shrs
+    ///
+    /// Useful if calling shrs from another shell and some environment variables are already set
     // could inherit all from calling shell for now
     pub fn load(&mut self) {
         for (var, val) in std::env::vars() {

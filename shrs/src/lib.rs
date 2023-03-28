@@ -26,6 +26,7 @@ pub use shell::{
     dummy_child, find_executables_in_path, Context, Runtime, Shell, ShellConfig,
     ShellConfigBuilder, ShellConfigBuilderError,
 };
+pub use shrs_line as line;
 
 mod signal;
 

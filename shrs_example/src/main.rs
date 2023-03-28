@@ -49,12 +49,19 @@ fn main() {
         ("la".into(), "ls -a".into()),
     ]);
 
-    // TODO also display the build version
     let hooks = Hooks {
         startup: |_ctx: StartupHookCtx| {
-            let welcome_str = format!("shrs | version {}", env!("SHRS_VERSION"));
+            let welcome_str = format!(
+                r#"
+        __         
+   ___ / /  _______
+  (_-</ _ \/ __(_-<
+ /___/_//_/_/ /___/
+a rusty POSIX shell | build {}"#,
+                env!("SHRS_VERSION")
+            );
+
             println!("{}", welcome_str);
-            println!("{}", "-".repeat(welcome_str.len()));
         },
         ..Default::default()
     };

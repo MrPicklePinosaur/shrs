@@ -2,12 +2,27 @@ use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
     cursor::{self, MoveUp},
-    style::{Attribute, Print, SetAttribute},
+    style::{Attribute, Print, SetAttribute, StyledContent, Stylize},
     terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ScrollUp},
     QueueableCommand,
 };
 
 use crate::{cursor::Cursor, menu::Menu, prompt::Prompt};
+
+/// Text to be renderered by painter
+pub struct TextSpan {
+    spans: Vec<StyledContent<String>>,
+}
+
+impl TextSpan {
+    pub fn new() -> Self {
+        TextSpan { spans: vec![] }
+    }
+
+    pub fn push(&mut self, span: StyledContent<String>) {
+        self.spans.push(span);
+    }
+}
 
 pub struct Painter {
     /// The output buffer

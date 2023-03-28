@@ -1,3 +1,5 @@
+//! Implementation and runtime for POSIX shell
+
 use std::{
     collections::HashMap,
     env,
@@ -12,11 +14,7 @@ use std::{
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
-use shrs_line::{
-    history::{DefaultHistory, History},
-    line::Line,
-    prompt::{DefaultPrompt, Prompt},
-};
+use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
 
 use crate::{
     alias::Alias,
@@ -104,17 +102,23 @@ impl ShellConfig {
     }
 }
 
+/// Constant shell data
+///
+/// Data here is generally not mutated at runtime.
 pub struct Shell {
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
 }
 
-// (shared) shell context
+/// Shared global shell context
+///
+/// Context here is shared by each subshell
 // TODO can technically unify shell and context
 pub struct Context {
     pub readline: Line,
     pub history: Box<dyn History<HistoryItem = String>>,
+    // TODO alias is currently unused
     pub alias: Alias,
     /// Custom prompt
     pub prompt: Box<dyn Prompt>,
@@ -122,7 +126,10 @@ pub struct Context {
     pub out: BufWriter<std::io::Stdout>,
 }
 
-// Runtime context for the shell
+/// Runtime context for the shell
+///
+/// Contains data that can should be local to each subshell. Data here should also be able to be
+/// cloned.
 #[derive(Clone)]
 pub struct Runtime {
     /// Current working directory

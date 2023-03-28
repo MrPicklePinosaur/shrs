@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "shrs_lib",
+    "shrs",
     "shrs_line",
     "shrs_lang",
     "shrs_example",

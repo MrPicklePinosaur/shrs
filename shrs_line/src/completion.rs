@@ -1,8 +1,8 @@
+//! Shell autocompletion
+
 use std::path::{Path, PathBuf};
 
 use trie_rs::{Trie, TrieBuilder};
-
-pub struct Completion {}
 
 // also provide some commonly used completion lists
 // - directories
@@ -11,6 +11,7 @@ pub struct Completion {}
 // - filename regex
 // - known hosts
 
+/// Context passed to completion handlers
 pub struct CompletionCtx {
     /// The current argument we are on
     pub arg_num: usize,
@@ -20,11 +21,11 @@ pub trait Completer {
     fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String>;
 }
 
+/// Very basic completer that uses prefix tree to match on a predefined word list
 pub struct DefaultCompleter {
     wordlist: Vec<String>,
 }
 
-/// Very basic completer that uses prefix tree to match on a predefined word list
 // TODO next step, make word list vary with context
 // TODO differ between cmdname, args etc
 impl DefaultCompleter {
@@ -105,6 +106,7 @@ impl Completer for DefaultCompleter {
     }
 }
 
+/// Generate list of files in the current working directory with predicate
 pub fn filepath_completion_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
 where
     P: FnMut(&std::fs::DirEntry) -> bool,
@@ -121,14 +123,17 @@ where
     Ok(out)
 }
 
+/// Generate list of files in the current working directory
 pub fn all_files_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     filepath_completion_p(dir, |_| true)
 }
 
+/// Generate list of all executables in PATH
 pub fn exectuable_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 
+/// Generate list of all ssh hosts
 pub fn ssh_completion(dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }

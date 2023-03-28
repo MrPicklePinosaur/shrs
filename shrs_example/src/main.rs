@@ -1,16 +1,15 @@
 use std::default;
 
 use shrs::{
-    alias::Alias,
     builtin::Builtins,
-    env::Env,
+    find_executables_in_path,
     hooks::{Hooks, StartupHookCtx},
+    line::{
+        completion::DefaultCompleter, DefaultCursor, DefaultHistory, DefaultMenu, Line,
+        LineBuilder, Prompt,
+    },
     prompt::{hostname, top_pwd, username},
-    shell::{self, find_executables_in_path, Context, Runtime, ShellConfig},
-};
-use shrs_line::{
-    line::{Line, LineBuilder},
-    prompt::Prompt,
+    Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
 };
 
 struct MyPrompt;
@@ -22,17 +21,15 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    use shell::ShellConfigBuilder;
-
     let mut env = Env::new();
     env.load();
 
     // configure line
     let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
-    let completer = shrs_line::completion::DefaultCompleter::new(completions);
-    let menu = shrs_line::menu::DefaultMenu::new();
-    let history = shrs_line::history::DefaultHistory::new();
-    let cursor = shrs_line::cursor::DefaultCursor::default();
+    let completer = DefaultCompleter::new(completions);
+    let menu = DefaultMenu::new();
+    let history = DefaultHistory::new();
+    let cursor = DefaultCursor::default();
 
     let readline = LineBuilder::default()
         .with_cursor(cursor)

@@ -1,3 +1,5 @@
+//! General purpose selection menu for shell
+
 use std::fmt::Display;
 
 use crossterm::{

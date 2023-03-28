@@ -1,3 +1,4 @@
+/// Vi mode for readline
 use crate::cursor_buffer::{CursorBuffer, Location, Result};
 
 /// All actions that can be performed on a text buffer
@@ -14,6 +15,7 @@ pub enum ViAction {
     MoveBackWord,
 }
 
+/// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {
     fn execute_vi(&mut self, action: ViAction) -> Result<()>;
 }

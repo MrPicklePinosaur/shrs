@@ -25,6 +25,7 @@ pub fn top_pwd() -> String {
 
 // TODO this is very linux specific, could use crate that abstracts
 // TODO this function is disgusting
+/// Get the username of the current user
 pub fn username() -> anyhow::Result<String> {
     let username = Command::new("whoami").output()?.stdout;
     let encoded = std::str::from_utf8(&username)?
@@ -34,6 +35,7 @@ pub fn username() -> anyhow::Result<String> {
     Ok(encoded)
 }
 
+/// Get the hostname
 pub fn hostname() -> anyhow::Result<String> {
     let username = Command::new("hostname").output()?.stdout;
     let encoded = std::str::from_utf8(&username)?

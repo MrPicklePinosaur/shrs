@@ -6,7 +6,7 @@ use crossterm::{
 };
 
 use crate::{
-    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
+    completion::{Completer, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     cursor_buffer::{CursorBuffer, Location},
     history::{DefaultHistory, History},
@@ -16,6 +16,7 @@ use crate::{
     vi::{ViAction, ViCursorBuffer},
 };
 
+/// Operating mode of readline
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LineMode {
     /// Vi insert mode
@@ -24,6 +25,7 @@ pub enum LineMode {
     Normal,
 }
 
+/// Configuration for readline
 #[derive(Builder)]
 #[builder(pattern = "owned")]
 #[builder(setter(prefix = "with"))]
@@ -56,7 +58,7 @@ impl Default for Line {
     }
 }
 
-pub struct LineCtx {
+struct LineCtx {
     cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
@@ -97,6 +99,7 @@ impl LineBuilder {
 }
 
 impl Line {
+    /// Start readline and read one line of user input
     pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
         let mut ctx = LineCtx::default();
         self.read_events(&mut ctx, prompt).unwrap()

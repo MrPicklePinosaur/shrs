@@ -65,7 +65,6 @@ impl Painter {
         &mut self,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = String>>,
-        buf: &str,
         styled_buf: StyledBuf,
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,
@@ -94,13 +93,7 @@ impl Painter {
         left_space += prompt_left.len();
         self.out.queue(Print(prompt_left))?;
 
-        // render line
-        // self.out
-        //     .queue(Print(&buf[..cursor_ind]))?
-        //     .queue(cursor::SavePosition)?
-        //     .queue(Print(&buf[cursor_ind..]))?;
-
-        // highlight prompt text
+        // render line (with syntax highlight spans)
         left_space += cursor_ind;
         for span in styled_buf.spans() {
             self.out.queue(Print(span))?;

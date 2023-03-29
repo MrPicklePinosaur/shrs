@@ -2,6 +2,7 @@ use std::{io::Write, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
@@ -11,7 +12,7 @@ use crate::{
     cursor_buffer::{CursorBuffer, Location},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
-    painter::Painter,
+    painter::{Painter, StyledBuf},
     prompt::Prompt,
     vi::{ViAction, ViCursorBuffer},
 };
@@ -123,8 +124,14 @@ impl Line {
 
         self.painter.init().unwrap();
 
-        self.painter
-            .paint(&prompt, &self.menu, "", ctx.cb.cursor(), &self.cursor)?;
+        self.painter.paint(
+            &prompt,
+            &self.menu,
+            "",
+            StyledBuf::new(),
+            ctx.cb.cursor(),
+            &self.cursor,
+        )?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -148,8 +155,17 @@ impl Line {
 
                 let res = ctx.cb.slice(..).as_str().unwrap();
 
-                self.painter
-                    .paint(&prompt, &self.menu, &res, ctx.cb.cursor(), &self.cursor)?;
+                // syntax highlight
+                let mut styled_buf = StyledBuf::new();
+                styled_buf.push(res.to_string().red());
+                self.painter.paint(
+                    &prompt,
+                    &self.menu,
+                    &res,
+                    styled_buf,
+                    ctx.cb.cursor(),
+                    &self.cursor,
+                )?;
             }
         }
 

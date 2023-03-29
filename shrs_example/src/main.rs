@@ -5,8 +5,8 @@ use shrs::{
     find_executables_in_path,
     hooks::{Hooks, StartupHookCtx},
     line::{
-        completion::DefaultCompleter, DefaultCursor, DefaultHistory, DefaultMenu, Line,
-        LineBuilder, Prompt,
+        completion::DefaultCompleter, DefaultCursor, DefaultHighlighter, DefaultHistory,
+        DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
@@ -30,12 +30,14 @@ fn main() {
     let menu = DefaultMenu::new();
     let history = DefaultHistory::new();
     let cursor = DefaultCursor::default();
+    let highlighter = DefaultHighlighter::default();
 
     let readline = LineBuilder::default()
         .with_cursor(cursor)
         .with_completer(completer)
         .with_menu(menu)
         .with_history(history)
+        .with_highlighter(highlighter)
         .build()
         .unwrap();
 
@@ -49,12 +51,19 @@ fn main() {
         ("la".into(), "ls -a".into()),
     ]);
 
-    // TODO also display the build version
     let hooks = Hooks {
         startup: |_ctx: StartupHookCtx| {
-            let welcome_str = format!("shrs | version {}", env!("SHRS_VERSION"));
+            let welcome_str = format!(
+                r#"
+        __         
+   ___ / /  _______
+  (_-</ _ \/ __(_-<
+ /___/_//_/_/ /___/
+a rusty POSIX shell | build {}"#,
+                env!("SHRS_VERSION")
+            );
+
             println!("{}", welcome_str);
-            println!("{}", "-".repeat(welcome_str.len()));
         },
         ..Default::default()
     };

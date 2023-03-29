@@ -24,5 +24,8 @@ pub mod vi;
 mod cursor_buffer;
 mod painter;
 
+mod highlight;
+pub use highlight::{DefaultHighlighter, Highlighter};
+
 #[cfg(test)]
 mod tests {}

@@ -24,9 +24,7 @@ pub struct DefaultHistory {
 
 impl DefaultHistory {
     pub fn new() -> Self {
-        DefaultHistory {
-            hist: vec!["aaa".into(), "bbb".into(), "ccc".into()],
-        }
+        DefaultHistory { hist: vec![] }
     }
 }
 

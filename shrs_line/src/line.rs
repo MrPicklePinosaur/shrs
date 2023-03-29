@@ -1,7 +1,8 @@
-use std::{io::Write, time::Duration};
+use std::{io::Write, marker::PhantomData, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
@@ -9,9 +10,10 @@ use crate::{
     completion::{Completer, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     cursor_buffer::{CursorBuffer, Location},
+    highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
-    painter::Painter,
+    painter::{Painter, StyledBuf},
     prompt::Prompt,
     vi::{ViAction, ViCursorBuffer},
 };
@@ -45,6 +47,10 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultCursor::default())")]
     #[builder(setter(custom))]
     cursor: Box<dyn Cursor>,
+
+    #[builder(default = "Box::new(DefaultHighlighter::default())")]
+    #[builder(setter(skip))]
+    highlighter: Box<dyn Highlighter>,
 
     // ignored fields
     #[builder(default = "Painter::new()")]
@@ -96,6 +102,11 @@ impl LineBuilder {
         self.cursor = Some(Box::new(cursor));
         self
     }
+    pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
+        // TODO not sure why this expects phantom data
+        // self.highlighter = Some(Box::new(highlighter));
+        self
+    }
 }
 
 impl Line {
@@ -123,8 +134,13 @@ impl Line {
 
         self.painter.init().unwrap();
 
-        self.painter
-            .paint(&prompt, &self.menu, "", ctx.cb.cursor(), &self.cursor)?;
+        self.painter.paint(
+            &prompt,
+            &self.menu,
+            StyledBuf::new(),
+            ctx.cb.cursor(),
+            &self.cursor,
+        )?;
 
         loop {
             if poll(Duration::from_millis(1000))? {
@@ -148,8 +164,15 @@ impl Line {
 
                 let res = ctx.cb.slice(..).as_str().unwrap();
 
-                self.painter
-                    .paint(&prompt, &self.menu, &res, ctx.cb.cursor(), &self.cursor)?;
+                // syntax highlight
+                let styled_buf = self.highlighter.highlight(res);
+                self.painter.paint(
+                    &prompt,
+                    &self.menu,
+                    styled_buf,
+                    ctx.cb.cursor(),
+                    &self.cursor,
+                )?;
             }
         }
 

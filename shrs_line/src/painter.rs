@@ -2,12 +2,32 @@ use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
     cursor::{self, MoveUp},
-    style::{Attribute, Print, SetAttribute},
+    style::{Attribute, Print, SetAttribute, StyledContent, Stylize},
     terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ScrollUp},
     QueueableCommand,
 };
 
 use crate::{cursor::Cursor, menu::Menu, prompt::Prompt};
+
+/// Text to be renderered by painter
+pub struct StyledBuf {
+    spans: Vec<StyledContent<String>>,
+}
+
+impl StyledBuf {
+    pub fn new() -> Self {
+        StyledBuf { spans: vec![] }
+    }
+
+    pub fn push(&mut self, span: StyledContent<String>) {
+        self.spans.push(span);
+    }
+
+    /// Get each block of styled text
+    pub fn spans(&self) -> &Vec<StyledContent<String>> {
+        &self.spans
+    }
+}
 
 pub struct Painter {
     /// The output buffer
@@ -45,7 +65,7 @@ impl Painter {
         &mut self,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = String>>,
-        buf: &str,
+        styled_buf: StyledBuf,
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,
     ) -> crossterm::Result<()> {
@@ -67,12 +87,17 @@ impl Painter {
             .queue(cursor::MoveTo(0, self.prompt_line))?
             .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
-        // render line
-        self.out
-            .queue(Print(prompt.as_ref().prompt_left()))?
-            .queue(Print(&buf[..cursor_ind]))?
-            .queue(cursor::SavePosition)?
-            .queue(Print(&buf[cursor_ind..]))?;
+        // render prompt
+        let mut left_space = 0; // cursor position from left side of terminal
+        let prompt_left = prompt.as_ref().prompt_left();
+        left_space += prompt_left.len();
+        self.out.queue(Print(prompt_left))?;
+
+        // render line (with syntax highlight spans)
+        left_space += cursor_ind;
+        for span in styled_buf.spans() {
+            self.out.queue(Print(span))?;
+        }
 
         // render menu
         if menu.is_active() {
@@ -90,7 +115,8 @@ impl Painter {
                 .queue(MoveUp(menu.items().len().saturating_sub(1) as u16))?;
         }
 
-        self.out.queue(cursor::RestorePosition)?;
+        // self.out.queue(cursor::RestorePosition)?;
+        self.out.queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.queue(cursor::Show)?;
         self.out.queue(cursor.get_cursor())?;
         self.out.flush()?;

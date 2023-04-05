@@ -30,6 +30,8 @@ pub use shrs_line as line;
 
 mod signal;
 
+pub mod theme;
+
 /*
 #[cfg(test)]
 mod tests {

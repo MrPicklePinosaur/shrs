@@ -1,10 +1,15 @@
 //! General purpose selection menu for shell
 
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    io::{stdout, BufWriter, Write},
+};
 
 use crossterm::{
+    cursor::{MoveDown, MoveToColumn, MoveUp},
     execute,
-    style::{Color, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    QueueableCommand,
 };
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
@@ -24,6 +29,9 @@ pub trait Menu {
 
     fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
     fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
+
+    fn render(&self, out: &mut Out) -> anyhow::Result<()>;
+    fn required_lines(&self) -> usize;
 }
 
 /// Simple menu that prompts user for a selection
@@ -32,6 +40,9 @@ pub struct DefaultMenu {
     /// Currently selected item
     cursor: u32,
     active: bool,
+    max_columns: usize,
+    max_rows: usize,
+    column_padding: usize,
 }
 
 impl DefaultMenu {
@@ -40,6 +51,9 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
+            max_columns: 2,
+            max_rows: 5,
+            column_padding: 2,
         }
     }
 }
@@ -94,7 +108,42 @@ impl Menu for DefaultMenu {
     }
 
     fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
-        execute!(out, ResetColor,)?;
+        execute!(out, ResetColor)?;
         Ok(())
+    }
+
+    fn render(&self, out: &mut Out) -> anyhow::Result<()> {
+        let mut i = 0;
+        let mut column_start: usize = 0;
+
+        self.unselected_style(out)?;
+        for column in self.items().chunks(self.max_rows as usize) {
+            // length of the longest word in column
+            let mut longest_word = 0;
+
+            for menu_item in column.iter() {
+                longest_word = longest_word.max(menu_item.len());
+                out.queue(MoveDown(1))?;
+                out.queue(MoveToColumn(column_start as u16))?;
+                if self.cursor() as usize == i {
+                    self.selected_style(out)?;
+                }
+
+                out.queue(Print(menu_item))?;
+                self.unselected_style(out)?;
+
+                i += 1;
+            }
+            column_start += longest_word + self.column_padding;
+
+            // move back up
+            out.queue(MoveUp(self.max_rows as u16))?;
+        }
+
+        Ok(())
+    }
+
+    fn required_lines(&self) -> usize {
+        self.items().len().min(self.max_rows) + 1
     }
 }

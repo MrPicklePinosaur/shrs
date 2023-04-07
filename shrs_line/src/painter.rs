@@ -68,12 +68,12 @@ impl Painter {
         styled_buf: StyledBuf,
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,
-    ) -> crossterm::Result<()> {
+    ) -> anyhow::Result<()> {
         self.out.queue(cursor::Hide)?;
 
         // scroll up if we need more lines
         if menu.is_active() {
-            let required_lines = menu.items().len() as u16 + 1;
+            let required_lines = menu.required_lines() as u16;
             let remaining_lines = self.term_size.1.saturating_sub(self.prompt_line);
             if required_lines > remaining_lines {
                 let extra_lines = required_lines.saturating_sub(remaining_lines);
@@ -101,18 +101,7 @@ impl Painter {
 
         // render menu
         if menu.is_active() {
-            menu.unselected_style(&mut self.out)?;
-            for (i, menu_item) in menu.items().iter().enumerate() {
-                self.out.queue(Print("\r\n"))?;
-                if menu.cursor() as usize == i {
-                    menu.selected_style(&mut self.out)?;
-                }
-
-                self.out.queue(Print(menu_item))?;
-                menu.unselected_style(&mut self.out)?;
-            }
-            self.out
-                .queue(MoveUp(menu.items().len().saturating_sub(1) as u16))?;
+            menu.render(&mut self.out)?;
         }
 
         // self.out.queue(cursor::RestorePosition)?;

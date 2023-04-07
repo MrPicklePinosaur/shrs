@@ -22,6 +22,7 @@ use crate::{
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupHookCtx},
     signal::sig_handler,
+    theme::Theme,
 };
 
 /// Unified shell config struct
@@ -57,6 +58,10 @@ pub struct ShellConfig {
     /// List of defined functions
     #[builder(default = "HashMap::new()")]
     functions: HashMap<String, Box<ast::Command>>,
+
+    /// Color theme
+    #[builder(default = "Theme::default()")]
+    theme: Theme,
 }
 
 impl ShellConfigBuilder {
@@ -96,6 +101,7 @@ impl ShellConfig {
         let shell = Shell {
             builtins: self.builtins,
             hooks: self.hooks,
+            theme: self.theme,
         };
 
         shell.run(&mut ctx, &mut rt)
@@ -109,6 +115,8 @@ pub struct Shell {
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
+    /// Color theme
+    pub theme: Theme,
 }
 
 /// Shared global shell context

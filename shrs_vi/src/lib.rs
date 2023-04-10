@@ -9,6 +9,7 @@ mod parser;
 pub use parser::{Error, Parser};
 
 mod ast;
+pub use ast::*;
 
 #[cfg(test)]
 mod tests {

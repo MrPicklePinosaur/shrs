@@ -22,6 +22,7 @@ pub Action: Action = {
     "d" <m:Motion> => Action::Delete(m),
     "c" <m:Motion> => Action::Change(m),
     "y" <m:Motion> => Action::Yank(m),
+    "i" => Action::Insert,
     <m:Motion> => Action::Move(m)
 };
 

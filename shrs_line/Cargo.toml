@@ -15,3 +15,5 @@ ropey = "1.6"
 
 anyhow = "1"
 thiserror = "1"
+
+shrs_vi = { path = "../shrs_vi" }

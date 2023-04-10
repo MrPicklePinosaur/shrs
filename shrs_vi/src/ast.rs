@@ -19,4 +19,5 @@ pub enum Action {
     Change(Motion),
     Yank(Motion),
     Move(Motion),
+    Insert,
 }

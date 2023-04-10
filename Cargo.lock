@@ -993,6 +993,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "ropey",
+ "shrs_vi",
  "thiserror",
  "trie-rs",
 ]

@@ -1,0 +1,33 @@
+use std::str::FromStr;
+use crate::ast::{Motion, Action, Command};
+
+grammar;
+
+pub Command: Command = <r:Repeat?> <a:Action> => {
+    Command {
+        repeat: r.unwrap_or(1),
+        action: a,
+    } 
+};
+
+pub Motion: Motion = {
+    "k" => Motion::Up,
+    "j" => Motion::Down,
+    "b" => Motion::BackWord,
+    "w" => Motion::Word,
+    "h" => Motion::Left,
+    "l" => Motion::Right,
+    "$" => Motion::End,
+    "^" => Motion::Start,
+};
+
+pub Action: Action = {
+    "d" <m:Motion> => Action::Delete(m),
+    "c" <m:Motion> => Action::Change(m),
+    "y" <m:Motion> => Action::Yank(m),
+    "i" => Action::Insert,
+    <m:Motion> => Action::Move(m)
+};
+
+pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();
+

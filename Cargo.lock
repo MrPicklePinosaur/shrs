@@ -993,8 +993,20 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "ropey",
+ "shrs_vi",
  "thiserror",
  "trie-rs",
+]
+
+[[package]]
+name = "shrs_vi"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lalrpop",
+ "lalrpop-util",
+ "regex",
+ "thiserror",
 ]
 
 [[package]]

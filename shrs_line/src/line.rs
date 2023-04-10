@@ -5,6 +5,7 @@ use crossterm::{
     style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     completion::{Completer, CompletionCtx, DefaultCompleter},
@@ -56,6 +57,11 @@ pub struct Line {
     #[builder(default = "Painter::new()")]
     #[builder(setter(skip))]
     painter: Painter,
+
+    /// Currently pressed keys in normal mode
+    #[builder(default = "String::new()")]
+    #[builder(setter(skip))]
+    normal_keys: String,
 }
 
 impl Default for Line {
@@ -327,73 +333,34 @@ impl Line {
         // TODO write better system to support key combinations
         match event {
             Event::Key(KeyEvent {
-                code: KeyCode::Char('i'),
-                modifiers: KeyModifiers::NONE,
-                ..
+                code: KeyCode::Esc, ..
             }) => {
-                ctx.mode = LineMode::Insert;
+                self.normal_keys.clear();
             },
             Event::Key(KeyEvent {
-                code: KeyCode::Char('h'),
-                modifiers: KeyModifiers::NONE,
+                code: KeyCode::Char(c),
                 ..
             }) => {
-                // TODO having to do these bounds checks are not nice, should implement some sort
-                // of cb.move_cursor_clamp
-                if ctx.cb.cursor() > 0 {
-                    ctx.cb.execute_vi(ViAction::MoveLeft)?;
+                self.normal_keys.push(c);
+
+                if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
+                    // special cases (possibly consulidate with execute_vi somehow)
+                    match action {
+                        Action::Insert => {
+                            ctx.mode = LineMode::Insert;
+                        },
+                        Action::Move(motion) => match motion {
+                            Motion::Up => self.history_up(ctx)?,
+                            Motion::Down => self.history_down(ctx)?,
+                            _ => {},
+                        },
+                        action => {
+                            ctx.cb.execute_vi(action)?;
+                        },
+                    }
+
+                    self.normal_keys.clear();
                 }
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('l'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                if ctx.cb.cursor() < ctx.cb.len() {
-                    ctx.cb.execute_vi(ViAction::MoveRight)?;
-                }
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('j'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                self.history_down(ctx)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('k'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                self.history_up(ctx)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('^'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveStart)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('$'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveEnd)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('w'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveNextWord)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('b'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveBackWord)?;
             },
             _ => {},
         }

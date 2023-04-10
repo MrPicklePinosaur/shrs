@@ -352,7 +352,9 @@ impl Line {
                         Action::Move(motion) => match motion {
                             Motion::Up => self.history_up(ctx)?,
                             Motion::Down => self.history_down(ctx)?,
-                            _ => {},
+                            _ => {
+                                ctx.cb.execute_vi(action)?;
+                            },
                         },
                         action => {
                             ctx.cb.execute_vi(action)?;

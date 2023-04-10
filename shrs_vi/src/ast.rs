@@ -14,6 +14,8 @@ pub enum Motion {
     Up,
     Down,
     End,
+    /// Select entire line (for Move action this behaves same as End)
+    All,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

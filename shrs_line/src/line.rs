@@ -1,4 +1,4 @@
-use std::{io::Write, marker::PhantomData, time::Duration};
+use std::{borrow::BorrowMut, io::Write, marker::PhantomData, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
@@ -237,7 +237,12 @@ impl Line {
                 ..
             }) => {
                 self.painter.newline()?;
-                return Ok(true);
+
+                // if line ends with backslash, don't confirm
+                let buf_str = ctx.cb.slice(..).as_str().unwrap().trim_end();
+                if !buf_str.ends_with('\\') {
+                    return Ok(true);
+                }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Tab,

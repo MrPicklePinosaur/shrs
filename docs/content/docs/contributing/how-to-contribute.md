@@ -14,24 +14,15 @@ toc = true
 top = false
 +++
 
-👉 Make sure to read the [Code of Conduct](../code-of-conduct/).
+### Issue tracking
 
-## Contribute to Doks
+To see current feature status, look at the github actions kanban
+- [shrs_lib: general project tasks](https://github.com/users/MrPicklePinosaur/projects/1/views/1)
+- [shrs_line: readline related tasks](https://github.com/users/MrPicklePinosaur/projects/2/views/1)
 
-👉 The AdiDoks code lives in the [`adidoks` repository](https://github.com/aaranxu/adidoks)
-
-- Follow the [GitHub flow](https://guides.github.com/introduction/flow/).
-- Follow the [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ### Create an issue
 
-- [Bug report](https://github.com/aaranxu/adidoks/issues/new?template=bug-report---.md)
-- [Feature request](https://github.com/aaranxu/adidoks/issues/new?template=feature-request---.md)
+- [Bug report](https://github.com/MrPicklePinosaur/shrs/issues/new?template=bug-report---.md)
+- [Feature request](https://github.com/MrPicklePinosaur/shrs/issues/new?template=feature-request---.md)
 
-## Improve documentation
-
-👉 The documentation lives in [`./content/docs/`](https://github.com/aaranxu/adidoks/tree/master/content/docs)
-of the [`adidoks` repository](https://github.com/h-enk/getdoks.org).
-
-- Follow the [GitHub flow](https://guides.github.com/introduction/flow/).
-- Follow the [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)

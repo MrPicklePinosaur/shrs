@@ -1,0 +1,19 @@
+[package]
+name = "shrs_vi"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "parser for vi like commands"
+repository = "https://github.com/MrPicklePinosaur/shrs"
+build = "build.rs"
+
+[dependencies]
+lalrpop-util = { version = "0.19.8", features = ["lexer"] }
+regex = "1"
+
+thiserror = "1"
+anyhow = "1"
+
+[build-dependencies]
+lalrpop = { version = "0.19.8", features = ["lexer"] }

@@ -5,7 +5,7 @@ use crossterm::{
     style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use shrs_vi::{Action, Command, Parser};
+use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     completion::{Completer, CompletionCtx, DefaultCompleter},
@@ -344,9 +344,15 @@ impl Line {
                 self.normal_keys.push(c);
 
                 if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
+                    // special cases (possibly consulidate with execute_vi somehow)
                     match action {
                         Action::Insert => {
                             ctx.mode = LineMode::Insert;
+                        },
+                        Action::Move(motion) => match motion {
+                            Motion::Up => self.history_up(ctx)?,
+                            Motion::Down => self.history_down(ctx)?,
+                            _ => {},
                         },
                         action => {
                             ctx.cb.execute_vi(action)?;

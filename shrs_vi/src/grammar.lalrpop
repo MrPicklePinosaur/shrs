@@ -11,6 +11,9 @@ pub Command: Command = <r:Repeat?> <a:Action> => {
 };
 
 pub Motion: Motion = {
+    "k" => Motion::Up,
+    "j" => Motion::Down,
+    "b" => Motion::BackWord,
     "w" => Motion::Word,
     "h" => Motion::Left,
     "l" => Motion::Right,

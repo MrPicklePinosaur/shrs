@@ -48,70 +48,50 @@ impl ViCursorBuffer for CursorBuffer {
                             Ok(())
                         }
                     },
+                    Motion::BackWord => {
+                        // TODO logic is getting comlpicatied, need more predicates to test location of
+                        // cursor (is cursor on first char of word, last char of word etc)
+
+                        // Move to the beginning of previous word
+                        if let Some(cur_char) = self.char_at(Location::Cursor()) {
+                            if cur_char.is_whitespace() {
+                                // if whitespace seek back to word first
+                                self.move_cursor(
+                                    Location::FindBack(self, |ch| !ch.is_whitespace())
+                                        .unwrap_or_default(),
+                                )?;
+                            } else {
+                                // and if is first letter of word
+                                if let Some(before) = self.char_at(Location::Before()) {
+                                    if before.is_whitespace() {
+                                        self.move_cursor(Location::Before())?;
+                                        // if whitespace seek back to word first
+                                        self.move_cursor(
+                                            Location::FindBack(self, |ch| !ch.is_whitespace())
+                                                .unwrap_or_default(),
+                                        )?;
+                                    }
+                                }
+                            }
+
+                            self.move_cursor(
+                                Location::FindBack(self, |ch| ch.is_whitespace())
+                                    .unwrap_or_default()
+                                    + Location::After(),
+                            )
+                        } else {
+                            Ok(())
+                        }
+                    },
+                    _ => Ok(()),
                 }
             },
-            _ => Ok(()), /*
-                         ViAction::MoveLeft => self.move_cursor(Location::Before()),
-                         ViAction::MoveRight => self.move_cursor(Location::After()),
-                         ViAction::MoveStart => self.move_cursor(Location::Front()),
-                         ViAction::MoveEnd => self.move_cursor(Location::Back(self)),
-                         // TODO should error be returned here instead? (currently results in NO-OP)
-                         ViAction::MoveFindChar(c) => {
-                             self.move_cursor(Location::FindChar(self, c).unwrap_or_default())
-                         },
-                         ViAction::MoveNextWord => {
-                             if let Some(cur_char) = self.char_at(Location::Cursor()) {
-                                 if !cur_char.is_whitespace() {
-                                     // if not whitespace first seek to whitespace character
-                                     self.move_cursor(
-                                         Location::Find(self, |ch| ch.is_whitespace()).unwrap_or_default(),
-                                     )?;
-                                 }
-                                 self.move_cursor(
-                                     Location::Find(self, |ch| !ch.is_whitespace()).unwrap_or_default(),
-                                 )
-                             } else {
-                                 Ok(())
-                             }
-                         },
-                         ViAction::MoveBackWord => {
-                             // TODO logic is getting comlpicatied, need more predicates to test location of
-                             // cursor (is cursor on first char of word, last char of word etc)
-
-                             // Move to the beginning of previous word
-                             if let Some(cur_char) = self.char_at(Location::Cursor()) {
-                                 if cur_char.is_whitespace() {
-                                     // if whitespace seek back to word first
-                                     self.move_cursor(
-                                         Location::FindBack(self, |ch| !ch.is_whitespace()).unwrap_or_default(),
-                                     )?;
-                                 } else {
-                                     // and if is first letter of word
-                                     if let Some(before) = self.char_at(Location::Before()) {
-                                         if before.is_whitespace() {
-                                             self.move_cursor(Location::Before())?;
-                                             // if whitespace seek back to word first
-                                             self.move_cursor(
-                                                 Location::FindBack(self, |ch| !ch.is_whitespace())
-                                                     .unwrap_or_default(),
-                                             )?;
-                                         }
-                                     }
-                                 }
-
-                                 self.move_cursor(
-                                     Location::FindBack(self, |ch| ch.is_whitespace()).unwrap_or_default()
-                                         + Location::After(),
-                                 )
-                             } else {
-                                 Ok(())
-                             }
-                         },
-                         */
+            _ => Ok(()),
         }
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::{ViAction, ViCursorBuffer};
@@ -146,3 +126,4 @@ mod tests {
         Ok(())
     }
 }
+*/

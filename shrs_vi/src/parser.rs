@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::{ast, grammar};
+use crate::{ast, grammar::CommandParser};
 
 // TODO better errors for unsuccessful parses
 #[derive(Error, Debug)]
@@ -9,16 +9,20 @@ pub enum Error {
     UnsuccessfulParse,
 }
 
-pub struct Parser {}
+pub struct Parser {
+    parser: CommandParser,
+}
 
 impl Parser {
     pub fn new() -> Self {
-        Parser {}
+        Parser {
+            parser: CommandParser::new(),
+        }
     }
 
     pub fn parse(&mut self, input: &str) -> Result<ast::Command, Error> {
-        grammar::CommandParser::new()
+        self.parser
             .parse(input)
-            .map_err(|e| Error::UnsuccessfulParse)
+            .map_err(|_| Error::UnsuccessfulParse)
     }
 }

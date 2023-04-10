@@ -9,3 +9,33 @@ mod parser;
 pub use parser::{Error, Parser};
 
 mod ast;
+
+#[cfg(test)]
+mod tests {
+
+    use super::grammar;
+    use crate::ast::{Action, Command, Motion};
+
+    #[test]
+    fn basic() -> anyhow::Result<()> {
+        let res = grammar::CommandParser::new().parse("dw")?;
+        assert_eq!(
+            res,
+            Command {
+                repeat: 1,
+                action: Action::Delete(Motion::Word)
+            }
+        );
+
+        let res = grammar::CommandParser::new().parse("42dw")?;
+        assert_eq!(
+            res,
+            Command {
+                repeat: 42,
+                action: Action::Delete(Motion::Word)
+            }
+        );
+
+        Ok(())
+    }
+}

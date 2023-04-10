@@ -3,9 +3,9 @@ use crate::ast::{Motion, Action, Command};
 
 grammar;
 
-pub Command: Command = <r:Repeat> <a:Action> => {
+pub Command: Command = <r:Repeat?> <a:Action> => {
     Command {
-        repeat: r,
+        repeat: r.unwrap_or(1),
         action: a,
     } 
 };
@@ -14,6 +14,8 @@ pub Motion: Motion = {
     "w" => Motion::Word,
     "h" => Motion::Left,
     "l" => Motion::Right,
+    "$" => Motion::End,
+    "^" => Motion::Start,
 };
 
 pub Action: Action = {
@@ -23,5 +25,5 @@ pub Action: Action = {
     <m:Motion> => Action::Move(m)
 };
 
-pub Repeat: u32 = <s:r"[0-9]*"> => u32::from_str_radix(s, 10).unwrap_or(1);
+pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();
 

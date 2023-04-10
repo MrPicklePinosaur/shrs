@@ -86,6 +86,10 @@ impl ViCursorBuffer for CursorBuffer {
                     _ => Ok(()),
                 }
             },
+            Action::Delete(motion) => match motion {
+                Motion::All => Ok(self.clear()),
+                _ => Ok(()),
+            },
             _ => Ok(()),
         }
     }

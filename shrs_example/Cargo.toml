@@ -10,6 +10,7 @@ build = "build.rs"
 
 [dependencies]
 shrs = { path = "../shrs" }
+anyhow = "1"
 
 [build-dependencies]
 chrono = "0.4"

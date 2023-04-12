@@ -1,9 +1,13 @@
-use std::default;
+use std::{
+    default,
+    io::{stdout, BufWriter},
+};
 
+use anyhow::Result;
 use shrs::{
     builtin::Builtins,
     find_executables_in_path,
-    hooks::{Hooks, StartupHookCtx},
+    hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::DefaultCompleter, DefaultCursor, DefaultHighlighter, DefaultHistory,
         DefaultMenu, Line, LineBuilder, Prompt,
@@ -21,6 +25,8 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
+    let mut out = BufWriter::new(stdout());
+
     let mut env = Env::new();
     env.load();
 
@@ -51,8 +57,8 @@ fn main() {
         ("la".into(), "ls -a".into()),
     ]);
 
-    let hooks = Hooks {
-        startup: |_ctx: StartupHookCtx| {
+    let startup_msg: HookFn<StartupCtx> =
+        |out: &mut BufWriter<std::io::Stdout>, _ctx: &StartupCtx| -> anyhow::Result<()> {
             let welcome_str = format!(
                 r#"
         __         
@@ -64,7 +70,11 @@ a rusty POSIX shell | build {}"#,
             );
 
             println!("{}", welcome_str);
-        },
+            Ok(())
+        };
+
+    let hooks = Hooks {
+        startup: HookList::from_iter(vec![startup_msg]),
         ..Default::default()
     };
 

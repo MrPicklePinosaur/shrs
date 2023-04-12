@@ -20,7 +20,7 @@ use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupHookCtx},
+    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
     signal::sig_handler,
     theme::Theme,
 };
@@ -160,7 +160,9 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
+        self.hooks
+            .startup
+            .run(&mut ctx.out, &StartupCtx { startup_time: 0 });
 
         loop {
             let line = ctx.readline.read_line(&ctx.prompt);
@@ -173,7 +175,7 @@ impl Shell {
                 raw_command: line.clone(),
                 command: expanded.clone(),
             };
-            (self.hooks.before_command)(&mut ctx.out, hook_ctx)?;
+            self.hooks.before_command.run(&mut ctx.out, &hook_ctx)?;
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
@@ -578,7 +580,7 @@ impl Shell {
             exit_code,
             cmd_time: 0.0,
         };
-        (self.hooks.after_command)(&mut ctx.out, hook_ctx)?;
+        self.hooks.after_command.run(&mut ctx.out, &hook_ctx)?;
 
         ctx.out.flush()?;
         Ok(Some(cmd_output))

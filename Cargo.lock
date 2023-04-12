@@ -970,6 +970,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "shrs",
+ "shrs_output_capture",
 ]
 
 [[package]]
@@ -997,6 +998,13 @@ dependencies = [
  "shrs_vi",
  "thiserror",
  "trie-rs",
+]
+
+[[package]]
+name = "shrs_output_capture"
+version = "0.1.0"
+dependencies = [
+ "shrs",
 ]
 
 [[package]]

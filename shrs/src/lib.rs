@@ -32,6 +32,11 @@ mod signal;
 
 pub mod theme;
 
+pub mod plugin;
+
+// TODO temp re-export anyhow
+pub use anyhow;
+
 /*
 #[cfg(test)]
 mod tests {

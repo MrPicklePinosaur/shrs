@@ -21,6 +21,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
+    plugin::Plugin,
     signal::sig_handler,
     theme::Theme,
 };
@@ -31,37 +32,42 @@ use crate::{
 #[builder(setter(prefix = "with"))]
 pub struct ShellConfig {
     #[builder(default = "Hooks::default()")]
-    hooks: Hooks,
+    pub hooks: Hooks,
 
     #[builder(default = "Builtins::default()")]
-    builtins: Builtins,
+    pub builtins: Builtins,
 
     #[builder(default = "Line::default()")]
-    readline: Line,
+    pub readline: Line,
 
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
-    history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History<HistoryItem = String>>,
 
     #[builder(default = "Alias::new()")]
-    alias: Alias,
+    pub alias: Alias,
 
     /// Custom prompt
     #[builder(default = "Box::new(DefaultPrompt::new())")]
     #[builder(setter(custom))]
-    prompt: Box<dyn Prompt>,
+    pub prompt: Box<dyn Prompt>,
 
     /// Environment variables
     #[builder(default = "Env::new()")]
-    env: Env,
+    pub env: Env,
 
     /// List of defined functions
     #[builder(default = "HashMap::new()")]
-    functions: HashMap<String, Box<ast::Command>>,
+    pub functions: HashMap<String, Box<ast::Command>>,
 
     /// Color theme
     #[builder(default = "Theme::default()")]
-    theme: Theme,
+    pub theme: Theme,
+
+    /// Plugins
+    #[builder(default = "Vec::new()")]
+    #[builder(setter(custom))]
+    pub plugins: Vec<Box<dyn Plugin>>,
 }
 
 impl ShellConfigBuilder {
@@ -73,13 +79,25 @@ impl ShellConfigBuilder {
         self.history = Some(Box::new(history));
         self
     }
+    pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
+        let mut cur_plugin = self.plugins.unwrap_or(vec![]);
+        cur_plugin.push(Box::new(plugin));
+        self.plugins = Some(cur_plugin);
+        self
+    }
 }
 
 impl ShellConfig {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub fn run(mut self) -> anyhow::Result<()> {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
         // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
+
+        // run plugins first
+        let plugins = self.plugins.drain(..).collect::<Vec<_>>();
+        for plugin in plugins {
+            plugin.init(&mut self);
+        }
 
         let mut ctx = Context {
             readline: self.readline,

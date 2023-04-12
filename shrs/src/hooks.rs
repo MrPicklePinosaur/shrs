@@ -14,21 +14,23 @@ use std::{io::BufWriter, marker::PhantomData};
 
 use crossterm::{style::Print, QueueableCommand};
 
-pub type HookFn<C> = fn(out: &mut BufWriter<std::io::Stdout>, ctx: C) -> anyhow::Result<()>;
+pub type HookFn<C: Clone> = fn(out: &mut BufWriter<std::io::Stdout>, ctx: &C) -> anyhow::Result<()>;
 
 /// Context for [StartupHook]
+#[derive(Clone)]
 pub struct StartupCtx {
     /// How much time it has taken for the shell to initialize
     pub startup_time: usize,
 }
 
 /// Default [StartupHook]
-pub fn startup_hook(out: &mut BufWriter<std::io::Stdout>, _ctx: StartupCtx) -> anyhow::Result<()> {
+pub fn startup_hook(out: &mut BufWriter<std::io::Stdout>, _ctx: &StartupCtx) -> anyhow::Result<()> {
     println!("welcome to shrs!");
     Ok(())
 }
 
 /// Context for [BeforeCommandHook]
+#[derive(Clone)]
 pub struct BeforeCommandCtx {
     /// Literal command entered by user
     pub raw_command: String,
@@ -38,7 +40,7 @@ pub struct BeforeCommandCtx {
 /// Default [BeforeCommandHook]
 pub fn before_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
-    ctx: BeforeCommandCtx,
+    ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     // let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
     // out.queue(Print(expanded_cmd))?;
@@ -46,6 +48,7 @@ pub fn before_command_hook(
 }
 
 /// Context for [AfterCommandHook]
+#[derive(Clone)]
 pub struct AfterCommandCtx {
     /// Exit code of previous command
     pub exit_code: i32,
@@ -56,7 +59,7 @@ pub struct AfterCommandCtx {
 /// Default [AfterCommandHook]
 pub fn after_command_hook(
     out: &mut BufWriter<std::io::Stdout>,
-    ctx: AfterCommandCtx,
+    ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
     // out.queue(Print(exit_code_str))?;
@@ -67,11 +70,11 @@ pub fn after_command_hook(
 #[derive(Clone)]
 pub struct Hooks {
     /// Runs before first prompt is shown
-    pub startup: HookFn<StartupCtx>,
+    pub startup: HookList<StartupCtx>,
     /// Runs before each command is executed
-    pub before_command: HookFn<BeforeCommandCtx>,
+    pub before_command: HookList<BeforeCommandCtx>,
     /// Runs after each command is executed
-    pub after_command: HookFn<AfterCommandCtx>,
+    pub after_command: HookList<AfterCommandCtx>,
 }
 
 #[derive(Clone)]
@@ -90,10 +93,11 @@ impl<C> HookList<C> {
     }
 
     /// Executes all registered hooks
-    pub fn run(&self, out: &mut BufWriter<std::io::Stdout>, ctx: C) {
-        for hook in self.hooks {
-            (hook)(out, ctx);
+    pub fn run(&self, out: &mut BufWriter<std::io::Stdout>, ctx: &C) -> anyhow::Result<()> {
+        for hook in self.hooks.iter() {
+            (hook)(out, &ctx)?;
         }
+        Ok(())
     }
 }
 
@@ -114,9 +118,9 @@ impl<C> FromIterator<HookFn<C>> for HookList<C> {
 impl Default for Hooks {
     fn default() -> Self {
         Hooks {
-            startup: startup_hook,
-            before_command: before_command_hook,
-            after_command: after_command_hook,
+            startup: HookList::from_iter([startup_hook as HookFn<StartupCtx>]),
+            before_command: HookList::from_iter([before_command_hook as HookFn<BeforeCommandCtx>]),
+            after_command: HookList::from_iter([after_command_hook as HookFn<AfterCommandCtx>]),
         }
     }
 }

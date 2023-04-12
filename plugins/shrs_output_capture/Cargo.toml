@@ -1,0 +1,11 @@
+[package]
+name = "shrs_output_capture"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "Capture the previous stdout and stderr output"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+shrs = { path = "../../shrs" }

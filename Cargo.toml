@@ -5,4 +5,5 @@ members = [
     "shrs_lang",
     "shrs_example",
     "shrs_vi",
+    "plugins/shrs_output_capture"
 ]

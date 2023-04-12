@@ -1000,6 +1000,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_output_capture"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+]
+
+[[package]]
 name = "shrs_vi"
 version = "0.1.0"
 dependencies = [

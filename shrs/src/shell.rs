@@ -31,37 +31,37 @@ use crate::{
 #[builder(setter(prefix = "with"))]
 pub struct ShellConfig {
     #[builder(default = "Hooks::default()")]
-    hooks: Hooks,
+    pub hooks: Hooks,
 
     #[builder(default = "Builtins::default()")]
-    builtins: Builtins,
+    pub builtins: Builtins,
 
     #[builder(default = "Line::default()")]
-    readline: Line,
+    pub readline: Line,
 
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
-    history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History<HistoryItem = String>>,
 
     #[builder(default = "Alias::new()")]
-    alias: Alias,
+    pub alias: Alias,
 
     /// Custom prompt
     #[builder(default = "Box::new(DefaultPrompt::new())")]
     #[builder(setter(custom))]
-    prompt: Box<dyn Prompt>,
+    pub prompt: Box<dyn Prompt>,
 
     /// Environment variables
     #[builder(default = "Env::new()")]
-    env: Env,
+    pub env: Env,
 
     /// List of defined functions
     #[builder(default = "HashMap::new()")]
-    functions: HashMap<String, Box<ast::Command>>,
+    pub functions: HashMap<String, Box<ast::Command>>,
 
     /// Color theme
     #[builder(default = "Theme::default()")]
-    theme: Theme,
+    pub theme: Theme,
 }
 
 impl ShellConfigBuilder {

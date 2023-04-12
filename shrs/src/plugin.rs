@@ -1,6 +1,6 @@
 //! Plugin System
 
-use crate::ShellConfig;
+use crate::{ShellConfig, ShellConfigBuilder};
 
 pub trait Plugin {
     fn init(&self, shell: &mut ShellConfig);
@@ -9,10 +9,4 @@ pub trait Plugin {
 /// Extension trait to make [ShellConfig] support plugins
 pub trait ShellPlugin {
     fn with_plugin(&mut self, plugin: impl Plugin);
-}
-
-impl ShellPlugin for ShellConfig {
-    fn with_plugin(&mut self, plugin: impl Plugin) {
-        plugin.init(self);
-    }
 }

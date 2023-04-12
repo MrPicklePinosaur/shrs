@@ -970,6 +970,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "shrs",
+ "shrs_output_capture",
 ]
 
 [[package]]

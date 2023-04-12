@@ -10,6 +10,7 @@ build = "build.rs"
 
 [dependencies]
 shrs = { path = "../shrs" }
+shrs_output_capture = { path = "../plugins/shrs_output_capture" }
 anyhow = "1"
 
 [build-dependencies]

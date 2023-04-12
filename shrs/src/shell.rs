@@ -21,6 +21,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
+    plugin::Plugin,
     signal::sig_handler,
     theme::Theme,
 };
@@ -62,6 +63,11 @@ pub struct ShellConfig {
     /// Color theme
     #[builder(default = "Theme::default()")]
     pub theme: Theme,
+
+    /// Plugins
+    #[builder(default = "Vec::new()")]
+    #[builder(setter(custom))]
+    pub plugins: Vec<Box<dyn Plugin>>,
 }
 
 impl ShellConfigBuilder {
@@ -73,13 +79,25 @@ impl ShellConfigBuilder {
         self.history = Some(Box::new(history));
         self
     }
+    pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
+        let mut cur_plugin = self.plugins.unwrap_or(vec![]);
+        cur_plugin.push(Box::new(plugin));
+        self.plugins = Some(cur_plugin);
+        self
+    }
 }
 
 impl ShellConfig {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub fn run(mut self) -> anyhow::Result<()> {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
         // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
+
+        // run plugins first
+        let plugins = self.plugins.drain(..).collect::<Vec<_>>();
+        for plugin in plugins {
+            plugin.init(&mut self);
+        }
 
         let mut ctx = Context {
             readline: self.readline,

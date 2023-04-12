@@ -15,6 +15,7 @@ use shrs::{
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
 };
+use shrs_output_capture::OutputCapturePlugin;
 
 struct MyPrompt;
 
@@ -84,6 +85,7 @@ a rusty POSIX shell | build {}"#,
         .with_alias(alias)
         .with_readline(readline)
         .with_prompt(prompt)
+        .with_plugin(OutputCapturePlugin)
         .build()
         .unwrap();
 

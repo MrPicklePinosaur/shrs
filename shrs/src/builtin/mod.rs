@@ -6,7 +6,10 @@ mod export;
 mod history;
 mod unalias;
 
-use std::{collections::HashMap, process::Child};
+use std::{
+    collections::{hash_map::Iter, HashMap},
+    process::Child,
+};
 
 use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
@@ -29,7 +32,23 @@ macro_rules! hashmap (
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 pub struct Builtins {
-    pub builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
+    builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
+}
+
+impl Builtins {
+    pub fn new() -> Self {
+        Builtins {
+            builtins: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, name: &'static str, builtin: impl BuiltinCmd + 'static) {
+        self.builtins.insert(name, Box::new(builtin));
+    }
+
+    pub fn iter(&self) -> Iter<'_, &str, Box<dyn BuiltinCmd>> {
+        self.builtins.iter()
+    }
 }
 
 impl Default for Builtins {

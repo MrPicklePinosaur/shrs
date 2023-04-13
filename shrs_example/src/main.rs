@@ -59,7 +59,7 @@ fn main() {
     ]);
 
     let startup_msg: HookFn<StartupCtx> =
-        |out: &mut BufWriter<std::io::Stdout>, _ctx: &StartupCtx| -> anyhow::Result<()> {
+        |sh_ctx: &mut Context, sh_rt: &mut Runtime, _ctx: &StartupCtx| -> anyhow::Result<()> {
             let welcome_str = format!(
                 r#"
         __         

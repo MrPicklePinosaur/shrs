@@ -1,28 +1,48 @@
 //! Capture stdout and stderr of previous command outputs
 //!
 //!
+mod builtin;
 
 use std::{io::BufWriter, marker::PhantomData};
 
+use builtin::AgainBuiltin;
 use shrs::{
     anyhow,
     hooks::AfterCommandCtx,
     plugin::{Plugin, ShellPlugin},
+    Context, Runtime,
 };
+
+struct OutputCaptureState {
+    pub last_command: String,
+}
+
+impl OutputCaptureState {
+    pub fn new() -> Self {
+        OutputCaptureState {
+            last_command: String::new(),
+        }
+    }
+}
 
 pub struct OutputCapturePlugin;
 
 impl Plugin for OutputCapturePlugin {
     fn init(&self, shell: &mut shrs::ShellConfig) {
         shell.hooks.after_command.register(after_command_hook);
+        shell.builtins.insert("again", AgainBuiltin::new());
+        shell.state.insert(OutputCaptureState::new());
     }
 }
 
 fn after_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
-    println!("Output Capture Hook registered");
+    if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
+        state.last_command = ctx.cmd_output.clone();
+    }
     Ok(())
 }
 
@@ -34,8 +54,9 @@ mod tests {
 
     #[test]
     pub fn register() {
-        let mut myshell = ShellConfigBuilder::default().build().unwrap();
-
-        myshell.with_plugin(OutputCapturePlugin);
+        let myshell = ShellConfigBuilder::default()
+            .with_plugin(OutputCapturePlugin)
+            .build()
+            .unwrap();
     }
 }

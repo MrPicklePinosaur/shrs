@@ -164,7 +164,12 @@ impl Line {
                                 break;
                             }
                         },
-                        LineMode::Normal => self.handle_normal_keys(ctx, event)?,
+                        LineMode::Normal => {
+                            let should_break = self.handle_normal_keys(ctx, event)?;
+                            if should_break {
+                                break;
+                            }
+                        },
                     }
                 }
 
@@ -329,9 +334,17 @@ impl Line {
         Ok(false)
     }
 
-    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         // TODO write better system to support key combinations
         match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                self.painter.newline()?;
+                return Ok(true);
+            },
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
@@ -368,7 +381,7 @@ impl Line {
             },
             _ => {},
         }
-        Ok(())
+        Ok(false)
     }
 
     // replace word at cursor with accepted word (used in automcompletion)

@@ -1,9 +1,11 @@
 //! Capture stdout and stderr of previous command outputs
 //!
 //!
+mod builtin;
 
 use std::{io::BufWriter, marker::PhantomData};
 
+use builtin::AgainBuiltin;
 use shrs::{
     anyhow,
     hooks::AfterCommandCtx,
@@ -15,6 +17,7 @@ pub struct OutputCapturePlugin;
 impl Plugin for OutputCapturePlugin {
     fn init(&self, shell: &mut shrs::ShellConfig) {
         shell.hooks.after_command.register(after_command_hook);
+        shell.builtins.insert("again", AgainBuiltin::new());
     }
 }
 
@@ -34,8 +37,9 @@ mod tests {
 
     #[test]
     pub fn register() {
-        let mut myshell = ShellConfigBuilder::default().build().unwrap();
-
-        myshell.with_plugin(OutputCapturePlugin);
+        let myshell = ShellConfigBuilder::default()
+            .with_plugin(OutputCapturePlugin)
+            .build()
+            .unwrap();
     }
 }

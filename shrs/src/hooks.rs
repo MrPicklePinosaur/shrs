@@ -54,6 +54,8 @@ pub struct AfterCommandCtx {
     pub exit_code: i32,
     /// Amount of time it took to run command
     pub cmd_time: f32,
+    /// Command output
+    pub cmd_output: String,
 }
 
 /// Default [AfterCommandHook]

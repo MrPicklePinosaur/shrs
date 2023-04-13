@@ -34,6 +34,8 @@ pub mod theme;
 
 pub mod plugin;
 
+mod state;
+
 // TODO temp re-export anyhow
 pub use anyhow;
 

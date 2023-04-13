@@ -23,6 +23,7 @@ use crate::{
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
     plugin::Plugin,
     signal::sig_handler,
+    state::State,
     theme::Theme,
 };
 
@@ -68,6 +69,11 @@ pub struct ShellConfig {
     #[builder(default = "Vec::new()")]
     #[builder(setter(custom))]
     pub plugins: Vec<Box<dyn Plugin>>,
+
+    /// Globally accessable state
+    #[builder(default = "State::new()")]
+    #[builder(setter(custom))]
+    pub state: State,
 }
 
 impl ShellConfigBuilder {
@@ -83,6 +89,14 @@ impl ShellConfigBuilder {
         let mut cur_plugin = self.plugins.unwrap_or(vec![]);
         cur_plugin.push(Box::new(plugin));
         self.plugins = Some(cur_plugin);
+        self
+    }
+    pub fn with_state<T: 'static>(mut self, state: T) -> Self {
+        // assert that state is not null
+        if self.state.is_none() {
+            self.state = Some(State::new());
+        }
+        self.state.as_mut().unwrap().insert(state);
         self
     }
 }
@@ -105,6 +119,7 @@ impl ShellConfig {
             alias: self.alias,
             prompt: self.prompt,
             out: BufWriter::new(stdout()),
+            state: self.state,
         };
         let mut rt = Runtime {
             env: self.env,
@@ -150,6 +165,7 @@ pub struct Context {
     pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
+    pub state: State,
 }
 
 /// Runtime context for the shell
@@ -589,7 +605,7 @@ impl Shell {
         let cmd_output = cmd_handle.wait_with_output()?;
         let utf8_output = std::str::from_utf8(&cmd_output.stdout)?;
 
-        ctx.out.queue(Print(utf8_output))?;
+        ctx.out.queue(Print(utf8_output.clone()))?;
 
         let exit_code = cmd_output.status.code().unwrap();
         rt.exit_status = exit_code;
@@ -597,6 +613,7 @@ impl Shell {
         let hook_ctx = AfterCommandCtx {
             exit_code,
             cmd_time: 0.0,
+            cmd_output: utf8_output.to_string(),
         };
         self.hooks.after_command.run(&mut ctx.out, &hook_ctx)?;
 

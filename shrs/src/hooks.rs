@@ -10,7 +10,7 @@
 // - env hook (when envrionment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::{io::BufWriter, marker::PhantomData};
+use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
 
 use crossterm::{style::Print, QueueableCommand};
 
@@ -77,6 +77,22 @@ pub fn after_command_hook(
     Ok(())
 }
 
+/// Context for [ChangeDirHook]
+#[derive(Clone)]
+pub struct ChangeDirCtx {
+    pub old_dir: PathBuf,
+    pub new_dir: PathBuf,
+}
+
+/// Default [AfterCommandHook]
+pub fn change_dir_hook(
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &ChangeDirCtx,
+) -> anyhow::Result<()> {
+    Ok(())
+}
+
 /// Collection of all the hooks that are avaliable
 #[derive(Clone)]
 pub struct Hooks {
@@ -86,6 +102,8 @@ pub struct Hooks {
     pub before_command: HookList<BeforeCommandCtx>,
     /// Runs after each command is executed
     pub after_command: HookList<AfterCommandCtx>,
+    /// Run each time the directory is changed
+    pub change_dir: HookList<ChangeDirCtx>,
 }
 
 #[derive(Clone)]
@@ -132,6 +150,7 @@ impl Default for Hooks {
             startup: HookList::from_iter([startup_hook as HookFn<StartupCtx>]),
             before_command: HookList::from_iter([before_command_hook as HookFn<BeforeCommandCtx>]),
             after_command: HookList::from_iter([after_command_hook as HookFn<AfterCommandCtx>]),
+            change_dir: HookList::from_iter([change_dir_hook as HookFn<ChangeDirCtx>]),
         }
     }
 }

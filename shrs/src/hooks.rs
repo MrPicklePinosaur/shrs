@@ -14,7 +14,10 @@ use std::{io::BufWriter, marker::PhantomData};
 
 use crossterm::{style::Print, QueueableCommand};
 
-pub type HookFn<C: Clone> = fn(out: &mut BufWriter<std::io::Stdout>, ctx: &C) -> anyhow::Result<()>;
+use crate::{Context, Runtime};
+
+pub type HookFn<C: Clone> =
+    fn(sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
 
 /// Context for [StartupHook]
 #[derive(Clone)]
@@ -24,7 +27,11 @@ pub struct StartupCtx {
 }
 
 /// Default [StartupHook]
-pub fn startup_hook(out: &mut BufWriter<std::io::Stdout>, _ctx: &StartupCtx) -> anyhow::Result<()> {
+pub fn startup_hook(
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    _ctx: &StartupCtx,
+) -> anyhow::Result<()> {
     println!("welcome to shrs!");
     Ok(())
 }
@@ -39,7 +46,8 @@ pub struct BeforeCommandCtx {
 }
 /// Default [BeforeCommandHook]
 pub fn before_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
     ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     // let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
@@ -60,7 +68,8 @@ pub struct AfterCommandCtx {
 
 /// Default [AfterCommandHook]
 pub fn after_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
@@ -95,9 +104,9 @@ impl<C> HookList<C> {
     }
 
     /// Executes all registered hooks
-    pub fn run(&self, out: &mut BufWriter<std::io::Stdout>, ctx: &C) -> anyhow::Result<()> {
+    pub fn run(&self, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()> {
         for hook in self.hooks.iter() {
-            (hook)(out, &ctx)?;
+            (hook)(sh_ctx, sh_rt, &ctx)?;
         }
         Ok(())
     }

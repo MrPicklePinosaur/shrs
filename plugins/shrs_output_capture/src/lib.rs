@@ -10,6 +10,7 @@ use shrs::{
     anyhow,
     hooks::AfterCommandCtx,
     plugin::{Plugin, ShellPlugin},
+    Context, Runtime,
 };
 
 struct OutputCaptureState {
@@ -35,9 +36,13 @@ impl Plugin for OutputCapturePlugin {
 }
 
 fn after_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
+    if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
+        state.last_command = ctx.cmd_output.clone();
+    }
     Ok(())
 }
 

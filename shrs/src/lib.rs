@@ -39,6 +39,10 @@ mod state;
 // TODO temp re-export anyhow
 pub use anyhow;
 
+pub mod crossterm {
+    pub use crossterm::{style::Print, QueueableCommand};
+}
+
 /*
 #[cfg(test)]
 mod tests {

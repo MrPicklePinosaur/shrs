@@ -196,7 +196,7 @@ impl Shell {
 
         self.hooks
             .startup
-            .run(&mut ctx.out, &StartupCtx { startup_time: 0 });
+            .run(ctx, rt, &StartupCtx { startup_time: 0 });
 
         loop {
             let line = ctx.readline.read_line(&ctx.prompt);
@@ -209,7 +209,7 @@ impl Shell {
                 raw_command: line.clone(),
                 command: expanded.clone(),
             };
-            self.hooks.before_command.run(&mut ctx.out, &hook_ctx)?;
+            self.hooks.before_command.run(ctx, rt, &hook_ctx)?;
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
@@ -615,7 +615,7 @@ impl Shell {
             cmd_time: 0.0,
             cmd_output: utf8_output.to_string(),
         };
-        self.hooks.after_command.run(&mut ctx.out, &hook_ctx)?;
+        self.hooks.after_command.run(ctx, rt, &hook_ctx)?;
 
         ctx.out.flush()?;
         Ok(Some(cmd_output))

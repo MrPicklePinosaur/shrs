@@ -24,7 +24,7 @@ impl BuiltinCmd for AgainBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
-            println!("{}", state.last_command);
+            print!("{}", state.last_command);
         }
 
         dummy_child()

@@ -26,7 +26,9 @@ impl State {
             .and_then(|data_any| data_any.downcast_ref::<T>())
     }
 
-    pub fn get_mut<T>(&mut self) -> Option<&mut T> {
-        todo!()
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.store
+            .get_mut(&TypeId::of::<T>())
+            .and_then(|data_any| data_any.downcast_mut::<T>())
     }
 }

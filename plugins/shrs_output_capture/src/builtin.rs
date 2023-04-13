@@ -5,24 +5,14 @@ use std::{
 
 use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime};
 
+use crate::OutputCaptureState;
+
 #[derive(Default)]
-pub struct AgainBuiltin {
-    last_output: String,
-}
+pub struct AgainBuiltin {}
 
 impl AgainBuiltin {
     pub fn new() -> Self {
-        AgainBuiltin {
-            last_output: String::new(),
-        }
-    }
-
-    pub fn update(&mut self, output: String) {
-        self.last_output = output;
-    }
-
-    pub fn get(&self) -> &String {
-        &self.last_output
+        AgainBuiltin {}
     }
 }
 
@@ -33,7 +23,9 @@ impl BuiltinCmd for AgainBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
-        println!("{}", self.get());
+        if let Some(state) = ctx.state.get::<OutputCaptureState>() {
+            println!("{}", state.last_command);
+        }
 
         dummy_child()
     }

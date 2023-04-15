@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     env,
     fs::File,
-    io::{stdin, stdout, BufWriter, Write},
+    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
@@ -189,6 +189,14 @@ pub struct Runtime {
     pub functions: HashMap<String, Box<ast::Command>>,
 }
 
+pub struct ExitStatus(pub i32);
+
+impl ExitStatus {
+    pub fn success(&self) -> bool {
+        self.0 == 0
+    }
+}
+
 impl Shell {
     pub fn run(&self, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
         // init stuff
@@ -229,7 +237,7 @@ impl Shell {
                     continue;
                 },
             };
-            let cmd_handle =
+            let mut cmd_handle =
                 match self.eval_command(ctx, rt, &cmd, Stdio::inherit(), Stdio::piped(), None) {
                     Ok(cmd_handle) => cmd_handle,
                     Err(e) => {
@@ -237,7 +245,7 @@ impl Shell {
                         continue;
                     },
                 };
-            self.command_output(ctx, rt, cmd_handle)?;
+            self.command_output(ctx, rt, &mut cmd_handle)?;
         }
     }
 
@@ -374,13 +382,12 @@ impl Shell {
                     _ => unreachable!(),
                 };
                 // TODO double check if these stdin and stdou params are correct
-                let a_cmd_handle =
+                let mut a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = self.command_output(ctx, rt, a_cmd_handle)? {
-                    if output.status.success() ^ negate {
-                        // TODO return something better (indicate that command failed with exit code)
-                        return dummy_child();
-                    }
+                let output_status = self.command_output(ctx, rt, &mut a_cmd_handle)?;
+                if output_status.success() ^ negate {
+                    // TODO return something better (indicate that command failed with exit code)
+                    return dummy_child();
                 }
                 let b_cmd_handle =
                     self.eval_command(ctx, rt, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
@@ -412,13 +419,13 @@ impl Shell {
             },
             ast::Command::SeqList(a_cmd, b_cmd) => {
                 // TODO very similar to AsyncList
-                let a_cmd_handle =
+                let mut a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        self.command_output(ctx, rt, a_cmd_handle)?;
+                        self.command_output(ctx, rt, &mut a_cmd_handle)?;
                         let b_cmd_handle = self.eval_command(
                             ctx,
                             rt,
@@ -450,21 +457,20 @@ impl Shell {
                 assert!(conds.len() >= 1);
 
                 for ast::Condition { cond, body } in conds {
-                    let cond_handle =
+                    let mut cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
-                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
-                        if output.status.success() {
-                            let body_handle = self.eval_command(
-                                ctx,
-                                rt,
-                                body,
-                                Stdio::inherit(),
-                                Stdio::piped(),
-                                None,
-                            )?;
-                            return Ok(body_handle);
-                        }
+                    let output_status = self.command_output(ctx, rt, &mut cond_handle)?;
+                    if output_status.success() {
+                        let body_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            body,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
+                        return Ok(body_handle);
                     }
                 }
 
@@ -490,23 +496,20 @@ impl Shell {
                 };
 
                 loop {
-                    let cond_handle =
+                    let mut cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to if statements
-                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
-                        if output.status.success() ^ negate {
-                            let body_handle = self.eval_command(
-                                ctx,
-                                rt,
-                                body,
-                                Stdio::inherit(),
-                                Stdio::piped(),
-                                None,
-                            )?;
-                            self.command_output(ctx, rt, body_handle)?;
-                        } else {
-                            break;
-                        }
+                    let output_status = self.command_output(ctx, rt, &mut cond_handle)?;
+                    if output_status.success() ^ negate {
+                        let mut body_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            body,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
+                        self.command_output(ctx, rt, &mut body_handle)?;
                     } else {
                         break; // TODO not sure if there should be break here
                     }
@@ -531,9 +534,9 @@ impl Shell {
                 for word in expanded {
                     // TODO should have seperate variable struct instead of env
                     rt.env.set(name, word); // TODO unset the var after the loop?
-                    let body_handle =
+                    let mut body_handle =
                         self.eval_command(ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                    self.command_output(ctx, rt, body_handle)?;
+                    self.command_output(ctx, rt, &mut body_handle)?;
                 }
 
                 dummy_child()
@@ -545,7 +548,7 @@ impl Shell {
 
                 for ast::CaseArm { pattern, body } in arms {
                     if pattern.iter().any(|x| x == &subst_word) {
-                        let body_handle = self.eval_command(
+                        let mut body_handle = self.eval_command(
                             ctx,
                             rt,
                             body,
@@ -553,7 +556,7 @@ impl Shell {
                             Stdio::piped(),
                             None,
                         )?;
-                        self.command_output(ctx, rt, body_handle)?;
+                        self.command_output(ctx, rt, &mut body_handle)?;
                         // TODO should we break? (should multiple match arms be matched?)
                     }
                 }
@@ -608,25 +611,36 @@ impl Shell {
         &self,
         ctx: &mut Context,
         rt: &mut Runtime,
-        cmd_handle: Child,
-    ) -> anyhow::Result<Option<Output>> {
-        let cmd_output = cmd_handle.wait_with_output()?;
-        let utf8_output = std::str::from_utf8(&cmd_output.stdout)?;
+        cmd_handle: &mut Child,
+    ) -> anyhow::Result<ExitStatus> {
+        // TODO also handle stderr
+        let output = if let Some(out) = cmd_handle.stdout.take() {
+            let reader = BufReader::new(out);
+            reader
+                .lines()
+                .map(|line| {
+                    let line = line.unwrap();
+                    println!("{}", line);
+                    line
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            String::new()
+        };
 
-        ctx.out.queue(Print(utf8_output.clone()))?;
+        let exit_status = cmd_handle.wait().unwrap().code().unwrap();
 
-        let exit_code = cmd_output.status.code().unwrap();
-        rt.exit_status = exit_code;
+        rt.exit_status = exit_status;
 
         let hook_ctx = AfterCommandCtx {
-            exit_code,
+            exit_code: exit_status,
             cmd_time: 0.0,
-            cmd_output: utf8_output.to_string(),
+            cmd_output: output,
         };
         self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;
 
-        ctx.out.flush()?;
-        Ok(Some(cmd_output))
+        Ok(ExitStatus(exit_status))
     }
 }
 

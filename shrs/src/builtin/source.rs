@@ -48,12 +48,12 @@ impl BuiltinCmd for SourceBuiltin {
         match interp {
             Some(interp) => {
                 println!("using interp {} at {}", interp.as_str(), file_path_str);
-                let child = Command::new(interp.as_str())
+                let mut child = Command::new(interp.as_str())
                     .args(vec![file_path_str])
                     .spawn()?;
 
                 // need command output here
-                sh.command_output(ctx, rt, child)?;
+                sh.command_output(ctx, rt, &mut child)?;
 
                 dummy_child()
             },

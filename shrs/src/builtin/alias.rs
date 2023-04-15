@@ -22,6 +22,7 @@ pub struct AliasBuiltin {}
 impl BuiltinCmd for AliasBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

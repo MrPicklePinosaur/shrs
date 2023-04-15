@@ -4,7 +4,10 @@ use std::{
 };
 
 use super::BuiltinCmd;
-use crate::shell::{dummy_child, Context, Runtime};
+use crate::{
+    shell::{dummy_child, Context, Runtime},
+    Shell,
+};
 
 #[derive(Default)]
 pub struct CdBuiltin {}
@@ -12,6 +15,7 @@ pub struct CdBuiltin {}
 impl BuiltinCmd for CdBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

@@ -38,8 +38,9 @@ impl BuiltinCmd for SourceBuiltin {
         let file_contents = read_to_string(file_path)?;
 
         // read shbang from first line
-        let interp = file_contents
-            .lines()
+        let mut it = file_contents.lines();
+
+        let interp = it
             .next()
             .and_then(|first_line| SHBANG_REGEX.captures(first_line))
             .and_then(|capture| capture.name("interp"));
@@ -56,7 +57,11 @@ impl BuiltinCmd for SourceBuiltin {
 
                 dummy_child()
             },
-            None => dummy_child(),
+            None => {
+                // otherwise evaluate with self
+
+                todo!()
+            },
         }
     }
 }

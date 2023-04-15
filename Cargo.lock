@@ -964,6 +964,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_cd_tools"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+ "thiserror",
+]
+
+[[package]]
 name = "shrs_example"
 version = "0.1.0"
 dependencies = [

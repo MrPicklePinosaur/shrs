@@ -13,6 +13,7 @@ use std::{
 
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
+use lazy_static::lazy_static;
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
 use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
 
@@ -196,7 +197,7 @@ impl Shell {
 
         self.hooks
             .startup
-            .run(ctx, rt, &StartupCtx { startup_time: 0 });
+            .run(self, ctx, rt, &StartupCtx { startup_time: 0 });
 
         loop {
             let line = ctx.readline.read_line(&ctx.prompt);
@@ -209,7 +210,7 @@ impl Shell {
                 raw_command: line.clone(),
                 command: expanded.clone(),
             };
-            self.hooks.before_command.run(ctx, rt, &hook_ctx)?;
+            self.hooks.before_command.run(self, ctx, rt, &hook_ctx)?;
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&expanded);
@@ -327,7 +328,7 @@ impl Shell {
 
                 for (builtin_name, builtin_cmd) in self.builtins.iter() {
                     if builtin_name == &cmd_name.as_str() {
-                        return builtin_cmd.run(ctx, rt, &subst_args);
+                        return builtin_cmd.run(self, ctx, rt, &subst_args);
                     }
                 }
 
@@ -596,7 +597,7 @@ impl Shell {
     }
 
     /// Small wrapper that outputs command output if exists
-    fn command_output(
+    pub fn command_output(
         &self,
         ctx: &mut Context,
         rt: &mut Runtime,
@@ -615,7 +616,7 @@ impl Shell {
             cmd_time: 0.0,
             cmd_output: utf8_output.to_string(),
         };
-        self.hooks.after_command.run(ctx, rt, &hook_ctx)?;
+        self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;
 
         ctx.out.flush()?;
         Ok(Some(cmd_output))
@@ -634,6 +635,12 @@ pub fn dummy_child() -> anyhow::Result<Child> {
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     use regex::Regex;
 
+    lazy_static! {
+        static ref R_0: Regex = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
+        static ref R_1: Regex = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
+        static ref R_2: Regex = Regex::new(r"~").unwrap(); // tilde
+    }
+
     let mut subst = arg.to_string();
 
     // substitute special parameters first
@@ -641,12 +648,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     subst = subst.as_str().replace("$#", &rt.args.len().to_string());
     subst = subst.as_str().replace("$0", &rt.name);
 
-    // TODO precompile regex in lazy_static
-    let r_0 = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
-    let r_1 = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
-    let r_2 = Regex::new(r"~").unwrap(); // tilde
-
-    for cap in r_0.captures_iter(arg) {
+    for cap in R_0.captures_iter(arg) {
         // look up env var
         let var = &cap["env"];
         // TODO stupid code
@@ -659,7 +661,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     }
 
     // TODO this is dumb stupid and bad repeated code
-    for cap in r_1.captures_iter(arg) {
+    for cap in R_1.captures_iter(arg) {
         let var = &cap["env"];
         let val = match rt.env.get(var) {
             Some(val) => val.clone(),
@@ -674,7 +676,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
         Some(home) => home.as_str(),
         None => "",
     };
-    let subst = r_2.replace_all(&subst, home).to_string();
+    let subst = R_2.replace_all(&subst, home).to_string();
 
     subst
 }

@@ -10,7 +10,7 @@ use shrs::{
     anyhow,
     hooks::AfterCommandCtx,
     plugin::{Plugin, ShellPlugin},
-    Context, Runtime,
+    Context, Runtime, Shell,
 };
 
 struct OutputCaptureState {
@@ -36,6 +36,7 @@ impl Plugin for OutputCapturePlugin {
 }
 
 fn after_command_hook(
+    sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,

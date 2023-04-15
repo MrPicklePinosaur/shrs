@@ -203,17 +203,24 @@ impl Shell {
             let line = ctx.readline.read_line(&ctx.prompt);
 
             // attempt to expand alias
-            let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
+            // TODO IFS
+            let mut words = line.split(" ").collect::<Vec<_>>();
+            if let Some(first) = words.get_mut(0) {
+                if let Some(expanded) = ctx.alias.get(&first.clone()) {
+                    *first = expanded;
+                }
+            }
+            let line = words.join(" ");
 
             // TODO not sure if hook should run here (since not all vars are expanded yet)
             let hook_ctx = BeforeCommandCtx {
                 raw_command: line.clone(),
-                command: expanded.clone(),
+                command: line.clone(),
             };
             self.hooks.before_command.run(self, ctx, rt, &hook_ctx)?;
 
             // TODO rewrite the error handling here better
-            let lexer = Lexer::new(&expanded);
+            let lexer = Lexer::new(&line);
             let mut parser = Parser::new();
             let cmd = match parser.parse(lexer) {
                 Ok(cmd) => cmd,

@@ -4,6 +4,7 @@ mod debug;
 mod exit;
 mod export;
 mod history;
+mod source;
 mod unalias;
 
 use std::{
@@ -13,9 +14,12 @@ use std::{
 
 use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
-    export::ExportBuiltin, history::HistoryBuiltin, unalias::UnaliasBuiltin,
+    export::ExportBuiltin, history::HistoryBuiltin, source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
-use crate::shell::{Context, Runtime};
+use crate::{
+    shell::{Context, Runtime},
+    Shell,
+};
 
 macro_rules! hashmap (
     { $($key:expr => $value:expr),+ } => {
@@ -80,12 +84,21 @@ impl Default for Builtins {
                     "unalias",
                     Box::new(UnaliasBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
+                (
+                    "source",
+                    Box::new(SourceBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
             ]),
         }
     }
 }
 
 pub trait BuiltinCmd {
-    fn run(&self, ctx: &mut Context, rt: &mut Runtime, args: &Vec<String>)
-        -> anyhow::Result<Child>;
+    fn run(
+        &self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        args: &Vec<String>,
+    ) -> anyhow::Result<Child>;
 }

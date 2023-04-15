@@ -14,10 +14,10 @@ use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
 
 use crossterm::{style::Print, QueueableCommand};
 
-use crate::{Context, Runtime};
+use crate::{Context, Runtime, Shell};
 
 pub type HookFn<C: Clone> =
-    fn(sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
+    fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
 
 /// Context for [StartupHook]
 #[derive(Clone)]
@@ -28,6 +28,7 @@ pub struct StartupCtx {
 
 /// Default [StartupHook]
 pub fn startup_hook(
+    sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
     _ctx: &StartupCtx,
@@ -46,6 +47,7 @@ pub struct BeforeCommandCtx {
 }
 /// Default [BeforeCommandHook]
 pub fn before_command_hook(
+    sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
     ctx: &BeforeCommandCtx,
@@ -68,6 +70,7 @@ pub struct AfterCommandCtx {
 
 /// Default [AfterCommandHook]
 pub fn after_command_hook(
+    sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
@@ -122,9 +125,15 @@ impl<C> HookList<C> {
     }
 
     /// Executes all registered hooks
-    pub fn run(&self, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()> {
+    pub fn run(
+        &self,
+        sh: &Shell,
+        sh_ctx: &mut Context,
+        sh_rt: &mut Runtime,
+        ctx: &C,
+    ) -> anyhow::Result<()> {
         for hook in self.hooks.iter() {
-            (hook)(sh_ctx, sh_rt, &ctx)?;
+            (hook)(sh, sh_ctx, sh_rt, &ctx)?;
         }
         Ok(())
     }

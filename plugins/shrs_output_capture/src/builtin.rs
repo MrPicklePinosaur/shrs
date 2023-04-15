@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime};
+use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime, Shell};
 
 use crate::OutputCaptureState;
 
@@ -19,6 +19,7 @@ impl AgainBuiltin {
 impl BuiltinCmd for AgainBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

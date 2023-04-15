@@ -13,7 +13,7 @@ use shrs::{
         DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},
-    Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
+    Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
 };
 use shrs_output_capture::OutputCapturePlugin;
 
@@ -58,21 +58,24 @@ fn main() {
         ("la".into(), "ls -a".into()),
     ]);
 
-    let startup_msg: HookFn<StartupCtx> =
-        |sh_ctx: &mut Context, sh_rt: &mut Runtime, _ctx: &StartupCtx| -> anyhow::Result<()> {
-            let welcome_str = format!(
-                r#"
+    let startup_msg: HookFn<StartupCtx> = |sh: &Shell,
+                                           sh_ctx: &mut Context,
+                                           sh_rt: &mut Runtime,
+                                           _ctx: &StartupCtx|
+     -> anyhow::Result<()> {
+        let welcome_str = format!(
+            r#"
         __         
    ___ / /  _______
   (_-</ _ \/ __(_-<
  /___/_//_/_/ /___/
 a rusty POSIX shell | build {}"#,
-                env!("SHRS_VERSION")
-            );
+            env!("SHRS_VERSION")
+        );
 
-            println!("{}", welcome_str);
-            Ok(())
-        };
+        println!("{}", welcome_str);
+        Ok(())
+    };
 
     let hooks = Hooks {
         startup: HookList::from_iter(vec![startup_msg]),

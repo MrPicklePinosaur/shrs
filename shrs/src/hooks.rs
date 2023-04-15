@@ -89,6 +89,7 @@ pub struct ChangeDirCtx {
 
 /// Default [AfterCommandHook]
 pub fn change_dir_hook(
+    sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
     ctx: &ChangeDirCtx,

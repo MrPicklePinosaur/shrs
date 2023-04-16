@@ -36,6 +36,8 @@ pub mod plugin;
 
 mod state;
 
+mod jobs;
+
 // TODO temp re-export anyhow
 pub use anyhow;
 

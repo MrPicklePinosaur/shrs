@@ -22,6 +22,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
+    jobs::{ExitStatus, Jobs},
     plugin::Plugin,
     signal::sig_handler,
     state::State,
@@ -121,6 +122,7 @@ impl ShellConfig {
             prompt: self.prompt,
             out: BufWriter::new(stdout()),
             state: self.state,
+            jobs: Jobs::new(),
         };
         let mut rt = Runtime {
             env: self.env,
@@ -167,6 +169,7 @@ pub struct Context {
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
+    pub jobs: Jobs,
 }
 
 /// Runtime context for the shell
@@ -187,14 +190,6 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
-}
-
-pub struct ExitStatus(pub i32);
-
-impl ExitStatus {
-    pub fn success(&self) -> bool {
-        self.0 == 0
-    }
 }
 
 impl Shell {
@@ -403,7 +398,10 @@ impl Shell {
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
-                    None => Ok(a_cmd_handle),
+                    None => {
+                        ctx.jobs.push(a_cmd_handle);
+                        dummy_child()
+                    },
                     Some(b_cmd) => {
                         let b_cmd_handle = self.eval_command(
                             ctx,

@@ -403,7 +403,8 @@ impl Shell {
 
                 match b_cmd {
                     None => {
-                        ctx.jobs.push(a_cmd_handle);
+                        // TODO might need a Command display trait implementation
+                        ctx.jobs.push(a_cmd_handle, String::new());
                         dummy_child()
                     },
                     Some(b_cmd) => {

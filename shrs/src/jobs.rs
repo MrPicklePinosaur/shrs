@@ -20,10 +20,15 @@ impl ExitStatus {
     }
 }
 
+pub struct JobInfo {
+    pub child: Child,
+    pub cmd: String,
+}
+
 /// Keeps track of all the current running jobs
 pub struct Jobs {
     next_id: JobId,
-    jobs: HashMap<JobId, Child>,
+    jobs: HashMap<JobId, JobInfo>,
 }
 
 impl Jobs {
@@ -35,19 +40,19 @@ impl Jobs {
     }
 
     /// Add new job to be tracked
-    pub fn push(&mut self, child: Child) {
+    pub fn push(&mut self, child: Child, cmd: String) {
         let next_id = self.get_next_id();
-        self.jobs.insert(next_id, child);
+        self.jobs.insert(next_id, JobInfo { child, cmd });
     }
 
-    pub fn iter(&self) -> Iter<'_, JobId, Child> {
+    pub fn iter(&self) -> Iter<'_, JobId, JobInfo> {
         self.jobs.iter()
     }
 
     /// Clean up finished jobs
     pub fn retain(&mut self, exit_handler: fn(status: ExitStatus)) {
         self.jobs.retain(|k, v| {
-            match v.try_wait() {
+            match v.child.try_wait() {
                 Ok(Some(status)) => {
                     exit_handler(ExitStatus(status.code().unwrap()));
                     false

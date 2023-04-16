@@ -241,6 +241,10 @@ impl Shell {
                     },
                 };
             self.command_output(ctx, rt, &mut cmd_handle)?;
+
+            // check up on running jobs
+            ctx.jobs
+                .retain(|status: ExitStatus| println!("[exit +{}]", status.code()));
         }
     }
 

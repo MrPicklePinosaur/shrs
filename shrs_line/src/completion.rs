@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use trie_rs::{Trie, TrieBuilder};
+use trie_rs::TrieBuilder;
 
 // also provide some commonly used completion lists
 // - directories
@@ -56,7 +56,7 @@ impl Completer for DefaultCompleter {
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
                 .collect();
 
-            return results;
+            results
         } else {
             // Return all results if empty query
             if buf.is_empty() {
@@ -99,9 +99,9 @@ impl Completer for DefaultCompleter {
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
-                .map(|x| format!("{}{}", display_prefix, x))
+                .map(|x| format!("{display_prefix}{x}"))
                 .collect();
-            return results;
+            results
         }
     }
 }
@@ -129,12 +129,12 @@ pub fn all_files_completion(dir: &Path) -> std::io::Result<Vec<String>> {
 }
 
 /// Generate list of all executables in PATH
-pub fn exectuable_completion(dir: &Path) -> std::io::Result<Vec<String>> {
+pub fn exectuable_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 
 /// Generate list of all ssh hosts
-pub fn ssh_completion(dir: &Path) -> std::io::Result<Vec<String>> {
+pub fn ssh_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 

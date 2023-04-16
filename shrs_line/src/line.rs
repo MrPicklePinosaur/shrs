@@ -1,8 +1,7 @@
-use std::{io::Write, marker::PhantomData, time::Duration};
+use std::{io::Write, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_vi::{Action, Command, Motion, Parser};
@@ -16,7 +15,7 @@ use crate::{
     menu::{DefaultMenu, Menu},
     painter::{Painter, StyledBuf},
     prompt::Prompt,
-    vi::{ViAction, ViCursorBuffer},
+    vi::ViCursorBuffer,
 };
 
 /// Operating mode of readline
@@ -108,7 +107,7 @@ impl LineBuilder {
         self.cursor = Some(Box::new(cursor));
         self
     }
-    pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
+    pub fn with_highlighter(self, _highlighter: impl Highlighter + 'static) -> Self {
         // TODO not sure why this expects phantom data
         // self.highlighter = Some(Box::new(highlighter));
         self
@@ -389,7 +388,7 @@ impl Line {
         // first remove current word
         // TODO could implement a delete_before
         ctx.cb
-            .move_cursor(Location::Rel(-1 * ctx.current_word.len() as isize))?;
+            .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
         ctx.cb.delete(Location::Cursor(), ctx.current_word.len())?;
 
         // then replace with the completion word

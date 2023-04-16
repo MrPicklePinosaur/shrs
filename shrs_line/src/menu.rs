@@ -1,9 +1,6 @@
 //! General purpose selection menu for shell
 
-use std::{
-    fmt::Display,
-    io::{stdout, BufWriter, Write},
-};
+use std::{fmt::Display, io::Write};
 
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
@@ -117,7 +114,7 @@ impl Menu for DefaultMenu {
         let mut column_start: usize = 0;
 
         self.unselected_style(out)?;
-        for column in self.items().chunks(self.max_rows as usize) {
+        for column in self.items().chunks(self.max_rows) {
             // length of the longest word in column
             let mut longest_word = 0;
 

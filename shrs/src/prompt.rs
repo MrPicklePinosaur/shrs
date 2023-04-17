@@ -44,3 +44,8 @@ pub fn hostname() -> anyhow::Result<String> {
         .to_string();
     Ok(encoded)
 }
+
+/// Get the current time
+pub fn current_time() {
+    todo!()
+}

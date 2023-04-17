@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+use crossterm::style::Stylize;
 use shrs::{
     builtin::Builtins,
     find_executables_in_path,
@@ -21,7 +22,11 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self) -> String {
-        format!(" {} > ", top_pwd())
+        let path = top_pwd().white().bold();
+        let username = username().unwrap_or_default().blue();
+        let hostname = hostname().unwrap_or_default().blue();
+        let prompt = ">".blue();
+        format!("{hostname}@{username} {path} {prompt} ")
     }
 }
 

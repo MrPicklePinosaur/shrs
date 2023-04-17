@@ -2,6 +2,7 @@
 
 pub trait Prompt {
     fn prompt_left(&self) -> String;
+    fn prompt_right(&self) -> String;
 }
 
 /// Default implementation for [Prompt]
@@ -16,5 +17,9 @@ impl DefaultPrompt {
 impl Prompt for DefaultPrompt {
     fn prompt_left(&self) -> String {
         String::from("> ")
+    }
+
+    fn prompt_right(&self) -> String {
+        String::new()
     }
 }

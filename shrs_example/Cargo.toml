@@ -12,6 +12,7 @@ build = "build.rs"
 shrs = { path = "../shrs" }
 shrs_output_capture = { path = "../plugins/shrs_output_capture" }
 anyhow = "1"
+crossterm = "0.26"
 
 [build-dependencies]
 chrono = "0.4"

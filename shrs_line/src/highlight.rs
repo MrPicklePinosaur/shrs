@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crossterm::style::{ContentStyle, StyledContent};
 
 use crate::painter::StyledBuf;
@@ -9,16 +7,9 @@ pub trait Highlighter {
 }
 
 /// Simple highlighter that colors the entire line one color
+#[derive(Default)]
 pub struct DefaultHighlighter {
     pub style: ContentStyle,
-}
-
-impl Default for DefaultHighlighter {
-    fn default() -> Self {
-        DefaultHighlighter {
-            style: ContentStyle::default(),
-        }
-    }
 }
 
 impl Highlighter for DefaultHighlighter {

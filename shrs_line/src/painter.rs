@@ -1,9 +1,9 @@
 use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
-    cursor::{self, MoveUp},
-    style::{Attribute, Print, SetAttribute, StyledContent, Stylize},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ScrollUp},
+    cursor::{self},
+    style::{Print, StyledContent},
+    terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
 

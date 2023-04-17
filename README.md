@@ -3,49 +3,48 @@
 
 # sh.rs
 
-rust library to build your own shell
+The rusty POSIX shell library for hackers
 
-[![book](https://img.shields.io/badge/book-website-orange)](#)
+[![crates.io](https://img.shields.io/crates/v/shrs.svg)](#)
+[![book](https://img.shields.io/badge/book-website-orange)](mrpicklepinosaur.github.io/shrs/)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#)
 
 </div>
-<!-- [![build](https://github.com/MrPicklePinosaur/shrs/workflows/Deploy/badge.svg)](https://github.com/MrPicklePinosaur/shrs/actions) -->
 
 ## PROJECT GOALS
 
 - **hackable**: almost every aspect of the shell should be easily customizable and extendable
-- **productive**: shell should encourage and facilitate an efficient workflow
-- **rusty**: implemented in rust down to the syscall level (rustix) and configurable in rust
+- **developer friendly**: well documented and easy to contribute to
+- **rusty**: implemented in and configurable in rust
 
 ## FEATURES
 
-Project is currently very much WIP, below lists the current feature statuses:
+DISCLAIMER: **shrs** is currently very much a work in progress, the API is subject to change frequently and things are prone to breaking. It currently may not be suitable for daily use, but is great for prototyping any experimental shell features you dream up with!
 
-| Feature | Status |
-| --- | --- |
-| posix shell | wip |
-| history | wip |
-| aliases | mvp |
-| completion | wip |
-| readline | wip |
-| vi mode | wip |
-| hooks | mvp |
-| keybindings | todo |
-| syntax highlighting | todo |
-| shell scripts | todo |
-| docs | todo |
+Here are what makes **shrs** special:
+- Completely configurable in rust (including your prompt, completions and more!)
+- Plugin system (community maintained plugins that add unique features)
 
+## GETTING STARTED
 
-## RELATED PROJECTS
+To get a taste of what **shrs** is capable of, without any configuration, you can run the example **shrs_example** shell that is bundled.
 
-- [nsh](https://github.com/nuta/nsh)
-- [nushell](https://github.com/nushell/nushell)
-- [rushell](https://github.com/hiking90/rushell)
+To get started with building your own shell, it's as easy as:
+```rust
+use shrs::ShellConfigBuilder;
 
-## RESOURCES
+fn main() {
+    let myshell = ShellConfigBuilder::default()
+        .build()
+        .unwrap();
 
-- [build your own shell](https://github.com/tokenrove/build-your-own-shell)
-- [grammar for posix shell](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_10)
-- [oursh: rust shell using lalrpop](https://github.com/nixpulvis/oursh)
-- [gnu: implementing a job control shell](https://www.gnu.org/software/libc/manual/html_node/Implementing-a-Shell.html)
-- [A Brief Introduction to termios](https://blog.nelhage.com/2009/12/a-brief-introduction-to-termios/)
+    myshell.run();
+}
+```
+
+See the [developer documentation](mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/) for more in depth information.
+
+## CONTRIBUTING
+
+If you encounter and bugs are have any feature requests, please don't hesitate to [leave an issue](https://github.com/MrPicklePinosaur/shrs/issues)!
+

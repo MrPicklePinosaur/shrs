@@ -1,4 +1,4 @@
-use shrs_vi::{Action, Command, Motion};
+use shrs_vi::{Action, Motion};
 
 /// Vi mode for readline
 use crate::cursor_buffer::{CursorBuffer, Location, Result};
@@ -87,7 +87,10 @@ impl ViCursorBuffer for CursorBuffer {
                 }
             },
             Action::Delete(motion) => match motion {
-                Motion::All => Ok(self.clear()),
+                Motion::All => {
+                    self.clear();
+                    Ok(())
+                },
                 _ => Ok(()),
             },
             _ => Ok(()),

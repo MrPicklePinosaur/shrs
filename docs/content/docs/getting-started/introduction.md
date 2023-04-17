@@ -14,7 +14,14 @@ toc = true
 top = false
 +++
 
-Welcome to **shrs**, the toolkit that will help you build and configure your own shell in **Rust**!
+Welcome to **shrs**, the toolkit that will help you build and configure your
+own shell in **Rust**!
+
+First of all **shrs** is NOT a shell, it is a library for YOU to build your own
+shell. It is meant for those that have reached the limits of what can be
+accomplished with just tinkering with the configuration files of pre-existing
+shells and would like to go beyond and add experimental and wild features to
+their own shells.
 
 ### Quick Start
 

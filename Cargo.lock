@@ -1016,6 +1016,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_prompt_builder"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "derive_builder",
+ "shrs",
+ "thiserror",
+]
+
+[[package]]
 name = "shrs_vi"
 version = "0.1.0"
 dependencies = [

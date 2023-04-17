@@ -28,6 +28,9 @@ impl Prompt for MyPrompt {
         let prompt = ">".blue();
         format!("{hostname}@{username} {path} {prompt} ")
     }
+    fn prompt_right(&self) -> String {
+        format!("shrs ")
+    }
 }
 
 fn main() {

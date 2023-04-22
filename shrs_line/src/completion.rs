@@ -93,14 +93,21 @@ impl Completer for DefaultCompleter {
                 display_prefix.push('/');
             }
 
-            // TODO can also append slash to end if directory
-
             let results = trie.predictive_search(suffix.to_str().unwrap());
             let results: Vec<String> = results
                 .iter()
                 .map(|x| std::str::from_utf8(x).unwrap().to_string())
                 .map(|x| format!("{display_prefix}{x}"))
+                .map(|x|
+                     // append trailing slash if path is directory
+                     if PathBuf::from(x.clone()).is_dir() {
+                         format!("{x}/")
+                     } else {
+                         x
+                     }
+                 )
                 .collect();
+
             results
         }
     }

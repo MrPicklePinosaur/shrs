@@ -27,6 +27,7 @@ pub struct DebugBuiltin {}
 impl BuiltinCmd for DebugBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

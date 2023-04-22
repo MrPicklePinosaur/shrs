@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     env,
     fs::File,
-    io::{stdin, stdout, BufWriter, Write},
+    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
     os::unix::process::CommandExt,
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
@@ -13,6 +13,7 @@ use std::{
 
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
+use lazy_static::lazy_static;
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
 use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
 
@@ -20,8 +21,11 @@ use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupHookCtx},
+    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
+    jobs::{ExitStatus, Jobs},
+    plugin::Plugin,
     signal::sig_handler,
+    state::State,
     theme::Theme,
 };
 
@@ -31,37 +35,47 @@ use crate::{
 #[builder(setter(prefix = "with"))]
 pub struct ShellConfig {
     #[builder(default = "Hooks::default()")]
-    hooks: Hooks,
+    pub hooks: Hooks,
 
     #[builder(default = "Builtins::default()")]
-    builtins: Builtins,
+    pub builtins: Builtins,
 
     #[builder(default = "Line::default()")]
-    readline: Line,
+    pub readline: Line,
 
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
-    history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History<HistoryItem = String>>,
 
     #[builder(default = "Alias::new()")]
-    alias: Alias,
+    pub alias: Alias,
 
     /// Custom prompt
     #[builder(default = "Box::new(DefaultPrompt::new())")]
     #[builder(setter(custom))]
-    prompt: Box<dyn Prompt>,
+    pub prompt: Box<dyn Prompt>,
 
     /// Environment variables
     #[builder(default = "Env::new()")]
-    env: Env,
+    pub env: Env,
 
     /// List of defined functions
     #[builder(default = "HashMap::new()")]
-    functions: HashMap<String, Box<ast::Command>>,
+    pub functions: HashMap<String, Box<ast::Command>>,
 
     /// Color theme
     #[builder(default = "Theme::default()")]
-    theme: Theme,
+    pub theme: Theme,
+
+    /// Plugins
+    #[builder(default = "Vec::new()")]
+    #[builder(setter(custom))]
+    pub plugins: Vec<Box<dyn Plugin>>,
+
+    /// Globally accessable state
+    #[builder(default = "State::new()")]
+    #[builder(setter(custom))]
+    pub state: State,
 }
 
 impl ShellConfigBuilder {
@@ -73,13 +87,33 @@ impl ShellConfigBuilder {
         self.history = Some(Box::new(history));
         self
     }
+    pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
+        let mut cur_plugin = self.plugins.unwrap_or(vec![]);
+        cur_plugin.push(Box::new(plugin));
+        self.plugins = Some(cur_plugin);
+        self
+    }
+    pub fn with_state<T: 'static>(mut self, state: T) -> Self {
+        // assert that state is not null
+        if self.state.is_none() {
+            self.state = Some(State::new());
+        }
+        self.state.as_mut().unwrap().insert(state);
+        self
+    }
 }
 
 impl ShellConfig {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub fn run(mut self) -> anyhow::Result<()> {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
         // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
+
+        // run plugins first
+        let plugins = self.plugins.drain(..).collect::<Vec<_>>();
+        for plugin in plugins {
+            plugin.init(&mut self);
+        }
 
         let mut ctx = Context {
             readline: self.readline,
@@ -87,6 +121,8 @@ impl ShellConfig {
             alias: self.alias,
             prompt: self.prompt,
             out: BufWriter::new(stdout()),
+            state: self.state,
+            jobs: Jobs::new(),
         };
         let mut rt = Runtime {
             env: self.env,
@@ -132,6 +168,8 @@ pub struct Context {
     pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
+    pub state: State,
+    pub jobs: Jobs,
 }
 
 /// Runtime context for the shell
@@ -160,23 +198,32 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        (self.hooks.startup)(StartupHookCtx { startup_time: 0 });
+        self.hooks
+            .startup
+            .run(self, ctx, rt, &StartupCtx { startup_time: 0 });
 
         loop {
             let line = ctx.readline.read_line(&ctx.prompt);
 
             // attempt to expand alias
-            let expanded = ctx.alias.get(&line).unwrap_or(&line.to_string()).clone();
+            // TODO IFS
+            let mut words = line.split(" ").collect::<Vec<_>>();
+            if let Some(first) = words.get_mut(0) {
+                if let Some(expanded) = ctx.alias.get(&first.clone()) {
+                    *first = expanded;
+                }
+            }
+            let line = words.join(" ");
 
             // TODO not sure if hook should run here (since not all vars are expanded yet)
             let hook_ctx = BeforeCommandCtx {
                 raw_command: line.clone(),
-                command: expanded.clone(),
+                command: line.clone(),
             };
-            (self.hooks.before_command)(&mut ctx.out, hook_ctx)?;
+            self.hooks.before_command.run(self, ctx, rt, &hook_ctx)?;
 
             // TODO rewrite the error handling here better
-            let lexer = Lexer::new(&expanded);
+            let lexer = Lexer::new(&line);
             let mut parser = Parser::new();
             let cmd = match parser.parse(lexer) {
                 Ok(cmd) => cmd,
@@ -185,7 +232,7 @@ impl Shell {
                     continue;
                 },
             };
-            let cmd_handle =
+            let mut cmd_handle =
                 match self.eval_command(ctx, rt, &cmd, Stdio::inherit(), Stdio::piped(), None) {
                     Ok(cmd_handle) => cmd_handle,
                     Err(e) => {
@@ -193,7 +240,11 @@ impl Shell {
                         continue;
                     },
                 };
-            self.command_output(ctx, rt, cmd_handle)?;
+            self.command_output(ctx, rt, &mut cmd_handle)?;
+
+            // check up on running jobs
+            ctx.jobs
+                .retain(|status: ExitStatus| println!("[exit +{}]", status.code()));
         }
     }
 
@@ -289,9 +340,9 @@ impl Shell {
                 // TODO doing args subst here is a waste if we evaluating function body
                 let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
 
-                for (builtin_name, builtin_cmd) in self.builtins.builtins.iter() {
+                for (builtin_name, builtin_cmd) in self.builtins.iter() {
                     if builtin_name == &cmd_name.as_str() {
-                        return builtin_cmd.run(ctx, rt, &subst_args);
+                        return builtin_cmd.run(self, ctx, rt, &subst_args);
                     }
                 }
 
@@ -330,13 +381,12 @@ impl Shell {
                     _ => unreachable!(),
                 };
                 // TODO double check if these stdin and stdou params are correct
-                let a_cmd_handle =
+                let mut a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-                if let Some(output) = self.command_output(ctx, rt, a_cmd_handle)? {
-                    if output.status.success() ^ negate {
-                        // TODO return something better (indicate that command failed with exit code)
-                        return dummy_child();
-                    }
+                let output_status = self.command_output(ctx, rt, &mut a_cmd_handle)?;
+                if output_status.success() ^ negate {
+                    // TODO return something better (indicate that command failed with exit code)
+                    return dummy_child();
                 }
                 let b_cmd_handle =
                     self.eval_command(ctx, rt, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
@@ -352,7 +402,11 @@ impl Shell {
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
-                    None => Ok(a_cmd_handle),
+                    None => {
+                        // TODO might need a Command display trait implementation
+                        ctx.jobs.push(a_cmd_handle, String::new());
+                        dummy_child()
+                    },
                     Some(b_cmd) => {
                         let b_cmd_handle = self.eval_command(
                             ctx,
@@ -368,13 +422,13 @@ impl Shell {
             },
             ast::Command::SeqList(a_cmd, b_cmd) => {
                 // TODO very similar to AsyncList
-                let a_cmd_handle =
+                let mut a_cmd_handle =
                     self.eval_command(ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
 
                 match b_cmd {
                     None => Ok(a_cmd_handle),
                     Some(b_cmd) => {
-                        self.command_output(ctx, rt, a_cmd_handle)?;
+                        self.command_output(ctx, rt, &mut a_cmd_handle)?;
                         let b_cmd_handle = self.eval_command(
                             ctx,
                             rt,
@@ -406,21 +460,20 @@ impl Shell {
                 assert!(conds.len() >= 1);
 
                 for ast::Condition { cond, body } in conds {
-                    let cond_handle =
+                    let mut cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to and statements
-                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
-                        if output.status.success() {
-                            let body_handle = self.eval_command(
-                                ctx,
-                                rt,
-                                body,
-                                Stdio::inherit(),
-                                Stdio::piped(),
-                                None,
-                            )?;
-                            return Ok(body_handle);
-                        }
+                    let output_status = self.command_output(ctx, rt, &mut cond_handle)?;
+                    if output_status.success() {
+                        let body_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            body,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
+                        return Ok(body_handle);
                     }
                 }
 
@@ -446,23 +499,20 @@ impl Shell {
                 };
 
                 loop {
-                    let cond_handle =
+                    let mut cond_handle =
                         self.eval_command(ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                     // TODO sorta similar to if statements
-                    if let Some(output) = self.command_output(ctx, rt, cond_handle)? {
-                        if output.status.success() ^ negate {
-                            let body_handle = self.eval_command(
-                                ctx,
-                                rt,
-                                body,
-                                Stdio::inherit(),
-                                Stdio::piped(),
-                                None,
-                            )?;
-                            self.command_output(ctx, rt, body_handle)?;
-                        } else {
-                            break;
-                        }
+                    let output_status = self.command_output(ctx, rt, &mut cond_handle)?;
+                    if output_status.success() ^ negate {
+                        let mut body_handle = self.eval_command(
+                            ctx,
+                            rt,
+                            body,
+                            Stdio::inherit(),
+                            Stdio::piped(),
+                            None,
+                        )?;
+                        self.command_output(ctx, rt, &mut body_handle)?;
                     } else {
                         break; // TODO not sure if there should be break here
                     }
@@ -487,9 +537,9 @@ impl Shell {
                 for word in expanded {
                     // TODO should have seperate variable struct instead of env
                     rt.env.set(name, word); // TODO unset the var after the loop?
-                    let body_handle =
+                    let mut body_handle =
                         self.eval_command(ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                    self.command_output(ctx, rt, body_handle)?;
+                    self.command_output(ctx, rt, &mut body_handle)?;
                 }
 
                 dummy_child()
@@ -501,7 +551,7 @@ impl Shell {
 
                 for ast::CaseArm { pattern, body } in arms {
                     if pattern.iter().any(|x| x == &subst_word) {
-                        let body_handle = self.eval_command(
+                        let mut body_handle = self.eval_command(
                             ctx,
                             rt,
                             body,
@@ -509,7 +559,7 @@ impl Shell {
                             Stdio::piped(),
                             None,
                         )?;
-                        self.command_output(ctx, rt, body_handle)?;
+                        self.command_output(ctx, rt, &mut body_handle)?;
                         // TODO should we break? (should multiple match arms be matched?)
                     }
                 }
@@ -560,28 +610,40 @@ impl Shell {
     }
 
     /// Small wrapper that outputs command output if exists
-    fn command_output(
+    pub fn command_output(
         &self,
         ctx: &mut Context,
         rt: &mut Runtime,
-        cmd_handle: Child,
-    ) -> anyhow::Result<Option<Output>> {
-        let cmd_output = cmd_handle.wait_with_output()?;
-        let utf8_output = std::str::from_utf8(&cmd_output.stdout)?;
+        cmd_handle: &mut Child,
+    ) -> anyhow::Result<ExitStatus> {
+        // TODO also handle stderr
+        let output = if let Some(out) = cmd_handle.stdout.take() {
+            let reader = BufReader::new(out);
+            reader
+                .lines()
+                .map(|line| {
+                    let line = line.unwrap();
+                    println!("{}", line);
+                    line
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            String::new()
+        };
 
-        ctx.out.queue(Print(utf8_output))?;
+        let exit_status = cmd_handle.wait().unwrap().code().unwrap();
 
-        let exit_code = cmd_output.status.code().unwrap();
-        rt.exit_status = exit_code;
+        rt.exit_status = exit_status;
 
         let hook_ctx = AfterCommandCtx {
-            exit_code,
+            exit_code: exit_status,
             cmd_time: 0.0,
+            cmd_output: output,
         };
-        (self.hooks.after_command)(&mut ctx.out, hook_ctx)?;
+        self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;
 
-        ctx.out.flush()?;
-        Ok(Some(cmd_output))
+        Ok(ExitStatus(exit_status))
     }
 }
 
@@ -597,6 +659,12 @@ pub fn dummy_child() -> anyhow::Result<Child> {
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     use regex::Regex;
 
+    lazy_static! {
+        static ref R_0: Regex = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
+        static ref R_1: Regex = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
+        static ref R_2: Regex = Regex::new(r"~").unwrap(); // tilde
+    }
+
     let mut subst = arg.to_string();
 
     // substitute special parameters first
@@ -604,12 +672,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     subst = subst.as_str().replace("$#", &rt.args.len().to_string());
     subst = subst.as_str().replace("$0", &rt.name);
 
-    // TODO precompile regex in lazy_static
-    let r_0 = Regex::new(r"\$(?P<env>[a-zA-Z_]+)").unwrap(); // no braces
-    let r_1 = Regex::new(r"\$\{(?P<env>[a-zA-Z_]+)\}").unwrap(); // with braces
-    let r_2 = Regex::new(r"~").unwrap(); // tilde
-
-    for cap in r_0.captures_iter(arg) {
+    for cap in R_0.captures_iter(arg) {
         // look up env var
         let var = &cap["env"];
         // TODO stupid code
@@ -622,7 +685,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     }
 
     // TODO this is dumb stupid and bad repeated code
-    for cap in r_1.captures_iter(arg) {
+    for cap in R_1.captures_iter(arg) {
         let var = &cap["env"];
         let val = match rt.env.get(var) {
             Some(val) => val.clone(),
@@ -637,7 +700,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
         Some(home) => home.as_str(),
         None => "",
     };
-    let subst = r_2.replace_all(&subst, home).to_string();
+    let subst = R_2.replace_all(&subst, home).to_string();
 
     subst
 }

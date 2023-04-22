@@ -10,35 +10,47 @@
 // - env hook (when envrionment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::io::BufWriter;
+use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
 
 use crossterm::{style::Print, QueueableCommand};
 
+use crate::{Context, Runtime, Shell};
+
+pub type HookFn<C: Clone> =
+    fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
+
 /// Context for [StartupHook]
-pub struct StartupHookCtx {
+#[derive(Clone)]
+pub struct StartupCtx {
     /// How much time it has taken for the shell to initialize
     pub startup_time: usize,
 }
 
-pub type StartupHook = fn(ctx: StartupHookCtx);
 /// Default [StartupHook]
-pub fn startup_hook(_ctx: StartupHookCtx) {
+pub fn startup_hook(
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    _ctx: &StartupCtx,
+) -> anyhow::Result<()> {
     println!("welcome to shrs!");
+    Ok(())
 }
 
 /// Context for [BeforeCommandHook]
+#[derive(Clone)]
 pub struct BeforeCommandCtx {
     /// Literal command entered by user
     pub raw_command: String,
     /// Command to be executed, after performing all substitutions
     pub command: String,
 }
-pub type BeforeCommandHook =
-    fn(out: &mut BufWriter<std::io::Stdout>, ctx: BeforeCommandCtx) -> anyhow::Result<()>;
 /// Default [BeforeCommandHook]
 pub fn before_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
-    ctx: BeforeCommandCtx,
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     // let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
     // out.queue(Print(expanded_cmd))?;
@@ -46,22 +58,42 @@ pub fn before_command_hook(
 }
 
 /// Context for [AfterCommandHook]
+#[derive(Clone)]
 pub struct AfterCommandCtx {
     /// Exit code of previous command
     pub exit_code: i32,
     /// Amount of time it took to run command
     pub cmd_time: f32,
+    /// Command output
+    pub cmd_output: String,
 }
-pub type AfterCommandHook =
-    fn(out: &mut BufWriter<std::io::Stdout>, ctx: AfterCommandCtx) -> anyhow::Result<()>;
 
 /// Default [AfterCommandHook]
 pub fn after_command_hook(
-    out: &mut BufWriter<std::io::Stdout>,
-    ctx: AfterCommandCtx,
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
     // out.queue(Print(exit_code_str))?;
+    Ok(())
+}
+
+/// Context for [ChangeDirHook]
+#[derive(Clone)]
+pub struct ChangeDirCtx {
+    pub old_dir: PathBuf,
+    pub new_dir: PathBuf,
+}
+
+/// Default [AfterCommandHook]
+pub fn change_dir_hook(
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &ChangeDirCtx,
+) -> anyhow::Result<()> {
     Ok(())
 }
 
@@ -69,19 +101,66 @@ pub fn after_command_hook(
 #[derive(Clone)]
 pub struct Hooks {
     /// Runs before first prompt is shown
-    pub startup: StartupHook,
+    pub startup: HookList<StartupCtx>,
     /// Runs before each command is executed
-    pub before_command: BeforeCommandHook,
+    pub before_command: HookList<BeforeCommandCtx>,
     /// Runs after each command is executed
-    pub after_command: AfterCommandHook,
+    pub after_command: HookList<AfterCommandCtx>,
+    /// Run each time the directory is changed
+    pub change_dir: HookList<ChangeDirCtx>,
+}
+
+#[derive(Clone)]
+pub struct HookList<C> {
+    hooks: Vec<HookFn<C>>,
+}
+
+impl<C> HookList<C> {
+    pub fn new() -> Self {
+        HookList { hooks: vec![] }
+    }
+
+    /// Registers a new hook
+    pub fn register(&mut self, hook: HookFn<C>) {
+        self.hooks.push(hook);
+    }
+
+    /// Executes all registered hooks
+    pub fn run(
+        &self,
+        sh: &Shell,
+        sh_ctx: &mut Context,
+        sh_rt: &mut Runtime,
+        ctx: &C,
+    ) -> anyhow::Result<()> {
+        for hook in self.hooks.iter() {
+            (hook)(sh, sh_ctx, sh_rt, &ctx)?;
+        }
+        Ok(())
+    }
+}
+
+impl<C> Default for HookList<C> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<C> FromIterator<HookFn<C>> for HookList<C> {
+    fn from_iter<T: IntoIterator<Item = HookFn<C>>>(iter: T) -> Self {
+        HookList {
+            hooks: Vec::from_iter(iter),
+        }
+    }
 }
 
 impl Default for Hooks {
     fn default() -> Self {
         Hooks {
-            startup: startup_hook,
-            before_command: before_command_hook,
-            after_command: after_command_hook,
+            startup: HookList::from_iter([startup_hook as HookFn<StartupCtx>]),
+            before_command: HookList::from_iter([before_command_hook as HookFn<BeforeCommandCtx>]),
+            after_command: HookList::from_iter([after_command_hook as HookFn<AfterCommandCtx>]),
+            change_dir: HookList::from_iter([change_dir_hook as HookFn<ChangeDirCtx>]),
         }
     }
 }

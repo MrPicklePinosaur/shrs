@@ -24,6 +24,7 @@ pub struct UnaliasBuiltin {}
 impl BuiltinCmd for UnaliasBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

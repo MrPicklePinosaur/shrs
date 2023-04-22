@@ -1,6 +1,6 @@
 +++
 title = "How to Contribute"
-description = "Contribute to AdiDoks, improve documentation, or submit to showcase."
+description = ""
 date = 2021-05-01T18:10:00+00:00
 updated = 2021-05-01T18:10:00+00:00
 draft = false
@@ -9,29 +9,23 @@ sort_by = "weight"
 template = "docs/page.html"
 
 [extra]
-lead = "Contribute to AdiDoks, improve documentation, or submit to showcase."
+lead = ""
 toc = true
 top = false
 +++
 
-👉 Make sure to read the [Code of Conduct](../code-of-conduct/).
+How you can help out with **shrs**
 
-## Contribute to Doks
+### Issue tracking
 
-👉 The AdiDoks code lives in the [`adidoks` repository](https://github.com/aaranxu/adidoks)
+To see current feature status and what would needs to be done, look at the github actions kanban
+- [shrs_lib: general project tasks](https://github.com/users/MrPicklePinosaur/projects/1/views/1)
+- [shrs_line: readline related tasks](https://github.com/users/MrPicklePinosaur/projects/2/views/1)
 
-- Follow the [GitHub flow](https://guides.github.com/introduction/flow/).
-- Follow the [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
+It is also helpful to fix [open issues](https://github.com/MrPicklePinosaur/shrs/issues). If you are a new contributor you can use the `good first issue` label to filter issues.
 
 ### Create an issue
 
-- [Bug report](https://github.com/aaranxu/adidoks/issues/new?template=bug-report---.md)
-- [Feature request](https://github.com/aaranxu/adidoks/issues/new?template=feature-request---.md)
-
-## Improve documentation
-
-👉 The documentation lives in [`./content/docs/`](https://github.com/aaranxu/adidoks/tree/master/content/docs)
-of the [`adidoks` repository](https://github.com/h-enk/getdoks.org).
-
-- Follow the [GitHub flow](https://guides.github.com/introduction/flow/).
-- Follow the [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
+- [Bug report](https://github.com/MrPicklePinosaur/shrs/issues/new?template=bug_report.md)
+- [Feature request](https://github.com/MrPicklePinosaur/shrs/issues/new?template=feature_request.md)
+- [Documentation improvement](https://github.com/MrPicklePinosaur/shrs/issues/new?template=docs.md)

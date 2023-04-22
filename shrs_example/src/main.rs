@@ -1,26 +1,41 @@
-use std::default;
+use std::{
+    default,
+    io::{stdout, BufWriter},
+};
 
+use anyhow::Result;
+use crossterm::style::Stylize;
 use shrs::{
     builtin::Builtins,
     find_executables_in_path,
-    hooks::{Hooks, StartupHookCtx},
+    hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::DefaultCompleter, DefaultCursor, DefaultHighlighter, DefaultHistory,
         DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},
-    Alias, Context, Env, Runtime, ShellConfig, ShellConfigBuilder,
+    Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
 };
+use shrs_output_capture::OutputCapturePlugin;
 
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self) -> String {
-        format!(" {} > ", top_pwd())
+        let path = top_pwd().white().bold();
+        let username = username().unwrap_or_default().blue();
+        let hostname = hostname().unwrap_or_default().blue();
+        let prompt = ">".blue();
+        format!("{hostname}@{username} {path} {prompt} ")
+    }
+    fn prompt_right(&self) -> String {
+        format!("shrs ")
     }
 }
 
 fn main() {
+    let mut out = BufWriter::new(stdout());
+
     let mut env = Env::new();
     env.load();
 
@@ -51,20 +66,27 @@ fn main() {
         ("la".into(), "ls -a".into()),
     ]);
 
-    let hooks = Hooks {
-        startup: |_ctx: StartupHookCtx| {
-            let welcome_str = format!(
-                r#"
+    let startup_msg: HookFn<StartupCtx> = |sh: &Shell,
+                                           sh_ctx: &mut Context,
+                                           sh_rt: &mut Runtime,
+                                           _ctx: &StartupCtx|
+     -> anyhow::Result<()> {
+        let welcome_str = format!(
+            r#"
         __         
    ___ / /  _______
   (_-</ _ \/ __(_-<
  /___/_//_/_/ /___/
 a rusty POSIX shell | build {}"#,
-                env!("SHRS_VERSION")
-            );
+            env!("SHRS_VERSION")
+        );
 
-            println!("{}", welcome_str);
-        },
+        println!("{}", welcome_str);
+        Ok(())
+    };
+
+    let hooks = Hooks {
+        startup: HookList::from_iter(vec![startup_msg]),
         ..Default::default()
     };
 
@@ -74,6 +96,7 @@ a rusty POSIX shell | build {}"#,
         .with_alias(alias)
         .with_readline(readline)
         .with_prompt(prompt)
+        .with_plugin(OutputCapturePlugin)
         .build()
         .unwrap();
 

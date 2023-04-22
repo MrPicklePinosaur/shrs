@@ -2,9 +2,9 @@ use std::{borrow::BorrowMut, io::Write, marker::PhantomData, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::Stylize,
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     completion::{Completer, CompletionCtx, DefaultCompleter},
@@ -15,7 +15,7 @@ use crate::{
     menu::{DefaultMenu, Menu},
     painter::{Painter, StyledBuf},
     prompt::Prompt,
-    vi::{ViAction, ViCursorBuffer},
+    vi::ViCursorBuffer,
 };
 
 /// Operating mode of readline
@@ -56,6 +56,11 @@ pub struct Line {
     #[builder(default = "Painter::new()")]
     #[builder(setter(skip))]
     painter: Painter,
+
+    /// Currently pressed keys in normal mode
+    #[builder(default = "String::new()")]
+    #[builder(setter(skip))]
+    normal_keys: String,
 }
 
 impl Default for Line {
@@ -102,7 +107,7 @@ impl LineBuilder {
         self.cursor = Some(Box::new(cursor));
         self
     }
-    pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
+    pub fn with_highlighter(self, _highlighter: impl Highlighter + 'static) -> Self {
         // TODO not sure why this expects phantom data
         // self.highlighter = Some(Box::new(highlighter));
         self
@@ -158,7 +163,12 @@ impl Line {
                                 break;
                             }
                         },
-                        LineMode::Normal => self.handle_normal_keys(ctx, event)?,
+                        LineMode::Normal => {
+                            let should_break = self.handle_normal_keys(ctx, event)?;
+                            if should_break {
+                                break;
+                            }
+                        },
                     }
                 }
 
@@ -328,81 +338,54 @@ impl Line {
         Ok(false)
     }
 
-    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         // TODO write better system to support key combinations
         match event {
             Event::Key(KeyEvent {
-                code: KeyCode::Char('i'),
+                code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                ctx.mode = LineMode::Insert;
+                self.painter.newline()?;
+                return Ok(true);
             },
             Event::Key(KeyEvent {
-                code: KeyCode::Char('h'),
-                modifiers: KeyModifiers::NONE,
+                code: KeyCode::Esc, ..
+            }) => {
+                self.normal_keys.clear();
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char(c),
                 ..
             }) => {
-                // TODO having to do these bounds checks are not nice, should implement some sort
-                // of cb.move_cursor_clamp
-                if ctx.cb.cursor() > 0 {
-                    ctx.cb.execute_vi(ViAction::MoveLeft)?;
+                self.normal_keys.push(c);
+
+                if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
+                    for _ in 0..repeat {
+                        // special cases (possibly consulidate with execute_vi somehow)
+                        match action {
+                            Action::Insert => {
+                                ctx.mode = LineMode::Insert;
+                            },
+                            Action::Move(motion) => match motion {
+                                Motion::Up => self.history_up(ctx)?,
+                                Motion::Down => self.history_down(ctx)?,
+                                _ => {
+                                    ctx.cb.execute_vi(action)?;
+                                },
+                            },
+                            action => {
+                                ctx.cb.execute_vi(action)?;
+                            },
+                        }
+                    }
+
+                    self.normal_keys.clear();
                 }
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('l'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                if ctx.cb.cursor() < ctx.cb.len() {
-                    ctx.cb.execute_vi(ViAction::MoveRight)?;
-                }
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('j'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                self.history_down(ctx)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('k'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                self.history_up(ctx)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('^'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveStart)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('$'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveEnd)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('w'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveNextWord)?;
-            },
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('b'),
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                ctx.cb.execute_vi(ViAction::MoveBackWord)?;
             },
             _ => {},
         }
-        Ok(())
+        Ok(false)
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
@@ -410,7 +393,7 @@ impl Line {
         // first remove current word
         // TODO could implement a delete_before
         ctx.cb
-            .move_cursor(Location::Rel(-1 * ctx.current_word.len() as isize))?;
+            .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
         ctx.cb.delete(Location::Cursor(), ctx.current_word.len())?;
 
         // then replace with the completion word

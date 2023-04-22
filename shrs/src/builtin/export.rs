@@ -26,6 +26,7 @@ pub struct ExportBuiltin {}
 impl BuiltinCmd for ExportBuiltin {
     fn run(
         &self,
+        sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,

@@ -21,7 +21,7 @@ impl Parser {
     pub fn parse(&mut self, lexer: Lexer) -> Result<ast::Command, Error> {
         grammar::ProgramParser::new()
             .parse(lexer.input(), lexer)
-            .map_err(|e| Error::UnsuccessfulParse)
+            .map_err(|_e| Error::UnsuccessfulParse)
     }
 }
 

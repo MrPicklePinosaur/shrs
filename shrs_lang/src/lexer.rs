@@ -98,7 +98,7 @@ impl<'input> Lexer<'input> {
     }
 
     pub fn input(&self) -> &'input str {
-        &self.input
+        self.input
     }
 
     fn advance(&mut self) -> Option<(usize, char, usize)> {
@@ -265,7 +265,7 @@ impl<'input> Iterator for Lexer<'input> {
             };
             return token;
         }
-        return None;
+        None
     }
 }
 

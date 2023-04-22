@@ -1,6 +1,6 @@
 +++
 title = "Introduction"
-description = "AdiDoks is a Zola theme helping you build modern documentation websites, which is a port of the Hugo theme Doks for Zola."
+description = ""
 date = 2021-05-01T08:00:00+00:00
 updated = 2021-05-01T08:00:00+00:00
 draft = false
@@ -9,23 +9,32 @@ sort_by = "weight"
 template = "docs/page.html"
 
 [extra]
-lead = 'AdiDoks is a Zola theme helping you build modern documentation websites, which is a port of the Hugo theme <a href="https://github.com/h-enk/doks">Doks</a> for Zola.'
+lead = ''
 toc = true
 top = false
 +++
 
-## Quick Start
+Welcome to **shrs**, the toolkit that will help you build and configure your
+own shell in **Rust**!
 
-One page summary of how to start a new AdiDoks project. [Quick Start →](../quick-start/)
+First of all **shrs** is NOT a shell, it is a library for YOU to build your own
+shell. It is meant for those that have reached the limits of what can be
+accomplished with just tinkering with the configuration files of pre-existing
+shells and would like to go beyond and add experimental and wild features to
+their own shells.
 
-## Go further
+### Quick Start
+
+Get a working shell up and quickly: [Quick Start →](../quick-start/)
+
+### Go further
 
 Contributing and Help.
 
-## Contributing
+### Contributing
 
 Find out how to contribute to Doks. [Contributing →](../../contributing/how-to-contribute/)
 
-## Help
+### Help
 
 Get help on Doks. [Help →](../../help/faq/)

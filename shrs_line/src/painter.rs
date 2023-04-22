@@ -1,9 +1,9 @@
 use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
-    cursor::{self, MoveUp},
-    style::{Attribute, Print, SetAttribute, StyledContent, Stylize},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear, ScrollUp},
+    cursor::{self, MoveToColumn},
+    style::{Print, StyledContent},
+    terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
 
@@ -87,7 +87,7 @@ impl Painter {
             .queue(cursor::MoveTo(0, self.prompt_line))?
             .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
-        // render prompt
+        // render left prompt
         let mut left_space = 0; // cursor position from left side of terminal
         let prompt_left = prompt.as_ref().prompt_left();
         left_space += prompt_left.len();
@@ -98,6 +98,13 @@ impl Painter {
         for span in styled_buf.spans() {
             self.out.queue(Print(span))?;
         }
+
+        // render right prompt
+        let mut right_space = self.term_size.0;
+        let prompt_right = prompt.as_ref().prompt_right();
+        right_space -= prompt_right.len() as u16;
+        self.out.queue(MoveToColumn(right_space))?;
+        self.out.queue(Print(prompt_right))?;
 
         // render menu
         if menu.is_active() {

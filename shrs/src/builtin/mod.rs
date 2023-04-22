@@ -4,15 +4,24 @@ mod debug;
 mod exit;
 mod export;
 mod history;
+mod jobs;
+mod source;
 mod unalias;
 
-use std::{collections::HashMap, process::Child};
+use std::{
+    collections::{hash_map::Iter, HashMap},
+    process::Child,
+};
 
 use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
-    export::ExportBuiltin, history::HistoryBuiltin, unalias::UnaliasBuiltin,
+    export::ExportBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin, source::SourceBuiltin,
+    unalias::UnaliasBuiltin,
 };
-use crate::shell::{Context, Runtime};
+use crate::{
+    shell::{Context, Runtime},
+    Shell,
+};
 
 macro_rules! hashmap (
     { $($key:expr => $value:expr),+ } => {
@@ -29,7 +38,23 @@ macro_rules! hashmap (
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 pub struct Builtins {
-    pub builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
+    builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
+}
+
+impl Builtins {
+    pub fn new() -> Self {
+        Builtins {
+            builtins: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, name: &'static str, builtin: impl BuiltinCmd + 'static) {
+        self.builtins.insert(name, Box::new(builtin));
+    }
+
+    pub fn iter(&self) -> Iter<'_, &str, Box<dyn BuiltinCmd>> {
+        self.builtins.iter()
+    }
 }
 
 impl Default for Builtins {
@@ -61,12 +86,25 @@ impl Default for Builtins {
                     "unalias",
                     Box::new(UnaliasBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
+                (
+                    "source",
+                    Box::new(SourceBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "jobs",
+                    Box::new(JobsBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
             ]),
         }
     }
 }
 
 pub trait BuiltinCmd {
-    fn run(&self, ctx: &mut Context, rt: &mut Runtime, args: &Vec<String>)
-        -> anyhow::Result<Child>;
+    fn run(
+        &self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        args: &Vec<String>,
+    ) -> anyhow::Result<Child>;
 }

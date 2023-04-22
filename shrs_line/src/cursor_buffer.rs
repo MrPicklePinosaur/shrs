@@ -153,7 +153,7 @@ impl CursorBuffer {
 
     /// Move the cursor using a location selector, clamping the cursor if it were to move to
     /// invalid position
-    pub fn move_cursor_clamp(&mut self, loc: Location) {
+    pub fn move_cursor_clamp(&mut self, _loc: Location) {
         todo!()
     }
 
@@ -166,7 +166,7 @@ impl CursorBuffer {
     }
 
     /// Insert text and offset cursor to point to same text
-    pub fn insert_inplace(&mut self, loc: Location, text: &str) -> Result<()> {
+    pub fn insert_inplace(&mut self, _loc: Location, _text: &str) -> Result<()> {
         todo!()
     }
 
@@ -186,13 +186,13 @@ impl CursorBuffer {
     ///
     /// In the case that cursor was pointing at deleted text, the behavior is the same as
     /// `delete`
-    pub fn delete_inplace(&mut self, loc: Location, len: usize) -> Result<()> {
+    pub fn delete_inplace(&mut self, _loc: Location, _len: usize) -> Result<()> {
         todo!()
     }
 
     /// Delete a length of text ending at location
     // TODO handle panic
-    pub fn delete_before(&mut self, loc: Location, len: usize) -> Result<()> {
+    pub fn delete_before(&mut self, _loc: Location, _len: usize) -> Result<()> {
         todo!()
     }
 

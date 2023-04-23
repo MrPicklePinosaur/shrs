@@ -954,6 +954,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "lazy_static",
+ "log",
  "pino_deref",
  "regex",
  "rexpect",

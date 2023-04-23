@@ -24,5 +24,7 @@ lazy_static = "1.4"
 shrs_line = { path = "../shrs_line" }
 shrs_lang = { path = "../shrs_lang" }
 
+log = { version = "0.4", features = ["std"] }
+
 [dev-dependencies]
 rexpect = "0.5"

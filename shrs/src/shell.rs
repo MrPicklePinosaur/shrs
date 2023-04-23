@@ -16,6 +16,7 @@ use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
 use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
+use thiserror::Error;
 
 use crate::{
     alias::Alias,
@@ -94,11 +95,9 @@ impl ShellConfigBuilder {
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
-        // assert that state is not null
-        if self.state.is_none() {
-            self.state = Some(State::new());
-        }
-        self.state.as_mut().unwrap().insert(state);
+        let mut cur_state = self.state.unwrap_or(State::new());
+        cur_state.insert(state);
+        self.state = Some(cur_state);
         self
     }
 }
@@ -129,7 +128,7 @@ impl ShellConfig {
             working_dir: std::env::current_dir().unwrap(),
             // TODO currently hardcoded
             name: "shrs".into(),
-            // TDOO currently unused (since we have not implemented functions etc)
+            // TODO currently unused (since we have not implemented functions etc)
             args: vec![],
             exit_status: 0,
             functions: self.functions,
@@ -192,15 +191,30 @@ pub struct Runtime {
     pub functions: HashMap<String, Box<ast::Command>>,
 }
 
+#[derive(Error, Debug)]
+pub enum Error {
+    /// Error when attempting file redirection
+    #[error("Redirection Error: {0}")]
+    Redirect(std::io::Error),
+    /// Error emitted by hook
+    #[error("Hook Error:")]
+    Hook(),
+}
+
 impl Shell {
     pub fn run(&self, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
         // init stuff
         sig_handler()?;
         rt.env.load();
 
-        self.hooks
+        let res = self
+            .hooks
             .startup
             .run(self, ctx, rt, &StartupCtx { startup_time: 0 });
+
+        if let Err(e) = res {
+            // TODO log that startup hook failed
+        }
 
         loop {
             let line = ctx.readline.read_line(&ctx.prompt);
@@ -228,6 +242,7 @@ impl Shell {
             let cmd = match parser.parse(lexer) {
                 Ok(cmd) => cmd,
                 Err(e) => {
+                    // TODO detailed parse errors
                     eprintln!("{}", e);
                     continue;
                 },
@@ -265,9 +280,15 @@ impl Shell {
                 args,
                 redirects,
             } => {
-                if args.len() == 0 {
-                    return Err(anyhow!("command is empty"));
-                }
+                let mut it = args.into_iter();
+
+                // Retrieve command name or return immediately (empty command)
+                let cmd_name = match it.next() {
+                    Some(cmd_name) => cmd_name,
+                    None => return dummy_child(),
+                };
+                let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
+
                 // println!("redirects {:?}", redirects);
                 // println!("assigns {:?}", assigns);
 
@@ -278,13 +299,16 @@ impl Shell {
                 for redirect in redirects {
                     let filename = Path::new(&*redirect.file);
                     // TODO not making use of file descriptor at all right now
-                    let n = match &redirect.n {
+                    let _n = match &redirect.n {
                         Some(n) => *n,
                         None => 1,
                     };
                     match redirect.mode {
                         ast::RedirectMode::Read => {
-                            let file_handle = File::options().read(true).open(filename).unwrap();
+                            let file_handle = File::options()
+                                .read(true)
+                                .open(filename)
+                                .map_err(|e| Error::Redirect(e))?;
                             cur_stdin = Stdio::from(file_handle);
                         },
                         ast::RedirectMode::Write => {
@@ -292,7 +316,7 @@ impl Shell {
                                 .write(true)
                                 .create_new(true)
                                 .open(filename)
-                                .unwrap();
+                                .map_err(|e| Error::Redirect(e))?;
                             cur_stdout = Stdio::from(file_handle);
                         },
                         ast::RedirectMode::ReadAppend => {
@@ -300,7 +324,7 @@ impl Shell {
                                 .read(true)
                                 .append(true)
                                 .open(filename)
-                                .unwrap();
+                                .map_err(|e| Error::Redirect(e))?;
                             cur_stdin = Stdio::from(file_handle);
                         },
                         ast::RedirectMode::WriteAppend => {
@@ -309,7 +333,7 @@ impl Shell {
                                 .append(true)
                                 .create_new(true)
                                 .open(filename)
-                                .unwrap();
+                                .map_err(|e| Error::Redirect(e))?;
                             cur_stdout = Stdio::from(file_handle);
                         },
                         ast::RedirectMode::ReadDup => {
@@ -324,16 +348,12 @@ impl Shell {
                                 .write(true)
                                 .create_new(true)
                                 .open(filename)
-                                .unwrap();
+                                .map_err(|e| Error::Redirect(e))?;
                             cur_stdin = Stdio::from(file_handle.try_clone().unwrap());
                             cur_stdout = Stdio::from(file_handle);
                         },
                     };
                 }
-
-                let mut it = args.into_iter();
-                let cmd_name = &it.next().unwrap();
-                let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
 
                 // TODO which stdin var to use?, previous command or from file redirection?
 
@@ -632,10 +652,11 @@ impl Shell {
             String::new()
         };
 
+        // Fetch output status
         let exit_status = cmd_handle.wait().unwrap().code().unwrap();
-
         rt.exit_status = exit_status;
 
+        // Call hook
         let hook_ctx = AfterCommandCtx {
             exit_code: exit_status,
             cmd_time: 0.0,
@@ -653,7 +674,7 @@ pub fn dummy_child() -> anyhow::Result<Child> {
     Ok(cmd)
 }
 
-/// Performs environment substition on a string
+/// Performs environment substation on a string
 // TODO regex replace might not be the best way. could also recognize the env var during parsing
 // TODO handle escaped characters
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {

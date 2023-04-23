@@ -22,10 +22,14 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self) -> String {
-        let path = top_pwd().white().bold();
-        let username = username().unwrap_or_default().blue();
-        let hostname = hostname().unwrap_or_default().blue();
-        let prompt = ">".blue();
+        // let path = top_pwd().white().bold();
+        // let username = username().unwrap_or_default().blue();
+        // let hostname = hostname().unwrap_or_default().blue();
+        // let prompt = ">".blue();
+        let path = top_pwd();
+        let username = username().unwrap_or_default();
+        let hostname = hostname().unwrap_or_default();
+        let prompt = ">";
         format!("{hostname}@{username} {path} {prompt} ")
     }
     fn prompt_right(&self) -> String {

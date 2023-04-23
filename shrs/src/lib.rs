@@ -38,6 +38,8 @@ mod state;
 
 mod jobs;
 
+mod logger;
+
 // TODO temp re-export anyhow
 pub use anyhow;
 

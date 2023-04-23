@@ -22,7 +22,7 @@ use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, StartupCtx},
+    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
     plugin::Plugin,
     signal::sig_handler,
@@ -258,8 +258,16 @@ impl Shell {
             self.command_output(ctx, rt, &mut cmd_handle)?;
 
             // check up on running jobs
-            ctx.jobs
-                .retain(|status: ExitStatus| println!("[exit +{}]", status.code()));
+            let mut exit_statuses = vec![];
+            ctx.jobs.retain(|status: ExitStatus| {
+                exit_statuses.push(status);
+            });
+
+            for status in exit_statuses.into_iter() {
+                self.hooks
+                    .job_exit
+                    .run(self, ctx, rt, &JobExitCtx { status });
+            }
         }
     }
 

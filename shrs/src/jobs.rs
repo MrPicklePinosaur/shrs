@@ -8,7 +8,7 @@ use pino_deref::Deref;
 
 pub type JobId = u32;
 
-#[derive(Deref)]
+#[derive(Deref, Clone)]
 pub struct ExitStatus(pub i32);
 
 impl ExitStatus {
@@ -50,7 +50,10 @@ impl Jobs {
     }
 
     /// Clean up finished jobs
-    pub fn retain(&mut self, exit_handler: fn(status: ExitStatus)) {
+    pub fn retain<F>(&mut self, mut exit_handler: F)
+    where
+        F: FnMut(ExitStatus),
+    {
         self.jobs.retain(|k, v| {
             match v.child.try_wait() {
                 Ok(Some(status)) => {

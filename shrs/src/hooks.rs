@@ -14,7 +14,7 @@ use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
 
 use crossterm::{style::Print, QueueableCommand};
 
-use crate::{Context, Runtime, Shell};
+use crate::{jobs::ExitStatus, Context, Runtime, Shell};
 
 pub type HookFn<C: Clone> =
     fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
@@ -97,6 +97,23 @@ pub fn change_dir_hook(
     Ok(())
 }
 
+/// Context for [JobExit]
+#[derive(Clone)]
+pub struct JobExitCtx {
+    pub status: ExitStatus,
+}
+
+/// Default [JobExitHook]
+pub fn job_exit_hook(
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &JobExitCtx,
+) -> anyhow::Result<()> {
+    println!("[exit +{}]", ctx.status.code());
+    Ok(())
+}
+
 /// Collection of all the hooks that are avaliable
 #[derive(Clone)]
 pub struct Hooks {
@@ -108,6 +125,8 @@ pub struct Hooks {
     pub after_command: HookList<AfterCommandCtx>,
     /// Run each time the directory is changed
     pub change_dir: HookList<ChangeDirCtx>,
+    /// Run each time the directory is changed
+    pub job_exit: HookList<JobExitCtx>,
 }
 
 #[derive(Clone)]
@@ -161,6 +180,7 @@ impl Default for Hooks {
             before_command: HookList::from_iter([before_command_hook as HookFn<BeforeCommandCtx>]),
             after_command: HookList::from_iter([after_command_hook as HookFn<AfterCommandCtx>]),
             change_dir: HookList::from_iter([change_dir_hook as HookFn<ChangeDirCtx>]),
+            job_exit: HookList::from_iter([job_exit_hook as HookFn<JobExitCtx>]),
         }
     }
 }

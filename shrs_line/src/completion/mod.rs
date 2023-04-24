@@ -1,8 +1,13 @@
 //! Shell autocompletion
 
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use trie_rs::TrieBuilder;
+
+mod engine;
 
 // also provide some commonly used completion lists
 // - directories

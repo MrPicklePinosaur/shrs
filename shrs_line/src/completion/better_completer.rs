@@ -1,18 +1,13 @@
 use std::collections::HashMap;
 
 use super::{Completer, CompletionCtx};
+use crate::completion::new_filepath_completer;
 
 // TODO make this FnMut?
 pub type Pred = dyn Fn(&CompletionCtx) -> bool;
 pub type Action = dyn Fn() -> Vec<String>;
 
 pub struct Rule(pub Box<Pred>, pub Box<Action>);
-
-impl Rule {
-    pub fn new(pred: &'static Pred, action: &'static Action) -> Self {
-        Rule(Box::new(pred), Box::new(action))
-    }
-}
 
 /// More advanced completion system that makes use of a collection of [Rule]
 pub struct BetterCompleter {
@@ -48,6 +43,30 @@ impl BetterCompleter {
 impl Completer for BetterCompleter {
     fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
         self.complete_helper(ctx)
+    }
+}
+
+impl Default for BetterCompleter {
+    fn default() -> Self {
+        // collection of predefined rules
+        fn cmdname_pred(ctx: &CompletionCtx) -> bool {
+            ctx.arg_num() == 0
+        }
+        fn cmdname_action() -> Vec<String> {
+            vec!["vim".into(), "emacs".into(), "nvim".into()]
+        }
+
+        fn filename_pred(ctx: &CompletionCtx) -> bool {
+            ctx.arg_num() != 0
+        }
+        fn filename_action() -> Vec<String> {
+            new_filepath_completer()
+        }
+
+        let mut comp = BetterCompleter::new();
+        comp.register(Rule(Box::new(cmdname_pred), Box::new(cmdname_action)));
+        comp.register(Rule(Box::new(filename_pred), Box::new(filename_action)));
+        comp
     }
 }
 

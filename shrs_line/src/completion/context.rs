@@ -19,4 +19,9 @@ impl CompletionCtx {
     pub fn cur_word(&self) -> Option<&String> {
         self.line.last()
     }
+
+    /// Which argument are we currently on
+    pub fn arg_num(&self) -> usize {
+        self.line.len().saturating_sub(1)
+    }
 }

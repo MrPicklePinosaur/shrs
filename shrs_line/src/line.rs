@@ -7,7 +7,7 @@ use crossterm::{
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
-    completion::{Completer, CompletionCtx, DefaultCompleter},
+    completion::{BetterCompleter, Completer, CompletionCtx},
     cursor::{Cursor, DefaultCursor},
     cursor_buffer::{CursorBuffer, Location},
     highlight::{DefaultHighlighter, Highlighter},
@@ -36,7 +36,7 @@ pub struct Line {
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = String>>,
 
-    #[builder(default = "Box::new(DefaultCompleter::new(vec![]))")]
+    #[builder(default = "Box::new(BetterCompleter::default())")]
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 

@@ -7,10 +7,11 @@ use anyhow::Result;
 use crossterm::style::Stylize;
 use shrs::{
     builtin::Builtins,
-    find_executables_in_path,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::{BetterCompleter, DefaultCompleter},
+        completion::{
+            new_filepath_completer, BetterCompleter, CompletionCtx, DefaultCompleter, Rule,
+        },
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},
@@ -44,9 +45,8 @@ fn main() {
     env.load();
 
     // configure line
-    // let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
-    // let completer = DefaultCompleter::new(completions);
-    let completer = BetterCompleter::new();
+    let completer = BetterCompleter::default();
+
     let menu = DefaultMenu::new();
     let history = DefaultHistory::new();
     let cursor = DefaultCursor::default();

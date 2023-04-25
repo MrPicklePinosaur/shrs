@@ -5,7 +5,7 @@ use std::{
 
 use trie_rs::TrieBuilder;
 
-use super::{all_files_completion, Completer, CompletionCtx};
+use super::{Completer, CompletionCtx};
 
 /// Very basic completer that uses prefix tree to match on a predefined word list
 pub struct DefaultCompleter {

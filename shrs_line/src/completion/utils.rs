@@ -2,6 +2,13 @@
 
 use std::path::Path;
 
+// also provide some commonly used completion lists
+// - directories
+// - executables
+// - file extension
+// - filename regex
+// - known hosts
+
 /// Generate list of files in the current working directory with predicate
 pub fn filepath_completion_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
 where

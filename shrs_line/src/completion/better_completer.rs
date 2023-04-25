@@ -4,13 +4,19 @@ use super::{Completer, CompletionCtx};
 
 // TODO make this FnMut?
 pub type Pred = dyn Fn(&CompletionCtx) -> bool;
-pub type Action = dyn Fn();
+pub type Action = dyn Fn() -> Vec<String>;
 
 pub struct Rule(pub Box<Pred>, pub Box<Action>);
 
-/// More advanced completion system that makes use of a collection of [Rules]
+impl Rule {
+    pub fn new(pred: &'static Pred, action: &'static Action) -> Self {
+        Rule(Box::new(pred), Box::new(action))
+    }
+}
+
+/// More advanced completion system that makes use of a collection of [Rule]
 pub struct BetterCompleter {
-    rules: Vec<Box<Rule>>,
+    rules: Vec<Rule>,
 }
 
 impl BetterCompleter {
@@ -19,8 +25,8 @@ impl BetterCompleter {
     }
 
     /// Register a new rule to use
-    pub fn register() {
-        todo!()
+    pub fn register(&mut self, rule: Rule) {
+        self.rules.push(rule);
     }
 
     pub fn complete_helper(&self) {
@@ -40,6 +46,18 @@ impl BetterCompleter {
 
 impl Completer for BetterCompleter {
     fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
+        // self.complete_helper()
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{BetterCompleter, Rule};
+
+    #[test]
+    fn simple() {
+        let mut comp = BetterCompleter::new();
+        // comp.register(Rule::new());
     }
 }

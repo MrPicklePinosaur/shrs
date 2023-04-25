@@ -160,6 +160,6 @@ we can go next.
 
 ## Resources
 - [Pragmatic approach to shell completion](https://dev.to/rsteube/a-pragmatic-approach-to-shell-completion-4gp0)
-
 - [carapace](https://github.com/rsteube/carapace)
 - [carapace-bin](https://github.com/rsteube/carapace-bin)
+- [zsh completion system explanation](https://zsh.sourceforge.io/Guide/zshguide06.html)

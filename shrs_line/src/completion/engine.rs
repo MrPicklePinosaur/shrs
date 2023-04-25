@@ -1,27 +1,45 @@
 use std::collections::HashMap;
 
-pub struct Program {
-    pub name: String,
-    pub root_cmd: Command,
-    pub description: String,
+use super::{Completer, CompletionCtx};
+
+// TODO make this FnMut?
+pub type Pred = dyn Fn(&CompletionCtx) -> bool;
+pub type Action = dyn Fn();
+
+pub struct Rule(pub Box<Pred>, pub Box<Action>);
+
+/// More advanced completion system that makes use of a collection of [Rules]
+pub struct BetterCompleter {
+    rules: Vec<Box<Rule>>,
 }
 
-pub struct Command {
-    pub name: String,
-    pub subcommands: HashMap<String, Command>,
-    pub flags: Vec<Flag>,
-    pub args: Vec<Arg>,
+impl BetterCompleter {
+    pub fn new() -> Self {
+        Self { rules: vec![] }
+    }
+
+    /// Register a new rule to use
+    pub fn register() {
+        todo!()
+    }
+
+    pub fn complete_helper(&self) {
+        let ctx = CompletionCtx { arg_num: 0 };
+
+        let rule = self.rules.iter().find(|p| (p.0)(&ctx));
+
+        match rule {
+            Some(rule) => {
+                // if rule was matched, run the corresponding action
+                rule.1();
+            },
+            None => { /* TODO display some notif that we cannot complete*/ },
+        }
+    }
 }
 
-pub struct Flag {
-    pub short: Option<char>,
-    pub long: String,
-    pub description: Option<String>,
+impl Completer for BetterCompleter {
+    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
+        todo!()
+    }
 }
-
-pub struct Arg {
-    // pub formatter:
-}
-
-/// Actual engine that is resposible for the completion
-pub struct Engine {}

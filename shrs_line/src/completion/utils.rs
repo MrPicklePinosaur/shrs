@@ -9,21 +9,21 @@ use std::path::Path;
 // - filename regex
 // - known hosts
 
-pub fn new_cmdname_completer() -> Vec<String> {
+pub fn cmdname_completer() -> Vec<String> {
     // find_executables_in_path(env.get("PATH").unwrap())
     todo!()
 }
 
-pub fn new_filepath_completer() -> Vec<String> {
+pub fn filepath_completer() -> Vec<String> {
     let cur_dir = match std::env::current_dir() {
         Ok(cur_dir) => cur_dir,
         Err(_) => return vec![],
     };
-    all_files_completion(&cur_dir).unwrap_or(vec![])
+    filepaths(&cur_dir).unwrap_or(vec![])
 }
 
 /// Generate list of files in the current working directory with predicate
-fn filepath_completion_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
+fn filepaths_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
 where
     P: FnMut(&std::fs::DirEntry) -> bool,
 {
@@ -37,6 +37,21 @@ where
         .collect();
 
     Ok(out)
+}
+
+/// Generate list of files in the current working directory
+fn filepaths(dir: &Path) -> std::io::Result<Vec<String>> {
+    filepaths_p(dir, |_| true)
+}
+
+/// Generate list of all executables in PATH
+fn exectuables(_dir: &Path) -> std::io::Result<Vec<String>> {
+    todo!()
+}
+
+/// Generate list of all ssh hosts
+fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
+    todo!()
 }
 
 /// Looks through each directory in path and finds executables
@@ -59,19 +74,4 @@ fn find_executables_in_path(path_str: &str) -> Vec<String> {
         }
     }
     execs
-}
-
-/// Generate list of files in the current working directory
-fn all_files_completion(dir: &Path) -> std::io::Result<Vec<String>> {
-    filepath_completion_p(dir, |_| true)
-}
-
-/// Generate list of all executables in PATH
-fn exectuable_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
-}
-
-/// Generate list of all ssh hosts
-fn ssh_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
 }

@@ -21,6 +21,11 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
+        todo!()
+    }
+
+    /*
     fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
         if ctx.arg_num == 1 {
             // Return all results if empty query
@@ -97,4 +102,5 @@ impl Completer for DefaultCompleter {
             results
         }
     }
+    */
 }

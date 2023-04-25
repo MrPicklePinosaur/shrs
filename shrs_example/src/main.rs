@@ -10,8 +10,8 @@ use shrs::{
     find_executables_in_path,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::DefaultCompleter, DefaultCursor, DefaultHighlighter, DefaultHistory,
-        DefaultMenu, Line, LineBuilder, Prompt,
+        completion::{BetterCompleter, DefaultCompleter},
+        DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
@@ -44,8 +44,9 @@ fn main() {
     env.load();
 
     // configure line
-    let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
-    let completer = DefaultCompleter::new(completions);
+    // let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
+    // let completer = DefaultCompleter::new(completions);
+    let completer = BetterCompleter::new();
     let menu = DefaultMenu::new();
     let history = DefaultHistory::new();
     let cursor = DefaultCursor::default();

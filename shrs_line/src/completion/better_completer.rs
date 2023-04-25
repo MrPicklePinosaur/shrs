@@ -29,25 +29,25 @@ impl BetterCompleter {
         self.rules.push(rule);
     }
 
-    pub fn complete_helper(&self) {
-        let ctx = CompletionCtx { arg_num: 0 };
-
-        let rule = self.rules.iter().find(|p| (p.0)(&ctx));
+    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<String> {
+        let rule = self.rules.iter().find(|p| (p.0)(ctx));
 
         match rule {
             Some(rule) => {
                 // if rule was matched, run the corresponding action
-                rule.1();
+                rule.1()
             },
-            None => { /* TODO display some notif that we cannot complete*/ },
+            None => {
+                // TODO display some notif that we cannot complete
+                vec![]
+            },
         }
     }
 }
 
 impl Completer for BetterCompleter {
-    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
-        // self.complete_helper()
-        todo!()
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
+        self.complete_helper(ctx)
     }
 }
 

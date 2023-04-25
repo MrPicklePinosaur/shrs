@@ -9,14 +9,11 @@ pub use default_completer::*;
 mod utils;
 pub use utils::*;
 
-/// Context passed to completion handlers
-pub struct CompletionCtx {
-    /// The current argument we are on
-    pub arg_num: usize,
-}
+mod context;
+pub use context::*;
 
 pub trait Completer {
-    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String>;
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<String>;
 }
 
 #[cfg(test)]

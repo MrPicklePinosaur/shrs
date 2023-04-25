@@ -5,7 +5,7 @@ use std::{
 
 use trie_rs::TrieBuilder;
 
-use super::{all_files_completion, Completer, CompletionCtx};
+use super::{Completer, CompletionCtx};
 
 /// Very basic completer that uses prefix tree to match on a predefined word list
 pub struct DefaultCompleter {
@@ -21,6 +21,11 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
+        todo!()
+    }
+
+    /*
     fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String> {
         if ctx.arg_num == 1 {
             // Return all results if empty query
@@ -97,4 +102,5 @@ impl Completer for DefaultCompleter {
             results
         }
     }
+    */
 }

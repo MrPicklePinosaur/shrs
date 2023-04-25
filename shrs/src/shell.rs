@@ -734,28 +734,6 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     subst
 }
 
-/// Looks through each directory in path and finds executables
-pub fn find_executables_in_path(path_str: &str) -> Vec<String> {
-    use std::{fs, os::unix::fs::PermissionsExt};
-
-    let mut execs = vec![];
-    for path in path_str.split(":") {
-        let dir = match fs::read_dir(path) {
-            Ok(dir) => dir,
-            Err(_) => continue,
-        };
-        for file in dir {
-            if let Ok(dir_entry) = file {
-                // check if file is executable
-                if dir_entry.metadata().unwrap().permissions().mode() & 0o111 != 0 {
-                    execs.push(dir_entry.file_name().to_str().unwrap().into());
-                }
-            }
-        }
-    }
-    execs
-}
-
 #[cfg(test)]
 mod tests {
     use super::{envsubst, Runtime};

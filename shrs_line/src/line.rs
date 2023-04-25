@@ -7,7 +7,7 @@ use crossterm::{
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
-    completion::{Completer, CompletionCtx, DefaultCompleter},
+    completion::{BetterCompleter, Completer, CompletionCtx},
     cursor::{Cursor, DefaultCursor},
     cursor_buffer::{CursorBuffer, Location},
     highlight::{DefaultHighlighter, Highlighter},
@@ -36,7 +36,7 @@ pub struct Line {
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = String>>,
 
-    #[builder(default = "Box::new(DefaultCompleter::new(vec![]))")]
+    #[builder(default = "Box::new(BetterCompleter::default())")]
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 
@@ -255,13 +255,17 @@ impl Line {
                 ..
             }) => {
                 // TODO IFS
-                let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-                ctx.current_word = args.clone().last().unwrap_or("").to_string();
+                let args = ctx
+                    .cb
+                    .slice(..ctx.cb.cursor())
+                    .as_str()
+                    .unwrap()
+                    .split(' ')
+                    .map(|s| s.to_owned())
+                    .collect::<Vec<_>>();
 
-                let comp_ctx = CompletionCtx {
-                    arg_num: args.count(),
-                };
-                let completions = self.completer.complete(&ctx.current_word, comp_ctx);
+                let comp_ctx = CompletionCtx::new(args);
+                let completions = self.completer.complete(&comp_ctx);
                 let owned = completions
                     .iter()
                     .map(|x| x.to_string())

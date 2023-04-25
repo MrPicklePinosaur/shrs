@@ -1,25 +1,11 @@
-//! Shell autocompletion
-
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use trie_rs::TrieBuilder;
 
-// also provide some commonly used completion lists
-// - directories
-// - executables
-// - file extension
-// - filename regex
-// - known hosts
-
-/// Context passed to completion handlers
-pub struct CompletionCtx {
-    /// The current argument we are on
-    pub arg_num: usize,
-}
-
-pub trait Completer {
-    fn complete(&self, buf: &str, ctx: CompletionCtx) -> Vec<String>;
-}
+use super::{all_files_completion, Completer, CompletionCtx};
 
 /// Very basic completer that uses prefix tree to match on a predefined word list
 pub struct DefaultCompleter {
@@ -111,60 +97,4 @@ impl Completer for DefaultCompleter {
             results
         }
     }
-}
-
-/// Generate list of files in the current working directory with predicate
-pub fn filepath_completion_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
-where
-    P: FnMut(&std::fs::DirEntry) -> bool,
-{
-    use std::fs;
-
-    let out: Vec<String> = fs::read_dir(dir)?
-        .filter_map(|f| f.ok())
-        .filter(predicate)
-        .map(|f| f.file_name().into_string())
-        .filter_map(|f| f.ok())
-        .collect();
-
-    Ok(out)
-}
-
-/// Generate list of files in the current working directory
-pub fn all_files_completion(dir: &Path) -> std::io::Result<Vec<String>> {
-    filepath_completion_p(dir, |_| true)
-}
-
-/// Generate list of all executables in PATH
-pub fn exectuable_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
-}
-
-/// Generate list of all ssh hosts
-pub fn ssh_completion(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
-}
-
-#[cfg(test)]
-mod tests {
-
-    /*
-    #[test]
-    fn default_completer() {
-        let completer = DefaultCompleter::new(vec![
-            "ls", "ld", "ldd", "let", "ln", "lsblk", "lscpu", "lspci", "lsusb",
-        ]);
-        completer.complete("ls", 0);
-    }
-    */
-
-    /*
-    use super::filepath_completion_p;
-
-    #[test]
-    fn test_filepath_completion() {
-        let out = filepath_completion_p("/home/pinosaur", |f| f.file_type().unwrap().is_file());
-        println!("{:?}", out);
-    }
-    */
 }

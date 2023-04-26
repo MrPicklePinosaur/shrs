@@ -64,7 +64,7 @@ impl Painter {
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,
         prompt: impl AsRef<T>,
-        menu: &Box<dyn Menu<MenuItem = String>>,
+        menu: &Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
         styled_buf: StyledBuf,
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,

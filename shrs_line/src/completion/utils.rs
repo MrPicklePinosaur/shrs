@@ -76,6 +76,15 @@ pub(crate) fn drop_path_end(path: &str) -> String {
     drop_end.chars().rev().collect::<String>()
 }
 
+pub(crate) fn path_end(path: &str) -> String {
+    let end = path
+        .chars()
+        .rev()
+        .take_while(|c| !(*c == '/'))
+        .collect::<String>();
+    end.chars().rev().collect::<String>()
+}
+
 #[cfg(test)]
 mod tests {
     use super::drop_path_end;

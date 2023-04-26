@@ -45,7 +45,7 @@ fn main() {
     // configure line
     let path_string = env.get("PATH").unwrap().to_string();
     let mut completer = DefaultCompleter::default();
-    completer.register(Rule(
+    completer.register(Rule::new(
         Pred::new(cmdname_pred),
         Box::new(cmdname_action(path_string)),
     ));

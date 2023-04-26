@@ -6,7 +6,10 @@ use std::{
 use crossterm::style::Stylize;
 use relative_path::RelativePath;
 
-use super::{drop_path_end, filepaths, find_executables_in_path, Completer, CompletionCtx};
+use super::{
+    drop_path_end, filepaths, find_executables_in_path, path_end, Completer, Completion,
+    CompletionCtx,
+};
 
 // TODO make this FnMut?
 pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<String>>;
@@ -31,7 +34,39 @@ impl Pred {
     }
 }
 
-pub struct Rule(pub Pred, pub Action);
+pub type Filter = Box<dyn Fn(&String) -> bool>;
+pub type Format = Box<dyn Fn(String) -> Completion>;
+
+pub struct Rule {
+    pub pred: Pred,
+    pub action: Action,
+    // pub filter: Filter,
+    pub format: Format,
+}
+
+impl Rule {
+    pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<String> + 'static) -> Self {
+        Self {
+            pred,
+            action: Box::new(action),
+            // filter:
+            format: Box::new(default_format),
+        }
+    }
+
+    // TODO this could maybe be rewritten as a builder pattern
+    pub fn with_format(
+        pred: Pred,
+        action: impl Fn(&CompletionCtx) -> Vec<String> + 'static,
+        format: impl Fn(String) -> Completion + 'static,
+    ) -> Self {
+        Self {
+            pred,
+            action: Box::new(action),
+            format: Box::new(format),
+        }
+    }
+}
 
 pub struct DefaultCompleter {
     rules: Vec<Rule>,
@@ -47,16 +82,17 @@ impl DefaultCompleter {
         self.rules.push(rule);
     }
 
-    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<String> {
-        let rule = self.rules.iter().find(|p| (p.0).test(ctx));
+    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
+        let rule = self.rules.iter().find(|p| (p.pred).test(ctx));
 
         match rule {
             Some(rule) => {
                 // if rule was matched, run the corresponding action
                 // also do prefix search (could make if prefix search is used a config option)
-                rule.1(ctx)
+                (rule.action)(ctx)
                     .into_iter()
                     .filter(|s| s.starts_with(ctx.cur_word().unwrap_or(&String::new())))
+                    .map(|s| (rule.format)(s))
                     .collect::<Vec<_>>()
             },
             None => {
@@ -68,7 +104,7 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         self.complete_helper(ctx)
     }
 }
@@ -78,12 +114,12 @@ impl Default for DefaultCompleter {
         // collection of predefined rules
 
         let mut comp = DefaultCompleter::new();
-        comp.register(Rule(
+        comp.register(Rule::new(
             Pred::new(git_pred).and(flag_pred),
             Box::new(git_flag_action),
         ));
-        comp.register(Rule(Pred::new(git_pred), Box::new(git_action)));
-        comp.register(Rule(Pred::new(arg_pred), Box::new(filename_action)));
+        comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
+        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
 }
@@ -146,6 +182,18 @@ pub fn path_pred(ctx: &CompletionCtx) -> bool {
 
     cur_path.is_dir()
 }
+
+pub fn default_format(s: String) -> Completion {
+    Completion {
+        add_space: true,
+        display: None,
+        completion: s.to_owned(),
+    }
+}
+
+// pub fn path_format(s: String) -> Completion {
+//     Completion { add_space: false, display: Some(path_end(&s)), completion: s }
+// }
 
 #[cfg(test)]
 mod tests {

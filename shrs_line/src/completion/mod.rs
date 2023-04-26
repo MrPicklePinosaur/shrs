@@ -9,8 +9,32 @@ pub use utils::*;
 mod context;
 pub use context::*;
 
+pub struct Completion {
+    /// If space should be added after completion
+    add_space: bool,
+    /// Vanity value that can be used by menu or others to display friendly version of completion
+    display: Option<String>,
+    /// Actual value to perform completion with
+    completion: String,
+}
+
+impl Completion {
+    /// Used to provide user friendly preview of what value will be completed
+    pub fn display(&self) -> String {
+        self.display.clone().unwrap_or(self.completion.clone())
+    }
+    /// Get actual value to be used when accepting completion
+    pub fn accept(&self) -> String {
+        let mut output = self.completion.clone();
+        if self.add_space {
+            output += " ";
+        }
+        output
+    }
+}
+
 pub trait Completer {
-    fn complete(&self, ctx: &CompletionCtx) -> Vec<String>;
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion>;
 }
 
 #[cfg(test)]

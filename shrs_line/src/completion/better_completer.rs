@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Completer, CompletionCtx};
+use super::{find_executables_in_path, Completer, CompletionCtx};
 use crate::completion::filepath_completer;
 
 // TODO make this FnMut?
@@ -18,7 +18,7 @@ impl Pred {
     }
     pub fn and(self, pred: impl Fn(&CompletionCtx) -> bool + 'static) -> Self {
         Self {
-            pred: Box::new(move |ctx: &CompletionCtx| -> bool { (*self.pred)(ctx) || pred(ctx) }),
+            pred: Box::new(move |ctx: &CompletionCtx| -> bool { (*self.pred)(ctx) && pred(ctx) }),
         }
     }
     pub fn test(&self, ctx: &CompletionCtx) -> bool {
@@ -72,60 +72,73 @@ impl Completer for BetterCompleter {
 impl Default for BetterCompleter {
     fn default() -> Self {
         // collection of predefined rules
-        fn cmdname_pred(ctx: &CompletionCtx) -> bool {
-            ctx.arg_num() == 0
-        }
-        fn cmdname_action() -> Vec<String> {
-            vec!["vim".into(), "emacs".into(), "nvim".into()]
-        }
-
-        fn filename_pred(ctx: &CompletionCtx) -> bool {
-            ctx.arg_num() != 0
-        }
-        fn filename_action() -> Vec<String> {
-            filepath_completer()
-        }
-
-        fn git_pred(ctx: &CompletionCtx) -> bool {
-            cmd_name("git".into())(ctx)
-        }
-        fn git_action() -> Vec<String> {
-            vec!["status".into(), "add".into(), "commit".into()]
-        }
 
         let mut comp = BetterCompleter::new();
-        comp.register(Rule(Pred::new(git_pred), Box::new(git_action)));
         comp.register(Rule(
-            Pred::new(git_pred).and(is_long_flag),
-            Box::new(git_action),
+            Pred::new(git_pred).and(flag_pred),
+            Box::new(git_flag_action),
         ));
-        comp.register(Rule(Pred::new(cmdname_pred), Box::new(cmdname_action)));
+        comp.register(Rule(Pred::new(git_pred), Box::new(git_action)));
         comp.register(Rule(Pred::new(filename_pred), Box::new(filename_action)));
         comp
     }
 }
 
-pub fn cmd_name(cmd_name: String) -> impl Fn(&CompletionCtx) -> bool {
-    Box::new(move |ctx: &CompletionCtx| ctx.cmd_name() == Some(&cmd_name))
+pub fn cmdname_pred(ctx: &CompletionCtx) -> bool {
+    ctx.arg_num() == 0
+}
+pub fn cmdname_action(path_str: String) -> impl Fn() -> Vec<String> {
+    move || -> Vec<String> { find_executables_in_path(&path_str) }
 }
 
-pub fn is_flag(ctx: &CompletionCtx) -> bool {
-    is_long_flag(ctx) || is_short_flag(ctx)
+pub fn filename_pred(ctx: &CompletionCtx) -> bool {
+    ctx.arg_num() != 0
 }
-pub fn is_short_flag(ctx: &CompletionCtx) -> bool {
-    todo!()
+pub fn filename_action() -> Vec<String> {
+    filepath_completer()
 }
-pub fn is_long_flag(ctx: &CompletionCtx) -> bool {
+
+pub fn git_pred(ctx: &CompletionCtx) -> bool {
+    cmdname_eq_pred("git".into())(ctx)
+}
+pub fn git_action() -> Vec<String> {
+    vec!["status".into(), "add".into(), "commit".into()]
+}
+
+pub fn git_flag_action() -> Vec<String> {
+    vec!["--version".into(), "--help".into(), "--bare".into()]
+}
+
+pub fn cmdname_eq_pred(cmd_name: String) -> impl Fn(&CompletionCtx) -> bool {
+    move |ctx: &CompletionCtx| ctx.cmd_name() == Some(&cmd_name)
+}
+
+pub fn flag_pred(ctx: &CompletionCtx) -> bool {
+    long_flag_pred(ctx) || short_flag_pred(ctx)
+}
+pub fn short_flag_pred(ctx: &CompletionCtx) -> bool {
+    ctx.cur_word().unwrap_or(&String::new()).starts_with("-")
+}
+pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
     ctx.cur_word().unwrap_or(&String::new()).starts_with("--")
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{BetterCompleter, Rule};
+    use super::{flag_pred, BetterCompleter, Rule};
+    use crate::completion::CompletionCtx;
 
     #[test]
     fn simple() {
         let mut comp = BetterCompleter::new();
         // comp.register(Rule::new());
+    }
+
+    #[test]
+    fn test_is_flag() {
+        let ctx = CompletionCtx::new(vec!["git".into(), "-".into()]);
+        assert!(flag_pred(&ctx));
+        let ctx = CompletionCtx::new(vec![]);
+        assert!(!flag_pred(&ctx));
     }
 }

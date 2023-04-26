@@ -737,7 +737,6 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{envsubst, Runtime};
-    use crate::shell::find_executables_in_path;
 
     // #[test]
     // fn envsubst_test() {
@@ -749,8 +748,8 @@ mod tests {
     //     assert_eq!(subst, String::from("/bin/shrs vim"));
     // }
 
-    #[test]
-    fn path_execs_test() {
-        println!("{:?}", find_executables_in_path("/usr/bin:/usr/local/bin"));
-    }
+    // #[test]
+    // fn path_execs_test() {
+    //     println!("{:?}", find_executables_in_path("/usr/bin:/usr/local/bin"));
+    // }
 }

@@ -6,10 +6,13 @@ use std::{
 use crossterm::style::Stylize;
 use relative_path::RelativePath;
 
-use super::{drop_path_end, filepaths, find_executables_in_path, Completer, CompletionCtx};
+use super::{
+    drop_path_end, filepaths, find_executables_in_path, path_end, Completer, Completion,
+    CompletionCtx,
+};
 
 // TODO make this FnMut?
-pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<String>>;
+pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<Completion>>;
 
 pub struct Pred {
     pred: Box<dyn Fn(&CompletionCtx) -> bool>,
@@ -31,7 +34,28 @@ impl Pred {
     }
 }
 
-pub struct Rule(pub Pred, pub Action);
+pub type Filter = Box<dyn Fn(&String) -> bool>;
+pub type Format = Box<dyn Fn(String) -> Completion>;
+
+pub struct Rule {
+    pub pred: Pred,
+    pub action: Action,
+    // pub filter: Filter,
+    // pub format: Format,
+}
+
+impl Rule {
+    pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<Completion> + 'static) -> Self {
+        Self {
+            pred,
+            action: Box::new(action),
+            // filter:
+            // format: Box::new(default_format),
+        }
+    }
+
+    // TODO this could maybe be rewritten as a builder pattern
+}
 
 pub struct DefaultCompleter {
     rules: Vec<Rule>,
@@ -47,16 +71,20 @@ impl DefaultCompleter {
         self.rules.push(rule);
     }
 
-    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<String> {
-        let rule = self.rules.iter().find(|p| (p.0).test(ctx));
+    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
+        let rule = self.rules.iter().find(|p| (p.pred).test(ctx));
 
         match rule {
             Some(rule) => {
                 // if rule was matched, run the corresponding action
                 // also do prefix search (could make if prefix search is used a config option)
-                rule.1(ctx)
+                (rule.action)(ctx)
                     .into_iter()
-                    .filter(|s| s.starts_with(ctx.cur_word().unwrap_or(&String::new())))
+                    .filter(|s| {
+                        s.accept()
+                            .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                    })
+                    // .map(|s| (rule.format)(s))
                     .collect::<Vec<_>>()
             },
             None => {
@@ -68,7 +96,7 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
+    fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         self.complete_helper(ctx)
     }
 }
@@ -78,34 +106,53 @@ impl Default for DefaultCompleter {
         // collection of predefined rules
 
         let mut comp = DefaultCompleter::new();
-        comp.register(Rule(
+        comp.register(Rule::new(
             Pred::new(git_pred).and(flag_pred),
             Box::new(git_flag_action),
         ));
-        comp.register(Rule(Pred::new(git_pred), Box::new(git_action)));
-        comp.register(Rule(Pred::new(arg_pred), Box::new(filename_action)));
+        comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
+        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
 }
 
-pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<String> {
-    move |ctx: &CompletionCtx| -> Vec<String> { find_executables_in_path(&path_str) }
+pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
+    move |ctx: &CompletionCtx| -> Vec<Completion> {
+        default_format(find_executables_in_path(&path_str))
+    }
 }
 
-pub fn filename_action(ctx: &CompletionCtx) -> Vec<String> {
+pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let cur_word = ctx.cur_word().unwrap();
-    let cur_path =
-        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
+    let drop_end = drop_path_end(cur_word);
+    let cur_path = RelativePath::new(&drop_end).to_path(std::env::current_dir().unwrap());
 
-    filepaths(&cur_path).unwrap_or(vec!["invlad".into()])
+    let output = filepaths(&cur_path).unwrap_or(vec![]);
+    output
+        .iter()
+        .map(|x| {
+            let mut filename = x.file_name().unwrap().to_str().unwrap().to_string();
+
+            // append slash if directory name
+            let is_dir = x.is_dir();
+            if is_dir {
+                filename += "/";
+            }
+            Completion {
+                add_space: !is_dir,
+                display: Some(filename.to_owned()),
+                completion: drop_end.to_owned() + &filename,
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
-pub fn git_action(ctx: &CompletionCtx) -> Vec<String> {
-    vec!["status".into(), "add".into(), "commit".into()]
+pub fn git_action(ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(vec!["status".into(), "add".into(), "commit".into()])
 }
 
-pub fn git_flag_action(ctx: &CompletionCtx) -> Vec<String> {
-    vec!["--version".into(), "--help".into(), "--bare".into()]
+pub fn git_flag_action(ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }
 
 /// Check if we are completing the command name
@@ -146,6 +193,21 @@ pub fn path_pred(ctx: &CompletionCtx) -> bool {
 
     cur_path.is_dir()
 }
+
+// TODO temp helper to create a list of completions
+pub fn default_format(s: Vec<String>) -> Vec<Completion> {
+    s.iter()
+        .map(|x| Completion {
+            add_space: true,
+            display: None,
+            completion: x.to_owned(),
+        })
+        .collect::<Vec<_>>()
+}
+
+// pub fn path_format(s: String) -> Completion {
+//     Completion { add_space: false, display: Some(path_end(&s)), completion: s }
+// }
 
 #[cfg(test)]
 mod tests {

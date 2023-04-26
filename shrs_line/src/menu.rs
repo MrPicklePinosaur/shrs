@@ -13,6 +13,7 @@ pub type Out = std::io::BufWriter<std::io::Stdout>;
 
 pub trait Menu {
     type MenuItem: Display;
+    type PreviewItem: Display;
 
     fn next(&mut self);
     fn previous(&mut self);
@@ -21,8 +22,8 @@ pub trait Menu {
     fn is_active(&self) -> bool;
     fn activate(&mut self);
     fn disactivate(&mut self);
-    fn items(&self) -> Vec<&Self::MenuItem>;
-    fn set_items(&mut self, items: Vec<Self::MenuItem>);
+    fn items(&self) -> Vec<&(Self::PreviewItem, Self::MenuItem)>;
+    fn set_items(&mut self, items: Vec<(Self::PreviewItem, Self::MenuItem)>);
 
     fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
     fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
@@ -33,7 +34,7 @@ pub trait Menu {
 
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
-    selections: Vec<String>,
+    selections: Vec<(String, String)>,
     /// Currently selected item
     cursor: u32,
     active: bool,
@@ -57,6 +58,7 @@ impl DefaultMenu {
 
 impl Menu for DefaultMenu {
     type MenuItem = String;
+    type PreviewItem = String;
 
     fn next(&mut self) {
         self.cursor = if self.selections.is_empty() {
@@ -70,7 +72,7 @@ impl Menu for DefaultMenu {
     }
     fn accept(&mut self) -> Option<&String> {
         self.disactivate();
-        self.selections.get(self.cursor as usize)
+        self.selections.get(self.cursor as usize).map(|x| &x.1)
     }
     fn cursor(&self) -> u32 {
         self.cursor
@@ -85,11 +87,11 @@ impl Menu for DefaultMenu {
     fn disactivate(&mut self) {
         self.active = false;
     }
-    fn items(&self) -> Vec<&String> {
+    fn items(&self) -> Vec<&(Self::PreviewItem, Self::MenuItem)> {
         // TODO is this the right way to case Vec<String> to Vec<&String> ??
         self.selections.iter().collect()
     }
-    fn set_items(&mut self, mut items: Vec<Self::MenuItem>) {
+    fn set_items(&mut self, mut items: Vec<(Self::PreviewItem, Self::MenuItem)>) {
         self.selections.clear();
         self.selections.append(&mut items);
         self.cursor = 0;
@@ -119,14 +121,14 @@ impl Menu for DefaultMenu {
             let mut longest_word = 0;
 
             for menu_item in column.iter() {
-                longest_word = longest_word.max(menu_item.len());
+                longest_word = longest_word.max(menu_item.0.len());
                 out.queue(MoveDown(1))?;
                 out.queue(MoveToColumn(column_start as u16))?;
                 if self.cursor() as usize == i {
                     self.selected_style(out)?;
                 }
 
-                out.queue(Print(menu_item))?;
+                out.queue(Print(&menu_item.0))?;
                 self.unselected_style(out)?;
 
                 i += 1;

@@ -12,6 +12,7 @@ crossterm = "0.26"
 trie-rs = "0.1"
 derive_builder = "0.12"
 ropey = "1.6"
+relative-path = "1.8"
 
 anyhow = "1"
 thiserror = "1"

@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use relative_path::RelativePath;
+
 use super::{filepaths, find_executables_in_path, Completer, CompletionCtx};
 
 // TODO make this FnMut?
@@ -90,6 +92,7 @@ pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<String
 }
 
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<String> {
+    /*
     // TODO code is a bit ugly
     let path = PathBuf::from(ctx.cur_word().unwrap());
     let dir = if path.is_dir() {
@@ -105,6 +108,8 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<String> {
     } else {
         filepaths(&std::env::current_dir().unwrap()).unwrap_or(vec![])
     }
+    */
+    vec!["VALID!".into()]
 }
 
 pub fn git_action(ctx: &CompletionCtx) -> Vec<String> {
@@ -146,12 +151,15 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 
 /// Check if we are completing a (real) path
 pub fn path_pred(ctx: &CompletionCtx) -> bool {
-    if let Some(cur_word) = ctx.cur_word() {
-        let path = PathBuf::from(cur_word);
-        path.is_dir() || path.parent().map_or(true, |p| p.is_dir())
-    } else {
-        true
-    }
+    // case one: currently directory user is entering is a valid directory,
+    // case two: user is in middle of typing a directory
+
+    // TODO handle absolute paths (path that starts with /)
+    let root = std::env::current_dir().unwrap();
+
+    let cur_word = ctx.cur_word().unwrap();
+    let cur_path = RelativePath::new(cur_word).to_path(&root);
+    cur_path.is_dir() || cur_path.parent().map_or(true, |p| p.is_dir())
 }
 
 #[cfg(test)]

@@ -9,10 +9,7 @@ use shrs::{
     builtin::Builtins,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::{
-            cmdname_action, cmdname_pred, filepath_completer, CompletionCtx, DefaultCompleter,
-            Pred, Rule,
-        },
+        completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},

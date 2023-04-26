@@ -12,16 +12,8 @@ use std::path::Path;
 // SWAP, a lot of time we need a bunch more context, like the shell's env or the current working
 // directory, consider what we can do to have completer functions that need 'initalizion'.
 
-pub fn filepath_completer() -> Vec<String> {
-    let cur_dir = match std::env::current_dir() {
-        Ok(cur_dir) => cur_dir,
-        Err(_) => return vec![],
-    };
-    filepaths(&cur_dir).unwrap_or(vec![])
-}
-
 /// Generate list of files in the current working directory with predicate
-fn filepaths_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
+pub(crate) fn filepaths_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
 where
     P: FnMut(&std::fs::DirEntry) -> bool,
 {
@@ -38,7 +30,7 @@ where
 }
 
 /// Generate list of files in the current working directory
-fn filepaths(dir: &Path) -> std::io::Result<Vec<String>> {
+pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<String>> {
     filepaths_p(dir, |_| true)
 }
 
@@ -53,7 +45,7 @@ fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
 }
 
 /// Looks through each directory in path and finds executables
-pub fn find_executables_in_path(path_str: &str) -> Vec<String> {
+pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
     use std::{fs, os::unix::fs::PermissionsExt};
 
     let mut execs = vec![];
@@ -72,4 +64,26 @@ pub fn find_executables_in_path(path_str: &str) -> Vec<String> {
         }
     }
     execs
+}
+
+/// Drop everything after the last / character
+pub(crate) fn drop_path_end(path: &str) -> String {
+    let drop_end = path
+        .chars()
+        .rev()
+        .skip_while(|c| !(*c == '/'))
+        .collect::<String>();
+    drop_end.chars().rev().collect::<String>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::drop_path_end;
+
+    #[test]
+    fn test_drop_path_end() {
+        assert_eq!(drop_path_end("Downloads/ab"), "Downloads/".to_owned());
+        assert_eq!(drop_path_end("Downloads/"), "Downloads/".to_owned());
+        assert_eq!(drop_path_end("Downloads"), "".to_owned());
+    }
 }

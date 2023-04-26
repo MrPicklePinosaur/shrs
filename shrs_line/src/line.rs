@@ -255,16 +255,11 @@ impl Line {
                 ..
             }) => {
                 // TODO IFS
-                let args = ctx
-                    .cb
-                    .slice(..ctx.cb.cursor())
-                    .as_str()
-                    .unwrap()
-                    .split(' ')
-                    .map(|s| s.to_owned())
-                    .collect::<Vec<_>>();
+                let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
+                ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
-                let comp_ctx = CompletionCtx::new(args);
+                let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
+
                 let completions = self.completer.complete(&comp_ctx);
                 let owned = completions
                     .iter()

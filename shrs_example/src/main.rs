@@ -9,9 +9,7 @@ use shrs::{
     builtin::Builtins,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::{
-            new_filepath_completer, BetterCompleter, CompletionCtx, DefaultCompleter, Rule,
-        },
+        completion::{filepath_completer, BetterCompleter, CompletionCtx, DefaultCompleter, Rule},
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
     },
     prompt::{hostname, top_pwd, username},

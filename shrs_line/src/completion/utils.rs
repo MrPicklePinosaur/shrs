@@ -9,6 +9,9 @@ use std::path::Path;
 // - filename regex
 // - known hosts
 
+// SWAP, a lot of time we need a bunch more context, like the shell's env or the current working
+// directory, consider what we can do to have completer functions that need 'initalizion'.
+
 pub fn cmdname_completer() -> Vec<String> {
     // find_executables_in_path(env.get("PATH").unwrap())
     todo!()

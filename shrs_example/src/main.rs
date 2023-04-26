@@ -10,7 +10,8 @@ use shrs::{
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{
-            new_filepath_completer, BetterCompleter, CompletionCtx, DefaultCompleter, Rule,
+            cmdname_action, cmdname_pred, filepath_completer, BetterCompleter, CompletionCtx,
+            DefaultCompleter, Pred, Rule,
         },
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
     },
@@ -45,7 +46,12 @@ fn main() {
     env.load();
 
     // configure line
-    let completer = BetterCompleter::default();
+    let path_string = env.get("PATH").unwrap().to_string();
+    let mut completer = BetterCompleter::default();
+    completer.register(Rule(
+        Pred::new(cmdname_pred),
+        Box::new(cmdname_action(path_string)),
+    ));
 
     let menu = DefaultMenu::new();
     let history = DefaultHistory::new();

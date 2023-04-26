@@ -9,10 +9,8 @@ use std::path::Path;
 // - filename regex
 // - known hosts
 
-pub fn cmdname_completer() -> Vec<String> {
-    // find_executables_in_path(env.get("PATH").unwrap())
-    todo!()
-}
+// SWAP, a lot of time we need a bunch more context, like the shell's env or the current working
+// directory, consider what we can do to have completer functions that need 'initalizion'.
 
 pub fn filepath_completer() -> Vec<String> {
     let cur_dir = match std::env::current_dir() {
@@ -55,7 +53,7 @@ fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
 }
 
 /// Looks through each directory in path and finds executables
-fn find_executables_in_path(path_str: &str) -> Vec<String> {
+pub fn find_executables_in_path(path_str: &str) -> Vec<String> {
     use std::{fs, os::unix::fs::PermissionsExt};
 
     let mut execs = vec![];

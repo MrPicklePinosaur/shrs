@@ -1,10 +1,7 @@
 //! Shell autocompletion
 
-mod better_completer;
-pub use better_completer::*;
-
-mod default_completer;
-pub use default_completer::*;
+mod completer;
+pub use completer::*;
 
 mod utils;
 pub use utils::*;

@@ -28,12 +28,11 @@ impl Pred {
 
 pub struct Rule(pub Pred, pub Action);
 
-/// More advanced completion system that makes use of a collection of [Rule]
-pub struct BetterCompleter {
+pub struct DefaultCompleter {
     rules: Vec<Rule>,
 }
 
-impl BetterCompleter {
+impl DefaultCompleter {
     pub fn new() -> Self {
         Self { rules: vec![] }
     }
@@ -63,17 +62,17 @@ impl BetterCompleter {
     }
 }
 
-impl Completer for BetterCompleter {
+impl Completer for DefaultCompleter {
     fn complete(&self, ctx: &CompletionCtx) -> Vec<String> {
         self.complete_helper(ctx)
     }
 }
 
-impl Default for BetterCompleter {
+impl Default for DefaultCompleter {
     fn default() -> Self {
         // collection of predefined rules
 
-        let mut comp = BetterCompleter::new();
+        let mut comp = DefaultCompleter::new();
         comp.register(Rule(
             Pred::new(git_pred).and(flag_pred),
             Box::new(git_flag_action),
@@ -125,12 +124,12 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{flag_pred, BetterCompleter, Rule};
+    use super::{flag_pred, DefaultCompleter, Rule};
     use crate::completion::CompletionCtx;
 
     #[test]
     fn simple() {
-        let mut comp = BetterCompleter::new();
+        let mut comp = DefaultCompleter::new();
         // comp.register(Rule::new());
     }
 

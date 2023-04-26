@@ -65,3 +65,25 @@ pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
     }
     execs
 }
+
+/// Drop everything after the last / character
+pub(crate) fn drop_path_end(path: &str) -> String {
+    let drop_end = path
+        .chars()
+        .rev()
+        .skip_while(|c| !(*c == '/'))
+        .collect::<String>();
+    drop_end.chars().rev().collect::<String>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::drop_path_end;
+
+    #[test]
+    fn test_drop_path_end() {
+        assert_eq!(drop_path_end("Downloads/ab"), "Downloads/".to_owned());
+        assert_eq!(drop_path_end("Downloads/"), "Downloads/".to_owned());
+        assert_eq!(drop_path_end("Downloads"), "".to_owned());
+    }
+}

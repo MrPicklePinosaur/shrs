@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crossterm::style::Stylize;
 use relative_path::RelativePath;
 
-use super::{filepaths, find_executables_in_path, Completer, CompletionCtx};
+use super::{drop_path_end, filepaths, find_executables_in_path, Completer, CompletionCtx};
 
 // TODO make this FnMut?
 pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<String>>;
@@ -92,24 +93,11 @@ pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<String
 }
 
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<String> {
-    /*
-    // TODO code is a bit ugly
-    let path = PathBuf::from(ctx.cur_word().unwrap());
-    let dir = if path.is_dir() {
-        Some(path.as_path())
-    } else if path.parent().map_or(false, |p| p.is_dir()) {
-        path.parent()
-    } else {
-        None
-    };
+    let cur_word = ctx.cur_word().unwrap();
+    let cur_path =
+        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
 
-    if let Some(dir) = dir {
-        filepaths(&dir).unwrap_or(vec![])
-    } else {
-        filepaths(&std::env::current_dir().unwrap()).unwrap_or(vec![])
-    }
-    */
-    vec!["VALID!".into()]
+    filepaths(&cur_path).unwrap_or(vec!["invlad".into()])
 }
 
 pub fn git_action(ctx: &CompletionCtx) -> Vec<String> {
@@ -151,20 +139,17 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 
 /// Check if we are completing a (real) path
 pub fn path_pred(ctx: &CompletionCtx) -> bool {
-    // case one: currently directory user is entering is a valid directory,
-    // case two: user is in middle of typing a directory
-
-    // TODO handle absolute paths (path that starts with /)
-    let root = std::env::current_dir().unwrap();
-
+    // strip part after slash
     let cur_word = ctx.cur_word().unwrap();
-    let cur_path = RelativePath::new(cur_word).to_path(&root);
-    cur_path.is_dir() || cur_path.parent().map_or(true, |p| p.is_dir())
+    let cur_path =
+        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
+
+    cur_path.is_dir()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{flag_pred, DefaultCompleter, Rule};
+    use super::{flag_pred, path_pred, DefaultCompleter, Rule};
     use crate::completion::CompletionCtx;
 
     #[test]

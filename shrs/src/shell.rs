@@ -248,7 +248,7 @@ impl Shell {
                 },
             };
             let mut cmd_handle =
-                match self.eval_command(ctx, rt, &cmd, Stdio::inherit(), Stdio::piped(), None) {
+                match self.eval_command(ctx, rt, &cmd, Stdio::inherit(), Stdio::inherit(), None) {
                     Ok(cmd_handle) => cmd_handle,
                     Err(e) => {
                         eprintln!("{}", e);
@@ -629,7 +629,7 @@ impl Shell {
             .args(args)
             .stdin(stdin)
             .stdout(stdout)
-            .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
+            // .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
             .current_dir(rt.working_dir.to_str().unwrap())
             .envs(envs)
             .spawn()?;

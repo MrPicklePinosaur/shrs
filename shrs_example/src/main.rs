@@ -67,7 +67,8 @@ fn main() {
     let prompt = MyPrompt;
 
     let alias = Alias::from_iter([
-        ("l".into(), "ls".into()),
+        ("ls".into(), "ls --color=always".into()),
+        ("l".into(), "ls --color=always".into()),
         ("c".into(), "cd".into()),
         ("g".into(), "git".into()),
         ("v".into(), "vim".into()),

@@ -12,7 +12,7 @@ use super::{
 };
 
 // TODO make this FnMut?
-pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<String>>;
+pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<Completion>>;
 
 pub struct Pred {
     pred: Box<dyn Fn(&CompletionCtx) -> bool>,
@@ -41,31 +41,20 @@ pub struct Rule {
     pub pred: Pred,
     pub action: Action,
     // pub filter: Filter,
-    pub format: Format,
+    // pub format: Format,
 }
 
 impl Rule {
-    pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<String> + 'static) -> Self {
+    pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<Completion> + 'static) -> Self {
         Self {
             pred,
             action: Box::new(action),
             // filter:
-            format: Box::new(default_format),
+            // format: Box::new(default_format),
         }
     }
 
     // TODO this could maybe be rewritten as a builder pattern
-    pub fn with_format(
-        pred: Pred,
-        action: impl Fn(&CompletionCtx) -> Vec<String> + 'static,
-        format: impl Fn(String) -> Completion + 'static,
-    ) -> Self {
-        Self {
-            pred,
-            action: Box::new(action),
-            format: Box::new(format),
-        }
-    }
 }
 
 pub struct DefaultCompleter {
@@ -91,8 +80,11 @@ impl DefaultCompleter {
                 // also do prefix search (could make if prefix search is used a config option)
                 (rule.action)(ctx)
                     .into_iter()
-                    .filter(|s| s.starts_with(ctx.cur_word().unwrap_or(&String::new())))
-                    .map(|s| (rule.format)(s))
+                    .filter(|s| {
+                        s.accept()
+                            .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                    })
+                    // .map(|s| (rule.format)(s))
                     .collect::<Vec<_>>()
             },
             None => {
@@ -124,24 +116,43 @@ impl Default for DefaultCompleter {
     }
 }
 
-pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<String> {
-    move |ctx: &CompletionCtx| -> Vec<String> { find_executables_in_path(&path_str) }
+pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
+    move |ctx: &CompletionCtx| -> Vec<Completion> {
+        default_format(find_executables_in_path(&path_str))
+    }
 }
 
-pub fn filename_action(ctx: &CompletionCtx) -> Vec<String> {
+pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let cur_word = ctx.cur_word().unwrap();
-    let cur_path =
-        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
+    let drop_end = drop_path_end(cur_word);
+    let cur_path = RelativePath::new(&drop_end).to_path(std::env::current_dir().unwrap());
 
-    filepaths(&cur_path).unwrap_or(vec!["invlad".into()])
+    let output = filepaths(&cur_path).unwrap_or(vec![]);
+    output
+        .iter()
+        .map(|x| {
+            let mut filename = x.file_name().unwrap().to_str().unwrap().to_string();
+
+            // append slash if directory name
+            let is_dir = x.is_dir();
+            if is_dir {
+                filename += "/";
+            }
+            Completion {
+                add_space: !is_dir,
+                display: Some(filename.to_owned()),
+                completion: drop_end.to_owned() + &filename,
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
-pub fn git_action(ctx: &CompletionCtx) -> Vec<String> {
-    vec!["status".into(), "add".into(), "commit".into()]
+pub fn git_action(ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(vec!["status".into(), "add".into(), "commit".into()])
 }
 
-pub fn git_flag_action(ctx: &CompletionCtx) -> Vec<String> {
-    vec!["--version".into(), "--help".into(), "--bare".into()]
+pub fn git_flag_action(ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }
 
 /// Check if we are completing the command name
@@ -183,12 +194,15 @@ pub fn path_pred(ctx: &CompletionCtx) -> bool {
     cur_path.is_dir()
 }
 
-pub fn default_format(s: String) -> Completion {
-    Completion {
-        add_space: true,
-        display: None,
-        completion: s.to_owned(),
-    }
+// TODO temp helper to create a list of completions
+pub fn default_format(s: Vec<String>) -> Vec<Completion> {
+    s.iter()
+        .map(|x| Completion {
+            add_space: true,
+            display: None,
+            completion: x.to_owned(),
+        })
+        .collect::<Vec<_>>()
 }
 
 // pub fn path_format(s: String) -> Completion {

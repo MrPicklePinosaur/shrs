@@ -1,6 +1,6 @@
 //! Collection of completion functions
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 // also provide some commonly used completion lists
 // - directories
@@ -13,24 +13,23 @@ use std::path::Path;
 // directory, consider what we can do to have completer functions that need 'initalizion'.
 
 /// Generate list of files in the current working directory with predicate
-pub(crate) fn filepaths_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<String>>
+pub(crate) fn filepaths_p<P>(dir: &Path, predicate: P) -> std::io::Result<Vec<PathBuf>>
 where
     P: FnMut(&std::fs::DirEntry) -> bool,
 {
     use std::fs;
 
-    let out: Vec<String> = fs::read_dir(dir)?
+    let out: Vec<PathBuf> = fs::read_dir(dir)?
         .filter_map(|f| f.ok())
         .filter(predicate)
-        .map(|f| f.file_name().into_string())
-        .filter_map(|f| f.ok())
+        .map(|f| f.path())
         .collect();
 
     Ok(out)
 }
 
 /// Generate list of files in the current working directory
-pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<String>> {
+pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<PathBuf>> {
     filepaths_p(dir, |_| true)
 }
 

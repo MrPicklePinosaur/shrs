@@ -11,11 +11,11 @@ pub use context::*;
 
 pub struct Completion {
     /// If space should be added after completion
-    add_space: bool,
+    pub(crate) add_space: bool,
     /// Vanity value that can be used by menu or others to display friendly version of completion
-    display: Option<String>,
+    pub(crate) display: Option<String>,
     /// Actual value to perform completion with
-    completion: String,
+    pub(crate) completion: String,
 }
 
 impl Completion {

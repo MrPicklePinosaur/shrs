@@ -67,12 +67,12 @@ fn main() {
     let prompt = MyPrompt;
 
     let alias = Alias::from_iter([
-        ("ls".into(), "ls --color=always".into()),
-        ("l".into(), "ls --color=always".into()),
+        ("ls".into(), "ls --color=auto".into()),
+        ("l".into(), "ls --color=auto".into()),
         ("c".into(), "cd".into()),
         ("g".into(), "git".into()),
         ("v".into(), "vim".into()),
-        ("la".into(), "ls -a".into()),
+        ("la".into(), "ls -a --color=auto".into()),
     ]);
 
     let startup_msg: HookFn<StartupCtx> = |sh: &Shell,

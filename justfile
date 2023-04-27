@@ -5,7 +5,7 @@ debug:
     cargo +nightly run shrs_example
 
 install:
-    cargo install --path shrs_example
+    cargo install --profile=release --path shrs_example
 
 devsetup:
     cp dev/hooks/* .git/hooks

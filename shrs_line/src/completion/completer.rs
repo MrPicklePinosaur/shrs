@@ -1,10 +1,9 @@
 use std::{
     collections::HashMap,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
 use crossterm::style::Stylize;
-use relative_path::RelativePath;
 
 use super::{
     drop_path_end, filepaths, find_executables_in_path, path_end, Completer, Completion,
@@ -125,7 +124,7 @@ pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Comple
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let cur_word = ctx.cur_word().unwrap();
     let drop_end = drop_path_end(cur_word);
-    let cur_path = RelativePath::new(&drop_end).to_path(std::env::current_dir().unwrap());
+    let cur_path = to_absolute(&drop_end, &dirs::home_dir().unwrap());
 
     let output = filepaths(&cur_path).unwrap_or(vec![]);
     output
@@ -145,6 +144,25 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
             }
         })
         .collect::<Vec<_>>()
+}
+
+/// Takes in an arbitrary path that user enters and convert it into an absolute path
+fn to_absolute(path_str: &str, home_dir: &Path) -> PathBuf {
+    let path_buf = PathBuf::from(path_str);
+
+    let absolute = if path_buf.has_root() {
+        path_buf
+    } else {
+        // handle home directory tilde
+        // TODO ~username/ not yet handled
+        if let Ok(stripped) = path_buf.strip_prefix("~/") {
+            home_dir.join(stripped)
+        } else {
+            std::env::current_dir().unwrap().join(path_buf)
+        }
+    };
+
+    absolute
 }
 
 pub fn git_action(ctx: &CompletionCtx) -> Vec<Completion> {
@@ -188,8 +206,8 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 pub fn path_pred(ctx: &CompletionCtx) -> bool {
     // strip part after slash
     let cur_word = ctx.cur_word().unwrap();
-    let cur_path =
-        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
+    // TODO should tehnically be using HOME env variable?
+    let cur_path = to_absolute(&drop_path_end(cur_word), &dirs::home_dir().unwrap());
 
     cur_path.is_dir()
 }

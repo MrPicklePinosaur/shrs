@@ -125,7 +125,7 @@ pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Comple
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let cur_word = ctx.cur_word().unwrap();
     let drop_end = drop_path_end(cur_word);
-    let cur_path = RelativePath::new(&drop_end).to_path(std::env::current_dir().unwrap());
+    let cur_path = to_absolute(&drop_end);
 
     let output = filepaths(&cur_path).unwrap_or(vec![]);
     output
@@ -145,6 +145,21 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
             }
         })
         .collect::<Vec<_>>()
+}
+
+/// Takes in an arbitrary path that user enters and convert it into an absolute path
+fn to_absolute(path_str: &str) -> PathBuf {
+    let path_buf = PathBuf::from(path_str);
+
+    let absolute = if path_buf.has_root() {
+        path_buf
+    } else {
+        // TODO handle tilde
+        let cur_dir = std::env::current_dir().unwrap();
+        cur_dir.join(path_buf)
+    };
+
+    absolute
 }
 
 pub fn git_action(ctx: &CompletionCtx) -> Vec<Completion> {
@@ -188,8 +203,7 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 pub fn path_pred(ctx: &CompletionCtx) -> bool {
     // strip part after slash
     let cur_word = ctx.cur_word().unwrap();
-    let cur_path =
-        RelativePath::new(&drop_path_end(cur_word)).to_path(std::env::current_dir().unwrap());
+    let cur_path = to_absolute(&drop_path_end(cur_word));
 
     cur_path.is_dir()
 }

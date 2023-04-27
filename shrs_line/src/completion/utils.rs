@@ -84,6 +84,16 @@ pub(crate) fn path_end(path: &str) -> String {
     end.chars().rev().collect::<String>()
 }
 
+// TODO could technically move this to utility crate
+pub mod path {
+
+    pub struct Path {
+        source: std::path::PathBuf,
+    }
+
+    impl Path {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::drop_path_end;

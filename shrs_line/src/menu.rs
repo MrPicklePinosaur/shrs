@@ -61,14 +61,18 @@ impl Menu for DefaultMenu {
     type PreviewItem = String;
 
     fn next(&mut self) {
-        self.cursor = if self.selections.is_empty() {
-            0
+        if self.cursor as usize == self.selections.len().saturating_sub(1) {
+            self.cursor = 0;
         } else {
-            (self.cursor + 1).min(self.selections.len() as u32 - 1)
-        };
+            self.cursor += 1;
+        }
     }
     fn previous(&mut self) {
-        self.cursor = self.cursor.saturating_sub(1);
+        if self.cursor == 0 {
+            self.cursor = self.selections.len().saturating_sub(1) as u32;
+        } else {
+            self.cursor = self.cursor.saturating_sub(1);
+        }
     }
     fn accept(&mut self) -> Option<&String> {
         self.disactivate();

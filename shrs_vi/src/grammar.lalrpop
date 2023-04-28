@@ -19,6 +19,7 @@ pub Motion: Motion = {
     "l" => Motion::Right,
     "$" => Motion::End,
     "^" => Motion::Start,
+    "0" => Motion::Start, // currently implemeting 0 as same as ^
 };
 
 pub Action: Action = {
@@ -26,6 +27,10 @@ pub Action: Action = {
     "c" <m:Motion> => Action::Change(m),
     "y" <m:Motion> => Action::Yank(m),
     "i" => Action::Insert,
+
+    "x" => Action::Delete(Motion::Char),
+    "D" => Action::Delete(Motion::End),
+
     <m:Motion> => Action::Move(m)
 };
 

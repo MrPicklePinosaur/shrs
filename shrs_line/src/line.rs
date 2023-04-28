@@ -371,11 +371,13 @@ impl Line {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {
-                                    ctx.cb.execute_vi(action)?;
+                                    // purposely unchecked
+                                    ctx.cb.execute_vi(action);
                                 },
                             },
                             action => {
-                                ctx.cb.execute_vi(action)?;
+                                // purposely unchecked
+                                ctx.cb.execute_vi(action);
                             },
                         }
                     }

@@ -1,6 +1,6 @@
 //! Friendly wrapper around Rope data structure that includes a cursor as well as relative and
 //! absolute indexing
-use std::ops::{Add, RangeBounds};
+use std::ops::{Add, RangeBounds, Sub};
 
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;

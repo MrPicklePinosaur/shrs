@@ -68,12 +68,12 @@ impl ViCursorBuffer for CursorBuffer {
     fn execute_vi(&mut self, action: Action) -> Result<()> {
         match action {
             Action::Move(motion) => match motion {
-                Motion::Left => self.move_cursor(Location::Before()),
-                Motion::Right => self.move_cursor(Location::After()),
-                Motion::Start => self.move_cursor(Location::Front()),
-                Motion::End => self.move_cursor(Location::Back(self)),
-                Motion::Word => self.move_cursor(self.motion_to_loc(motion)?),
-                Motion::BackWord => self.move_cursor(self.motion_to_loc(motion)?),
+                Motion::Left
+                | Motion::Right
+                | Motion::Start
+                | Motion::End
+                | Motion::Word
+                | Motion::BackWord => self.move_cursor(self.motion_to_loc(motion)?),
                 _ => Ok(()),
             },
             Action::Delete(motion) => match motion {
@@ -81,20 +81,14 @@ impl ViCursorBuffer for CursorBuffer {
                     self.clear();
                     Ok(())
                 },
-                Motion::Char => {
-                    self.delete(Location::Cursor(), 1)?;
-                    Ok(())
-                },
-                Motion::End => {
-                    // self.delete(Location::Cursor(), )?;
-                    Ok(())
-                },
+                Motion::Left
+                | Motion::Right
+                | Motion::Start
+                | Motion::End
+                | Motion::Char
+                | Motion::Word
+                | Motion::BackWord => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
                 _ => Ok(()),
-            },
-            Action::Change(motion) => {
-                self.execute_vi(Action::Delete(motion))?;
-                self.execute_vi(Action::Insert)?;
-                Ok(())
             },
             _ => Ok(()),
         }
@@ -139,40 +133,3 @@ mod test {
         Ok(())
     }
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use super::{ViAction, ViCursorBuffer};
-    use crate::cursor_buffer::{CursorBuffer, Location, Result};
-
-    #[test]
-    fn move_next_word() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello world goodbye world");
-
-        cb.execute_vi(ViAction::MoveNextWord)?;
-        assert_eq!(cb.cursor(), 6);
-
-        cb.execute_vi(ViAction::MoveNextWord)?;
-        assert_eq!(cb.cursor(), 12);
-
-        Ok(())
-    }
-
-    #[test]
-    fn move_back_word() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello world goodbye world");
-        cb.execute_vi(ViAction::MoveEnd)?;
-        cb.execute_vi(ViAction::MoveLeft)?;
-        assert_eq!(cb.cursor(), 24);
-
-        cb.execute_vi(ViAction::MoveBackWord)?;
-        assert_eq!(cb.cursor(), 20);
-
-        cb.execute_vi(ViAction::MoveBackWord)?;
-        assert_eq!(cb.cursor(), 12);
-
-        Ok(())
-    }
-}
-*/

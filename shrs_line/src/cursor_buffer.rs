@@ -171,13 +171,14 @@ impl CursorBuffer {
     }
 
     /// Delete a length of text starting from location and move cursor to start of deleted text
-    pub fn delete(&mut self, loc: Location, len: usize) -> Result<()> {
-        let start = self.to_absolute(loc)?;
-        if start + len > self.len() {
-            return Err(Error::DeletingTooMuch);
-        }
-        self.data.remove(start..start + len);
-        self.move_cursor(Location::Abs(start))?;
+    pub fn delete(&mut self, start: Location, end: Location) -> Result<()> {
+        let start = self.to_absolute(start)?;
+        let end = self.to_absolute(end)?;
+
+        let range = if start <= end { start..end } else { end..start };
+
+        self.data.remove(range);
+        self.move_cursor(Location::Abs(start.min(end)))?;
         Ok(())
     }
 

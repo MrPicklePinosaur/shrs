@@ -69,7 +69,7 @@ impl Default for Line {
     }
 }
 
-struct LineCtx {
+pub struct LineCtx {
     cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
@@ -305,7 +305,7 @@ impl Line {
                 ..
             }) => {
                 if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
-                    ctx.cb.delete(Location::Before(), 1)?;
+                    ctx.cb.delete(Location::Before(), Location::Cursor())?;
                 }
             },
             Event::Key(KeyEvent {
@@ -367,15 +367,21 @@ impl Line {
                             Action::Insert => {
                                 ctx.mode = LineMode::Insert;
                             },
+                            Action::Change(motion) => {
+                                ctx.cb.execute_vi(Action::Delete(motion));
+                                ctx.mode = LineMode::Insert;
+                            },
                             Action::Move(motion) => match motion {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {
-                                    ctx.cb.execute_vi(action)?;
+                                    // purposely unchecked
+                                    ctx.cb.execute_vi(action);
                                 },
                             },
                             action => {
-                                ctx.cb.execute_vi(action)?;
+                                // purposely unchecked
+                                ctx.cb.execute_vi(action);
                             },
                         }
                     }
@@ -394,7 +400,10 @@ impl Line {
         // TODO could implement a delete_before
         ctx.cb
             .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
-        ctx.cb.delete(Location::Cursor(), ctx.current_word.len())?;
+        ctx.cb.delete(
+            Location::Cursor(),
+            Location::Rel(ctx.current_word.len() as isize),
+        )?;
 
         // then replace with the completion word
         ctx.cb.insert(Location::Cursor(), accepted)?;

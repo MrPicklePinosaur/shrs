@@ -19,20 +19,29 @@ pub Motion: Motion = {
     "l" => Motion::Right,
     "$" => Motion::End,
     "^" => Motion::Start,
+    "0" => Motion::Start, // currently implemeting 0 as same as ^
+    "f" <c:r"[a-zA-Z0-9]"> => Motion::Find(c.chars().next().unwrap()),
 };
 
 pub Action: Action = {
     <a:DeleteAction> => a,
-    "c" <m:Motion> => Action::Change(m),
+    <a:ChangeAction> => a,
     "y" <m:Motion> => Action::Yank(m),
     "i" => Action::Insert,
+    "x" => Action::Delete(Motion::Char),
     <m:Motion> => Action::Move(m)
 };
 
 pub DeleteAction: Action = {
     "d" "d" => Action::Delete(Motion::All),
+    "D" => Action::Delete(Motion::End),
     "d" <m:Motion> => Action::Delete(m),
 };
 
-pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();
+pub ChangeAction: Action = {
+    "c" "c" => Action::Change(Motion::All),
+    "C" => Action::Change(Motion::End),
+    "c" <m:Motion> => Action::Change(m),
+};
 
+pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();

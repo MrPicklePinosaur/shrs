@@ -2,6 +2,7 @@ use std::{io::Write, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_vi::{Action, Command, Motion, Parser};
@@ -178,7 +179,22 @@ impl Line {
                 let res = ctx.cb.slice(..).as_str().unwrap();
 
                 // syntax highlight
-                let styled_buf = self.highlighter.highlight(res);
+                let mut styled_buf = self.highlighter.highlight(res);
+
+                // add currently selected completion to buf
+                if self.menu.is_active() {
+                    if let Some(selection) = self.menu.current_selection() {
+                        let trimmed_selection = &selection[ctx.current_word.len()..];
+                        styled_buf.push(StyledContent::new(
+                            ContentStyle {
+                                foreground_color: Some(Color::Red),
+                                ..Default::default()
+                            },
+                            trimmed_selection.to_string(),
+                        ));
+                    }
+                }
+
                 self.painter.paint(
                     &prompt,
                     &self.menu,

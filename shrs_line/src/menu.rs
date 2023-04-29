@@ -18,6 +18,7 @@ pub trait Menu {
     fn next(&mut self);
     fn previous(&mut self);
     fn accept(&mut self) -> Option<&Self::MenuItem>;
+    fn current_selection(&self) -> Option<&Self::MenuItem>;
     fn cursor(&self) -> u32;
     fn is_active(&self) -> bool;
     fn activate(&mut self);
@@ -76,6 +77,9 @@ impl Menu for DefaultMenu {
     }
     fn accept(&mut self) -> Option<&String> {
         self.disactivate();
+        self.current_selection()
+    }
+    fn current_selection(&self) -> Option<&String> {
         self.selections.get(self.cursor as usize).map(|x| &x.1)
     }
     fn cursor(&self) -> u32 {

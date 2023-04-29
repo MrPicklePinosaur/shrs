@@ -20,7 +20,7 @@ pub Motion: Motion = {
     "$" => Motion::End,
     "^" => Motion::Start,
     "0" => Motion::Start, // currently implemeting 0 as same as ^
-    "f" <c:r"[a-zA-Z0-9]"> => Motion::Find(c.chars().next().unwrap()),
+    "f" <c:r"[a-zA-Z]"> => Motion::Find(c.chars().next().unwrap()),
 };
 
 pub Action: Action = {

@@ -18,6 +18,7 @@ pub enum Motion {
     Char,
     /// Select entire line (for Move action this behaves same as End)
     All,
+    Find(char),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

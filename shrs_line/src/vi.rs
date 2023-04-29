@@ -14,6 +14,14 @@ pub trait ViCursorBuffer {
 impl ViCursorBuffer for CursorBuffer {
     fn motion_to_loc(&self, motion: Motion) -> Result<Location> {
         match motion {
+            Motion::Find(c) => {
+                // if current char is character we are looking for go to next one
+                let offset = match self.char_at(Location::Cursor()) {
+                    Some(cur_char) if cur_char == c => Location::After(),
+                    _ => Location::Cursor(),
+                };
+                Ok(Location::FindChar(self, offset, c).unwrap_or_default())
+            },
             Motion::Left => Ok(Location::Before()),
             Motion::Right => Ok(Location::After()),
             Motion::Start => Ok(Location::Front()),
@@ -73,7 +81,8 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Start
                 | Motion::End
                 | Motion::Word
-                | Motion::BackWord => self.move_cursor(self.motion_to_loc(motion)?),
+                | Motion::BackWord
+                | Motion::Find(_) => self.move_cursor(self.motion_to_loc(motion)?),
                 _ => Ok(()),
             },
             Action::Delete(motion) => match motion {
@@ -87,7 +96,8 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::End
                 | Motion::Char
                 | Motion::Word
-                | Motion::BackWord => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
+                | Motion::BackWord
+                | Motion::Find(_) => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
                 _ => Ok(()),
             },
             _ => Ok(()),

@@ -61,35 +61,35 @@ impl Location {
     }
 
     /// Location of the next occurrence of character
-    pub fn FindChar(cb: &CursorBuffer, c: char) -> Option<Location> {
-        Location::Find(cb, |ch| ch == c)
+    pub fn FindChar(cb: &CursorBuffer, start: Location, c: char) -> Option<Location> {
+        Location::Find(cb, start, |ch| ch == c)
     }
 
     /// Location of the next occurrence of predicate
-    pub fn Find<P>(cb: &CursorBuffer, predicate: P) -> Option<Location>
+    pub fn Find<P>(cb: &CursorBuffer, start: Location, predicate: P) -> Option<Location>
     where
         Self: Sized,
         P: FnMut(char) -> bool,
     {
-        let ind = cb.chars(Location::Cursor()).unwrap().position(predicate);
-        ind.map(|i| Location::Abs(cb.cursor() + i))
+        let ind = cb.chars(start).unwrap().position(predicate);
+        ind.map(|i| start + Location::Rel(i as isize))
     }
 
     /// Location of the previous occurrence of character
-    pub fn FindCharBack(cb: &CursorBuffer, c: char) -> Option<Location> {
-        Location::FindBack(cb, |ch| ch == c)
+    pub fn FindCharBack(cb: &CursorBuffer, start: Location, c: char) -> Option<Location> {
+        Location::FindBack(cb, start, |ch| ch == c)
     }
 
     /// Location of the previous occurrence of predicate
-    pub fn FindBack<P>(cb: &CursorBuffer, predicate: P) -> Option<Location>
+    pub fn FindBack<P>(cb: &CursorBuffer, start: Location, predicate: P) -> Option<Location>
     where
         Self: Sized,
         P: FnMut(char) -> bool,
     {
-        let mut it = cb.chars(Location::Cursor()).unwrap();
+        let mut it = cb.chars(start).unwrap();
         it.reverse();
         let ind = it.position(predicate);
-        ind.map(|i| Location::Abs(cb.cursor().saturating_sub(i + 1)))
+        ind.map(|i| start + Location::Rel(-1 * (i + 1) as isize))
     }
 }
 
@@ -306,8 +306,11 @@ mod tests {
     fn find_char() -> Result<()> {
         let cb = CursorBuffer::from_str("hello");
 
-        assert_eq!(Location::FindChar(&cb, 'l'), Some(Location::Abs(2)));
-        assert_eq!(Location::FindChar(&cb, 'x'), None);
+        assert_eq!(
+            Location::FindChar(&cb, Location::Cursor(), 'l'),
+            Some(Location::Abs(2))
+        );
+        assert_eq!(Location::FindChar(&cb, Location::Cursor(), 'x'), None);
         Ok(())
     }
 
@@ -316,8 +319,11 @@ mod tests {
         let mut cb = CursorBuffer::from_str("hello");
         cb.move_cursor(Location::Back(&cb))?;
 
-        assert_eq!(Location::FindCharBack(&cb, 'l'), Some(Location::Abs(3)));
-        assert_eq!(Location::FindCharBack(&cb, 'x'), None);
+        assert_eq!(
+            Location::FindCharBack(&cb, Location::Cursor(), 'l'),
+            Some(Location::Abs(3))
+        );
+        assert_eq!(Location::FindCharBack(&cb, Location::Cursor(), 'x'), None);
         Ok(())
     }
 }

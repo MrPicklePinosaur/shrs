@@ -1,0 +1,43 @@
+name: Build Example
+on:
+  workflow_dispatch: {}
+
+env:
+  binary: shrs_example
+
+jobs:
+  release_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: little-core-labs/get-git-tag@v3.0.1
+        id: get_version
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+      - name: Build
+        run: |
+          cargo build --release --target x86_64-unknown-linux-gnu
+      - name: Prepare package
+        run: |
+          mkdir linux
+          cp target/x86_64-unknown-linux-gnu/release/shrs_example linux/
+          chmod +x linux/shrs_example
+      - name: Package as a zip
+        uses: vimtor/action-zip@v1
+        with:
+          files: linux
+          dest: ${{ env.binary }}.zip
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          release_name: nightly build ${{ github.ref }}
+          prerelease: true
+          body: Development build of the example shell
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ env.binary }}.zip
+          asset_name: ${{ env.binary }}-linux-${{ github.ref }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true

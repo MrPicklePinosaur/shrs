@@ -4,6 +4,9 @@ default: debug
 debug:
     cargo +nightly run shrs_example
 
+build:
+    cargo build --release --target x86_64-unknown-linux-gnu
+
 install:
     cargo install --profile=release --path shrs_example
 

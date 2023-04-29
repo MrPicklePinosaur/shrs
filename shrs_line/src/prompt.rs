@@ -1,8 +1,12 @@
 //! Shell prompt
 
+use crossterm::style::{ContentStyle, StyledContent};
+
+use crate::painter::StyledBuf;
+
 pub trait Prompt {
-    fn prompt_left(&self) -> String;
-    fn prompt_right(&self) -> String;
+    fn prompt_left(&self) -> StyledBuf;
+    fn prompt_right(&self) -> StyledBuf;
 }
 
 /// Default implementation for [Prompt]
@@ -15,11 +19,14 @@ impl DefaultPrompt {
 }
 
 impl Prompt for DefaultPrompt {
-    fn prompt_left(&self) -> String {
-        String::from("> ")
+    fn prompt_left(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec![StyledContent::new(
+            ContentStyle::new(),
+            "> ".to_string(),
+        )])
     }
 
-    fn prompt_right(&self) -> String {
-        String::new()
+    fn prompt_right(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec![])
     }
 }

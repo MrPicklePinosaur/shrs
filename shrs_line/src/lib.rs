@@ -23,6 +23,7 @@ pub mod vi;
 
 mod cursor_buffer;
 mod painter;
+pub use painter::StyledBuf;
 
 mod highlight;
 pub use highlight::{DefaultHighlighter, Highlighter};

@@ -2,7 +2,7 @@ use std::io::{stdout, BufWriter, Write};
 
 use crossterm::{
     cursor::{self, MoveToColumn},
-    style::{Print, StyledContent},
+    style::{Print, PrintStyledContent, StyledContent},
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
@@ -23,9 +23,25 @@ impl StyledBuf {
         self.spans.push(span);
     }
 
-    /// Get each block of styled text
-    pub fn spans(&self) -> &Vec<StyledContent<String>> {
-        &self.spans
+    fn spans(&self) -> impl Iterator<Item = &StyledContent<String>> {
+        self.spans.iter()
+    }
+
+    fn into_spans(self) -> impl IntoIterator<Item = StyledContent<String>> {
+        self.spans.into_iter()
+    }
+
+    /// Length of content in characters
+    pub fn content_len(&self) -> usize {
+        self.spans.iter().map(|s| s.content().len()).sum()
+    }
+}
+
+impl FromIterator<StyledContent<String>> for StyledBuf {
+    fn from_iter<T: IntoIterator<Item = StyledContent<String>>>(iter: T) -> Self {
+        Self {
+            spans: Vec::from_iter(iter),
+        }
     }
 }
 
@@ -90,8 +106,10 @@ impl Painter {
         // render left prompt
         let mut left_space = 0; // cursor position from left side of terminal
         let prompt_left = prompt.as_ref().prompt_left();
-        left_space += prompt_left.len();
-        self.out.queue(Print(prompt_left))?;
+        left_space += prompt_left.content_len();
+        for span in prompt_left.into_spans() {
+            self.out.queue(PrintStyledContent(span))?;
+        }
 
         // render line (with syntax highlight spans)
         left_space += cursor_ind;
@@ -102,9 +120,11 @@ impl Painter {
         // render right prompt
         let mut right_space = self.term_size.0;
         let prompt_right = prompt.as_ref().prompt_right();
-        right_space -= prompt_right.len() as u16;
+        right_space -= prompt_right.content_len() as u16;
         self.out.queue(MoveToColumn(right_space))?;
-        self.out.queue(Print(prompt_right))?;
+        for span in prompt_right.into_spans() {
+            self.out.queue(PrintStyledContent(span))?;
+        }
 
         // render menu
         if menu.is_active() {

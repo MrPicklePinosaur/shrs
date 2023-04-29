@@ -11,6 +11,7 @@ use shrs::{
     line::{
         completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
+        StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
@@ -20,19 +21,19 @@ use shrs_output_capture::OutputCapturePlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self) -> String {
-        // let path = top_pwd().white().bold();
-        // let username = username().unwrap_or_default().blue();
-        // let hostname = hostname().unwrap_or_default().blue();
-        // let prompt = ">".blue();
-        let path = top_pwd();
-        let username = username().unwrap_or_default();
-        let hostname = hostname().unwrap_or_default();
-        let prompt = ">";
-        format!("{hostname}@{username} {path} {prompt} ")
+    fn prompt_left(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec![
+            username().unwrap_or_default().blue(),
+            String::from("@").reset(),
+            hostname().unwrap_or_default().blue(),
+            String::from(" ").reset(),
+            top_pwd().white().bold(),
+            String::from(" ").reset(),
+            "> ".to_string().blue(),
+        ])
     }
-    fn prompt_right(&self) -> String {
-        format!("shrs ")
+    fn prompt_right(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])
     }
 }
 

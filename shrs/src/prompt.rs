@@ -1,6 +1,6 @@
 //! Collection of utility functions for building a prompt
 
-use std::{borrow::Cow, ffi::OsString, process::Command};
+use std::{borrow::Cow, ffi::OsString, path::PathBuf, process::Command};
 
 use anyhow::anyhow;
 
@@ -15,11 +15,22 @@ pub fn full_pwd() -> String {
 
 /// Get the top level working directory
 pub fn top_pwd() -> String {
-    if let Some(file_name) = std::env::current_dir().unwrap().file_name() {
-        file_name.to_os_string().into_string().unwrap()
-    } else {
-        // special case for when in root directory
+    let cur_dir = std::env::current_dir().unwrap();
+    let home_dir = dirs::home_dir().unwrap();
+
+    if cur_dir == home_dir {
+        // home directory case
+        String::from("~")
+    } else if cur_dir == PathBuf::from("/") {
+        // root directory case
         String::from("/")
+    } else {
+        cur_dir
+            .file_name()
+            .unwrap()
+            .to_os_string()
+            .into_string()
+            .unwrap()
     }
 }
 

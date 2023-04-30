@@ -41,10 +41,6 @@ impl Prompt for MyPrompt {
     }
 }
 
-fn clear_screen_binding() {
-    Command::new("clear").spawn();
-}
-
 fn main() {
     let mut out = BufWriter::new(stdout());
 
@@ -65,7 +61,9 @@ fn main() {
     let highlighter = DefaultHighlighter::default();
     let keybinding = DefaultKeybinding::from_iter([(
         (KeyCode::Char('l'), KeyModifiers::CONTROL),
-        Box::new(clear_screen_binding) as Box<dyn FnMut()>,
+        Box::new(|| {
+            Command::new("clear").spawn();
+        }) as Box<dyn FnMut()>,
     )]);
 
     let readline = LineBuilder::default()

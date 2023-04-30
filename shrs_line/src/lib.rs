@@ -28,5 +28,8 @@ pub use painter::StyledBuf;
 mod highlight;
 pub use highlight::{DefaultHighlighter, Highlighter};
 
+mod keybinding;
+pub use keybinding::{DefaultKeybinding, Keybinding};
+
 #[cfg(test)]
 mod tests {}

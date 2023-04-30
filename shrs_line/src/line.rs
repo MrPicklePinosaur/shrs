@@ -17,6 +17,7 @@ use crate::{
     painter::{Painter, StyledBuf},
     prompt::Prompt,
     vi::ViCursorBuffer,
+    DefaultKeybinding, Keybinding,
 };
 
 /// Operating mode of readline
@@ -50,8 +51,12 @@ pub struct Line {
     cursor: Box<dyn Cursor>,
 
     #[builder(default = "Box::new(DefaultHighlighter::default())")]
-    #[builder(setter(skip))]
+    #[builder(setter(custom))]
     highlighter: Box<dyn Highlighter>,
+
+    #[builder(default = "Box::new(DefaultKeybinding::new())")]
+    #[builder(setter(custom))]
+    keybinding: Box<dyn Keybinding>,
 
     // ignored fields
     #[builder(default = "Painter::new()")]
@@ -111,9 +116,12 @@ impl LineBuilder {
         self.cursor = Some(Box::new(cursor));
         self
     }
-    pub fn with_highlighter(self, _highlighter: impl Highlighter + 'static) -> Self {
-        // TODO not sure why this expects phantom data
-        // self.highlighter = Some(Box::new(highlighter));
+    pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
+        self.highlighter = Some(Box::new(highlighter));
+        self
+    }
+    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
+        self.keybinding = Some(Box::new(keybinding));
         self
     }
 }
@@ -154,6 +162,12 @@ impl Line {
         loop {
             if poll(Duration::from_millis(1000))? {
                 let event = read()?;
+
+                if let Event::Key(key_event) = event {
+                    if self.keybinding.handle_key_event(key_event) {
+                        break;
+                    }
+                }
 
                 // handle menu events
                 if self.menu.is_active() {

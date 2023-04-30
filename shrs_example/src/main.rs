@@ -1,17 +1,21 @@
 use std::{
     default,
     io::{stdout, BufWriter},
+    process::Command,
 };
 
 use anyhow::Result;
-use crossterm::style::Stylize;
+use crossterm::{
+    event::{KeyCode, KeyModifiers},
+    style::Stylize,
+};
 use shrs::{
     builtin::Builtins,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
-        DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultMenu, Line, LineBuilder, Prompt,
-        StyledBuf,
+        DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultKeybinding, DefaultMenu,
+        Keybinding, Line, LineBuilder, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
@@ -37,6 +41,10 @@ impl Prompt for MyPrompt {
     }
 }
 
+fn clear_screen_binding() {
+    Command::new("clear").spawn();
+}
+
 fn main() {
     let mut out = BufWriter::new(stdout());
 
@@ -55,6 +63,10 @@ fn main() {
     let history = DefaultHistory::new();
     let cursor = DefaultCursor::default();
     let highlighter = DefaultHighlighter::default();
+    let keybinding = DefaultKeybinding::from_iter([(
+        (KeyCode::Char('l'), KeyModifiers::CONTROL),
+        Box::new(clear_screen_binding) as Box<dyn FnMut()>,
+    )]);
 
     let readline = LineBuilder::default()
         .with_cursor(cursor)
@@ -62,6 +74,7 @@ fn main() {
         .with_menu(menu)
         .with_history(history)
         .with_highlighter(highlighter)
+        .with_keybinding(keybinding)
         .build()
         .unwrap();
 
@@ -73,6 +86,7 @@ fn main() {
         ("c".into(), "cd".into()),
         ("g".into(), "git".into()),
         ("v".into(), "vim".into()),
+        ("V".into(), "nvim".into()),
         ("la".into(), "ls -a --color=auto".into()),
     ]);
 

@@ -73,6 +73,7 @@ fn main() {
         ("c".into(), "cd".into()),
         ("g".into(), "git".into()),
         ("v".into(), "vim".into()),
+        ("V".into(), "nvim".into()),
         ("la".into(), "ls -a --color=auto".into()),
     ]);
 

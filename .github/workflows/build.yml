@@ -33,11 +33,11 @@ jobs:
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
-          release_name: nightly build ${{ github.ref }}
+          release_name: nightly build ${{ github.sha }}
           prerelease: true
           body: Development build of the example shell
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ env.binary }}.zip
-          asset_name: ${{ env.binary }}-linux-${{ github.ref }}.zip
+          asset_name: ${{ env.binary }}-linux-${{ github.sha }}.zip
           tag: ${{ github.ref }}
           overwrite: true

@@ -221,7 +221,11 @@ impl Shell {
 
             // attempt to expand alias
             // TODO IFS
-            let mut words = line.split(" ").collect::<Vec<_>>();
+            let mut words = line
+                .split(" ")
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect::<Vec<_>>();
             if let Some(first) = words.get_mut(0) {
                 if let Some(expanded) = ctx.alias.get(&first.clone()) {
                     *first = expanded;

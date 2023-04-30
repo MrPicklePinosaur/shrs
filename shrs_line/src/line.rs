@@ -163,6 +163,12 @@ impl Line {
             if poll(Duration::from_millis(1000))? {
                 let event = read()?;
 
+                if let Event::Key(key_event) = event {
+                    if self.keybinding.handle_key_event(key_event) {
+                        break;
+                    }
+                }
+
                 // handle menu events
                 if self.menu.is_active() {
                     self.handle_menu_keys(ctx, event)?;

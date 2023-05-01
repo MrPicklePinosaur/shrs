@@ -1,5 +1,13 @@
 //! Shell history
 
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
+
+use thiserror::Error;
+
 /// Trait to implement for shell history
 pub trait History {
     type HistoryItem;
@@ -55,4 +63,39 @@ impl History for DefaultHistory {
     fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
         self.hist.get(i)
     }
+}
+
+/// Store the history persistantly in a file on disk
+///
+/// History file is a very simple file consistaning of each history item on it's own line
+// TODO potential options
+// - history len
+// - remove duplicates
+// - only use valid commands
+// - resolve alias
+pub struct FileBackedHistory {
+    hist: Vec<String>,
+}
+
+#[derive(Debug, Error)]
+pub enum FileBackedHistoryError {
+    #[error("error when opening history file {0}")]
+    OpeningHistFile(std::io::Error),
+}
+
+impl FileBackedHistory {
+    pub fn new(hist_file: PathBuf) -> Result<Self, FileBackedHistoryError> {
+        Ok(FileBackedHistory { hist: vec![] })
+    }
+}
+
+fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHistoryError> {
+    let handle = File::open(hist_file).map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+    let reader = BufReader::new(handle);
+    // TODO should error/terminate when a line cannot be read?
+    let hist = reader
+        .lines()
+        .filter_map(|line| line.ok())
+        .collect::<Vec<_>>();
+    Ok(hist)
 }

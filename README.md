@@ -19,6 +19,8 @@ The rusty POSIX shell library for hackers
 
 ## FEATURES
 
+<img width=50% src="media/demo.gif"/>
+
 DISCLAIMER: **shrs** is currently very much a work in progress, the API is subject to change frequently and things are prone to breaking. It currently may not be suitable for daily use, but is great for prototyping any experimental shell features you dream up with!
 
 Here are what makes **shrs** special:

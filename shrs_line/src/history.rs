@@ -2,10 +2,11 @@
 
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     path::PathBuf,
 };
 
+use crossterm::QueueableCommand;
 use thiserror::Error;
 
 /// Trait to implement for shell history
@@ -75,22 +76,78 @@ impl History for DefaultHistory {
 // - resolve alias
 pub struct FileBackedHistory {
     hist: Vec<String>,
+    hist_file: PathBuf,
 }
 
 #[derive(Debug, Error)]
 pub enum FileBackedHistoryError {
     #[error("error when opening history file {0}")]
     OpeningHistFile(std::io::Error),
+    #[error("error writing history to disk {0}")]
+    Flush(std::io::Error),
 }
 
 impl FileBackedHistory {
     pub fn new(hist_file: PathBuf) -> Result<Self, FileBackedHistoryError> {
-        Ok(FileBackedHistory { hist: vec![] })
+        let hist = parse_history_file(hist_file.clone())?;
+        Ok(FileBackedHistory { hist, hist_file })
+    }
+
+    fn flush(&self) -> Result<(), FileBackedHistoryError> {
+        // TODO consider keeping handle to history file open the entire time
+        let handle = File::options()
+            .write(true)
+            .open(&self.hist_file)
+            .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+        let mut writer = BufWriter::new(handle);
+        writer
+            .write_all(self.hist.join("\n").as_bytes())
+            .map_err(|e| FileBackedHistoryError::Flush(e))?;
+        writer
+            .flush()
+            .map_err(|e| FileBackedHistoryError::Flush(e))?;
+        Ok(())
+    }
+}
+
+impl History for FileBackedHistory {
+    type HistoryItem = String;
+
+    fn add(&mut self, item: Self::HistoryItem) {
+        self.hist.insert(0, item);
+        // TODO consider how often we want to flush
+        self.flush().unwrap();
+    }
+
+    fn clear(&mut self) {
+        self.hist.clear();
+        self.flush().unwrap();
+    }
+
+    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem> {
+    //     todo!()
+    // }
+
+    fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
+        todo!()
+    }
+
+    fn len(&self) -> usize {
+        self.hist.len()
+    }
+
+    fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
+        self.hist.get(i)
     }
 }
 
 fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHistoryError> {
-    let handle = File::open(hist_file).map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+    let handle = File::options()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(hist_file)
+        .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
     let reader = BufReader::new(handle);
     // TODO should error/terminate when a line cannot be read?
     let hist = reader

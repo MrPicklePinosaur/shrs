@@ -1,6 +1,7 @@
 use std::{
-    default,
+    default, fs,
     io::{stdout, BufWriter},
+    path::Path,
     process::Command,
 };
 
@@ -15,7 +16,7 @@ use shrs::{
     line::{
         completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultKeybinding, DefaultMenu,
-        Keybinding, Line, LineBuilder, Prompt, StyledBuf,
+        FileBackedHistory, Keybinding, Line, LineBuilder, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
@@ -56,7 +57,16 @@ fn main() {
     ));
 
     let menu = DefaultMenu::new();
-    let history = DefaultHistory::new();
+
+    // init config directory
+    let config_dir = dirs::home_dir().unwrap().as_path().join(".config/shrs");
+    // also log when creating dir
+    // TODO ignore errors for now (we dont care if dir already exists)
+    fs::create_dir_all(config_dir.clone());
+
+    let history_file = config_dir.as_path().join("history");
+    let history = FileBackedHistory::new(history_file).unwrap();
+
     let cursor = DefaultCursor::default();
     let highlighter = DefaultHighlighter::default();
     let keybinding = DefaultKeybinding::from_iter([(

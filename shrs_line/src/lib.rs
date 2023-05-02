@@ -10,7 +10,7 @@ mod cursor;
 pub use cursor::{Cursor, DefaultCursor};
 
 mod history;
-pub use history::{DefaultHistory, History};
+pub use history::{DefaultHistory, FileBackedHistory, History};
 
 mod menu;
 pub use menu::{DefaultMenu, Menu};

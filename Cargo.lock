@@ -1062,6 +1062,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "crossterm",
+ "dirs",
  "shrs",
  "shrs_output_capture",
 ]

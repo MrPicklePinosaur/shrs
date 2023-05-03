@@ -10,6 +10,7 @@ pub struct Env {
 }
 
 impl Env {
+    /// Construct a new [Env] struct
     pub fn new() -> Self {
         Env {
             vars: HashMap::new(),
@@ -49,5 +50,13 @@ impl Env {
     /// If the environment variable was already not set, it is a NOOP
     pub fn remove(&mut self, var: &str) {
         self.vars.remove(var);
+    }
+}
+
+impl FromIterator<(&'static str, &'static str)> for Env {
+    fn from_iter<T: IntoIterator<Item = (&'static str, &'static str)>>(iter: T) -> Self {
+        Env {
+            vars: HashMap::from_iter(iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned()))),
+        }
     }
 }

@@ -7,4 +7,5 @@ members = [
     "shrs_vi",
     "plugins/shrs_output_capture",
     "plugins/shrs_cd_tools",
+    "plugins/shrs_derive_completion",
 ]

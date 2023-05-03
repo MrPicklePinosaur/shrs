@@ -1,0 +1,19 @@
+[package]
+name = "shrs_derive_completion"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "Specify shell completions from derive macro"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+shrs = { path = "../../shrs" }
+
+syn = { version = "1.0", features = ["full"] }
+quote = "1.0"
+
+thiserror = "1"

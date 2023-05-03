@@ -8,7 +8,7 @@ use crossterm::{
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
-    completion::{Completer, CompletionCtx, DefaultCompleter},
+    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     cursor_buffer::{CursorBuffer, Location},
     highlight::{DefaultHighlighter, Highlighter},
@@ -171,7 +171,7 @@ impl Line {
 
                 // handle menu events
                 if self.menu.is_active() {
-                    self.handle_menu_keys(ctx, event)?;
+                    self.handle_menu_keys(ctx, event.clone())?;
                 } else {
                     // TODO bit hacky bubbling up control flow from funtion
                     match ctx.mode {
@@ -287,28 +287,15 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                // TODO IFS
-                let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-                ctx.current_word = args.clone().last().unwrap_or("").to_string();
-
-                let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
-
-                let completions = self.completer.complete(&comp_ctx);
-                let completions = completions
-                    .iter()
-                    .take(10) // TODO make this config
-                    .collect::<Vec<_>>();
+                self.populate_completions(ctx)?;
+                self.menu.activate();
 
                 // if completions only has one entry, automatically select it
-                if completions.len() == 1 {
-                    self.accept_completion(ctx, &completions.get(0).unwrap().accept())?;
-                } else {
-                    let menuitems = completions
-                        .iter()
-                        .map(|c| (c.display().to_owned(), c.accept().to_owned()))
-                        .collect::<Vec<_>>();
-                    self.menu.set_items(menuitems);
-                    self.menu.activate();
+                let completion_len = self.menu.items().len();
+                if completion_len == 1 {
+                    // TODO stupid ownership stuff
+                    let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
+                    self.accept_completion(ctx, &item.0)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -330,15 +317,6 @@ impl Line {
                 }
             },
             Event::Key(KeyEvent {
-                code: KeyCode::Backspace,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
-                    ctx.cb.delete(Location::Before(), Location::Cursor())?;
-                }
-            },
-            Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -356,6 +334,15 @@ impl Line {
                 code: KeyCode::Esc, ..
             }) => {
                 ctx.mode = LineMode::Normal;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                    ctx.cb.delete(Location::Before(), Location::Cursor())?;
+                }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
@@ -422,6 +409,29 @@ impl Line {
             _ => {},
         }
         Ok(false)
+    }
+
+    // recalculate the current completions
+    fn populate_completions(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+        // TODO IFS
+        let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
+        ctx.current_word = args.clone().last().unwrap_or("").to_string();
+
+        let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
+
+        let completions = self.completer.complete(&comp_ctx);
+        let completions = completions
+            .iter()
+            .take(10) // TODO make this config
+            .collect::<Vec<_>>();
+
+        let menuitems = completions
+            .iter()
+            .map(|c| (c.display().to_owned(), c.accept().to_owned()))
+            .collect::<Vec<_>>();
+        self.menu.set_items(menuitems);
+
+        Ok(())
     }
 
     // replace word at cursor with accepted word (used in automcompletion)

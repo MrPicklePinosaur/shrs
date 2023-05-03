@@ -69,7 +69,7 @@ impl ViCursorBuffer for CursorBuffer {
                 };
                 Ok(ret + Location::After())
             },
-            _ => todo!(),
+            _ => Ok(Location::Cursor()),
         }
     }
 

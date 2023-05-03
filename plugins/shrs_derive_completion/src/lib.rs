@@ -8,7 +8,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Fields, Item, ItemStruct};
 
-#[proc_macro_derive(Builder)]
+#[proc_macro_derive(Builder, attributes(command))]
 pub fn builder(input: TokenStream) -> TokenStream {
     let parsed_input = parse_macro_input!(input as Item);
 

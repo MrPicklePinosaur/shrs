@@ -20,7 +20,7 @@ impl BuiltinCmd for HelpBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
-        let cmds = Builtins::default().builtins.into_keys();
+        let cmds = sh.builtins.builtins.keys();
 
         println!("Builtin Commands:");
 

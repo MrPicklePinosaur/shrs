@@ -3,6 +3,7 @@ mod cd;
 mod debug;
 mod exit;
 mod export;
+mod help;
 mod history;
 mod jobs;
 mod source;
@@ -15,8 +16,8 @@ use std::{
 
 use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
-    export::ExportBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin, source::SourceBuiltin,
-    unalias::UnaliasBuiltin,
+    export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
+    source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
 use crate::{
     shell::{Context, Runtime},
@@ -93,6 +94,10 @@ impl Default for Builtins {
                 (
                     "jobs",
                     Box::new(JobsBuiltin::default()) as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "help",
+                    Box::new(HelpBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
             ]),
         }

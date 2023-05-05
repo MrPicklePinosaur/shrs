@@ -10,7 +10,7 @@
 // - env hook (when envrionment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
+use std::{io::BufWriter, marker::PhantomData, path::PathBuf, time::Duration};
 
 use crossterm::{style::Print, QueueableCommand};
 
@@ -23,7 +23,7 @@ pub type HookFn<C: Clone> =
 #[derive(Clone)]
 pub struct StartupCtx {
     /// How much time it has taken for the shell to initialize
-    pub startup_time: usize,
+    pub startup_time: Duration,
 }
 
 /// Default [StartupHook]
@@ -63,7 +63,7 @@ pub struct AfterCommandCtx {
     /// Exit code of previous command
     pub exit_code: i32,
     /// Amount of time it took to run command
-    pub cmd_time: f32,
+    pub cmd_time: Duration,
     /// Command output
     pub cmd_output: String,
 }
@@ -75,6 +75,10 @@ pub fn after_command_hook(
     sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
+    println!(
+        "Time taken {}",
+        sh_rt.timer.prev_cmd_time.unwrap().as_millis()
+    );
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
     // out.queue(Print(exit_code_str))?;
     Ok(())

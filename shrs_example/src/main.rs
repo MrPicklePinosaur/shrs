@@ -44,6 +44,27 @@ impl Prompt for MyPrompt {
     }
 }
 
+struct TimerPrompt;
+impl Prompt for TimerPrompt {
+    fn prompt_left(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec![
+            username().unwrap_or_default().blue(),
+            String::from("@").reset(),
+            hostname().unwrap_or_default().blue(),
+            String::from(" ").reset(),
+            top_pwd().white().bold(),
+            String::from(" ").reset(),
+            "> ".to_string().blue(),
+        ])
+    }
+    fn prompt_right(&self) -> StyledBuf {
+        StyledBuf::from_iter(vec![
+            "shrs".to_string().blue(),
+            String::from(" In Progress ").reset(),
+        ])
+    }
+}
+
 fn main() {
     let mut out = BufWriter::new(stdout());
 
@@ -147,7 +168,7 @@ a rusty POSIX shell | build {}"#,
         .with_env(env)
         .with_alias(alias)
         .with_readline(readline)
-        .with_prompt(prompt)
+        .with_prompt(TimerPrompt)
         .with_plugin(OutputCapturePlugin)
         .build()
         .unwrap();

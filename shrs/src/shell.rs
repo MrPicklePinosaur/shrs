@@ -9,6 +9,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
     rc::Rc,
+    time::Instant,
 };
 
 use anyhow::anyhow;
@@ -25,6 +26,7 @@ use crate::{
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
     plugin::Plugin,
+    process_timer::ProcessTimer,
     signal::sig_handler,
     state::State,
     theme::Theme,
@@ -132,6 +134,7 @@ impl ShellConfig {
             args: vec![],
             exit_status: 0,
             functions: self.functions,
+            timer: ProcessTimer::new(),
         };
         let shell = Shell {
             builtins: self.builtins,
@@ -189,6 +192,8 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
+    /// Timer
+    pub timer: ProcessTimer,
 }
 
 #[derive(Error, Debug)]
@@ -207,10 +212,14 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        let res = self
-            .hooks
-            .startup
-            .run(self, ctx, rt, &StartupCtx { startup_time: 0 });
+        let res = self.hooks.startup.run(
+            self,
+            ctx,
+            rt,
+            &StartupCtx {
+                startup_time: rt.timer.init_time.elapsed(),
+            },
+        );
 
         if let Err(e) = res {
             // TODO log that startup hook failed
@@ -239,6 +248,9 @@ impl Shell {
                 command: line.clone(),
             };
             self.hooks.before_command.run(self, ctx, rt, &hook_ctx)?;
+
+            //start command timer
+            rt.timer.start_cmd_timer();
 
             // TODO rewrite the error handling here better
             let lexer = Lexer::new(&line);
@@ -668,10 +680,13 @@ impl Shell {
         let exit_status = cmd_handle.wait().unwrap().code().unwrap();
         rt.exit_status = exit_status;
 
+        //end timer
+        rt.timer.end_cmd_timer();
+
         // Call hook
         let hook_ctx = AfterCommandCtx {
             exit_code: exit_status,
-            cmd_time: 0.0,
+            cmd_time: rt.timer.prev_cmd_time.unwrap(),
             cmd_output: output,
         };
         self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;

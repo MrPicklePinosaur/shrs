@@ -62,8 +62,6 @@ pub fn before_command_hook(
 pub struct AfterCommandCtx {
     /// Exit code of previous command
     pub exit_code: i32,
-    /// Amount of time it took to run command
-    pub cmd_time: Duration,
     /// Command output
     pub cmd_output: String,
 }
@@ -75,10 +73,6 @@ pub fn after_command_hook(
     sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
-    println!(
-        "Time taken {}",
-        sh_rt.timer.prev_cmd_time.unwrap().as_millis()
-    );
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
     // out.queue(Print(exit_code_str))?;
     Ok(())

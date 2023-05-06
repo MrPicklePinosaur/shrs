@@ -8,11 +8,11 @@ use std::{
 use anyhow::Result;
 use crossterm::{
     event::{KeyCode, KeyModifiers},
-    style::Stylize,
+    style::{StyledContent, Stylize},
 };
 use shrs::{
     builtin::Builtins,
-    hooks::{HookFn, HookList, Hooks, StartupCtx},
+    hooks::{AfterCommandCtx, HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
         DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultKeybinding, DefaultMenu,
@@ -25,7 +25,18 @@ use shrs_output_capture::OutputCapturePlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
-struct MyPrompt;
+struct MyPrompt {
+    left_field: StyledContent<String>,
+    right_field: StyledContent<String>,
+}
+impl MyPrompt {
+    pub fn new() -> Self {
+        MyPrompt {
+            left_field: String::from("> ").blue(),
+            right_field: String::from("").blue(),
+        }
+    }
+}
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self) -> StyledBuf {
@@ -36,32 +47,25 @@ impl Prompt for MyPrompt {
             String::from(" ").reset(),
             top_pwd().white().bold(),
             String::from(" ").reset(),
-            "> ".to_string().blue(),
-        ])
-    }
-    fn prompt_right(&self) -> StyledBuf {
-        StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])
-    }
-}
-
-struct TimerPrompt;
-impl Prompt for TimerPrompt {
-    fn prompt_left(&self) -> StyledBuf {
-        StyledBuf::from_iter(vec![
-            username().unwrap_or_default().blue(),
-            String::from("@").reset(),
-            hostname().unwrap_or_default().blue(),
-            String::from(" ").reset(),
-            top_pwd().white().bold(),
-            String::from(" ").reset(),
-            "> ".to_string().blue(),
+            self.left_field.clone(),
         ])
     }
     fn prompt_right(&self) -> StyledBuf {
         StyledBuf::from_iter(vec![
+            self.right_field.clone(),
+            String::from(" ").reset(),
             "shrs".to_string().blue(),
-            String::from(" In Progress ").reset(),
         ])
+    }
+
+    fn set_left(&mut self, field: String) {
+        self.left_field = field.to_string().blue();
+        // unimplemented!()
+    }
+
+    fn set_right(&mut self, field: String) {
+        self.right_field = field.to_string().blue();
+        // unimplemented!()
     }
 }
 
@@ -122,7 +126,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let prompt = MyPrompt;
+    let prompt = MyPrompt::new();
 
     // =-=-= Aliases =-=-=
     // Set aliases
@@ -156,10 +160,22 @@ a rusty POSIX shell | build {}"#,
         println!("{}", welcome_str);
         Ok(())
     };
-    let hooks = Hooks {
+    let mut hooks = Hooks {
         startup: HookList::from_iter(vec![startup_msg]),
         ..Default::default()
     };
+    let cmd_time_display: HookFn<AfterCommandCtx> = |sh: &Shell,
+                                                     sh_ctx: &mut Context,
+                                                     sh_rt: &mut Runtime,
+                                                     _ctx: &AfterCommandCtx|
+     -> anyhow::Result<()> {
+        sh_ctx.prompt.set_right(format!(
+            "Previous Command Time: {} ms",
+            sh_rt.timer.prev_cmd_time.unwrap().as_millis()
+        ));
+        Ok(())
+    };
+    hooks.after_command.register(cmd_time_display);
 
     // =-=-= Shell =-=-=
     // Construct the final shell
@@ -168,7 +184,7 @@ a rusty POSIX shell | build {}"#,
         .with_env(env)
         .with_alias(alias)
         .with_readline(readline)
-        .with_prompt(TimerPrompt)
+        .with_prompt(prompt)
         .with_plugin(OutputCapturePlugin)
         .build()
         .unwrap();

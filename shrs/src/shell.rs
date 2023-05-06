@@ -686,7 +686,6 @@ impl Shell {
         // Call hook
         let hook_ctx = AfterCommandCtx {
             exit_code: exit_status,
-            cmd_time: rt.timer.prev_cmd_time.unwrap(),
             cmd_output: output,
         };
         self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;

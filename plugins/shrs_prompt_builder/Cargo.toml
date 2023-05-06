@@ -1,0 +1,15 @@
+[package]
+name = "shrs_prompt_builder"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "Builder pattern for shrs prompt"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+shrs = { path = "../../shrs" }
+crossterm = "0.26"
+
+derive_builder = "0.12"
+thiserror = "1"

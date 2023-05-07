@@ -1,6 +1,7 @@
 //! Shell history
 
 use std::{
+    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader, BufWriter, Write},
     path::PathBuf,
@@ -77,6 +78,11 @@ impl History for DefaultHistory {
 pub struct FileBackedHistory {
     hist: Vec<String>,
     hist_file: PathBuf,
+    // config options
+    // /// Don't keep duplicate history values
+    // dedup: bool,
+    // /// Max length of history to keep
+    // max_length: usize,
 }
 
 #[derive(Debug, Error)]
@@ -93,7 +99,9 @@ impl FileBackedHistory {
         Ok(FileBackedHistory { hist, hist_file })
     }
 
-    fn flush(&self) -> Result<(), FileBackedHistoryError> {
+    fn flush(&mut self) -> Result<(), FileBackedHistoryError> {
+        // TODO not efficient to dedup every step
+        self.dedup();
         // TODO consider keeping handle to history file open the entire time
         let handle = File::options()
             .write(true)
@@ -107,6 +115,12 @@ impl FileBackedHistory {
             .flush()
             .map_err(|e| FileBackedHistoryError::Flush(e))?;
         Ok(())
+    }
+
+    /// Remove duplicate entries
+    fn dedup(&mut self) {
+        let mut uniques = HashSet::new();
+        self.hist.retain(|x| uniques.insert(x.clone()));
     }
 }
 

@@ -2,27 +2,49 @@
 use std::{
     collections::{hash_map::Iter, HashMap},
     process::Child,
+    time::{Duration, Instant},
 };
-
-use pino_deref::Deref;
 
 pub type JobId = u32;
 
-#[derive(Deref, Clone)]
-pub struct ExitStatus(pub i32);
+#[derive(Clone)]
+pub struct ExitInfo {
+    pub status: i32,
+    pub job_duration: Duration,
+}
 
-impl ExitStatus {
+impl ExitInfo {
     pub fn success(&self) -> bool {
-        self.0 == 0
+        self.status == 0
     }
     pub fn code(&self) -> i32 {
-        self.0
+        self.status
+    }
+}
+pub struct JobTimer {
+    pub start_time: Option<Instant>,
+    pub job_duration: Option<Duration>,
+}
+impl JobTimer {
+    pub fn end_job_timer(&mut self) {
+        self.job_duration = Some(self.start_time.unwrap().elapsed());
+    }
+    pub fn init(&mut self) {
+        self.start_time = Some(Instant::now());
+    }
+    pub fn new() -> Self {
+        JobTimer {
+            start_time: None,
+            job_duration: None,
+        }
     }
 }
 
 pub struct JobInfo {
     pub child: Child,
     pub cmd: String,
+    pub timer: JobTimer,
+    pub exit_status: Option<ExitInfo>,
 }
 
 /// Keeps track of all the current running jobs
@@ -42,7 +64,17 @@ impl Jobs {
     /// Add new job to be tracked
     pub fn push(&mut self, child: Child, cmd: String) {
         let next_id = self.get_next_id();
-        self.jobs.insert(next_id, JobInfo { child, cmd });
+        let mut timer = JobTimer::new();
+        timer.init();
+        self.jobs.insert(
+            next_id,
+            JobInfo {
+                child,
+                cmd,
+                timer,
+                exit_status: None,
+            },
+        );
     }
 
     pub fn iter(&self) -> Iter<'_, JobId, JobInfo> {
@@ -52,12 +84,16 @@ impl Jobs {
     /// Clean up finished jobs
     pub fn retain<F>(&mut self, mut exit_handler: F)
     where
-        F: FnMut(ExitStatus),
+        F: FnMut(ExitInfo),
     {
         self.jobs.retain(|k, v| {
             match v.child.try_wait() {
                 Ok(Some(status)) => {
-                    exit_handler(ExitStatus(status.code().unwrap()));
+                    v.timer.end_job_timer();
+                    exit_handler(ExitInfo {
+                        job_duration: v.timer.job_duration.unwrap(),
+                        status: status.code().unwrap(),
+                    });
                     false
                 },
                 Ok(None) => true,

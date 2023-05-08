@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
     rc::Rc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use anyhow::anyhow;
@@ -24,7 +24,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    jobs::{ExitStatus, Jobs},
+    jobs::{ExitInfo, JobInfo, Jobs},
     plugin::Plugin,
     signal::sig_handler,
     state::State,
@@ -263,15 +263,14 @@ impl Shell {
             self.command_output(ctx, rt, &mut cmd_handle)?;
 
             // check up on running jobs
-            let mut exit_statuses = vec![];
-            ctx.jobs.retain(|status: ExitStatus| {
-                exit_statuses.push(status);
+            let mut exit_infos = vec![];
+
+            ctx.jobs.retain(|info: ExitInfo| {
+                exit_infos.push(info);
             });
 
-            for status in exit_statuses.into_iter() {
-                self.hooks
-                    .job_exit
-                    .run(self, ctx, rt, &JobExitCtx { status });
+            for info in exit_infos.into_iter() {
+                self.hooks.job_exit.run(self, ctx, rt, &JobExitCtx { info });
             }
         }
     }
@@ -648,7 +647,7 @@ impl Shell {
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd_handle: &mut Child,
-    ) -> anyhow::Result<ExitStatus> {
+    ) -> anyhow::Result<ExitInfo> {
         // TODO also handle stderr
         let output = if let Some(out) = cmd_handle.stdout.take() {
             let reader = BufReader::new(out);
@@ -677,7 +676,10 @@ impl Shell {
         };
         self.hooks.after_command.run(self, ctx, rt, &hook_ctx)?;
 
-        Ok(ExitStatus(exit_status))
+        Ok(ExitInfo {
+            job_duration: Duration::ZERO,
+            status: exit_status,
+        })
     }
 }
 

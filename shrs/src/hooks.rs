@@ -21,10 +21,7 @@ pub type HookFn<C: Clone> =
 
 /// Context for [StartupHook]
 #[derive(Clone)]
-pub struct StartupCtx {
-    /// How much time it has taken for the shell to initialize
-    pub startup_time: usize,
-}
+pub struct StartupCtx {}
 
 /// Default [StartupHook]
 pub fn startup_hook(

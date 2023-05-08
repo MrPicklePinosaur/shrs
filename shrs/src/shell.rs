@@ -9,6 +9,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Output, Stdio},
     rc::Rc,
+    time::Instant,
 };
 
 use anyhow::anyhow;
@@ -132,6 +133,7 @@ impl ShellConfig {
             args: vec![],
             exit_status: 0,
             functions: self.functions,
+            startup_time: Instant::now(),
         };
         let shell = Shell {
             builtins: self.builtins,
@@ -189,6 +191,8 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
+
+    pub startup_time: Instant,
 }
 
 #[derive(Error, Debug)]
@@ -207,10 +211,7 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        let res = self
-            .hooks
-            .startup
-            .run(self, ctx, rt, &StartupCtx { startup_time: 0 });
+        let res = self.hooks.startup.run(self, ctx, rt, &StartupCtx {});
 
         if let Err(e) = res {
             // TODO log that startup hook failed

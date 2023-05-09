@@ -16,7 +16,6 @@ use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
-use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
 use thiserror::Error;
 
 use crate::{
@@ -46,12 +45,8 @@ pub struct Shell {
 /// Context here is shared by each subshell
 // TODO can technically unify shell and context
 pub struct Context {
-    pub readline: Line,
-    pub history: Box<dyn History<HistoryItem = String>>,
     // TODO alias is currently unused
     pub alias: Alias,
-    /// Custom prompt
-    pub prompt: Box<dyn Prompt>,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,

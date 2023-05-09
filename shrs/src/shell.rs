@@ -16,7 +16,7 @@ use shrs_core::{
     State, Theme,
 };
 use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
-use shrs_line::{DefaultHistory, DefaultPrompt, History, Line, Prompt};
+use shrs_line::{DefaultPrompt, Line, Prompt};
 use thiserror::Error;
 
 use crate::plugin::Plugin;
@@ -35,17 +35,8 @@ pub struct ShellConfig {
     #[builder(default = "Line::default()")]
     pub readline: Line,
 
-    #[builder(default = "Box::new(DefaultHistory::new())")]
-    #[builder(setter(custom))]
-    pub history: Box<dyn History<HistoryItem = String>>,
-
     #[builder(default = "Alias::new()")]
     pub alias: Alias,
-
-    /// Custom prompt
-    #[builder(default = "Box::new(DefaultPrompt::new())")]
-    #[builder(setter(custom))]
-    pub prompt: Box<dyn Prompt>,
 
     /// Environment variables
     #[builder(default = "Env::new()")]
@@ -71,14 +62,6 @@ pub struct ShellConfig {
 }
 
 impl ShellConfigBuilder {
-    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
-        self.prompt = Some(Box::new(prompt));
-        self
-    }
-    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
-        self.history = Some(Box::new(history));
-        self
-    }
     pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
         let mut cur_plugin = self.plugins.unwrap_or(vec![]);
         cur_plugin.push(Box::new(plugin));
@@ -106,10 +89,7 @@ impl ShellConfig {
         }
 
         let mut ctx = Context {
-            readline: self.readline,
-            history: self.history,
             alias: self.alias,
-            prompt: self.prompt,
             out: BufWriter::new(stdout()),
             state: self.state,
             jobs: Jobs::new(),
@@ -130,8 +110,9 @@ impl ShellConfig {
             hooks: self.hooks,
             theme: self.theme,
         };
+        let mut readline = self.readline;
 
-        run_shell(&sh, &mut ctx, &mut rt)
+        run_shell(&sh, &mut ctx, &mut rt, &mut readline)
     }
 }
 
@@ -145,7 +126,12 @@ pub enum Error {
     Hook(),
 }
 
-fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+fn run_shell(
+    sh: &Shell,
+    ctx: &mut Context,
+    rt: &mut Runtime,
+    readline: &mut Line,
+) -> anyhow::Result<()> {
     // init stuff
     sig_handler()?;
     rt.env.load();
@@ -164,7 +150,7 @@ fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<
     }
 
     loop {
-        let line = ctx.readline.read_line(&ctx.prompt);
+        let line = readline.read_line();
 
         // attempt to expand alias
         // TODO IFS

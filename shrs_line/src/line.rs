@@ -15,7 +15,7 @@ use crate::{
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
     painter::{Painter, StyledBuf},
-    prompt::Prompt,
+    prompt::{DefaultPrompt, Prompt},
     vi::ViCursorBuffer,
     DefaultKeybinding, Keybinding,
 };
@@ -57,6 +57,11 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultKeybinding::new())")]
     #[builder(setter(custom))]
     keybinding: Box<dyn Keybinding>,
+
+    /// Custom prompt
+    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(setter(custom))]
+    prompt: Box<dyn Prompt>,
 
     // ignored fields
     #[builder(default = "Painter::new()")]
@@ -124,20 +129,20 @@ impl LineBuilder {
         self.keybinding = Some(Box::new(keybinding));
         self
     }
+    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
+        self.prompt = Some(Box::new(prompt));
+        self
+    }
 }
 
 impl Line {
     /// Start readline and read one line of user input
-    pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
+    pub fn read_line(&mut self) -> String {
         let mut ctx = LineCtx::default();
-        self.read_events(&mut ctx, prompt).unwrap()
+        self.read_events(&mut ctx).unwrap()
     }
 
-    fn read_events<T: Prompt + ?Sized>(
-        &mut self,
-        ctx: &mut LineCtx,
-        prompt: impl AsRef<T>,
-    ) -> anyhow::Result<String> {
+    fn read_events(&mut self, ctx: &mut LineCtx) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -152,7 +157,7 @@ impl Line {
         self.painter.init().unwrap();
 
         self.painter.paint(
-            &prompt,
+            &self.prompt,
             &self.menu,
             StyledBuf::new(),
             ctx.cb.cursor(),
@@ -210,7 +215,7 @@ impl Line {
                 }
 
                 self.painter.paint(
-                    &prompt,
+                    &self.prompt,
                     &self.menu,
                     styled_buf,
                     ctx.cb.cursor(),

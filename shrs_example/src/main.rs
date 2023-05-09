@@ -86,8 +86,12 @@ fn main() {
         }) as Box<dyn FnMut()>,
     )]);
 
+    // =-=-= Prompt =-=-=
+    let prompt = MyPrompt;
+
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
+
     let readline = LineBuilder::default()
         .with_cursor(cursor)
         .with_completer(completer)
@@ -95,10 +99,9 @@ fn main() {
         .with_history(history)
         .with_highlighter(highlighter)
         .with_keybinding(keybinding)
+        .with_prompt(prompt)
         .build()
         .unwrap();
-
-    let prompt = MyPrompt;
 
     // =-=-= Aliases =-=-=
     // Set aliases
@@ -144,7 +147,6 @@ a rusty POSIX shell | build {}"#,
         .with_env(env)
         .with_alias(alias)
         .with_readline(readline)
-        .with_prompt(prompt)
         .with_plugin(OutputCapturePlugin)
         .build()
         .unwrap();

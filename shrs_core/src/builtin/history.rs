@@ -48,7 +48,7 @@ impl BuiltinCmd for HistoryBuiltin {
                 // stdout().flush()?;
             },
             Some(Commands::Clear) => {
-                ctx.history.clear();
+                // ctx.history.clear();
             },
             Some(Commands::Run { index }) => {
                 todo!()

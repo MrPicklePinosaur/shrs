@@ -1,5 +1,3 @@
-use std::error::Error;
-
 /// Vi mode for readline
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
@@ -106,10 +104,10 @@ impl ViCursorBuffer for CursorBuffer {
 
 #[cfg(test)]
 mod test {
+    use shrs_utils::cursor_buffer::{CursorBuffer, Result};
     use shrs_vi::{Action, Motion};
 
     use super::ViCursorBuffer;
-    use crate::cursor_buffer::{CursorBuffer, Location, Result};
 
     #[test]
     fn move_next_word() -> Result<()> {

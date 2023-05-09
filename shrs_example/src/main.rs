@@ -1,25 +1,22 @@
 use std::{
-    default, fs,
+    fs,
     io::{stdout, BufWriter},
-    path::Path,
     process::Command,
 };
 
-use anyhow::Result;
 use crossterm::{
     event::{KeyCode, KeyModifiers},
     style::Stylize,
 };
 use shrs::{
-    builtin::Builtins,
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::{cmdname_action, cmdname_pred, CompletionCtx, DefaultCompleter, Pred, Rule},
-        DefaultCursor, DefaultHighlighter, DefaultHistory, DefaultKeybinding, DefaultMenu,
-        FileBackedHistory, Keybinding, Line, LineBuilder, Prompt, StyledBuf,
+        completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
+        DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu, FileBackedHistory,
+        LineBuilder, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
-    Alias, Context, Env, Runtime, Shell, ShellConfig, ShellConfigBuilder,
+    Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
 };
 use shrs_output_capture::OutputCapturePlugin;
 
@@ -45,7 +42,7 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    let mut out = BufWriter::new(stdout());
+    let _out = BufWriter::new(stdout());
 
     // =-=-= Configuration directory =-=-=
     // Initialize the directory we will be using to hold our configuration and metadata files
@@ -117,9 +114,9 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg: HookFn<StartupCtx> = |sh: &Shell,
-                                           sh_ctx: &mut Context,
-                                           sh_rt: &mut Runtime,
+    let startup_msg: HookFn<StartupCtx> = |_sh: &Shell,
+                                           _sh_ctx: &mut Context,
+                                           _sh_rt: &mut Runtime,
                                            _ctx: &StartupCtx|
      -> anyhow::Result<()> {
         let welcome_str = format!(
@@ -132,7 +129,7 @@ a rusty POSIX shell | build {}"#,
             env!("SHRS_VERSION")
         );
 
-        println!("{}", welcome_str);
+        println!("{welcome_str}");
         Ok(())
     };
     let hooks = Hooks {

@@ -1,8 +1,3 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
-
 use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime, Shell};
 
 use crate::OutputCaptureState;
@@ -19,10 +14,10 @@ impl AgainBuiltin {
 impl BuiltinCmd for AgainBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _rt: &mut Runtime,
+        _args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
             print!("{}", state.last_command);

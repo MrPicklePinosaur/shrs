@@ -1041,6 +1041,7 @@ dependencies = [
  "pino_deref",
  "regex",
  "rexpect",
+ "shrs_core",
  "shrs_lang",
  "shrs_line",
  "signal-hook",
@@ -1052,6 +1053,26 @@ name = "shrs_cd_tools"
 version = "0.1.0"
 dependencies = [
  "shrs",
+ "thiserror",
+]
+
+[[package]]
+name = "shrs_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossbeam-channel",
+ "crossterm",
+ "derive_builder",
+ "dirs",
+ "lazy_static",
+ "pino_deref",
+ "regex",
+ "rexpect",
+ "shrs_lang",
+ "shrs_line",
+ "signal-hook",
  "thiserror",
 ]
 

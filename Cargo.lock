@@ -1071,7 +1071,6 @@ dependencies = [
  "regex",
  "rexpect",
  "shrs_lang",
- "shrs_line",
  "signal-hook",
  "thiserror",
 ]

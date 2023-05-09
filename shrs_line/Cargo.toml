@@ -17,3 +17,4 @@ anyhow = "1"
 thiserror = "1"
 shrs_vi = { path = "../shrs_vi" }
 shrs_utils = { path = "../shrs_utils" }
+# shrs_core = { path = "../shrs_utils" }

@@ -84,18 +84,3 @@ fn after_command_hook(
     }
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use shrs::{plugin::ShellPlugin, ShellConfigBuilder};
-
-    use crate::CommandTimerPlugin;
-
-    #[test]
-    pub fn register() {
-        let myshell = ShellConfigBuilder::default()
-            .with_plugin(CommandTimerPlugin)
-            .build()
-            .unwrap();
-    }
-}

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "shrs",
+    "shrs_core",
     "shrs_line",
     "shrs_lang",
     "shrs_example",

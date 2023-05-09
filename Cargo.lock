@@ -1032,6 +1032,26 @@ name = "shrs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_builder",
+ "shrs_core",
+ "shrs_lang",
+ "shrs_line",
+ "thiserror",
+]
+
+[[package]]
+name = "shrs_cd_tools"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+ "thiserror",
+]
+
+[[package]]
+name = "shrs_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "clap",
  "crossbeam-channel",
  "crossterm",
@@ -1044,14 +1064,6 @@ dependencies = [
  "shrs_lang",
  "shrs_line",
  "signal-hook",
- "thiserror",
-]
-
-[[package]]
-name = "shrs_cd_tools"
-version = "0.1.0"
-dependencies = [
- "shrs",
  "thiserror",
 ]
 

@@ -211,7 +211,14 @@ impl Shell {
         sig_handler()?;
         rt.env.load();
 
-        let res = self.hooks.startup.run(self, ctx, rt, &StartupCtx {});
+        let res = self.hooks.startup.run(
+            self,
+            ctx,
+            rt,
+            &StartupCtx {
+                startup_time: rt.startup_time.elapsed(),
+            },
+        );
 
         if let Err(e) = res {
             // TODO log that startup hook failed

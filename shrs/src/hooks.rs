@@ -10,7 +10,7 @@
 // - env hook (when envrionment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::{io::BufWriter, marker::PhantomData, path::PathBuf};
+use std::{io::BufWriter, marker::PhantomData, path::PathBuf, time::Duration};
 
 use crossterm::{style::Print, QueueableCommand};
 
@@ -21,7 +21,9 @@ pub type HookFn<C: Clone> =
 
 /// Context for [StartupHook]
 #[derive(Clone)]
-pub struct StartupCtx {}
+pub struct StartupCtx {
+    pub startup_time: Duration,
+}
 
 /// Default [StartupHook]
 pub fn startup_hook(

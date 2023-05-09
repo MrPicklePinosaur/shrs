@@ -1,9 +1,8 @@
 use std::error::Error;
 
-use shrs_vi::{Action, Motion};
-
 /// Vi mode for readline
-use crate::cursor_buffer::{CursorBuffer, Location, Result};
+use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
+use shrs_vi::{Action, Motion};
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {

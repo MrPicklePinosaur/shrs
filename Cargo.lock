@@ -1032,10 +1032,19 @@ name = "shrs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap",
+ "crossbeam-channel",
+ "crossterm",
  "derive_builder",
+ "dirs",
+ "lazy_static",
+ "pino_deref",
+ "regex",
+ "rexpect",
  "shrs_core",
  "shrs_lang",
  "shrs_line",
+ "signal-hook",
  "thiserror",
 ]
 

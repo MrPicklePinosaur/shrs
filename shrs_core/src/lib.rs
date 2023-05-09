@@ -22,10 +22,11 @@ pub mod hooks;
 pub mod prompt;
 
 mod shell;
-pub use shell::{dummy_child, Context, Runtime, Shell};
+pub use shell::{command_output, dummy_child, run_external_command, Context, Runtime, Shell};
 pub use shrs_line as line;
 
 mod signal;
+pub use signal::sig_handler;
 
 mod theme;
 pub use theme::Theme;
@@ -36,7 +37,7 @@ pub use state::State;
 mod jobs;
 // TODO temp re-export anyhow
 pub use anyhow;
-pub use jobs::{JobId, JobInfo, Jobs};
+pub use jobs::{ExitStatus, JobId, JobInfo, Jobs};
 
 pub mod crossterm {
     pub use crossterm::{style::Print, QueueableCommand};

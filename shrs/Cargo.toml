@@ -8,11 +8,23 @@ description = "modular library to build your own shell in rust"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
+regex = "1"
+signal-hook = "0.3"
+crossbeam-channel = "0.5"
+clap = { version = "4.1", features = ["derive"] }
+crossterm = "0.26"
 derive_builder = "0.12"
+dirs = "5"
+
+pino_deref = "0.1"
 
 thiserror = "1"
 anyhow = "1"
+lazy_static = "1.4"
 
 shrs_core = { path = "../shrs_core" }
 shrs_line = { path = "../shrs_line" }
 shrs_lang = { path = "../shrs_lang" }
+
+[dev-dependencies]
+rexpect = "0.5"

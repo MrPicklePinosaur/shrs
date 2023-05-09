@@ -1,12 +1,12 @@
 //! Shell history
 
 use std::{
+    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader, BufWriter, Write},
     path::PathBuf,
 };
 
-use crossterm::QueueableCommand;
 use thiserror::Error;
 
 /// Trait to implement for shell history
@@ -77,6 +77,11 @@ impl History for DefaultHistory {
 pub struct FileBackedHistory {
     hist: Vec<String>,
     hist_file: PathBuf,
+    // config options
+    // /// Don't keep duplicate history values
+    // dedup: bool,
+    // /// Max length of history to keep
+    // max_length: usize,
 }
 
 #[derive(Debug, Error)]
@@ -93,20 +98,26 @@ impl FileBackedHistory {
         Ok(FileBackedHistory { hist, hist_file })
     }
 
-    fn flush(&self) -> Result<(), FileBackedHistoryError> {
+    fn flush(&mut self) -> Result<(), FileBackedHistoryError> {
+        // TODO not efficient to dedup every step
+        self.dedup();
         // TODO consider keeping handle to history file open the entire time
         let handle = File::options()
             .write(true)
             .open(&self.hist_file)
-            .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+            .map_err(FileBackedHistoryError::OpeningHistFile)?;
         let mut writer = BufWriter::new(handle);
         writer
             .write_all(self.hist.join("\n").as_bytes())
-            .map_err(|e| FileBackedHistoryError::Flush(e))?;
-        writer
-            .flush()
-            .map_err(|e| FileBackedHistoryError::Flush(e))?;
+            .map_err(FileBackedHistoryError::Flush)?;
+        writer.flush().map_err(FileBackedHistoryError::Flush)?;
         Ok(())
+    }
+
+    /// Remove duplicate entries
+    fn dedup(&mut self) {
+        let mut uniques = HashSet::new();
+        self.hist.retain(|x| uniques.insert(x.clone()));
     }
 }
 
@@ -147,7 +158,7 @@ fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHisto
         .write(true)
         .create(true)
         .open(hist_file)
-        .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+        .map_err(FileBackedHistoryError::OpeningHistFile)?;
     let reader = BufReader::new(handle);
     // TODO should error/terminate when a line cannot be read?
     let hist = reader

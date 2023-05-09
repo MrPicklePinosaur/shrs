@@ -1,10 +1,12 @@
 [workspace]
 members = [
     "shrs",
+    "shrs_core",
     "shrs_line",
     "shrs_lang",
     "shrs_example",
     "shrs_vi",
+    "shrs_utils",
     "plugins/shrs_output_capture",
     "plugins/shrs_cd_tools",
     "plugins/shrs_derive_completion",

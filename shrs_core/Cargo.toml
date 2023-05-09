@@ -1,5 +1,5 @@
 [package]
-name = "shrs"
+name = "shrs_core"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -22,8 +22,6 @@ thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"
 
-shrs_core = { path = "../shrs_core" }
-shrs_line = { path = "../shrs_line" }
 shrs_lang = { path = "../shrs_lang" }
 
 [dev-dependencies]

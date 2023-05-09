@@ -5,17 +5,17 @@ use crossterm::{
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     completion::{Completer, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
-    cursor_buffer::{CursorBuffer, Location},
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
     painter::{Painter, StyledBuf},
-    prompt::Prompt,
+    prompt::{DefaultPrompt, Prompt},
     vi::ViCursorBuffer,
     DefaultKeybinding, Keybinding,
 };
@@ -57,6 +57,11 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultKeybinding::new())")]
     #[builder(setter(custom))]
     keybinding: Box<dyn Keybinding>,
+
+    /// Custom prompt
+    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(setter(custom))]
+    prompt: Box<dyn Prompt>,
 
     // ignored fields
     #[builder(default = "Painter::new()")]
@@ -124,20 +129,20 @@ impl LineBuilder {
         self.keybinding = Some(Box::new(keybinding));
         self
     }
+    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
+        self.prompt = Some(Box::new(prompt));
+        self
+    }
 }
 
 impl Line {
     /// Start readline and read one line of user input
-    pub fn read_line<T: Prompt + ?Sized>(&mut self, prompt: impl AsRef<T>) -> String {
+    pub fn read_line(&mut self) -> String {
         let mut ctx = LineCtx::default();
-        self.read_events(&mut ctx, prompt).unwrap()
+        self.read_events(&mut ctx).unwrap()
     }
 
-    fn read_events<T: Prompt + ?Sized>(
-        &mut self,
-        ctx: &mut LineCtx,
-        prompt: impl AsRef<T>,
-    ) -> anyhow::Result<String> {
+    fn read_events(&mut self, ctx: &mut LineCtx) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -152,7 +157,7 @@ impl Line {
         self.painter.init().unwrap();
 
         self.painter.paint(
-            &prompt,
+            &self.prompt,
             &self.menu,
             StyledBuf::new(),
             ctx.cb.cursor(),
@@ -171,7 +176,7 @@ impl Line {
 
                 // handle menu events
                 if self.menu.is_active() {
-                    self.handle_menu_keys(ctx, event)?;
+                    self.handle_menu_keys(ctx, event.clone())?;
                 } else {
                     // TODO bit hacky bubbling up control flow from funtion
                     match ctx.mode {
@@ -210,7 +215,7 @@ impl Line {
                 }
 
                 self.painter.paint(
-                    &prompt,
+                    &self.prompt,
                     &self.menu,
                     styled_buf,
                     ctx.cb.cursor(),
@@ -287,28 +292,15 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                // TODO IFS
-                let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-                ctx.current_word = args.clone().last().unwrap_or("").to_string();
-
-                let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
-
-                let completions = self.completer.complete(&comp_ctx);
-                let completions = completions
-                    .iter()
-                    .take(10) // TODO make this config
-                    .collect::<Vec<_>>();
+                self.populate_completions(ctx)?;
+                self.menu.activate();
 
                 // if completions only has one entry, automatically select it
-                if completions.len() == 1 {
-                    self.accept_completion(ctx, &completions.get(0).unwrap().accept())?;
-                } else {
-                    let menuitems = completions
-                        .iter()
-                        .map(|c| (c.display().to_owned(), c.accept().to_owned()))
-                        .collect::<Vec<_>>();
-                    self.menu.set_items(menuitems);
-                    self.menu.activate();
+                let completion_len = self.menu.items().len();
+                if completion_len == 1 {
+                    // TODO stupid ownership stuff
+                    let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
+                    self.accept_completion(ctx, &item.0)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -330,15 +322,6 @@ impl Line {
                 }
             },
             Event::Key(KeyEvent {
-                code: KeyCode::Backspace,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
-                    ctx.cb.delete(Location::Before(), Location::Cursor())?;
-                }
-            },
-            Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -356,6 +339,15 @@ impl Line {
                 code: KeyCode::Esc, ..
             }) => {
                 ctx.mode = LineMode::Normal;
+            },
+            Event::Key(KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                    ctx.cb.delete(Location::Before(), Location::Cursor())?;
+                }
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
@@ -422,6 +414,29 @@ impl Line {
             _ => {},
         }
         Ok(false)
+    }
+
+    // recalculate the current completions
+    fn populate_completions(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+        // TODO IFS
+        let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
+        ctx.current_word = args.clone().last().unwrap_or("").to_string();
+
+        let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
+
+        let completions = self.completer.complete(&comp_ctx);
+        let completions = completions
+            .iter()
+            .take(10) // TODO make this config
+            .collect::<Vec<_>>();
+
+        let menuitems = completions
+            .iter()
+            .map(|c| (c.display(), c.accept()))
+            .collect::<Vec<_>>();
+        self.menu.set_items(menuitems);
+
+        Ok(())
     }
 
     // replace word at cursor with accepted word (used in automcompletion)

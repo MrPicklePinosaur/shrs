@@ -3,15 +3,8 @@
 //!
 mod builtin;
 
-use std::{io::BufWriter, marker::PhantomData};
-
 use builtin::AgainBuiltin;
-use shrs::{
-    anyhow,
-    hooks::AfterCommandCtx,
-    plugin::{Plugin, ShellPlugin},
-    Context, Runtime, Shell,
-};
+use shrs::{anyhow, hooks::AfterCommandCtx, plugin::Plugin, Context, Runtime, Shell};
 
 struct OutputCaptureState {
     pub last_command: String,
@@ -36,9 +29,9 @@ impl Plugin for OutputCapturePlugin {
 }
 
 fn after_command_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
+    _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
@@ -55,7 +48,7 @@ mod tests {
 
     #[test]
     pub fn register() {
-        let myshell = ShellConfigBuilder::default()
+        let _myshell = ShellConfigBuilder::default()
             .with_plugin(OutputCapturePlugin)
             .build()
             .unwrap();

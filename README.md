@@ -6,7 +6,7 @@
 The rusty POSIX shell library for hackers
 
 [![crates.io](https://img.shields.io/crates/v/shrs.svg)](#)
-[![book](https://img.shields.io/badge/book-website-orange)](mrpicklepinosaur.github.io/shrs/)
+[![book](https://img.shields.io/badge/book-website-orange)](https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#)
 
 </div>
@@ -29,9 +29,14 @@ Here are what makes **shrs** special:
 
 ## GETTING STARTED
 
-To get a taste of what **shrs** is capable of, without any configuration, you can run the example **shrs_example** shell that is bundled.
+To get a taste of what **shrs** is capable of, without any configuration, you can run the example **shrs_example** shell that is bundled by running:
+```sh
+git clone https://github.com/MrPicklePinosaur/shrs.git
+cd ./shrs/shrs_example
+cargo run
+```
 
-To get started with building your own shell, it's as easy as:
+To get started with building your own shell, it's as easy as creating a new cargo project with:
 ```rust
 use shrs::ShellConfigBuilder;
 

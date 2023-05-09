@@ -48,7 +48,7 @@ pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
     use std::{fs, os::unix::fs::PermissionsExt};
 
     let mut execs = vec![];
-    for path in path_str.split(":") {
+    for path in path_str.split(':') {
         let dir = match fs::read_dir(path) {
             Ok(dir) => dir,
             Err(_) => continue,
@@ -70,7 +70,7 @@ pub(crate) fn drop_path_end(path: &str) -> String {
     let drop_end = path
         .chars()
         .rev()
-        .skip_while(|c| !(*c == '/'))
+        .skip_while(|c| *c != '/')
         .collect::<String>();
     drop_end.chars().rev().collect::<String>()
 }
@@ -79,7 +79,7 @@ pub(crate) fn path_end(path: &str) -> String {
     let end = path
         .chars()
         .rev()
-        .take_while(|c| !(*c == '/'))
+        .take_while(|c| *c != '/')
         .collect::<String>();
     end.chars().rev().collect::<String>()
 }

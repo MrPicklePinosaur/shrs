@@ -10,7 +10,7 @@ use regex::Regex;
 
 use super::BuiltinCmd;
 use crate::{
-    shell::{dummy_child, Context, Runtime},
+    shell::{command_output, dummy_child, Context, Runtime},
     Shell,
 };
 
@@ -53,7 +53,7 @@ impl BuiltinCmd for SourceBuiltin {
                     .spawn()?;
 
                 // need command output here
-                sh.command_output(ctx, rt, &mut child)?;
+                command_output(sh, ctx, rt, &mut child)?;
 
                 dummy_child()
             },

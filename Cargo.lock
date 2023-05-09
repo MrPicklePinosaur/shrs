@@ -1041,6 +1041,7 @@ dependencies = [
  "pino_deref",
  "regex",
  "rexpect",
+ "shrs_core",
  "shrs_lang",
  "shrs_line",
  "signal-hook",
@@ -1060,6 +1061,26 @@ name = "shrs_command_timer"
 version = "0.1.0"
 dependencies = [
  "shrs",
+]
+
+[[package]]
+name = "shrs_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossbeam-channel",
+ "crossterm",
+ "derive_builder",
+ "dirs",
+ "lazy_static",
+ "pino_deref",
+ "regex",
+ "rexpect",
+ "shrs_lang",
+ "shrs_line",
+ "signal-hook",
+ "thiserror",
 ]
 
 [[package]]
@@ -1096,7 +1117,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "dirs",
- "ropey",
+ "shrs_utils",
  "shrs_vi",
  "thiserror",
  "trie-rs",
@@ -1107,6 +1128,17 @@ name = "shrs_output_capture"
 version = "0.1.0"
 dependencies = [
  "shrs",
+]
+
+[[package]]
+name = "shrs_utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crossterm",
+ "derive_builder",
+ "ropey",
+ "thiserror",
 ]
 
 [[package]]

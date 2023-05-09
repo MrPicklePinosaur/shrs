@@ -21,7 +21,6 @@ pub use prompt::{DefaultPrompt, Prompt};
 pub mod completion;
 pub mod vi;
 
-mod cursor_buffer;
 mod painter;
 pub use painter::StyledBuf;
 

@@ -1089,7 +1089,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "dirs",
- "ropey",
+ "shrs_utils",
  "shrs_vi",
  "thiserror",
  "trie-rs",
@@ -1100,6 +1100,17 @@ name = "shrs_output_capture"
 version = "0.1.0"
 dependencies = [
  "shrs",
+]
+
+[[package]]
+name = "shrs_utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crossterm",
+ "derive_builder",
+ "ropey",
+ "thiserror",
 ]
 
 [[package]]

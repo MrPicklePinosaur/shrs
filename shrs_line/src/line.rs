@@ -5,12 +5,12 @@ use crossterm::{
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
-    cursor_buffer::{CursorBuffer, Location},
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},

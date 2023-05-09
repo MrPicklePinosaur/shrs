@@ -14,19 +14,11 @@ toc = true
 top = false
 +++
 
-## Default autocompletion
+## Rule based
 
-The default autocompletion system will autocomplete the command name using
-executables in the PATH, and autocomplete all following arguments with files in
-the current directory.
-```rust
-let completions: Vec<String> = find_executables_in_path(env.get("PATH").unwrap());
-let completer = DefaultCompleter::new(completions);
+The autocompletion system works on **rules**, which are pairs of **predicates**
+and **actions**. Predicates help determine when an action is allowed to run,
+and actions return the actual word list for the completion system to display to
+the user.
 
-myline.with_completer(completer);
-```
-
-## Coming Soon: Advanced customized completions
-
-Upcoming is an easy to provide smart completions for a variety of programs like
-`git`, `docker` and more.
+## Coming soon: declarative

@@ -1,13 +1,7 @@
-use std::{
-    collections::HashMap,
-    path::{Component, Path, PathBuf},
-};
-
-use crossterm::style::Stylize;
+use std::path::{Path, PathBuf};
 
 use super::{
-    drop_path_end, filepaths, find_executables_in_path, path_end, Completer, Completion,
-    CompletionCtx,
+    drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
 };
 
 // TODO make this FnMut?
@@ -116,7 +110,7 @@ impl Default for DefaultCompleter {
 }
 
 pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
-    move |ctx: &CompletionCtx| -> Vec<Completion> {
+    move |_ctx: &CompletionCtx| -> Vec<Completion> {
         default_format(find_executables_in_path(&path_str))
     }
 }
@@ -165,11 +159,11 @@ fn to_absolute(path_str: &str, home_dir: &Path) -> PathBuf {
     absolute
 }
 
-pub fn git_action(ctx: &CompletionCtx) -> Vec<Completion> {
+pub fn git_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     default_format(vec!["status".into(), "add".into(), "commit".into()])
 }
 
-pub fn git_flag_action(ctx: &CompletionCtx) -> Vec<Completion> {
+pub fn git_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }
 
@@ -196,7 +190,7 @@ pub fn flag_pred(ctx: &CompletionCtx) -> bool {
     long_flag_pred(ctx) || short_flag_pred(ctx)
 }
 pub fn short_flag_pred(ctx: &CompletionCtx) -> bool {
-    ctx.cur_word().unwrap_or(&String::new()).starts_with("-") && !long_flag_pred(ctx)
+    ctx.cur_word().unwrap_or(&String::new()).starts_with('-') && !long_flag_pred(ctx)
 }
 pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
     ctx.cur_word().unwrap_or(&String::new()).starts_with("--")
@@ -229,12 +223,12 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
 
 #[cfg(test)]
 mod tests {
-    use super::{flag_pred, path_pred, DefaultCompleter, Rule};
+    use super::{flag_pred, DefaultCompleter};
     use crate::completion::CompletionCtx;
 
     #[test]
     fn simple() {
-        let mut comp = DefaultCompleter::new();
+        let _comp = DefaultCompleter::new();
         // comp.register(Rule::new());
     }
 

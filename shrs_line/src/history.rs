@@ -7,7 +7,6 @@ use std::{
     path::PathBuf,
 };
 
-use crossterm::QueueableCommand;
 use thiserror::Error;
 
 /// Trait to implement for shell history
@@ -106,14 +105,12 @@ impl FileBackedHistory {
         let handle = File::options()
             .write(true)
             .open(&self.hist_file)
-            .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+            .map_err(FileBackedHistoryError::OpeningHistFile)?;
         let mut writer = BufWriter::new(handle);
         writer
             .write_all(self.hist.join("\n").as_bytes())
-            .map_err(|e| FileBackedHistoryError::Flush(e))?;
-        writer
-            .flush()
-            .map_err(|e| FileBackedHistoryError::Flush(e))?;
+            .map_err(FileBackedHistoryError::Flush)?;
+        writer.flush().map_err(FileBackedHistoryError::Flush)?;
         Ok(())
     }
 
@@ -161,7 +158,7 @@ fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHisto
         .write(true)
         .create(true)
         .open(hist_file)
-        .map_err(|e| FileBackedHistoryError::OpeningHistFile(e))?;
+        .map_err(FileBackedHistoryError::OpeningHistFile)?;
     let reader = BufReader::new(handle);
     // TODO should error/terminate when a line cannot be read?
     let hist = reader

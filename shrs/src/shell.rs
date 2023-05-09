@@ -1,22 +1,17 @@
 use std::{
     collections::HashMap,
-    env,
     fs::File,
-    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
-    os::unix::process::CommandExt,
-    path::{Path, PathBuf},
-    process::{Child, Output, Stdio},
-    rc::Rc,
+    io::{stdout, BufRead, BufWriter, Write},
+    path::Path,
+    process::{Child, Stdio},
     time::Instant,
 };
 
-use anyhow::anyhow;
-use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
 use shrs_core::{
     builtin::Builtins,
     command_output, dummy_child,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
+    hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     run_external_command, sig_handler, Alias, Context, Env, ExitStatus, Jobs, Runtime, Shell,
     State, Theme,
 };
@@ -164,7 +159,7 @@ fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<
         },
     );
 
-    if let Err(e) = res {
+    if let Err(_e) = res {
         // TODO log that startup hook failed
     }
 
@@ -174,12 +169,12 @@ fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<
         // attempt to expand alias
         // TODO IFS
         let mut words = line
-            .split(" ")
+            .split(' ')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>();
         if let Some(first) = words.get_mut(0) {
-            if let Some(expanded) = ctx.alias.get(&first.clone()) {
+            if let Some(expanded) = ctx.alias.get(first.clone()) {
                 *first = expanded;
             }
         }
@@ -199,7 +194,7 @@ fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<
             Ok(cmd) => cmd,
             Err(e) => {
                 // TODO detailed parse errors
-                eprintln!("{}", e);
+                eprintln!("{e}");
                 continue;
             },
         };
@@ -207,7 +202,7 @@ fn run_shell(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<
             match eval_command(sh, ctx, rt, &cmd, Stdio::inherit(), Stdio::inherit(), None) {
                 Ok(cmd_handle) => cmd_handle,
                 Err(e) => {
-                    eprintln!("{}", e);
+                    eprintln!("{e}");
                     continue;
                 },
             };
@@ -234,7 +229,7 @@ fn eval_command(
     cmd: &ast::Command,
     stdin: Stdio,
     stdout: Stdio,
-    pgid: Option<i32>,
+    _pgid: Option<i32>,
 ) -> anyhow::Result<Child> {
     match cmd {
         ast::Command::Simple {
@@ -242,7 +237,7 @@ fn eval_command(
             args,
             redirects,
         } => {
-            let mut it = args.into_iter();
+            let mut it = args.iter();
 
             // Retrieve command name or return immediately (empty command)
             let cmd_name = match it.next() {
@@ -270,7 +265,7 @@ fn eval_command(
                         let file_handle = File::options()
                             .read(true)
                             .open(filename)
-                            .map_err(|e| Error::Redirect(e))?;
+                            .map_err(Error::Redirect)?;
                         cur_stdin = Stdio::from(file_handle);
                     },
                     ast::RedirectMode::Write => {
@@ -278,7 +273,7 @@ fn eval_command(
                             .write(true)
                             .create_new(true)
                             .open(filename)
-                            .map_err(|e| Error::Redirect(e))?;
+                            .map_err(Error::Redirect)?;
                         cur_stdout = Stdio::from(file_handle);
                     },
                     ast::RedirectMode::ReadAppend => {
@@ -286,7 +281,7 @@ fn eval_command(
                             .read(true)
                             .append(true)
                             .open(filename)
-                            .map_err(|e| Error::Redirect(e))?;
+                            .map_err(Error::Redirect)?;
                         cur_stdin = Stdio::from(file_handle);
                     },
                     ast::RedirectMode::WriteAppend => {
@@ -295,7 +290,7 @@ fn eval_command(
                             .append(true)
                             .create_new(true)
                             .open(filename)
-                            .map_err(|e| Error::Redirect(e))?;
+                            .map_err(Error::Redirect)?;
                         cur_stdout = Stdio::from(file_handle);
                     },
                     ast::RedirectMode::ReadDup => {
@@ -310,7 +305,7 @@ fn eval_command(
                             .write(true)
                             .create_new(true)
                             .open(filename)
-                            .map_err(|e| Error::Redirect(e))?;
+                            .map_err(Error::Redirect)?;
                         cur_stdin = Stdio::from(file_handle.try_clone().unwrap());
                         cur_stdout = Stdio::from(file_handle);
                     },
@@ -344,7 +339,7 @@ fn eval_command(
                     sh,
                     ctx,
                     rt,
-                    &cmd_name,
+                    cmd_name,
                     &subst_args,
                     cur_stdin,
                     cur_stdout,
@@ -434,7 +429,7 @@ fn eval_command(
         },
         ast::Command::If { conds, else_part } => {
             // TODO throw proper error here
-            assert!(conds.len() >= 1);
+            assert!(!conds.is_empty());
 
             for ast::Condition { cond, body } in conds {
                 let mut cond_handle =
@@ -494,7 +489,7 @@ fn eval_command(
             let mut expanded = vec![];
             for word in wordlist {
                 // TODO use IFS variable for this
-                for subword in word.split(" ") {
+                for subword in word.split(' ') {
                     expanded.push(subword);
                 }
             }
@@ -568,7 +563,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
             Some(val) => val.clone(),
             None => String::new(),
         };
-        let fmt_env = format!("${}", var); // format $VAR
+        let fmt_env = format!("${var}"); // format $VAR
         subst = subst.as_str().replace(&fmt_env, &val);
     }
 
@@ -579,7 +574,7 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
             Some(val) => val.clone(),
             None => String::new(),
         };
-        let fmt_env = format!("${{{}}}", var); // format ${VAR}
+        let fmt_env = format!("${{{var}}}"); // format ${VAR}
         subst = subst.as_str().replace(&fmt_env, &val);
     }
 

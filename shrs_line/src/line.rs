@@ -9,7 +9,7 @@ use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
-    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
+    completion::{Completer, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
@@ -427,7 +427,7 @@ impl Line {
 
         let menuitems = completions
             .iter()
-            .map(|c| (c.display().to_owned(), c.accept().to_owned()))
+            .map(|c| (c.display(), c.accept()))
             .collect::<Vec<_>>();
         self.menu.set_items(menuitems);
 

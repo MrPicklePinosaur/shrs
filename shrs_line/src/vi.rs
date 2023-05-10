@@ -20,7 +20,7 @@ impl ViCursorBuffer for CursorBuffer {
                 Ok(Location::FindChar(self, offset, c).unwrap_or_default())
             },
             Motion::Left => Ok(Location::Before()),
-            Motion::Right => Ok(Location::After()),
+            Motion::Right | Motion::Char => Ok(Location::After()),
             Motion::Start => Ok(Location::Front()),
             Motion::End => Ok(Location::Back(self)),
             Motion::Word => {

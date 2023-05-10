@@ -1,8 +1,8 @@
-use shrs_derive_completion::{self, Completion};
+use shrs_derive_completion::Completion;
 
 #[derive(Completion)]
 struct MyCompletion {
-    #[flag]
+    #[flag(short = "")]
     help: bool,
 }
 

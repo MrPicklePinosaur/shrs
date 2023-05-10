@@ -41,6 +41,32 @@ impl ViCursorBuffer for CursorBuffer {
                 Ok(Location::Find(self, start, |ch| !ch.is_whitespace())
                     .unwrap_or(Location::Back(self)))
             },
+            Motion::WordPunc => {
+                let punc = "!-~*|\".?[]{}()";
+                //check if at end of line
+                let cur_char = if let Some(ch) = self.char_at(Location::Cursor()) {
+                    ch
+                } else {
+                    return Ok(Location::Cursor());
+                };
+                let start = if cur_char.is_whitespace() {
+                    Location::Cursor()
+                } else if punc.contains(cur_char) {
+                    //start at non punc
+                    Location::Find(self, Location::Cursor(), |ch| !punc.contains(ch))
+                        .unwrap_or(Location::Back(self))
+                } else {
+                    //if letter char
+                    Location::Find(self, Location::Cursor(), |ch| {
+                        ch.is_whitespace() || punc.contains(ch)
+                    })
+                    .unwrap_or(Location::Back(self))
+                };
+
+                //jump to next word
+                Ok(Location::Find(self, start, |ch| !ch.is_whitespace())
+                    .unwrap_or(Location::Back(self)))
+            },
             Motion::BackWord => {
                 // TODO logic is getting comlpicatied, need more predicates to test location of
                 // cursor (is cursor on first char of word, last char of word etc)
@@ -78,6 +104,7 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Start
                 | Motion::End
                 | Motion::Word
+                | Motion::WordPunc
                 | Motion::BackWord
                 | Motion::Find(_) => self.move_cursor(self.motion_to_loc(motion)?),
                 _ => Ok(()),
@@ -93,6 +120,7 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::End
                 | Motion::Char
                 | Motion::Word
+                | Motion::WordPunc
                 | Motion::BackWord
                 | Motion::Find(_) => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
                 _ => Ok(()),

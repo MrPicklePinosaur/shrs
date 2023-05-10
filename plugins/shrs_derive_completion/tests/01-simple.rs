@@ -2,7 +2,7 @@ use shrs_derive_completion::Completion;
 
 #[derive(Completion)]
 struct MyCompletion {
-    #[flag(short = "")]
+    #[flag(long = "help")]
     help: bool,
 }
 

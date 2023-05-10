@@ -10,25 +10,30 @@ use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitStr, Meta};
 
 /// Information on a flag
 struct Flag {
-    desc: String,
-    /// Short flag name
-    ///
-    /// Short flags can be passed with a single dash. For example `-v`.
-    short: Option<char>,
+    // desc: String,
     /// Long flag name
     ///
     /// Long names are passed with a double dash. For example `--verbose`.
     long: String,
+    /// Short flag name
+    ///
+    /// Short flags can be passed with a single dash. For example `-v`.
+    short: Option<char>,
 }
 
 impl Flag {
-    fn new() -> Self {
-        Self {
-            desc: todo!(),
-            short: todo!(),
-            long: todo!(),
+    fn new(long: impl ToString) -> Self {
+        Flag {
+            long: long.to_string(),
+            short: None,
         }
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+enum Error {
+    #[error("Could not applied on unnamed field")]
+    UnamedField,
 }
 
 /// Data gathered from parsing the struct the `Completion` macro is applied to
@@ -49,7 +54,7 @@ pub fn completion(input: TokenStream) -> TokenStream {
     let mut ctx = DeriveContext::new();
 
     if let Item::Struct(item) = parsed_input {
-        impl_struct(&mut ctx, item)
+        impl_struct(&mut ctx, item).unwrap()
     } else {
         quote! {
             compile_error!("not used on struct or enum")
@@ -58,24 +63,32 @@ pub fn completion(input: TokenStream) -> TokenStream {
     }
 }
 
-fn impl_struct(ctx: &mut DeriveContext, item: ItemStruct) -> TokenStream {
+fn impl_struct(ctx: &mut DeriveContext, item: ItemStruct) -> Result<TokenStream, Error> {
     for field in item.fields {
+        let field_name = field.ident.ok_or(Error::UnamedField)?;
+
         // check if field is marked as flag
         for attr in field.attrs.iter() {
             if attr.path().is_ident("flag") {
+                // Default long flag name is name of field
+                let mut flag = Flag::new(field_name.clone());
+
                 attr.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("short") {
+                    if meta.path.is_ident("long") {
                         let value = meta.value()?;
                         let s: LitStr = value.parse()?;
-                        Ok(())
+                        flag.long = s.value();
                     } else {
-                        Err(meta.error("unsupported attribute"))
+                        return Err(meta.error("unsupported attribute"));
                     }
+
+                    Ok(())
                 })
                 .unwrap();
+                ctx.flags.push(flag);
             }
         }
     }
 
-    quote! {}.into()
+    Ok(quote! {}.into())
 }

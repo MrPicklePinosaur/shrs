@@ -7,6 +7,7 @@ pub struct Command {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Motion {
     BackWord,
+    WordPunc,
     Word,
     Left,
     Right,

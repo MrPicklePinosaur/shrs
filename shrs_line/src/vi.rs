@@ -118,7 +118,6 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Right
                 | Motion::Start
                 | Motion::End
-                | Motion::Char
                 | Motion::Word
                 | Motion::WordPunc
                 | Motion::BackWord

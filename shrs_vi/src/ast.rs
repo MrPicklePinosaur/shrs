@@ -14,8 +14,6 @@ pub enum Motion {
     Up,
     Down,
     End,
-    /// The current character
-    Char,
     /// Select entire line (for Move action this behaves same as End)
     All,
     Find(char),

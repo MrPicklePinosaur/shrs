@@ -28,7 +28,7 @@ pub Action: Action = {
     <a:ChangeAction> => a,
     "y" <m:Motion> => Action::Yank(m),
     "i" => Action::Insert,
-    "x" => Action::Delete(Motion::Char),
+    "x" => Action::Delete(Motion::Right),
     <m:Motion> => Action::Move(m)
 };
 

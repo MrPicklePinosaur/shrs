@@ -21,6 +21,7 @@ derive_builder = "0.12"
 
 syn = { version = "2", features = ["full"] }
 quote = "1"
+proc-macro2= "1"
 
 thiserror = "1"
 

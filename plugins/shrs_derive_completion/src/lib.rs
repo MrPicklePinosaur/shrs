@@ -7,7 +7,6 @@ extern crate derive_builder;
 
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitStr, Meta};
 use thiserror::__private::DisplayAsDisplay;
@@ -43,11 +42,11 @@ enum Error {
 }
 
 #[proc_macro_derive(Completion, attributes(flag))]
-pub fn completion(input: TokenStream) -> TokenStream {
+pub fn completion(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let parsed_input = parse_macro_input!(input as Item);
 
     if let Item::Struct(item) = parsed_input {
-        impl_struct(item).unwrap()
+        impl_struct(item).unwrap().into()
     } else {
         quote! {
             compile_error!("not used on struct or enum")
@@ -56,15 +55,15 @@ pub fn completion(input: TokenStream) -> TokenStream {
     }
 }
 
-fn impl_struct(item: ItemStruct) -> Result<TokenStream, Error> {
+fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
     let mut cli = CliBuilder::default();
     let mut flags: Vec<Flag> = vec![];
 
     let struct_name = &item.ident;
-    cli.name(struct_name.as_display().to_string());
+    cli.name(struct_name.as_display().to_string().to_ascii_lowercase());
 
-    for field in item.fields {
-        let field_name = field.ident.ok_or(Error::UnamedField)?;
+    for field in item.fields.iter() {
+        let field_name = field.ident.clone().ok_or(Error::UnamedField)?;
 
         // check if field is marked as flag
         for attr in field.attrs.iter() {
@@ -92,19 +91,20 @@ fn impl_struct(item: ItemStruct) -> Result<TokenStream, Error> {
 
     let cli = cli.build().unwrap();
 
-    let flag_rules = flag_rules(cli, flags).unwrap();
+    let _flag_rules = flag_rules(cli, flags).unwrap();
 
     let output = quote! {
         // TODO might run into issues using a use statement here
-        use shrs::line::completion::{DefaultCompleter, Rule, Pred, Action};
+        use shrs::line::completion::{
+            cmdname_eq_pred, default_format, flag_pred, Action, Completion, CompletionCtx,
+            DefaultCompleter, Pred, Rule,
+        };
 
         impl #struct_name {
-            pub fn rules(&self, comp: &mut DefaultCompleter) -> Vec<Rule> {
+            pub fn rules(comp: &mut DefaultCompleter) {
 
                 // Rules for flags
-                // comp.register(#flag_rules)
-
-                todo!()
+                comp.register(#_flag_rules);
             }
         }
     }
@@ -113,18 +113,13 @@ fn impl_struct(item: ItemStruct) -> Result<TokenStream, Error> {
 }
 
 /// Generate rules based off of flags that were parsed
-fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<TokenStream, Error> {
-    use shrs::line::completion::{
-        cmdname_eq_pred, default_format, flag_pred, Action, Completion, CompletionCtx,
-        DefaultCompleter, Pred, Rule,
-    };
-
+fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<proc_macro2::TokenStream, Error> {
     let cli_name = &cli.name;
     let long_flags = flags
         .iter()
         .map(|f| {
             let f = format!("--{}", f.long);
-            quote! { f }
+            quote! { #f.into() }
         })
         .collect::<Vec<_>>();
 
@@ -138,9 +133,9 @@ fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<TokenStream, Error> {
                 )
             };
             Rule::new(
-                Pred::new(cmdname_eq_pred(cli_name.into())).and(flag_pred),
+                Pred::new(cmdname_eq_pred(#cli_name.into())).and(flag_pred),
                 Box::new(long_flags_action)
-            );
+            )
         }
     }
     .into();

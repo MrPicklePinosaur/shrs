@@ -385,28 +385,17 @@ impl Line {
                 if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
                     for _ in 0..repeat {
                         // special cases (possibly consulidate with execute_vi somehow)
-                        match action {
-                            Action::Insert(motion) => {
-                                //being explicit
-                                ctx.cb.execute_vi(Action::Move(motion));
-                                ctx.mode = LineMode::Insert;
-                            },
-                            Action::Change(motion) => {
-                                ctx.cb.execute_vi(Action::Delete(motion));
-                                ctx.mode = LineMode::Insert;
-                            },
-                            Action::Move(motion) => match motion {
+
+                        if let Ok(mode) = ctx.cb.execute_vi(action.clone()) {
+                            ctx.mode = mode;
+                        }
+                        if let Action::Move(motion) = action {
+                            action.clone();
+                            match motion {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
-                                _ => {
-                                    // purposely unchecked
-                                    ctx.cb.execute_vi(action);
-                                },
-                            },
-                            action => {
-                                // purposely unchecked
-                                ctx.cb.execute_vi(action);
-                            },
+                                _ => {},
+                            }
                         }
                     }
 

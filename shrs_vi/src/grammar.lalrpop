@@ -32,7 +32,7 @@ pub Action: Action = {
     "I" => Action::Insert(Motion::Start),
     "a" => Action::Insert(Motion::Right),
     "A" => Action::Insert(Motion::End),
-    "x" => Action::Delete(Motion::Char),
+    "x" => Action::Delete(Motion::Right),
     <m:Motion> => Action::Move(m)
 };
 

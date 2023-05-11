@@ -28,7 +28,10 @@ pub Action: Action = {
     <a:DeleteAction> => a,
     <a:ChangeAction> => a,
     "y" <m:Motion> => Action::Yank(m),
-    "i" => Action::Insert,
+    "i" => Action::Insert(Motion::None),
+    "I" => Action::Insert(Motion::Start),
+    "a" => Action::Insert(Motion::Right),
+    "A" => Action::Insert(Motion::End),
     "x" => Action::Delete(Motion::Char),
     <m:Motion> => Action::Move(m)
 };
@@ -43,6 +46,8 @@ pub ChangeAction: Action = {
     "c" "c" => Action::Change(Motion::All),
     "C" => Action::Change(Motion::End),
     "c" <m:Motion> => Action::Change(m),
+    "s" => Action::Change(Motion::Right),
+    "S" => Action::Change(Motion::All)
 };
 
 pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();

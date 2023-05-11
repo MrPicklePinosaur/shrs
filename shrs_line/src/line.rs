@@ -386,7 +386,9 @@ impl Line {
                     for _ in 0..repeat {
                         // special cases (possibly consulidate with execute_vi somehow)
                         match action {
-                            Action::Insert => {
+                            Action::Insert(motion) => {
+                                //being explicit
+                                ctx.cb.execute_vi(Action::Move(motion));
                                 ctx.mode = LineMode::Insert;
                             },
                             Action::Change(motion) => {

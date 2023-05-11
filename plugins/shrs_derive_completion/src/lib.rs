@@ -8,7 +8,7 @@ extern crate derive_builder;
 extern crate proc_macro;
 
 use quote::quote;
-use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitStr, Meta};
+use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitChar, LitStr, Meta};
 use thiserror::__private::DisplayAsDisplay;
 
 /// Information on the CLI itself
@@ -75,8 +75,17 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
                 attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("long") {
                         let value = meta.value()?;
-                        let s: LitStr = value.parse()?;
-                        flag.long(s.value());
+                        let s = value.parse::<LitStr>()?.value();
+                        flag.long(s);
+                    } else if meta.path.is_ident("short") {
+                        let c = if let Ok(value) = meta.value() {
+                            value.parse::<LitChar>()?.value()
+                        } else {
+                            // if no specific short flag is passed, use the first character of the
+                            // current field
+                            field_name.to_string().chars().nth(0).unwrap()
+                        };
+                        flag.short(Some(c));
                     } else {
                         return Err(meta.error("unsupported attribute"));
                     }
@@ -123,18 +132,30 @@ fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<proc_macro2::TokenStream, Er
         })
         .collect::<Vec<_>>();
 
+    let short_flags = flags
+        .iter()
+        .filter_map(|f| {
+            f.short.map(|f| {
+                let f = format!("-{}", f);
+                quote! { #f.into() }
+            })
+        })
+        .collect::<Vec<_>>();
+
     let output = quote! {
         {
-            let long_flags_action = |ctx: &CompletionCtx| -> Vec<Completion> {
+            let flags_action = |ctx: &CompletionCtx| -> Vec<Completion> {
                 default_format(
                     vec![
                         #(#long_flags)*
+                        ,
+                        #(#short_flags)*
                     ]
                 )
             };
             Rule::new(
                 Pred::new(cmdname_eq_pred(#cli_name.into())).and(flag_pred),
-                Box::new(long_flags_action)
+                Box::new(flags_action)
             )
         }
     }

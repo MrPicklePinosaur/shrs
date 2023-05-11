@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 use super::{
     drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,

@@ -8,7 +8,7 @@ struct MyCli {
 }
 
 fn main() {
-    let mut comp = DefaultCompleter::default();
+    let mut comp = DefaultCompleter::new();
     MyCli::rules(&mut comp);
 
     let readline = LineBuilder::default().with_completer(comp).build().unwrap();

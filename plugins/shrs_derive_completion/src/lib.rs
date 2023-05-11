@@ -104,6 +104,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
             pub fn rules(comp: &mut DefaultCompleter) {
 
                 // Rules for flags
+                // println!("{:?}", #_flag_rules);
                 comp.register(#_flag_rules);
             }
         }

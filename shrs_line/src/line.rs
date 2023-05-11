@@ -390,7 +390,6 @@ impl Line {
                             ctx.mode = mode;
                         }
                         if let Action::Move(motion) = action {
-                            action.clone();
                             match motion {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,

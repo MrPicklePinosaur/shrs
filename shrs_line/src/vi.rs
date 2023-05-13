@@ -2,10 +2,12 @@
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
+use crate::LineMode;
+
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {
     fn motion_to_loc(&self, motion: Motion) -> Result<Location>;
-    fn execute_vi(&mut self, action: Action) -> Result<()>;
+    fn execute_vi(&mut self, action: Action) -> Result<LineMode>;
 }
 
 impl ViCursorBuffer for CursorBuffer {
@@ -96,8 +98,9 @@ impl ViCursorBuffer for CursorBuffer {
         }
     }
 
-    fn execute_vi(&mut self, action: Action) -> Result<()> {
+    fn execute_vi(&mut self, action: Action) -> Result<LineMode> {
         match action {
+            Action::Insert => Ok(LineMode::Insert),
             Action::Move(motion) => match motion {
                 Motion::Left
                 | Motion::Right
@@ -106,13 +109,16 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Word
                 | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => self.move_cursor(self.motion_to_loc(motion)?),
-                _ => Ok(()),
+                | Motion::Find(_) => {
+                    self.move_cursor(self.motion_to_loc(motion)?)?;
+                    Ok(LineMode::Normal)
+                },
+                _ => Ok(LineMode::Normal),
             },
             Action::Delete(motion) => match motion {
                 Motion::All => {
                     self.clear();
-                    Ok(())
+                    Ok(LineMode::Normal)
                 },
                 Motion::Left
                 | Motion::Right
@@ -121,10 +127,19 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Word
                 | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
-                _ => Ok(()),
+                | Motion::Find(_) => {
+                    self.delete(Location::Cursor(), self.motion_to_loc(motion)?)?;
+                    Ok(LineMode::Normal)
+                },
+                _ => Ok(LineMode::Normal),
             },
-            _ => Ok(()),
+            //executed left to right
+            Action::Chain(action1, action2) => {
+                self.execute_vi(*action1)?;
+                self.execute_vi(*action2)
+            },
+
+            _ => Ok(LineMode::Normal),
         }
     }
 }

@@ -3,12 +3,14 @@ use shrs_derive_completion::Completion;
 
 #[derive(Completion)]
 struct MyCli {
-    #[flag(long = "help")]
+    #[flag(long = "help", short)]
     help: bool,
+    #[flag(short = "v")]
+    verbose: bool,
 }
 
 fn main() {
-    let mut comp = DefaultCompleter::default();
+    let mut comp = DefaultCompleter::new();
     MyCli::rules(&mut comp);
 
     let readline = LineBuilder::default().with_completer(comp).build().unwrap();

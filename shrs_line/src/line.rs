@@ -225,7 +225,9 @@ impl Line {
         }
 
         let res = ctx.cb.slice(..).as_str().unwrap().to_string();
-        self.history.add(res.clone());
+        if !res.is_empty() {
+            self.history.add(res.clone());
+        }
         Ok(res)
     }
 

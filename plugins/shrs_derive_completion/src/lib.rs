@@ -79,12 +79,16 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
                         flag.long(s);
                     } else if meta.path.is_ident("short") {
                         let c = if let Ok(value) = meta.value() {
-                            value.parse::<LitChar>()?.value()
+                            value.parse::<LitStr>()?.value()
                         } else {
                             // if no specific short flag is passed, use the first character of the
                             // current field
-                            field_name.to_string().chars().nth(0).unwrap()
+                            field_name.to_string()
                         };
+                        let c = c
+                            .chars()
+                            .nth(0)
+                            .ok_or(meta.error("expected short flag with single character"))?;
                         flag.short(Some(c));
                     } else {
                         return Err(meta.error("unsupported attribute"));
@@ -147,9 +151,9 @@ fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<proc_macro2::TokenStream, Er
             let flags_action = |ctx: &CompletionCtx| -> Vec<Completion> {
                 default_format(
                     vec![
-                        #(#long_flags)*
+                        #(#short_flags),*
                         ,
-                        #(#short_flags)*
+                        #(#long_flags),*
                     ]
                 )
             };

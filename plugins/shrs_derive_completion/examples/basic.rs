@@ -5,6 +5,8 @@ use shrs_derive_completion::Completion;
 struct MyCli {
     #[flag(long = "help", short)]
     help: bool,
+    #[flag(short = "v")]
+    verbose: bool,
 }
 
 fn main() {

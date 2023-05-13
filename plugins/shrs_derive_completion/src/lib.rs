@@ -7,7 +7,10 @@ extern crate derive_builder;
 
 extern crate proc_macro;
 
+use std::marker::PhantomData;
+
 use quote::quote;
+use shrs::line::completion::Action;
 use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitChar, LitStr, Meta};
 use thiserror::__private::DisplayAsDisplay;
 
@@ -33,6 +36,13 @@ struct Flag {
     /// Short flags can be passed with a single dash. For example `-v`.
     #[builder(default)]
     short: Option<char>,
+}
+
+/// Information on type of argument
+// TODO include default function for generating completions based on type?
+// ie: files, ssh
+struct Arg {
+    action: Action,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -67,6 +77,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
 
         // check if field is marked as flag
         for attr in field.attrs.iter() {
+            // handle #[flag(..)]
             if attr.path().is_ident("flag") {
                 // Default long flag name is name of field
                 let mut flag = FlagBuilder::default();
@@ -98,6 +109,8 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
                 })
                 .unwrap();
                 flags.push(flag.build().unwrap());
+            } else if attr.path().is_ident("arg") {
+                // handle #[arg(..)]
             }
         }
     }

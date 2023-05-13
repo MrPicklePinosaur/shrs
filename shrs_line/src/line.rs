@@ -80,12 +80,53 @@ impl Default for Line {
     }
 }
 
+/// State for where the prompt is in history browse mode
+#[derive(PartialEq, Eq)]
+pub enum HistoryInd {
+    /// Brand new prompt
+    Prompt,
+    /// In history line
+    Line(usize),
+}
+
+impl HistoryInd {
+    /// Go up (less recent) in history, if in prompt mode, then enter history
+    pub fn up(&self, limit: usize) -> HistoryInd {
+        match self {
+            HistoryInd::Prompt => {
+                if limit == 0 {
+                    HistoryInd::Prompt
+                } else {
+                    HistoryInd::Line(0)
+                }
+            },
+            HistoryInd::Line(i) => HistoryInd::Line((i + 1).min(limit)),
+        }
+    }
+
+    /// Go down (more recent) in history, if in most recent history line, enter prompt mode
+    pub fn down(&self) -> HistoryInd {
+        match self {
+            HistoryInd::Prompt => HistoryInd::Prompt,
+            HistoryInd::Line(i) => {
+                if *i == 0 {
+                    HistoryInd::Prompt
+                } else {
+                    HistoryInd::Line(i.saturating_sub(1))
+                }
+            },
+        }
+    }
+}
+
 pub struct LineCtx {
     cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
     // TODO dumping history index here for now
-    history_ind: i32,
+    history_ind: HistoryInd,
+    // line contents that were present before entering history mode
+    saved_line: String,
     mode: LineMode,
 }
 
@@ -94,7 +135,8 @@ impl Default for LineCtx {
         LineCtx {
             cb: CursorBuffer::new(),
             current_word: String::new(),
-            history_ind: -1,
+            history_ind: HistoryInd::Prompt,
+            saved_line: String::new(),
             mode: LineMode::Insert,
         }
     }
@@ -449,24 +491,38 @@ impl Line {
     }
 
     fn history_up(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
-        // TODO make this logic nicer
-        ctx.history_ind = (ctx.history_ind + 1).min(self.history.len().saturating_sub(1) as i32);
-
-        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-            ctx.cb.clear();
-            ctx.cb.insert(Location::Cursor(), history_item)?;
+        // save current prompt
+        if HistoryInd::Prompt == ctx.history_ind {
+            ctx.saved_line = ctx.cb.slice(..).to_string();
         }
+
+        ctx.history_ind = ctx.history_ind.up(self.history.len());
+        self.update_history(ctx)?;
+
         Ok(())
     }
 
     fn history_down(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
-        ctx.history_ind = (ctx.history_ind - 1).max(0);
+        ctx.history_ind = ctx.history_ind.down();
+        self.update_history(ctx)?;
 
-        if let Some(history_item) = self.history.get(ctx.history_ind as usize) {
-            ctx.cb.clear();
-            ctx.cb.insert(Location::Cursor(), history_item)?;
+        Ok(())
+    }
+
+    fn update_history(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+        match ctx.history_ind {
+            // restore saved line
+            HistoryInd::Prompt => {
+                ctx.cb.clear();
+                ctx.cb.insert(Location::Cursor(), &ctx.saved_line)?;
+            },
+            // fill prompt with history element
+            HistoryInd::Line(i) => {
+                let history_item = self.history.get(i).unwrap();
+                ctx.cb.clear();
+                ctx.cb.insert(Location::Cursor(), history_item)?;
+            },
         }
-
         Ok(())
     }
 }

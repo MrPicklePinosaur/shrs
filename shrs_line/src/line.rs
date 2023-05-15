@@ -256,7 +256,7 @@ impl Line {
                             if should_break {
                                 break;
                             }
-                            self.buffer_history.add(&ctx.cb);
+                            self.buffer_history.add(&line_ctx.cb);
                         },
                         LineMode::Normal => {
                             let should_break = self.handle_normal_keys(line_ctx, event)?;

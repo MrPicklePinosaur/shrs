@@ -1,5 +1,5 @@
-use std::fs::File;
-use std::io::Write;
+// use std::fs::File;
+// use std::io::Write;
 
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 
@@ -19,7 +19,7 @@ pub struct DefaultBufferHistory {
 impl DefaultBufferHistory {
     pub fn new() -> Self {
         DefaultBufferHistory {
-            hist: vec![],
+            hist: vec![("".to_string(), 0)],
             index: 0,
             // w: File::create("./debug.txt").unwrap(),
         }
@@ -34,7 +34,9 @@ impl BufferHistory for DefaultBufferHistory {
     fn next(&mut self, cb: &mut CursorBuffer) {
         if self.index < self.hist.len() - 1 {
             self.index += 1;
+
             self.update_buffer(cb);
+
             // writeln!(
             //     self.w,
             //     "{:?}",
@@ -50,7 +52,9 @@ impl BufferHistory for DefaultBufferHistory {
     fn prev(&mut self, cb: &mut CursorBuffer) {
         if self.index > 0 {
             self.index -= 1;
+
             self.update_buffer(cb);
+
             // writeln!(
             //     self.w,
             //     "{:?}",
@@ -64,7 +68,7 @@ impl BufferHistory for DefaultBufferHistory {
     }
 
     fn add(&mut self, cb: &CursorBuffer) {
-        // writeln!(self.w, "adding");
+        // writeln!(self.w, "{}", self.index);
 
         if !self.hist.is_empty() && self.index != self.hist.len() {
             self.hist.drain((self.index + 1)..);
@@ -79,7 +83,7 @@ impl BufferHistory for DefaultBufferHistory {
         self.index += 1;
     }
     fn clear(&mut self) {
-        self.hist.clear();
+        self.hist.drain(1..);
         self.index = 0;
     }
 }

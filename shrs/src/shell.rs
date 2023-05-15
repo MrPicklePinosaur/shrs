@@ -150,7 +150,7 @@ fn run_shell(
     }
 
     loop {
-        let line = readline.read_line();
+        let line = readline.read_line(sh, ctx, rt);
 
         // attempt to expand alias
         // TODO IFS

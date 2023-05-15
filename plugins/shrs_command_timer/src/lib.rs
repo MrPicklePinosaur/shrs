@@ -15,7 +15,7 @@ use shrs::{
     Context, Runtime, Shell,
 };
 
-struct CommandTimerState {
+pub struct CommandTimerState {
     /// The time the previous command was started at
     start_time: Option<Instant>,
     /// Buffer to hold the result of the previous tracked command time

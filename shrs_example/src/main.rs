@@ -26,7 +26,14 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+        let vi_mode = match line_ctx.mode() {
+            shrs::line::LineMode::Insert => String::from("[i]").bold().yellow(),
+            shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
+        };
+
         StyledBuf::from_iter(vec![
+            vi_mode,
+            String::from(" ").reset(),
             username().unwrap_or_default().blue(),
             String::from("@").reset(),
             hostname().unwrap_or_default().blue(),

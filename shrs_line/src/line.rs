@@ -148,6 +148,9 @@ impl<'a> LineCtx<'a> {
             rt,
         }
     }
+    pub fn mode(&self) -> LineMode {
+        self.mode
+    }
 }
 
 // impl Default for LineCtx {

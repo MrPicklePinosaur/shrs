@@ -4,7 +4,7 @@
 extern crate derive_builder;
 
 mod line;
-pub use line::{Line, LineBuilder, LineBuilderError, LineMode};
+pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode};
 
 mod cursor;
 pub use cursor::{Cursor, DefaultCursor};

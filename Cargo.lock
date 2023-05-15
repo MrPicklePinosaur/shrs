@@ -1184,6 +1184,7 @@ dependencies = [
  "crossterm",
  "derive_builder",
  "dirs",
+ "shrs_core",
  "shrs_utils",
  "shrs_vi",
  "thiserror",

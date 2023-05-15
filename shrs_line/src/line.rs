@@ -130,9 +130,9 @@ pub struct LineCtx<'a> {
     saved_line: String,
     mode: LineMode,
 
-    sh: &'a Shell,
-    ctx: &'a Context,
-    rt: &'a Runtime,
+    pub sh: &'a Shell,
+    pub ctx: &'a Context,
+    pub rt: &'a Runtime,
 }
 
 impl<'a> LineCtx<'a> {

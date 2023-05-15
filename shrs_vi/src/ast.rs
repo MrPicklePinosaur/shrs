@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Command {
     pub repeat: u32,
     pub action: Action,
@@ -6,7 +6,9 @@ pub struct Command {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Motion {
+    None,
     BackWord,
+    WordPunc,
     Word,
     Left,
     Right,
@@ -14,18 +16,16 @@ pub enum Motion {
     Up,
     Down,
     End,
-    /// The current character
-    Char,
     /// Select entire line (for Move action this behaves same as End)
     All,
     Find(char),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
     Delete(Motion),
-    Change(Motion),
     Yank(Motion),
     Move(Motion),
     Insert,
+    Chain(Box<Action>, Box<Action>),
 }

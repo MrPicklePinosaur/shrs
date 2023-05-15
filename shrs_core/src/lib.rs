@@ -23,7 +23,6 @@ pub mod prompt;
 
 mod shell;
 pub use shell::{command_output, dummy_child, run_external_command, Context, Runtime, Shell};
-pub use shrs_line as line;
 
 mod signal;
 pub use signal::sig_handler;

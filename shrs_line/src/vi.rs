@@ -2,10 +2,12 @@
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
+use crate::LineMode;
+
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {
     fn motion_to_loc(&self, motion: Motion) -> Result<Location>;
-    fn execute_vi(&mut self, action: Action) -> Result<()>;
+    fn execute_vi(&mut self, action: Action) -> Result<LineMode>;
 }
 
 impl ViCursorBuffer for CursorBuffer {
@@ -41,6 +43,32 @@ impl ViCursorBuffer for CursorBuffer {
                 Ok(Location::Find(self, start, |ch| !ch.is_whitespace())
                     .unwrap_or(Location::Back(self)))
             },
+            Motion::WordPunc => {
+                let punc = "!-~*|\".?[]{}()";
+                //check if at end of line
+                let cur_char = if let Some(ch) = self.char_at(Location::Cursor()) {
+                    ch
+                } else {
+                    return Ok(Location::Cursor());
+                };
+                let start = if cur_char.is_whitespace() {
+                    Location::Cursor()
+                } else if punc.contains(cur_char) {
+                    //start at non punc
+                    Location::Find(self, Location::Cursor(), |ch| !punc.contains(ch))
+                        .unwrap_or(Location::Back(self))
+                } else {
+                    //if letter char
+                    Location::Find(self, Location::Cursor(), |ch| {
+                        ch.is_whitespace() || punc.contains(ch)
+                    })
+                    .unwrap_or(Location::Back(self))
+                };
+
+                //jump to next word
+                Ok(Location::Find(self, start, |ch| !ch.is_whitespace())
+                    .unwrap_or(Location::Back(self)))
+            },
             Motion::BackWord => {
                 // TODO logic is getting comlpicatied, need more predicates to test location of
                 // cursor (is cursor on first char of word, last char of word etc)
@@ -70,34 +98,48 @@ impl ViCursorBuffer for CursorBuffer {
         }
     }
 
-    fn execute_vi(&mut self, action: Action) -> Result<()> {
+    fn execute_vi(&mut self, action: Action) -> Result<LineMode> {
         match action {
+            Action::Insert => Ok(LineMode::Insert),
             Action::Move(motion) => match motion {
                 Motion::Left
                 | Motion::Right
                 | Motion::Start
                 | Motion::End
                 | Motion::Word
+                | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => self.move_cursor(self.motion_to_loc(motion)?),
-                _ => Ok(()),
+                | Motion::Find(_) => {
+                    self.move_cursor(self.motion_to_loc(motion)?)?;
+                    Ok(LineMode::Normal)
+                },
+                _ => Ok(LineMode::Normal),
             },
             Action::Delete(motion) => match motion {
                 Motion::All => {
                     self.clear();
-                    Ok(())
+                    Ok(LineMode::Normal)
                 },
                 Motion::Left
                 | Motion::Right
                 | Motion::Start
                 | Motion::End
-                | Motion::Char
                 | Motion::Word
+                | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => self.delete(Location::Cursor(), self.motion_to_loc(motion)?),
-                _ => Ok(()),
+                | Motion::Find(_) => {
+                    self.delete(Location::Cursor(), self.motion_to_loc(motion)?)?;
+                    Ok(LineMode::Normal)
+                },
+                _ => Ok(LineMode::Normal),
             },
-            _ => Ok(()),
+            //executed left to right
+            Action::Chain(action1, action2) => {
+                self.execute_vi(*action1)?;
+                self.execute_vi(*action2)
+            },
+
+            _ => Ok(LineMode::Normal),
         }
     }
 }

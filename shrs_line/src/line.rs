@@ -1,4 +1,4 @@
-use std::{io::Write, time::Duration};
+use std::{borrow::BorrowMut, io::Write, time::Duration};
 
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
@@ -9,6 +9,7 @@ use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
+    buffer_history::{BufferHistory, DefaultBufferHistory},
     completion::{Completer, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     highlight::{DefaultHighlighter, Highlighter},
@@ -45,6 +46,10 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
     history: Box<dyn History<HistoryItem = String>>,
+
+    #[builder(default = "Box::new(DefaultBufferHistory::new())")]
+    #[builder(setter(custom))]
+    buffer_history: Box<dyn BufferHistory>,
 
     #[builder(default = "Box::new(DefaultCursor::default())")]
     #[builder(setter(custom))]
@@ -227,6 +232,7 @@ impl Line {
                             if should_break {
                                 break;
                             }
+                            self.buffer_history.add(&ctx.cb);
                         },
                         LineMode::Normal => {
                             let should_break = self.handle_normal_keys(ctx, event)?;
@@ -328,6 +334,7 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
+                self.buffer_history.clear();
                 self.painter.newline()?;
                 return Ok(true);
             },
@@ -433,12 +440,18 @@ impl Line {
                         if let Ok(mode) = ctx.cb.execute_vi(action.clone()) {
                             ctx.mode = mode;
                         }
-                        if let Action::Move(motion) = action {
-                            match motion {
+                        match action {
+                            Action::Undo => self.buffer_history.prev(ctx.cb.borrow_mut()),
+
+                            Action::Redo => self.buffer_history.next(ctx.cb.borrow_mut()),
+                            Action::Move(motion) => match motion {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {},
-                            }
+                            },
+                            _ => {
+                                self.buffer_history.add(&ctx.cb);
+                            },
                         }
                     }
 

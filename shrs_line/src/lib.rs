@@ -30,5 +30,8 @@ pub use highlight::{DefaultHighlighter, Highlighter};
 mod keybinding;
 pub use keybinding::{DefaultKeybinding, Keybinding};
 
+mod buffer_history;
+pub use buffer_history::{BufferHistory, DefaultBufferHistory};
+
 #[cfg(test)]
 mod tests {}

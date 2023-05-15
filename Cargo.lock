@@ -1119,6 +1119,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_command_timer"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+]
+
+[[package]]
 name = "shrs_core"
 version = "0.1.0"
 dependencies = [

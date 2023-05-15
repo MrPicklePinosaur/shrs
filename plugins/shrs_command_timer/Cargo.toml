@@ -1,0 +1,11 @@
+[package]
+name = "shrs_command_timer"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "shrs plugin to time how long the previous command took to run"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+shrs = { path = "../../shrs" }

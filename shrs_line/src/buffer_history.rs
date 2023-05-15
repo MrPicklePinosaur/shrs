@@ -13,7 +13,7 @@ pub trait BufferHistory {
 pub struct DefaultBufferHistory {
     index: usize,
     hist: Vec<(String, usize)>,
-    w: File,
+    // w: File,
 }
 
 impl DefaultBufferHistory {
@@ -21,7 +21,7 @@ impl DefaultBufferHistory {
         DefaultBufferHistory {
             hist: vec![],
             index: 0,
-            w: File::create("./debug.txt").unwrap(),
+            // w: File::create("./debug.txt").unwrap(),
         }
     }
     fn update_buffer(&mut self, cb: &mut CursorBuffer) {
@@ -35,15 +35,15 @@ impl BufferHistory for DefaultBufferHistory {
         if self.index < self.hist.len() - 1 {
             self.index += 1;
             self.update_buffer(cb);
-            writeln!(
-                self.w,
-                "{:?}",
-                self.hist
-                    .iter()
-                    .map(|h| { h.0.clone() })
-                    .collect::<Vec<String>>()
-            )
-            .unwrap();
+            // writeln!(
+            //     self.w,
+            //     "{:?}",
+            //     self.hist
+            //         .iter()
+            //         .map(|h| { h.0.clone() })
+            //         .collect::<Vec<String>>()
+            // )
+            // .unwrap();
         }
     }
 
@@ -51,20 +51,20 @@ impl BufferHistory for DefaultBufferHistory {
         if self.index > 0 {
             self.index -= 1;
             self.update_buffer(cb);
-            writeln!(
-                self.w,
-                "{:?}",
-                self.hist
-                    .iter()
-                    .map(|h| { h.0.clone() })
-                    .collect::<Vec<String>>()
-            )
-            .unwrap();
+            // writeln!(
+            //     self.w,
+            //     "{:?}",
+            //     self.hist
+            //         .iter()
+            //         .map(|h| { h.0.clone() })
+            //         .collect::<Vec<String>>()
+            // )
+            // .unwrap();
         }
     }
 
     fn add(&mut self, cb: &CursorBuffer) {
-        writeln!(self.w, "adding");
+        // writeln!(self.w, "adding");
 
         if !self.hist.is_empty() && self.index != self.hist.len() {
             self.hist.drain((self.index + 1)..);

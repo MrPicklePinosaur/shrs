@@ -13,7 +13,7 @@ use shrs::{
     line::{
         completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
         DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu, FileBackedHistory,
-        LineBuilder, Prompt, StyledBuf,
+        LineBuilder, LineCtx, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
@@ -25,8 +25,15 @@ use shrs_output_capture::OutputCapturePlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self) -> StyledBuf {
+    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+        let vi_mode = match line_ctx.mode() {
+            shrs::line::LineMode::Insert => String::from("[i]").bold().yellow(),
+            shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
+        };
+
         StyledBuf::from_iter(vec![
+            vi_mode,
+            String::from(" ").reset(),
             username().unwrap_or_default().blue(),
             String::from("@").reset(),
             hostname().unwrap_or_default().blue(),
@@ -36,7 +43,7 @@ impl Prompt for MyPrompt {
             "> ".to_string().blue(),
         ])
     }
-    fn prompt_right(&self) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])
     }
 }

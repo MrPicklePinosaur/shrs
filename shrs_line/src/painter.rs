@@ -6,8 +6,9 @@ use crossterm::{
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
+use shrs_core::{Context, Runtime, Shell};
 
-use crate::{cursor::Cursor, menu::Menu, prompt::Prompt};
+use crate::{cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
 
 /// Text to be renderered by painter
 pub struct StyledBuf {
@@ -79,6 +80,7 @@ impl Painter {
 
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,
+        line_ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
         styled_buf: StyledBuf,
@@ -105,7 +107,7 @@ impl Painter {
 
         // render left prompt
         let mut left_space = 0; // cursor position from left side of terminal
-        let prompt_left = prompt.as_ref().prompt_left();
+        let prompt_left = prompt.as_ref().prompt_left(line_ctx);
         left_space += prompt_left.content_len();
         for span in prompt_left.into_spans() {
             self.out.queue(PrintStyledContent(span))?;
@@ -119,7 +121,7 @@ impl Painter {
 
         // render right prompt
         let mut right_space = self.term_size.0;
-        let prompt_right = prompt.as_ref().prompt_right();
+        let prompt_right = prompt.as_ref().prompt_right(line_ctx);
         right_space -= prompt_right.content_len() as u16;
         self.out.queue(MoveToColumn(right_space))?;
         for span in prompt_right.into_spans() {

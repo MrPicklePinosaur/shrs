@@ -39,7 +39,10 @@ pub use anyhow;
 pub use jobs::{ExitStatus, JobId, JobInfo, Jobs};
 
 pub mod crossterm {
-    pub use crossterm::{style::Print, QueueableCommand};
+    pub use crossterm::{
+        style::{Print, Stylize},
+        QueueableCommand,
+    };
 }
 
 /*

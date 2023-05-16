@@ -10,4 +10,6 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 [dependencies]
 shrs = { path = "../../shrs" }
 
+derive_builder = "0.12"
+
 thiserror = "1"

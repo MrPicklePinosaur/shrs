@@ -256,7 +256,6 @@ impl Line {
                             if should_break {
                                 break;
                             }
-                            self.buffer_history.add(&line_ctx.cb);
                         },
                         LineMode::Normal => {
                             let should_break = self.handle_normal_keys(line_ctx, event)?;
@@ -415,6 +414,7 @@ impl Line {
                 code: KeyCode::Esc, ..
             }) => {
                 ctx.mode = LineMode::Normal;
+                self.buffer_history.add(&ctx.cb);
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Backspace,
@@ -444,6 +444,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
+                self.buffer_history.clear();
+
                 self.painter.newline()?;
                 return Ok(true);
             },

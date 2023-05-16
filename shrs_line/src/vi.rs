@@ -138,7 +138,7 @@ impl ViCursorBuffer for CursorBuffer {
 
             _ => (),
         }
-        return Ok(LineMode::Normal);
+        Ok(LineMode::Normal)
     }
 }
 

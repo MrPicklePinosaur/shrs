@@ -27,9 +27,9 @@ pub fn root_dir() -> Result<PathBuf> {
 /// Get name of current branch
 pub fn branch() -> Result<String> {
     let res = Command::new("git")
-        .arg("--show-current")
+        .args(vec!["branch", "--show-current"])
         .output()
         .map_err(|e| Error::GitError(e.to_string()))?;
 
-    Ok(str::from_utf8(&res.stdout).unwrap().to_string())
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
 }

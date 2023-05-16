@@ -1,18 +1,63 @@
 //! Scan file system to match project type
 
+use std::{
+    ffi::OsString,
+    fs,
+    path::{Path, PathBuf},
+};
+
 #[derive(Builder)]
-pub struct Query<'a> {
+#[builder(pattern = "owned")]
+pub struct Query {
     /// Required files (exact match)
-    files: Vec<&'a str>,
+    #[builder(default = "Vec::new()")]
+    files: Vec<String>,
     /// Required file extensions
-    extensions: Vec<&'a str>,
+    #[builder(default = "Vec::new()")]
+    extensions: Vec<String>,
     /// Required directories
-    dirs: Vec<&'a str>,
+    #[builder(default = "Vec::new()")]
+    dirs: Vec<String>,
+
+    /// Should query be performed recursively
+    #[builder(default = "true")]
+    recursive: bool,
 }
 
-impl<'a> Query<'a> {
+impl Query {
     /// Runs filesystem query and returns if query matched
-    pub fn scan(&self) -> bool {
-        todo!()
+    pub fn scan(&self, dir: &Path) -> bool {
+        // look for required files
+        let found_files = self.files.iter().all(|required_file| {
+            let mut dir_contents = fs::read_dir(dir).unwrap();
+            dir_contents
+                .find(|f| f.as_ref().unwrap().file_name() == OsString::from(required_file))
+                .is_some()
+        });
+
+        // look for required file extensions
+
+        // look for required dirs
+
+        found_files
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::QueryBuilder;
+
+    #[test]
+    fn basic() {
+        let query = QueryBuilder::default()
+            .files(vec![String::from(".vimrc")])
+            .build()
+            .unwrap();
+
+        // TODO make proper test (that works on all dev machines)
+        let path = PathBuf::from("/home/pinosaur");
+        assert!(query.scan(&path));
     }
 }

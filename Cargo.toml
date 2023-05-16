@@ -11,4 +11,5 @@ members = [
     "plugins/shrs_cd_tools",
     "plugins/shrs_command_timer",
     "plugins/shrs_derive_completion",
+    "plugins/shrs_run_context",
 ]

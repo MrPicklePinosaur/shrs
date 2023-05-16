@@ -27,6 +27,7 @@ pub struct Query {
 impl Query {
     /// Runs filesystem query and returns if query matched
     pub fn scan(&self, dir: &Path) -> bool {
+        // TODO run this recursively
         // look for required files
         let found_files = self.files.iter().all(|required_file| {
             let mut dir_contents = fs::read_dir(dir).unwrap();

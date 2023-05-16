@@ -1,5 +1,13 @@
 //! Utilities for rust based projects
 
-pub fn rust_found_cargo_toml() -> bool {
-    todo!()
+use crate::query::{Query, QueryBuilder, QueryBuilderError};
+
+pub struct RustModule {
+    // pub cargo_toml:
+}
+
+pub fn module() -> Result<Query, QueryBuilderError> {
+    QueryBuilder::default()
+        .files(vec![String::from("Cargo.toml")])
+        .build()
 }

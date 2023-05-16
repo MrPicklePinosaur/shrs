@@ -1137,6 +1137,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_run_context"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "shrs",
+]
+
+[[package]]
 name = "shrs_utils"
 version = "0.1.0"
 dependencies = [

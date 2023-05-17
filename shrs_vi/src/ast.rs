@@ -23,6 +23,8 @@ pub enum Motion {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
+    Undo,
+    Redo,
     Delete(Motion),
     Yank(Motion),
     Move(Motion),

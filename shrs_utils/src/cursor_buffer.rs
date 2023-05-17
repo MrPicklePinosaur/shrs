@@ -269,6 +269,12 @@ impl CursorBuffer {
     fn bounds_check(&self, i: isize) -> bool {
         i >= 0 && i <= self.len() as isize
     }
+
+    pub fn set_string(&mut self, s: &String) {
+        self.data.remove(0..self.len());
+        self.data.insert(0, s.as_str());
+        self.cursor = 0;
+    }
 }
 
 /*

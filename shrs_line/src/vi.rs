@@ -100,7 +100,7 @@ impl ViCursorBuffer for CursorBuffer {
 
     fn execute_vi(&mut self, action: Action) -> Result<LineMode> {
         match action {
-            Action::Insert => Ok(LineMode::Insert),
+            Action::Insert => return Ok(LineMode::Insert),
             Action::Move(motion) => match motion {
                 Motion::Left
                 | Motion::Right
@@ -111,14 +111,12 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::BackWord
                 | Motion::Find(_) => {
                     self.move_cursor(self.motion_to_loc(motion)?)?;
-                    Ok(LineMode::Normal)
                 },
-                _ => Ok(LineMode::Normal),
+                _ => (),
             },
             Action::Delete(motion) => match motion {
                 Motion::All => {
                     self.clear();
-                    Ok(LineMode::Normal)
                 },
                 Motion::Left
                 | Motion::Right
@@ -129,18 +127,18 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::BackWord
                 | Motion::Find(_) => {
                     self.delete(Location::Cursor(), self.motion_to_loc(motion)?)?;
-                    Ok(LineMode::Normal)
                 },
-                _ => Ok(LineMode::Normal),
+                _ => (),
             },
             //executed left to right
             Action::Chain(action1, action2) => {
                 self.execute_vi(*action1)?;
-                self.execute_vi(*action2)
+                return self.execute_vi(*action2);
             },
 
-            _ => Ok(LineMode::Normal),
+            _ => (),
         }
+        Ok(LineMode::Normal)
     }
 }
 

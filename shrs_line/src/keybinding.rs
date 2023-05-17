@@ -8,6 +8,8 @@ pub trait Keybinding {
     fn handle_key_event(&mut self, key_event: KeyEvent) -> bool;
 }
 
+pub type Binding = (KeyCode, KeyModifiers);
+
 // #[macro_export]
 // macro_rules! keybindings {
 //     ($($binding:expr),* $(,)*) => {{
@@ -15,9 +17,7 @@ pub trait Keybinding {
 //     }};
 // }
 
-pub type Binding = (KeyCode, KeyModifiers);
-
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 enum BindingFromStrError {
     #[error("unknown key: {0}")]
     UnknownKey(String),
@@ -75,6 +75,8 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
         "s" | "shift" => Ok(KeyModifiers::SHIFT),
         "a" | "alt" => Ok(KeyModifiers::ALT),
         "c" | "ctrl" => Ok(KeyModifiers::CONTROL),
+        "super" => Ok(KeyModifiers::SUPER),
+        "m" | "meta" => Ok(KeyModifiers::META),
         _ => Err(BindingFromStrError::UnknownMod(s.to_string())),
     }
 }
@@ -110,5 +112,20 @@ impl FromIterator<(Binding, Box<dyn FnMut()>)> for DefaultKeybinding {
         DefaultKeybinding {
             bindings: HashMap::from_iter(iter),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crossterm::event::{KeyCode, KeyModifiers};
+
+    use super::parse_keybinding;
+
+    #[test]
+    fn keybinding_parse() {
+        assert_eq!(
+            parse_keybinding("c"),
+            Ok((KeyCode::Char('c'), KeyModifiers::NONE))
+        );
     }
 }

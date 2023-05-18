@@ -10,15 +10,23 @@ pub trait Keybinding {
 
 pub type Binding = (KeyCode, KeyModifiers);
 
-// #[macro_export]
-// macro_rules! keybindings {
-//     ($($binding:expr),* $(,)*) => {{
-
-//     }};
-// }
+#[macro_export]
+macro_rules! keybindings {
+    ($($binding:expr => $func:expr),* $(,)*) => {{
+        use crate::DefaultKeybinding;
+        DefaultKeybinding::from_iter([
+            $((
+                parse_keybinding($binding).unwrap(),
+                Box::new(|| {
+                    $func;
+                }) as Box<dyn FnMut()>
+            )),*
+        ])
+    }};
+}
 
 #[derive(Error, Debug, PartialEq, Eq)]
-enum BindingFromStrError {
+pub enum BindingFromStrError {
     #[error("unknown key: {0}")]
     UnknownKey(String),
     #[error("unknown modifier: {0}")]
@@ -27,7 +35,7 @@ enum BindingFromStrError {
     EmptyKeybinding,
 }
 
-fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
+pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
     let mut parts = s.split("-").collect::<Vec<_>>();
 
     // last part is always the keycode
@@ -117,6 +125,8 @@ impl FromIterator<(Binding, Box<dyn FnMut()>)> for DefaultKeybinding {
 
 #[cfg(test)]
 mod tests {
+    use std::process::Command;
+
     use crossterm::event::{KeyCode, KeyModifiers};
 
     use super::parse_keybinding;
@@ -124,8 +134,50 @@ mod tests {
     #[test]
     fn keybinding_parse() {
         assert_eq!(
+            parse_keybinding("<space>"),
+            Ok((KeyCode::Char(' '), KeyModifiers::NONE))
+        );
+        assert_eq!(
+            parse_keybinding("<esc>"),
+            Ok((KeyCode::Esc, KeyModifiers::NONE))
+        );
+        assert_eq!(
             parse_keybinding("c"),
             Ok((KeyCode::Char('c'), KeyModifiers::NONE))
         );
+        assert_eq!(
+            parse_keybinding("C"),
+            Ok((KeyCode::Char('C'), KeyModifiers::NONE))
+        );
+        assert_eq!(
+            parse_keybinding("C-c"),
+            Ok((KeyCode::Char('c'), KeyModifiers::CONTROL))
+        );
+        assert_eq!(
+            parse_keybinding("Ctrl-c"),
+            Ok((KeyCode::Char('c'), KeyModifiers::CONTROL))
+        );
+        assert_eq!(
+            parse_keybinding("C-S-c"),
+            Ok((
+                KeyCode::Char('c'),
+                KeyModifiers::CONTROL | KeyModifiers::SHIFT
+            ))
+        );
+        assert_eq!(
+            parse_keybinding("Ctrl-Shift-c"),
+            Ok((
+                KeyCode::Char('c'),
+                KeyModifiers::CONTROL | KeyModifiers::SHIFT
+            ))
+        );
+    }
+
+    #[test]
+    fn keybinding_macro() {
+        keybindings! {
+            "C-l" => Command::new("clear").spawn(),
+            "C-q" => Command::new("clear").spawn(),
+        };
     }
 }

@@ -1,13 +1,13 @@
-use shrs_utils::cursor_buffer::{CursorBuffer, Location};
+use shrs_utils::cursor_buffer::{self, CursorBuffer, Location};
 
 pub trait BufferHistory {
-    //redo
+    /// Redo
     fn next(&mut self, cb: &mut CursorBuffer);
-    //undo
+    /// Undo
     fn prev(&mut self, cb: &mut CursorBuffer);
-    //add change to record
+    /// Add change to record
     fn add(&mut self, cb: &CursorBuffer);
-    //clear all recorded changes
+    /// Clear all recorded changes
     fn clear(&mut self);
 }
 
@@ -26,10 +26,12 @@ impl DefaultBufferHistory {
             index: 0,
         }
     }
-    fn update_buffer(&mut self, cb: &mut CursorBuffer) {
+    fn update_buffer(&mut self, cb: &mut CursorBuffer) -> cursor_buffer::Result<()> {
         let new_buf = &self.hist.get(self.index).unwrap().0;
-        cb.set_string(&new_buf);
-        cb.move_cursor(Location::Abs(self.hist[self.index].1));
+        cb.clear();
+        cb.insert(Location::Cursor(), new_buf)?;
+        cb.move_cursor(Location::Abs(self.hist[self.index].1))?;
+        Ok(())
     }
 }
 

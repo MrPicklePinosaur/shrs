@@ -270,9 +270,9 @@ impl CursorBuffer {
         i >= 0 && i <= self.len() as isize
     }
 
-    pub fn set_string(&mut self, s: &String) {
+    pub fn set_string(&mut self, s: &str) {
         self.data.remove(0..self.len());
-        self.data.insert(0, s.as_str());
+        self.data.insert(0, s);
         self.cursor = 0;
     }
 }

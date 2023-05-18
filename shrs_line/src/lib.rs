@@ -28,7 +28,7 @@ mod highlight;
 pub use highlight::{DefaultHighlighter, Highlighter};
 
 mod keybinding;
-pub use keybinding::{DefaultKeybinding, Keybinding};
+pub use keybinding::{parse_keybinding, DefaultKeybinding, Keybinding};
 
 mod buffer_history;
 pub use buffer_history::{BufferHistory, DefaultBufferHistory};

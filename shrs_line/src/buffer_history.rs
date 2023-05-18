@@ -27,7 +27,8 @@ impl DefaultBufferHistory {
         }
     }
     fn update_buffer(&mut self, cb: &mut CursorBuffer) {
-        cb.set_string(&self.hist[self.index].0);
+        let new_buf = &self.hist.get(self.index).unwrap().0;
+        cb.set_string(&new_buf);
         cb.move_cursor(Location::Abs(self.hist[self.index].1));
     }
 }

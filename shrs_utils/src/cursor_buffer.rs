@@ -1,6 +1,9 @@
 //! Friendly wrapper around Rope data structure that includes a cursor as well as relative and
 //! absolute indexing
-use std::ops::{Add, RangeBounds};
+use std::{
+    borrow::Cow,
+    ops::{Add, RangeBounds},
+};
 
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;
@@ -270,6 +273,11 @@ impl CursorBuffer {
     /// Predicate if an index is a valid cursor into the buffer
     fn bounds_check(&self, i: isize) -> bool {
         i >= 0 && i <= self.len() as isize
+    }
+
+    /// Get borrowed contents of CursorBuffer as a string
+    pub fn as_str<'a>(&'a self) -> Cow<'a, str> {
+        self.data.slice(..).into()
     }
 }
 

@@ -12,6 +12,7 @@ crossterm = "0.26"
 trie-rs = "0.1"
 derive_builder = "0.12"
 dirs = "5"
+unicode-width = "0.1"
 
 anyhow = "1"
 thiserror = "1"

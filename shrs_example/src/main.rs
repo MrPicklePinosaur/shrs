@@ -12,8 +12,8 @@ use shrs::{
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
-        DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu, FileBackedHistory,
-        LineBuilder, LineCtx, Prompt, StyledBuf,
+        keybindings, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
+        FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
@@ -86,12 +86,9 @@ fn main() {
 
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
-    let keybinding = DefaultKeybinding::from_iter([(
-        (KeyCode::Char('l'), KeyModifiers::CONTROL),
-        Box::new(|| {
-            Command::new("clear").spawn();
-        }) as Box<dyn FnMut()>,
-    )]);
+    let keybinding = keybindings! {
+        "C-l" => Command::new("clear").spawn(),
+    };
 
     // =-=-= Prompt =-=-=
     let prompt = MyPrompt;

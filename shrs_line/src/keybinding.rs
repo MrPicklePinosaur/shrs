@@ -13,7 +13,7 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     ($($binding:expr => $func:expr),* $(,)*) => {{
-        use crate::DefaultKeybinding;
+        use $crate::{DefaultKeybinding, parse_keybinding};
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),

@@ -1,4 +1,8 @@
-use std::io::{stdout, BufWriter, Write};
+use std::{
+    borrow::Cow,
+    io::{stdout, BufWriter, Write},
+    ops::{Index, Range, RangeBounds},
+};
 
 use crossterm::{
     cursor::{self, MoveToColumn},
@@ -7,6 +11,7 @@ use crossterm::{
     QueueableCommand,
 };
 use shrs_core::{Context, Runtime, Shell};
+use unicode_width::UnicodeWidthStr;
 
 use crate::{cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
 
@@ -33,8 +38,24 @@ impl StyledBuf {
     }
 
     /// Length of content in characters
+    ///
+    /// The length returned is the 'visual' length of the character, in other words, how many
+    /// terminal columns it takes up
     pub fn content_len(&self) -> usize {
-        self.spans.iter().map(|s| s.content().len()).sum()
+        use unicode_width::UnicodeWidthStr;
+        // TODO this copies the entire contents just to get the len, can probably optimize by using
+        // borrowed version
+        let raw = self.as_string();
+        UnicodeWidthStr::width(raw.as_str())
+    }
+
+    /// Return the contents of StyledBuf with just the raw characters and no formatting
+    pub fn as_string(&self) -> String {
+        self.spans
+            .iter()
+            .map(|s| s.content().as_str())
+            .collect::<Vec<_>>()
+            .join("")
     }
 }
 
@@ -114,7 +135,10 @@ impl Painter {
         }
 
         // render line (with syntax highlight spans)
-        left_space += cursor_ind;
+        // TODO introduce better slicing of StyledBuf
+        let slice = &styled_buf.as_string();
+        let chars = slice.as_str().chars().take(cursor_ind).collect::<String>();
+        left_space += UnicodeWidthStr::width(chars.as_str());
         for span in styled_buf.spans() {
             self.out.queue(Print(span))?;
         }

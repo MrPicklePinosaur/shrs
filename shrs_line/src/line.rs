@@ -266,10 +266,10 @@ impl Line {
                     }
                 }
 
-                let res = line_ctx.cb.slice(..).as_str().unwrap();
+                let res: String = line_ctx.cb.as_str().into();
 
                 // syntax highlight
-                let mut styled_buf = self.highlighter.highlight(res);
+                let mut styled_buf = self.highlighter.highlight(&res);
 
                 // add currently selected completion to buf
                 if self.menu.is_active() {
@@ -296,7 +296,7 @@ impl Line {
             }
         }
 
-        let res = line_ctx.cb.slice(..).as_str().unwrap().to_string();
+        let res: String = line_ctx.cb.as_str().into();
         if !res.is_empty() {
             self.history.add(res.clone());
         }

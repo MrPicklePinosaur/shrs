@@ -1,6 +1,9 @@
 //! Friendly wrapper around Rope data structure that includes a cursor as well as relative and
 //! absolute indexing
-use std::ops::{Add, RangeBounds};
+use std::{
+    borrow::Cow,
+    ops::{Add, RangeBounds},
+};
 
 use ropey::{Rope, RopeSlice};
 use thiserror::Error;
@@ -161,7 +164,9 @@ impl CursorBuffer {
     pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {
         self.data.insert(self.to_absolute(loc)?, text);
         self.move_cursor(loc)?;
-        self.move_cursor(Location::Rel(text.len() as isize))?;
+        // NOTE we need to use `text.chars().count()` instead of `text.len()` since `.len()` counts
+        // bytes and not UTF-8 graphemes.
+        self.move_cursor(Location::Rel(text.chars().count() as isize))?;
         Ok(())
     }
 
@@ -269,6 +274,11 @@ impl CursorBuffer {
     fn bounds_check(&self, i: isize) -> bool {
         i >= 0 && i <= self.len() as isize
     }
+
+    /// Get borrowed contents of CursorBuffer as a string
+    pub fn as_str<'a>(&'a self) -> Cow<'a, str> {
+        self.data.slice(..).into()
+    }
 }
 
 #[cfg(test)]
@@ -327,6 +337,18 @@ mod tests {
             Some(Location::Rel(-2))
         );
         assert_eq!(Location::FindCharBack(&cb, Location::Cursor(), 'x'), None);
+        Ok(())
+    }
+
+    #[test]
+    fn utf8_basic() -> Result<()> {
+        let mut cb = CursorBuffer::from_str("こんにちは");
+        cb.move_cursor(Location::After())?;
+
+        assert_eq!(cb.cursor(), 1);
+        cb.insert(Location::Cursor(), "こここ")?;
+        assert_eq!(cb.cursor(), 4);
+        assert_eq!(cb.len(), 8);
         Ok(())
     }
 }

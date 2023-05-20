@@ -524,6 +524,8 @@ impl Line {
             Location::Rel(ctx.current_word.len() as isize),
         )?;
 
+        ctx.current_word.clear();
+
         // then replace with the completion word
         ctx.cb.insert(Location::Cursor(), accepted)?;
 

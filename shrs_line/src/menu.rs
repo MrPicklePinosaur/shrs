@@ -144,7 +144,7 @@ impl Menu for DefaultMenu {
             column_start += longest_word + self.column_padding;
 
             // move back up
-            out.queue(MoveUp(self.max_rows as u16))?;
+            out.queue(MoveUp(column.len() as u16))?;
         }
 
         Ok(())

@@ -46,12 +46,12 @@ impl StyledBuf {
         use unicode_width::UnicodeWidthStr;
         // TODO this copies the entire contents just to get the len, can probably optimize by using
         // borrowed version
-        let raw = self.as_string();
+        let raw = self.contents();
         UnicodeWidthStr::width(raw.as_str())
     }
 
     /// Return the contents of StyledBuf with just the raw characters and no formatting
-    pub fn as_string(&self) -> String {
+    pub fn contents(&self) -> String {
         self.spans
             .iter()
             .map(|s| s.content().as_str())
@@ -146,7 +146,7 @@ impl Painter {
 
         // render line (with syntax highlight spans)
         // TODO introduce better slicing of StyledBuf
-        let slice = &styled_buf.as_string();
+        let slice = &styled_buf.contents();
         let chars = slice.as_str().chars().take(cursor_ind).collect::<String>();
         left_space += UnicodeWidthStr::width(chars.as_str());
         for span in styled_buf.spans() {

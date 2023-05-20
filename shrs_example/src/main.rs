@@ -4,24 +4,7 @@ use std::{
     process::Command,
 };
 
-use crossterm::{
-    event::{KeyCode, KeyModifiers},
-    style::Stylize,
-};
-use shrs::{
-    builtin::{BuiltinCmd, Builtins},
-    hooks::{HookFn, HookList, Hooks, StartupCtx},
-    line::{
-        completion::{
-            self, builtin_cmdname_action, cmdname_action, cmdname_pred, flag_pred, Completion,
-            CompletionCtx, DefaultCompleter, Pred, Rule,
-        },
-        keybindings, styled, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
-        FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
-    },
-    prompt::{hostname, top_pwd, username},
-    Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
-};
+use shrs::prelude::*;
 use shrs_output_capture::OutputCapturePlugin;
 
 // =-=-= Prompt customization =-=-=
@@ -34,8 +17,6 @@ impl Prompt for MyPrompt {
             shrs::line::LineMode::Insert => String::from("[i]").bold().yellow(),
             shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
         };
-
-        use shrs::line::StyledDisplay;
 
         styled!(vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> ")
     }

@@ -76,7 +76,7 @@ impl<T: Display> StyledDisplay for StyledContent<T> {
 
 #[macro_export]
 macro_rules! styled {
-    ($([$($style:ident),*] $part:expr),* $(,)*) => {{
+    ($($(@($($style:ident),*))? $part:expr),* $(,)*) => {{
         use $crate::{StyledBuf, StyledDisplay};
         use crossterm::style::{Stylize, StyledContent, ContentStyle};
 
@@ -85,10 +85,10 @@ macro_rules! styled {
                 // TODO this will probably return a pretty vague compiler error, if possible try to find
                 // way to panic with decent message when the cast doesn't work
                 let part: &dyn StyledDisplay = &$part;
-                StyledContent::new(ContentStyle::new(), part.to_string())$(.$style())*
+                StyledContent::new(ContentStyle::new(), part.to_string())$($(.$style())*)?
             }),*
         ])
-    }}
+    }};
 }
 
 #[cfg(test)]
@@ -102,11 +102,11 @@ mod tests {
         println!("test {}", "lol".blue().reset());
 
         let styled_buf = styled! {
-            [red,bold] Some("lol"),
-            [] "lol",
-            [] String::from("lol"),
-            [] "lol".blue(),
-            [] styled! { [] "lol" }
+            @(red,bold) Some("lol"),
+            "lol",
+            String::from("lol"),
+            "lol".blue(),
+            styled! { "lol" }
         };
         println!("out {}", styled_buf);
     }

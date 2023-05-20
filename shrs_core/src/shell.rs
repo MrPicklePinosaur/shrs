@@ -144,5 +144,7 @@ pub fn run_external_command(
         .envs(envs)
         .spawn()?;
 
+    ctx.jobs.push(child, String::new());
+
     Ok(child)
 }

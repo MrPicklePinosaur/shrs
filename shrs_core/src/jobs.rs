@@ -6,9 +6,10 @@ use std::{
 
 use pino_deref::Deref;
 
+/// Unique identifier for a job
 pub type JobId = u32;
 
-#[derive(Deref, Clone)]
+#[derive(Deref, Debug, Clone)]
 pub struct ExitStatus(pub i32);
 
 impl ExitStatus {
@@ -20,9 +21,21 @@ impl ExitStatus {
     }
 }
 
+/// Holds information on a given Job and it's current status
+///
+/// Returned by commands that spawn a new job
+#[derive(Debug, Clone)]
+pub enum JobStatus {
+    Exited(ExitStatus),
+    Running(JobId),
+    Suspended(JobId),
+    Killed,
+}
+
 pub struct JobInfo {
     pub child: Child,
     pub cmd: String,
+    pub status: JobStatus,
 }
 
 /// Keeps track of all the current running jobs
@@ -34,7 +47,7 @@ pub struct Jobs {
 impl Jobs {
     pub fn new() -> Self {
         Jobs {
-            next_id: 0,
+            next_id: 1,
             jobs: HashMap::new(),
         }
     }
@@ -42,7 +55,14 @@ impl Jobs {
     /// Add new job to be tracked
     pub fn push(&mut self, child: Child, cmd: String) {
         let next_id = self.get_next_id();
-        self.jobs.insert(next_id, JobInfo { child, cmd });
+        self.jobs.insert(
+            next_id,
+            JobInfo {
+                child,
+                cmd,
+                status: JobStatus::Running(next_id),
+            },
+        );
     }
 
     pub fn iter(&self) -> Iter<'_, JobId, JobInfo> {

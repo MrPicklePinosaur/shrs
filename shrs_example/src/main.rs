@@ -11,7 +11,10 @@ use crossterm::{
 use shrs::{
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
-        completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
+        completion::{
+            self, cmdname_action, cmdname_pred, flag_pred, Completion, CompletionCtx,
+            DefaultCompleter, Pred, Rule,
+        },
         keybindings, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
         FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
     },

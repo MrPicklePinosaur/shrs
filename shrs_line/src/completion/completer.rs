@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use shrs_core::builtin::Builtins;
+
 use super::{
     drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
 };
@@ -107,10 +109,20 @@ impl Default for DefaultCompleter {
     }
 }
 
+/// Return all the executables in PATH
 pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
     move |_ctx: &CompletionCtx| -> Vec<Completion> {
         default_format(find_executables_in_path(&path_str))
     }
+}
+
+/// Return all the builtin command names
+pub fn builtin_cmdname_action(builtin: &Builtins) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
+    let builtin_names = builtin
+        .iter()
+        .map(|(name, _)| name.to_owned().to_string())
+        .collect::<Vec<_>>();
+    move |_ctx: &CompletionCtx| -> Vec<Completion> { default_format(builtin_names.clone()) }
 }
 
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {

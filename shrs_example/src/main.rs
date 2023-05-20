@@ -9,11 +9,12 @@ use crossterm::{
     style::Stylize,
 };
 use shrs::{
+    builtin::{BuiltinCmd, Builtins},
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{
-            self, cmdname_action, cmdname_pred, flag_pred, Completion, CompletionCtx,
-            DefaultCompleter, Pred, Rule,
+            self, builtin_cmdname_action, cmdname_action, cmdname_pred, flag_pred, Completion,
+            CompletionCtx, DefaultCompleter, Pred, Rule,
         },
         keybindings, styled, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
         FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
@@ -59,6 +60,8 @@ fn main() {
     env.load();
     env.set("SHELL_NAME", "shrs_example");
 
+    let builtins = Builtins::default();
+
     // =-=-= Completion =-=-=
     // Get list of binaries in path and initialize the completer to autocomplete command names
     let path_string = env.get("PATH").unwrap().to_string();
@@ -66,6 +69,10 @@ fn main() {
     completer.register(Rule::new(
         Pred::new(cmdname_pred),
         Box::new(cmdname_action(path_string)),
+    ));
+    completer.register(Rule::new(
+        Pred::new(cmdname_pred),
+        Box::new(builtin_cmdname_action(&builtins)),
     ));
 
     // =-=-= Menu =-=-=-=

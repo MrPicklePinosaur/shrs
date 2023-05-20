@@ -15,7 +15,7 @@ use shrs::{
             self, cmdname_action, cmdname_pred, flag_pred, Completion, CompletionCtx,
             DefaultCompleter, Pred, Rule,
         },
-        keybindings, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
+        keybindings, styled, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
         FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
     },
     prompt::{hostname, top_pwd, username},
@@ -34,17 +34,20 @@ impl Prompt for MyPrompt {
             shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
         };
 
-        StyledBuf::from_iter(vec![
-            vi_mode,
-            String::from(" ").reset(),
-            username().unwrap_or_default().blue(),
-            String::from("@").reset(),
-            hostname().unwrap_or_default().blue(),
-            String::from(" ").reset(),
-            top_pwd().white().bold(),
-            String::from(" ").reset(),
-            "> ".to_string().blue(),
-        ])
+        use shrs::line::StyledDisplay;
+
+        // StyledBuf::from_iter(vec![
+        //     vi_mode,
+        //     String::from(" ").reset(),
+        //     username().unwrap_or_default().blue(),
+        //     String::from("@").reset(),
+        //     hostname().unwrap_or_default().blue(),
+        //     String::from(" ").reset(),
+        //     top_pwd().white().bold(),
+        //     String::from(" ").reset(),
+        //     "> ".to_string().blue(),
+        // ]);
+        styled!(vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> ")
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])

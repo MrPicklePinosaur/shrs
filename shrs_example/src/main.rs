@@ -5,7 +5,10 @@ use std::{
 };
 
 use shrs::prelude::*;
+use shrs_cd_tools::git;
+use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_output_capture::OutputCapturePlugin;
+use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
@@ -18,10 +21,18 @@ impl Prompt for MyPrompt {
             shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
         };
 
-        styled!(vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> ")
+        styled! {vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> "}
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
-        StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])
+        let time_str = line_ctx
+            .ctx
+            .state
+            .get::<CommandTimerState>()
+            .and_then(|x| x.command_time())
+            .map(|x| format!("{:?}", x));
+
+        let git_branch = git::branch().map(|s| format!("git:{}", s));
+        styled! {@(bold,blue)git_branch, " ", time_str, " "}
     }
 }
 
@@ -135,6 +146,8 @@ a rusty POSIX shell | build {}"#,
         .with_alias(alias)
         .with_readline(readline)
         .with_plugin(OutputCapturePlugin)
+        .with_plugin(CommandTimerPlugin)
+        .with_plugin(RunContextPlugin)
         .build()
         .unwrap();
 

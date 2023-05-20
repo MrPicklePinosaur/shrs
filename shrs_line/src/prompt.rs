@@ -75,6 +75,7 @@ impl StyledDisplay for String {
         default_styled_content(ToString::to_string(&self))
     }
 }
+// TODO this currently has incorrect offset
 impl StyledDisplay for StyledBuf {
     fn to_string(&self) -> StyledContent<String> {
         default_styled_content(ToString::to_string(&self))

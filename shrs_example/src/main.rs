@@ -36,17 +36,6 @@ impl Prompt for MyPrompt {
 
         use shrs::line::StyledDisplay;
 
-        // StyledBuf::from_iter(vec![
-        //     vi_mode,
-        //     String::from(" ").reset(),
-        //     username().unwrap_or_default().blue(),
-        //     String::from("@").reset(),
-        //     hostname().unwrap_or_default().blue(),
-        //     String::from(" ").reset(),
-        //     top_pwd().white().bold(),
-        //     String::from(" ").reset(),
-        //     "> ".to_string().blue(),
-        // ]);
         styled!(vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> ")
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {

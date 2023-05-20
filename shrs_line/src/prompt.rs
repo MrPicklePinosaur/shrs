@@ -2,8 +2,9 @@
 
 use std::{any::Any, fmt::Display};
 
-use crossterm::style::{ContentStyle, StyledContent};
+use crossterm::style::{ContentStyle, StyledContent, Stylize};
 use shrs_core::{Context, Runtime, Shell};
+use thiserror::__private::DisplayAsDisplay;
 
 use crate::{line::LineCtx, painter::StyledBuf};
 
@@ -36,27 +37,40 @@ impl Prompt for DefaultPrompt {
 }
 
 /// Valid types that can be passed to the styled macro
+// cool since anyone can implement this trait to add something else that can be passed to this
+// macro
 pub trait StyledDisplay {
-    fn to_string(&self) -> String;
+    fn to_string(&self) -> <String as Stylize>::Styled;
 }
 impl<T: ToString> StyledDisplay for Option<T> {
-    fn to_string(&self) -> String {
+    fn to_string(&self) -> <String as Stylize>::Styled {
         self.as_ref()
             .to_owned()
             .map(|x| x.to_string())
             .unwrap_or_default()
+            .reset()
     }
 }
 impl StyledDisplay for &str {
-    fn to_string(&self) -> String {
-        String::from(*self)
+    fn to_string(&self) -> <String as Stylize>::Styled {
+        String::from(*self).reset()
     }
 }
 impl StyledDisplay for String {
-    fn to_string(&self) -> String {
-        self.to_owned()
+    fn to_string(&self) -> <String as Stylize>::Styled {
+        self.to_owned().reset()
     }
 }
+impl StyledDisplay for StyledBuf {
+    fn to_string(&self) -> <String as Stylize>::Styled {
+        ToString::to_string(&self).reset()
+    }
+}
+// impl<T: Display> StyledDisplay for StyledContent<T> {
+//     fn to_string(&self) -> <String as Stylize>::Styled {
+//         self.clone()
+//     }
+// }
 
 #[macro_export]
 macro_rules! styled {
@@ -69,7 +83,7 @@ macro_rules! styled {
                 // TODO this will probably return a pretty vague compiler error, if possible try to find
                 // way to panic with decent message when the cast doesn't work
                 let part: &dyn StyledDisplay = &$part;
-                part.to_string().reset()
+                part.to_string()
             }),*
         ])
     }}
@@ -82,10 +96,13 @@ mod tests {
 
     #[test]
     fn styled_macro() {
+        use crossterm::style::Stylize;
+
         let styled_buf = styled! {
             Some("lol"),
             "lol",
-            String::from("lol")
+            String::from("lol"),
+            styled! { "lol" }
         };
         println!("out {}", styled_buf);
     }

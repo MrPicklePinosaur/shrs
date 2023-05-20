@@ -19,14 +19,26 @@ url = "/docs/getting-started/introduction/"
 weight = 10
 
 [[extra.list]]
-title = "Hackable"
+title = "🛠️ Hackable"
 content = "Fully configurable and extensible in Rust"
 
 [[extra.list]]
-title = "Productive"
-content = "Includes modern shell features like completion and hinting"
+title = "⚡Productive"
+content = "Includes modern shell features like completion, hinting and history"
 
 [[extra.list]]
-title = "Rusty"
-content = "Fully written in Rust"
+title = "✅ POSIX compliant"
+content = "Comfortable transition from your favorite shells"
+
+[[extra.list]]
+title = "🧩 Powerful Plugin System"
+content = "Numerous community maintained plugins to take your shell to the next level"
+
+[[extra.list]]
+title = "🎉 Open Source"
+content = "Community maintained and completely free and open source"
+
+[[extra.list]]
+title = "🦀 Written in Rust"
+content = "Of course it is blazingly fast"
 +++

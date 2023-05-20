@@ -40,37 +40,39 @@ impl Prompt for DefaultPrompt {
 // cool since anyone can implement this trait to add something else that can be passed to this
 // macro
 pub trait StyledDisplay {
-    fn to_string(&self) -> <String as Stylize>::Styled;
+    fn to_string(&self) -> String;
 }
 impl<T: ToString> StyledDisplay for Option<T> {
-    fn to_string(&self) -> <String as Stylize>::Styled {
+    fn to_string(&self) -> String {
         self.as_ref()
             .to_owned()
             .map(|x| x.to_string())
             .unwrap_or_default()
-            .reset()
     }
 }
 impl StyledDisplay for &str {
-    fn to_string(&self) -> <String as Stylize>::Styled {
-        String::from(*self).reset()
+    fn to_string(&self) -> String {
+        ToString::to_string(&self)
     }
 }
 impl StyledDisplay for String {
-    fn to_string(&self) -> <String as Stylize>::Styled {
-        self.to_owned().reset()
+    fn to_string(&self) -> String {
+        ToString::to_string(&self)
     }
 }
 impl StyledDisplay for StyledBuf {
-    fn to_string(&self) -> <String as Stylize>::Styled {
-        ToString::to_string(&self).reset()
+    fn to_string(&self) -> String {
+        ToString::to_string(&self)
     }
 }
-// impl<T: Display> StyledDisplay for StyledContent<T> {
-//     fn to_string(&self) -> <String as Stylize>::Styled {
-//         self.clone()
-//     }
-// }
+impl<T: Display> StyledDisplay for StyledContent<T> {
+    fn to_string(&self) -> String {
+        ToString::to_string(&self)
+    }
+}
+
+// would technically like to make macro accept ToString but we want special behavior for option
+// type
 
 #[macro_export]
 macro_rules! styled {
@@ -83,7 +85,7 @@ macro_rules! styled {
                 // TODO this will probably return a pretty vague compiler error, if possible try to find
                 // way to panic with decent message when the cast doesn't work
                 let part: &dyn StyledDisplay = &$part;
-                part.to_string()
+                part.to_string().reset()
             }),*
         ])
     }}
@@ -102,6 +104,7 @@ mod tests {
             Some("lol"),
             "lol",
             String::from("lol"),
+            "lol".blue(),
             styled! { "lol" }
         };
         println!("out {}", styled_buf);

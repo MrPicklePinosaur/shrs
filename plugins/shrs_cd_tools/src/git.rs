@@ -31,5 +31,9 @@ pub fn branch() -> Result<String> {
         .output()
         .map_err(|e| Error::GitError(e.to_string()))?;
 
+    if !res.status.success() {
+        return Err(Error::NotGitRepo);
+    }
+
     Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
 }

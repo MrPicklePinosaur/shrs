@@ -75,10 +75,14 @@ pub struct Runtime {
     pub functions: HashMap<String, Box<ast::Command>>,
 }
 
-pub fn dummy_child() -> anyhow::Result<Child> {
-    use std::process::Command;
-    let cmd = Command::new("true").spawn()?;
-    Ok(cmd)
+// pub fn dummy_child() -> anyhow::Result<Child> {
+//     use std::process::Command;
+//     let cmd = Command::new("true").spawn()?;
+//     Ok(cmd)
+// }
+use nix::{sys::wait::WaitStatus, unistd::Pid};
+pub fn dummy_child() -> anyhow::Result<WaitStatus> {
+    Ok(WaitStatus::Exited(Pid::this(), 0))
 }
 
 /// Small wrapper that outputs command output if exists
@@ -129,7 +133,7 @@ pub fn run_external_command(
     stdout: Stdio,
     pgid: Option<i32>,
     assigns: &Vec<ast::Assign>,
-) -> anyhow::Result<Child> {
+) -> anyhow::Result<Pid> {
     use std::process::Command;
 
     let envs = assigns.iter().map(|word| (&word.var, &word.val));
@@ -144,7 +148,8 @@ pub fn run_external_command(
         .envs(envs)
         .spawn()?;
 
+    let pid = child.id();
     ctx.jobs.push(child, String::new());
 
-    Ok(child)
+    Ok(Pid::from_raw(pid as i32))
 }

@@ -7,6 +7,8 @@ use std::{
     time::Instant,
 };
 
+use nix::{sys::wait::WaitStatus};
+
 use lazy_static::lazy_static;
 use shrs_core::{
     builtin::Builtins,
@@ -216,7 +218,7 @@ fn eval_command(
     stdin: Stdio,
     stdout: Stdio,
     _pgid: Option<i32>,
-) -> anyhow::Result<Child> {
+) -> anyhow::Result<WaitStatus> {
     match cmd {
         ast::Command::Simple {
             assigns,

@@ -16,7 +16,7 @@ mod menu;
 pub use menu::{DefaultMenu, Menu};
 
 mod prompt;
-pub use prompt::{DefaultPrompt, Prompt, StyledOption};
+pub use prompt::{DefaultPrompt, Prompt, StyledDisplay};
 
 pub mod completion;
 pub mod vi;

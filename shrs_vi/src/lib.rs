@@ -24,7 +24,7 @@ mod tests {
             res,
             Command {
                 repeat: 1,
-                action: Action::Delete(Motion::Word)
+                action: Action::Delete(Motion::WordPunc)
             }
         );
 
@@ -33,7 +33,7 @@ mod tests {
             res,
             Command {
                 repeat: 42,
-                action: Action::Delete(Motion::Word)
+                action: Action::Delete(Motion::WordPunc)
             }
         );
 

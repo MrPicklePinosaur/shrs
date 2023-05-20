@@ -93,6 +93,7 @@ impl ShellConfig {
             out: BufWriter::new(stdout()),
             state: self.state,
             jobs: Jobs::new(),
+            startup_time: Instant::now(),
         };
         let mut rt = Runtime {
             env: self.env,
@@ -103,7 +104,6 @@ impl ShellConfig {
             args: vec![],
             exit_status: 0,
             functions: self.functions,
-            startup_time: Instant::now(),
         };
         let sh = Shell {
             builtins: self.builtins,
@@ -141,7 +141,7 @@ fn run_shell(
         ctx,
         rt,
         &StartupCtx {
-            startup_time: rt.startup_time.elapsed(),
+            startup_time: ctx.startup_time.elapsed(),
         },
     );
 
@@ -150,7 +150,7 @@ fn run_shell(
     }
 
     loop {
-        let line = readline.read_line();
+        let line = readline.read_line(sh, ctx, rt);
 
         // attempt to expand alias
         // TODO IFS

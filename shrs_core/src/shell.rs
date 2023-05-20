@@ -51,6 +51,8 @@ pub struct Context {
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
     pub jobs: Jobs,
+
+    pub startup_time: Instant,
 }
 
 /// Runtime context for the shell
@@ -71,8 +73,6 @@ pub struct Runtime {
     pub exit_status: i32,
     /// List of defined functions
     pub functions: HashMap<String, Box<ast::Command>>,
-
-    pub startup_time: Instant,
 }
 
 pub fn dummy_child() -> anyhow::Result<Child> {

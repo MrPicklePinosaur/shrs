@@ -1,4 +1,8 @@
-use std::io::{stdout, BufWriter, Write};
+use std::{
+    borrow::Cow,
+    io::{stdout, BufWriter, Write},
+    ops::{Index, Range, RangeBounds},
+};
 
 use crossterm::{
     cursor::{self, MoveToColumn},
@@ -6,8 +10,10 @@ use crossterm::{
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
+use shrs_core::{Context, Runtime, Shell};
+use unicode_width::UnicodeWidthStr;
 
-use crate::{cursor::Cursor, menu::Menu, prompt::Prompt};
+use crate::{cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
 
 /// Text to be renderered by painter
 pub struct StyledBuf {
@@ -32,8 +38,24 @@ impl StyledBuf {
     }
 
     /// Length of content in characters
+    ///
+    /// The length returned is the 'visual' length of the character, in other words, how many
+    /// terminal columns it takes up
     pub fn content_len(&self) -> usize {
-        self.spans.iter().map(|s| s.content().len()).sum()
+        use unicode_width::UnicodeWidthStr;
+        // TODO this copies the entire contents just to get the len, can probably optimize by using
+        // borrowed version
+        let raw = self.as_string();
+        UnicodeWidthStr::width(raw.as_str())
+    }
+
+    /// Return the contents of StyledBuf with just the raw characters and no formatting
+    pub fn as_string(&self) -> String {
+        self.spans
+            .iter()
+            .map(|s| s.content().as_str())
+            .collect::<Vec<_>>()
+            .join("")
     }
 }
 
@@ -79,6 +101,7 @@ impl Painter {
 
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,
+        line_ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
         styled_buf: StyledBuf,
@@ -105,21 +128,24 @@ impl Painter {
 
         // render left prompt
         let mut left_space = 0; // cursor position from left side of terminal
-        let prompt_left = prompt.as_ref().prompt_left();
+        let prompt_left = prompt.as_ref().prompt_left(line_ctx);
         left_space += prompt_left.content_len();
         for span in prompt_left.into_spans() {
             self.out.queue(PrintStyledContent(span))?;
         }
 
         // render line (with syntax highlight spans)
-        left_space += cursor_ind;
+        // TODO introduce better slicing of StyledBuf
+        let slice = &styled_buf.as_string();
+        let chars = slice.as_str().chars().take(cursor_ind).collect::<String>();
+        left_space += UnicodeWidthStr::width(chars.as_str());
         for span in styled_buf.spans() {
             self.out.queue(Print(span))?;
         }
 
         // render right prompt
         let mut right_space = self.term_size.0;
-        let prompt_right = prompt.as_ref().prompt_right();
+        let prompt_right = prompt.as_ref().prompt_right(line_ctx);
         right_space -= prompt_right.content_len() as u16;
         self.out.queue(MoveToColumn(right_space))?;
         for span in prompt_right.into_spans() {

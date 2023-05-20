@@ -2,22 +2,10 @@
 
 use std::collections::HashMap;
 
-/*
-// NOTE this probably does not need to be a trait since alias is a builtin, any special
-// functionality can probaly be implemented in the builtin itself?
-pub trait Alias {
-    fn get(&self, alias: &str) -> Option<&String>;
-    fn set(&mut self, alias: &str, cmd: &str);
-    fn unset(&mut self, alias: &str);
-    fn clear(&mut self);
-}
-*/
-
 /// Query and set aliases
 ///
 /// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
 /// but upon substition the error is emitted. This may be changed in the future.
-// currently just wrapper around hashmap
 #[derive(Clone)]
 pub struct Alias {
     aliases: HashMap<String, String>,

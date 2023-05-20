@@ -14,7 +14,8 @@ pub Motion: Motion = {
     "k" => Motion::Up,
     "j" => Motion::Down,
     "b" => Motion::BackWord,
-    "w" => Motion::Word,
+    "w" => Motion::WordPunc,
+    "W" => Motion::Word,
     "h" => Motion::Left,
     "l" => Motion::Right,
     "$" => Motion::End,
@@ -28,7 +29,12 @@ pub Action: Action = {
     <a:ChangeAction> => a,
     "y" <m:Motion> => Action::Yank(m),
     "i" => Action::Insert,
-    "x" => Action::Delete(Motion::Char),
+    "I" => Action::Chain(Box::new(Action::Move(Motion::Start)), Box::new(Action::Insert)),
+    "a" => Action::Chain(Box::new(Action::Move(Motion::Right)), Box::new(Action::Insert)),
+    "A" => Action::Chain(Box::new(Action::Move(Motion::End)), Box::new(Action::Insert)),
+    "x" => Action::Delete(Motion::Right),
+    "u" => Action::Undo,
+    "r" => Action::Redo,
     <m:Motion> => Action::Move(m)
 };
 
@@ -39,9 +45,12 @@ pub DeleteAction: Action = {
 };
 
 pub ChangeAction: Action = {
-    "c" "c" => Action::Change(Motion::All),
-    "C" => Action::Change(Motion::End),
-    "c" <m:Motion> => Action::Change(m),
+    "c" "c" => Action::Chain(Box::new(Action::Delete(Motion::All)), Box::new(Action::Insert)),
+    "C" => Action::Chain(Box::new(Action::Delete(Motion::End)), Box::new(Action::Insert)),
+    "c" <m:Motion> => Action::Chain(Box::new(Action::Delete(m)), Box::new(Action::Insert)),
+    "s" => Action::Chain(Box::new(Action::Delete(Motion::Right)), Box::new(Action::Insert)),
+    "S" => Action::Chain(Box::new(Action::Delete(Motion::All)), Box::new(Action::Insert)),
+
 };
 
 pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();

@@ -1,15 +1,12 @@
 [package]
-name = "shrs_cd_tools"
+name = "shrs_run_context"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
-description = "Variety of utilities for running commands conditionally on directory change"
+description = "Save and load run context"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
 shrs = { path = "../../shrs" }
-
-derive_builder = "0.12"
-
-thiserror = "1"
+clap = { version = "4.1", features = ["derive"] }

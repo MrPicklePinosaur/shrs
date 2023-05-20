@@ -4,7 +4,7 @@
 extern crate derive_builder;
 
 mod line;
-pub use line::{Line, LineBuilder, LineBuilderError, LineMode};
+pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode};
 
 mod cursor;
 pub use cursor::{Cursor, DefaultCursor};
@@ -28,7 +28,10 @@ mod highlight;
 pub use highlight::{DefaultHighlighter, Highlighter};
 
 mod keybinding;
-pub use keybinding::{DefaultKeybinding, Keybinding};
+pub use keybinding::{parse_keybinding, DefaultKeybinding, Keybinding};
+
+mod buffer_history;
+pub use buffer_history::{BufferHistory, DefaultBufferHistory};
 
 #[cfg(test)]
 mod tests {}

@@ -65,26 +65,24 @@ impl DefaultCompleter {
     }
 
     pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
-        let rule = self.rules.iter().find(|p| (p.pred).test(ctx));
+        let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
 
-        match rule {
-            Some(rule) => {
-                // if rule was matched, run the corresponding action
-                // also do prefix search (could make if prefix search is used a config option)
-                (rule.action)(ctx)
-                    .into_iter()
-                    .filter(|s| {
-                        s.accept()
-                            .starts_with(ctx.cur_word().unwrap_or(&String::new()))
-                    })
-                    // .map(|s| (rule.format)(s))
-                    .collect::<Vec<_>>()
-            },
-            None => {
-                // TODO display some notif that we cannot complete
-                vec![]
-            },
+        let mut output = vec![];
+        for rule in rules {
+            // if rule was matched, run the corresponding action
+            // also do prefix search (could make if prefix search is used a config option)
+            let mut comps = (rule.action)(ctx)
+                .into_iter()
+                .filter(|s| {
+                    s.accept()
+                        .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                })
+                // .map(|s| (rule.format)(s))
+                .collect::<Vec<_>>();
+
+            output.append(&mut comps);
         }
+        output
     }
 }
 

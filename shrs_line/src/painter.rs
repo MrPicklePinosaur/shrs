@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    fmt::Display,
     io::{stdout, BufWriter, Write},
     ops::{Index, Range, RangeBounds},
 };
@@ -56,6 +57,15 @@ impl StyledBuf {
             .map(|s| s.content().as_str())
             .collect::<Vec<_>>()
             .join("")
+    }
+}
+
+impl Display for StyledBuf {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for span in self.spans() {
+            write!(f, "{}", span)?;
+        }
+        Ok(())
     }
 }
 

@@ -12,7 +12,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 use crate::{
     buffer_history::{BufferHistory, DefaultBufferHistory},
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
-    cursor::{Cursor, DefaultCursor},
+    cursor::CursorStyle,
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
@@ -51,10 +51,6 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultBufferHistory::new())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
-
-    #[builder(default = "Box::new(DefaultCursor::default())")]
-    #[builder(setter(custom))]
-    cursor: Box<dyn Cursor>,
 
     #[builder(default = "Box::new(DefaultHighlighter::default())")]
     #[builder(setter(custom))]
@@ -187,10 +183,6 @@ impl LineBuilder {
         self.history = Some(Box::new(history));
         self
     }
-    pub fn with_cursor(mut self, cursor: impl Cursor + 'static) -> Self {
-        self.cursor = Some(Box::new(cursor));
-        self
-    }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
         self.highlighter = Some(Box::new(highlighter));
         self
@@ -232,7 +224,6 @@ impl Line {
             &self.menu,
             StyledBuf::new(),
             line_ctx.cb.cursor(),
-            &self.cursor,
         )?;
 
         loop {
@@ -291,7 +282,6 @@ impl Line {
                     &self.menu,
                     styled_buf,
                     line_ctx.cb.cursor(),
-                    &self.cursor,
                 )?;
             }
         }

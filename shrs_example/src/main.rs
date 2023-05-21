@@ -75,7 +75,6 @@ fn main() {
     let history_file = config_dir.as_path().join("history");
     let history = FileBackedHistory::new(history_file).unwrap();
 
-    let cursor = DefaultCursor::default();
     let highlighter = DefaultHighlighter::default();
 
     // =-=-= Keybindings =-=-=
@@ -91,7 +90,6 @@ fn main() {
     // Initialize readline with all of our components
 
     let readline = LineBuilder::default()
-        .with_cursor(cursor)
         .with_completer(completer)
         .with_menu(menu)
         .with_history(history)

@@ -7,7 +7,7 @@ mod line;
 pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode};
 
 mod cursor;
-pub use cursor::{Cursor, DefaultCursor};
+pub use cursor::CursorStyle;
 
 mod history;
 pub use history::{DefaultHistory, FileBackedHistory, History};

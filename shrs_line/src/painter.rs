@@ -14,7 +14,7 @@ use crossterm::{
 use shrs_core::{Context, Runtime, Shell};
 use unicode_width::UnicodeWidthStr;
 
-use crate::{completion::Completion, cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
+use crate::{completion::Completion, line::LineCtx, menu::Menu, prompt::Prompt, CursorStyle};
 
 /// Text to be renderered by painter
 pub struct StyledBuf {
@@ -116,8 +116,14 @@ impl Painter {
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: StyledBuf,
         cursor_ind: usize,
-        cursor: &Box<dyn Cursor>,
     ) -> anyhow::Result<()> {
+        let default_cursor_style = CursorStyle::default();
+        let cursor_style = line_ctx
+            .ctx
+            .state
+            .get::<CursorStyle>()
+            .unwrap_or(&default_cursor_style);
+
         self.out.queue(cursor::Hide)?;
 
         // scroll up if we need more lines
@@ -170,7 +176,7 @@ impl Painter {
         // self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.queue(cursor::Show)?;
-        self.out.queue(cursor.get_cursor())?;
+        self.out.queue(cursor_style.style)?;
         self.out.flush()?;
 
         Ok(())

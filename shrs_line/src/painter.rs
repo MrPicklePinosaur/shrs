@@ -117,13 +117,6 @@ impl Painter {
         styled_buf: StyledBuf,
         cursor_ind: usize,
     ) -> anyhow::Result<()> {
-        let default_cursor_style = CursorStyle::default();
-        let cursor_style = line_ctx
-            .ctx
-            .state
-            .get::<CursorStyle>()
-            .unwrap_or(&default_cursor_style);
-
         self.out.queue(cursor::Hide)?;
 
         // scroll up if we need more lines
@@ -176,7 +169,11 @@ impl Painter {
         // self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.queue(cursor::Show)?;
+
+        // set cursor style
+        let cursor_style = line_ctx.ctx.state.get_or_default::<CursorStyle>();
         self.out.queue(cursor_style.style)?;
+
         self.out.flush()?;
 
         Ok(())

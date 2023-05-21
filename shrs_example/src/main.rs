@@ -13,7 +13,7 @@ use shrs::{
     line::{
         completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
         keybindings, DefaultCursor, DefaultKeybinding, DefaultMenu, FileBackedHistory, LineBuilder,
-        LineCtx, Prompt, StyledBuf, SyntaxHighlighter,
+        LineCtx, Prompt, StyledBuf, SyntaxHighlighter, SyntaxTheme,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
@@ -82,7 +82,7 @@ fn main() {
     let history = FileBackedHistory::new(history_file).unwrap();
 
     let cursor = DefaultCursor::default();
-    let highlighter = SyntaxHighlighter::new();
+    let highlighter = SyntaxHighlighter::new(SyntaxTheme::default());
 
     // =-=-= Keybindings =-=-=
     // Add basic keybindings

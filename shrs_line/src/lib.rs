@@ -25,7 +25,7 @@ mod painter;
 pub use painter::StyledBuf;
 
 mod highlight;
-pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter};
+pub use highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme};
 
 mod keybinding;
 pub use keybinding::{parse_keybinding, DefaultKeybinding, Keybinding};

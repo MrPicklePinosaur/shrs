@@ -1,3 +1,8 @@
+use std::{
+    collections::HashMap,
+    ops::{Range, RangeBounds},
+};
+
 use crossterm::style::{Color, ContentStyle, StyledContent};
 use shrs_lang::{ast, Lexer, Parser, Token, RESERVED_WORDS};
 
@@ -28,26 +33,69 @@ impl Highlighter for DefaultHighlighter {
         styled_buf
     }
 }
+pub type RuleFn = fn(&Token) -> bool;
 pub struct SyntaxTheme {
     command: ContentStyle,
-    operator: ContentStyle,
-    reserved: ContentStyle,
     auto: ContentStyle, // path: ContentStyle
+    style_rules: Vec<(RuleFn, ContentStyle)>,
+}
+impl SyntaxTheme {
+    pub fn push_rule(&mut self, rule: RuleFn, style: ContentStyle) {
+        self.style_rules.push((rule, style));
+    }
 }
 impl Default for SyntaxTheme {
     fn default() -> Self {
+        let mut rules = vec![];
+        let is_reserved: RuleFn = |t: &Token| -> bool {
+            match t {
+                Token::IF
+                | Token::ELSE
+                | Token::FI
+                | Token::THEN
+                | Token::ELIF
+                | Token::DO
+                | Token::DONE
+                | Token::CASE
+                | Token::ESAC
+                | Token::WHILE
+                | Token::UNTIL
+                | Token::FOR
+                | Token::IN => true,
+                _ => false,
+            }
+        };
+        let is_string: RuleFn = |t: &Token| -> bool {
+            if let Token::WORD(w) = t {
+                println!("{:?}", t);
+                return w.starts_with('\'') || w.starts_with('\"');
+            }
+            false
+        };
+
+        rules.push((
+            is_reserved,
+            ContentStyle {
+                foreground_color: Some(Color::Yellow),
+                ..Default::default()
+            },
+        ));
+        rules.push((
+            is_string,
+            ContentStyle {
+                foreground_color: Some(Color::Green),
+                ..Default::default()
+            },
+        ));
+
         Self {
             command: ContentStyle {
                 foreground_color: Some(Color::Blue),
                 ..Default::default()
             },
 
-            operator: ContentStyle::default(),
-            reserved: ContentStyle {
-                foreground_color: Some(Color::Yellow),
-                ..Default::default()
-            },
             auto: ContentStyle::default(),
+            style_rules: rules,
         }
     }
 }
@@ -56,10 +104,8 @@ pub struct SyntaxHighlighter {
     theme: SyntaxTheme,
 }
 impl SyntaxHighlighter {
-    pub fn new() -> Self {
-        SyntaxHighlighter {
-            theme: SyntaxTheme::default(),
-        }
+    pub fn new(theme: SyntaxTheme) -> Self {
+        SyntaxHighlighter { theme }
     }
 }
 
@@ -76,37 +122,37 @@ impl Highlighter for SyntaxHighlighter {
             style = self.theme.auto;
 
             if let Ok(token) = t {
-                match token.1 {
+                match token.1.clone() {
                     Token::WORD(_) => {
                         if is_cmd {
                             style = self.theme.command;
                             is_cmd = false;
                         }
                     },
-                    Token::LPAREN | Token::RPAREN | Token::RBRACE | Token::LBRACE => {
-                        style = self.theme.operator;
-                    },
-                    //Tokens that are followed by command
-                    Token::AND_IF | Token::OR_IF | Token::DSEMI | Token::SEMI => {
-                        style = self.theme.operator;
-                        is_cmd = true;
-                    },
+                    //Tokens that make next word command
                     Token::IF
                     | Token::THEN
                     | Token::ELSE
                     | Token::ELIF
                     | Token::DO
-                    | Token::CASE => {
-                        style = self.theme.reserved;
+                    | Token::CASE
+                    | Token::AND_IF
+                    | Token::OR_IF
+                    | Token::SEMI
+                    | Token::DSEMI
+                    | Token::AMP
+                    | Token::PIPE => {
                         is_cmd = true;
-                    },
-                    Token::FI | Token::ESAC => {
-                        style = self.theme.reserved;
                     },
                     _ => (),
                 }
+                for (style_rule, s) in self.theme.style_rules.iter() {
+                    if style_rule(&token.1) {
+                        style = s.clone();
+                        break;
+                    }
+                }
 
-                println!("{:?}", token);
                 styled_buf.push(StyledContent::new(
                     style,
                     buf[last_index..token.2].to_string(),

@@ -19,4 +19,5 @@ thiserror = "1"
 shrs_core = { path = "../shrs_core" }
 shrs_vi = { path = "../shrs_vi" }
 shrs_utils = { path = "../shrs_utils" }
+shrs_lang = {path = "../shrs_lang"}
 # shrs_core = { path = "../shrs_utils" }

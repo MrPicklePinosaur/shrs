@@ -135,6 +135,7 @@ fn run_shell(
     // init stuff
     sig_handler()?;
     rt.env.load();
+    let mut parser = Parser::new();
 
     let res = sh.hooks.startup.run(
         sh,
@@ -175,7 +176,6 @@ fn run_shell(
 
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let mut parser = Parser::new();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {

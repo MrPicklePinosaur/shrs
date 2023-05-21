@@ -12,8 +12,8 @@ use shrs::{
     hooks::{HookFn, HookList, Hooks, StartupCtx},
     line::{
         completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
-        keybindings, DefaultCursor, DefaultHighlighter, DefaultKeybinding, DefaultMenu,
-        FileBackedHistory, LineBuilder, LineCtx, Prompt, StyledBuf,
+        keybindings, DefaultCursor, DefaultKeybinding, DefaultMenu, FileBackedHistory, LineBuilder,
+        LineCtx, Prompt, StyledBuf, SyntaxHighlighter,
     },
     prompt::{hostname, top_pwd, username},
     Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
@@ -82,7 +82,7 @@ fn main() {
     let history = FileBackedHistory::new(history_file).unwrap();
 
     let cursor = DefaultCursor::default();
-    let highlighter = DefaultHighlighter::default();
+    let highlighter = SyntaxHighlighter::new();
 
     // =-=-= Keybindings =-=-=
     // Add basic keybindings

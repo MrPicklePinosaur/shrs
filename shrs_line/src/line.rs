@@ -11,7 +11,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     buffer_history::{BufferHistory, DefaultBufferHistory},
-    completion::{Completer, CompletionCtx, DefaultCompleter},
+    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
     cursor::{Cursor, DefaultCursor},
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
@@ -38,7 +38,7 @@ pub enum LineMode {
 pub struct Line {
     #[builder(default = "Box::new(DefaultMenu::new())")]
     #[builder(setter(custom))]
-    menu: Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
+    menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
 
     #[builder(default = "Box::new(DefaultCompleter::default())")]
     #[builder(setter(custom))]
@@ -174,7 +174,7 @@ impl<'a> LineCtx<'a> {
 impl LineBuilder {
     pub fn with_menu(
         mut self,
-        menu: impl Menu<MenuItem = String, PreviewItem = String> + 'static,
+        menu: impl Menu<MenuItem = Completion, PreviewItem = String> + 'static,
     ) -> Self {
         self.menu = Some(Box::new(menu));
         self
@@ -274,7 +274,7 @@ impl Line {
                 // add currently selected completion to buf
                 if self.menu.is_active() {
                     if let Some(selection) = self.menu.current_selection() {
-                        let trimmed_selection = &selection[line_ctx.current_word.len()..];
+                        let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
                         styled_buf.push(StyledContent::new(
                             ContentStyle {
                                 foreground_color: Some(Color::Red),
@@ -310,9 +310,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                let accepted = self.menu.accept().cloned();
-                if let Some(accepted) = accepted {
-                    self.accept_completion(ctx, &accepted)?;
+                if let Some(accepted) = self.menu.accept().cloned() {
+                    self.accept_completion(ctx, accepted)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -375,7 +374,7 @@ impl Line {
                 if completion_len == 1 {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
-                    self.accept_completion(ctx, &item.0)?;
+                    self.accept_completion(ctx, item.1)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -437,7 +436,7 @@ impl Line {
     }
 
     fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
-        // TODO write better system to support key combinations
+        // TODO write better system toString support key combinations
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -506,7 +505,7 @@ impl Line {
 
         let menuitems = completions
             .iter()
-            .map(|c| (c.display(), c.accept()))
+            .map(|c| (c.display(), (*c).clone()))
             .collect::<Vec<_>>();
         self.menu.set_items(menuitems);
 
@@ -514,9 +513,20 @@ impl Line {
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) -> anyhow::Result<()> {
+    fn accept_completion(
+        &mut self,
+        ctx: &mut LineCtx,
+        completion: Completion,
+    ) -> anyhow::Result<()> {
+        let accepted = if let Some(accepted) = self.menu.accept().cloned() {
+            accepted
+        } else {
+            return Ok(());
+        };
+
         // first remove current word
         // TODO could implement a delete_before
+        // TODO make use of ReplaceMethod
         ctx.cb
             .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
         ctx.cb.delete(
@@ -527,7 +537,7 @@ impl Line {
         ctx.current_word.clear();
 
         // then replace with the completion word
-        ctx.cb.insert(Location::Cursor(), accepted)?;
+        ctx.cb.insert(Location::Cursor(), &accepted.accept())?;
 
         Ok(())
     }

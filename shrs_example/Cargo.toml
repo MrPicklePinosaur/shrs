@@ -11,6 +11,10 @@ build = "build.rs"
 [dependencies]
 shrs = { path = "../shrs" }
 shrs_output_capture = { path = "../plugins/shrs_output_capture" }
+shrs_cd_tools = { path = "../plugins/shrs_cd_tools" }
+shrs_command_timer = { path = "../plugins/shrs_command_timer" }
+shrs_run_context = { path = "../plugins/shrs_run_context" }
+
 dirs = "5"
 anyhow = "1"
 crossterm = "0.26"

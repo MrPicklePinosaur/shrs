@@ -2,25 +2,15 @@
 
 use crossterm::cursor::SetCursorStyle;
 
-pub trait Cursor {
-    fn get_cursor(&self) -> SetCursorStyle;
+#[derive(Clone)]
+pub struct CursorStyle {
+    pub style: SetCursorStyle,
 }
 
-/// Default provided implementation of [Cursor]
-pub struct DefaultCursor {
-    style: SetCursorStyle,
-}
-
-impl Default for DefaultCursor {
+impl Default for CursorStyle {
     fn default() -> Self {
-        DefaultCursor {
+        Self {
             style: SetCursorStyle::DefaultUserShape,
         }
-    }
-}
-
-impl Cursor for DefaultCursor {
-    fn get_cursor(&self) -> SetCursorStyle {
-        self.style
     }
 }

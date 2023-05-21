@@ -4,21 +4,11 @@ use std::{
     process::Command,
 };
 
-use crossterm::{
-    event::{KeyCode, KeyModifiers},
-    style::Stylize,
-};
-use shrs::{
-    hooks::{HookFn, HookList, Hooks, StartupCtx},
-    line::{
-        completion::{cmdname_action, cmdname_pred, DefaultCompleter, Pred, Rule},
-        keybindings, DefaultCursor, DefaultKeybinding, DefaultMenu, FileBackedHistory, LineBuilder,
-        LineCtx, Prompt, StyledBuf, SyntaxHighlighter, SyntaxTheme,
-    },
-    prompt::{hostname, top_pwd, username},
-    Alias, Context, Env, Runtime, Shell, ShellConfigBuilder,
-};
+use shrs::prelude::*;
+use shrs_cd_tools::git;
+use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_output_capture::OutputCapturePlugin;
+use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
@@ -31,20 +21,18 @@ impl Prompt for MyPrompt {
             shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
         };
 
-        StyledBuf::from_iter(vec![
-            vi_mode,
-            String::from(" ").reset(),
-            username().unwrap_or_default().blue(),
-            String::from("@").reset(),
-            hostname().unwrap_or_default().blue(),
-            String::from(" ").reset(),
-            top_pwd().white().bold(),
-            String::from(" ").reset(),
-            "> ".to_string().blue(),
-        ])
+        styled! {vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> "}
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
-        StyledBuf::from_iter(vec!["shrs".to_string().blue(), String::from(" ").reset()])
+        let time_str = line_ctx
+            .ctx
+            .state
+            .get::<CommandTimerState>()
+            .and_then(|x| x.command_time())
+            .map(|x| format!("{:?}", x));
+
+        let git_branch = git::branch().map(|s| format!("git:{}", s));
+        styled! {@(bold,blue)git_branch, " ", time_str, " "}
     }
 }
 
@@ -64,6 +52,8 @@ fn main() {
     env.load();
     env.set("SHELL_NAME", "shrs_example");
 
+    let builtins = Builtins::default();
+
     // =-=-= Completion =-=-=
     // Get list of binaries in path and initialize the completer to autocomplete command names
     let path_string = env.get("PATH").unwrap().to_string();
@@ -71,6 +61,10 @@ fn main() {
     completer.register(Rule::new(
         Pred::new(cmdname_pred),
         Box::new(cmdname_action(path_string)),
+    ));
+    completer.register(Rule::new(
+        Pred::new(cmdname_pred),
+        Box::new(builtin_cmdname_action(&builtins)),
     ));
 
     // =-=-= Menu =-=-=-=
@@ -81,7 +75,6 @@ fn main() {
     let history_file = config_dir.as_path().join("history");
     let history = FileBackedHistory::new(history_file).unwrap();
 
-    let cursor = DefaultCursor::default();
     let highlighter = SyntaxHighlighter::new(SyntaxTheme::default());
 
     // =-=-= Keybindings =-=-=
@@ -97,7 +90,6 @@ fn main() {
     // Initialize readline with all of our components
 
     let readline = LineBuilder::default()
-        .with_cursor(cursor)
         .with_completer(completer)
         .with_menu(menu)
         .with_history(history)
@@ -152,6 +144,8 @@ a rusty POSIX shell | build {}"#,
         .with_alias(alias)
         .with_readline(readline)
         .with_plugin(OutputCapturePlugin)
+        .with_plugin(CommandTimerPlugin)
+        .with_plugin(RunContextPlugin)
         .build()
         .unwrap();
 

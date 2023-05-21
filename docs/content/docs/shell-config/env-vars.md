@@ -22,7 +22,7 @@ env.load();
 myshell.with_env(env);
 ```
 
-In the case that the **shrs** shell is your login shell, or that you wish to define additional environment variables, you can do so by appending to the `Env` object.
+In the case that the **shrs** shell is your login shell, or that you wish to define additional environment variables, you can do so by appending to the `Env` object. Note that environment variables are also **case insensitive**.
 ```rust
 env.set("SHELL", "my_shrs");
 ```

@@ -1,7 +1,10 @@
 use std::path::{Path, PathBuf};
 
+use shrs_core::builtin::Builtins;
+
 use super::{
     drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
+    ReplaceMethod,
 };
 
 // TODO make this FnMut?
@@ -65,26 +68,24 @@ impl DefaultCompleter {
     }
 
     pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
-        let rule = self.rules.iter().find(|p| (p.pred).test(ctx));
+        let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
 
-        match rule {
-            Some(rule) => {
-                // if rule was matched, run the corresponding action
-                // also do prefix search (could make if prefix search is used a config option)
-                (rule.action)(ctx)
-                    .into_iter()
-                    .filter(|s| {
-                        s.accept()
-                            .starts_with(ctx.cur_word().unwrap_or(&String::new()))
-                    })
-                    // .map(|s| (rule.format)(s))
-                    .collect::<Vec<_>>()
-            },
-            None => {
-                // TODO display some notif that we cannot complete
-                vec![]
-            },
+        let mut output = vec![];
+        for rule in rules {
+            // if rule was matched, run the corresponding action
+            // also do prefix search (could make if prefix search is used a config option)
+            let mut comps = (rule.action)(ctx)
+                .into_iter()
+                .filter(|s| {
+                    s.accept()
+                        .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                })
+                // .map(|s| (rule.format)(s))
+                .collect::<Vec<_>>();
+
+            output.append(&mut comps);
         }
+        output
     }
 }
 
@@ -109,10 +110,20 @@ impl Default for DefaultCompleter {
     }
 }
 
+/// Return all the executables in PATH
 pub fn cmdname_action(path_str: String) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
     move |_ctx: &CompletionCtx| -> Vec<Completion> {
         default_format(find_executables_in_path(&path_str))
     }
+}
+
+/// Return all the builtin command names
+pub fn builtin_cmdname_action(builtin: &Builtins) -> impl Fn(&CompletionCtx) -> Vec<Completion> {
+    let builtin_names = builtin
+        .iter()
+        .map(|(name, _)| name.to_owned().to_string())
+        .collect::<Vec<_>>();
+    move |_ctx: &CompletionCtx| -> Vec<Completion> { default_format(builtin_names.clone()) }
 }
 
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
@@ -135,6 +146,7 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
                 add_space: !is_dir,
                 display: Some(filename.to_owned()),
                 completion: drop_end.to_owned() + &filename,
+                replace_method: ReplaceMethod::Append,
             }
         })
         .collect::<Vec<_>>()
@@ -213,6 +225,7 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
             add_space: true,
             display: None,
             completion: x.to_owned(),
+            replace_method: ReplaceMethod::Replace,
         })
         .collect::<Vec<_>>()
 }

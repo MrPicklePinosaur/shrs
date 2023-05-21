@@ -1,6 +1,7 @@
 use std::{borrow::BorrowMut, io::Write, time::Duration};
 
 use crossterm::{
+    cursor::SetCursorStyle,
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -11,8 +12,8 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use crate::{
     buffer_history::{BufferHistory, DefaultBufferHistory},
-    completion::{Completer, CompletionCtx, DefaultCompleter},
-    cursor::{Cursor, DefaultCursor},
+    completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
+    cursor::CursorStyle,
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
@@ -38,7 +39,7 @@ pub enum LineMode {
 pub struct Line {
     #[builder(default = "Box::new(DefaultMenu::new())")]
     #[builder(setter(custom))]
-    menu: Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
+    menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
 
     #[builder(default = "Box::new(DefaultCompleter::default())")]
     #[builder(setter(custom))]
@@ -51,10 +52,6 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultBufferHistory::new())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
-
-    #[builder(default = "Box::new(DefaultCursor::default())")]
-    #[builder(setter(custom))]
-    cursor: Box<dyn Cursor>,
 
     #[builder(default = "Box::new(DefaultHighlighter::default())")]
     #[builder(setter(custom))]
@@ -136,12 +133,12 @@ pub struct LineCtx<'a> {
     mode: LineMode,
 
     pub sh: &'a Shell,
-    pub ctx: &'a Context,
-    pub rt: &'a Runtime,
+    pub ctx: &'a mut Context,
+    pub rt: &'a mut Runtime,
 }
 
 impl<'a> LineCtx<'a> {
-    pub fn new(sh: &'a Shell, ctx: &'a Context, rt: &'a Runtime) -> Self {
+    pub fn new(sh: &'a Shell, ctx: &'a mut Context, rt: &'a mut Runtime) -> Self {
         LineCtx {
             cb: CursorBuffer::new(),
             current_word: String::new(),
@@ -174,7 +171,7 @@ impl<'a> LineCtx<'a> {
 impl LineBuilder {
     pub fn with_menu(
         mut self,
-        menu: impl Menu<MenuItem = String, PreviewItem = String> + 'static,
+        menu: impl Menu<MenuItem = Completion, PreviewItem = String> + 'static,
     ) -> Self {
         self.menu = Some(Box::new(menu));
         self
@@ -185,10 +182,6 @@ impl LineBuilder {
     }
     pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
         self.history = Some(Box::new(history));
-        self
-    }
-    pub fn with_cursor(mut self, cursor: impl Cursor + 'static) -> Self {
-        self.cursor = Some(Box::new(cursor));
         self
     }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
@@ -232,7 +225,6 @@ impl Line {
             &self.menu,
             StyledBuf::new(),
             line_ctx.cb.cursor(),
-            &self.cursor,
         )?;
 
         loop {
@@ -274,7 +266,7 @@ impl Line {
                 // add currently selected completion to buf
                 if self.menu.is_active() {
                     if let Some(selection) = self.menu.current_selection() {
-                        let trimmed_selection = &selection[line_ctx.current_word.len()..];
+                        let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
                         styled_buf.push(StyledContent::new(
                             ContentStyle {
                                 foreground_color: Some(Color::Red),
@@ -291,7 +283,6 @@ impl Line {
                     &self.menu,
                     styled_buf,
                     line_ctx.cb.cursor(),
-                    &self.cursor,
                 )?;
             }
         }
@@ -310,9 +301,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                let accepted = self.menu.accept().cloned();
-                if let Some(accepted) = accepted {
-                    self.accept_completion(ctx, &accepted)?;
+                if let Some(accepted) = self.menu.accept().cloned() {
+                    self.accept_completion(ctx, accepted)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -375,7 +365,7 @@ impl Line {
                 if completion_len == 1 {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
-                    self.accept_completion(ctx, &item.0)?;
+                    self.accept_completion(ctx, item.1)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -413,7 +403,7 @@ impl Line {
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
-                ctx.mode = LineMode::Normal;
+                self.to_normal_mode(ctx)?;
                 self.buffer_history.add(&ctx.cb);
             },
             Event::Key(KeyEvent {
@@ -437,7 +427,7 @@ impl Line {
     }
 
     fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
-        // TODO write better system to support key combinations
+        // TODO write better system toString support key combinations
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -465,7 +455,10 @@ impl Line {
                         // special cases (possibly consulidate with execute_vi somehow)
 
                         if let Ok(mode) = ctx.cb.execute_vi(action.clone()) {
-                            ctx.mode = mode;
+                            match mode {
+                                LineMode::Insert => self.to_insert_mode(ctx)?,
+                                LineMode::Normal => self.to_normal_mode(ctx)?,
+                            };
                         }
                         match action {
                             Action::Undo => self.buffer_history.prev(ctx.cb.borrow_mut()),
@@ -506,7 +499,7 @@ impl Line {
 
         let menuitems = completions
             .iter()
-            .map(|c| (c.display(), c.accept()))
+            .map(|c| (c.display(), (*c).clone()))
             .collect::<Vec<_>>();
         self.menu.set_items(menuitems);
 
@@ -514,9 +507,20 @@ impl Line {
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(&mut self, ctx: &mut LineCtx, accepted: &str) -> anyhow::Result<()> {
+    fn accept_completion(
+        &mut self,
+        ctx: &mut LineCtx,
+        completion: Completion,
+    ) -> anyhow::Result<()> {
+        let accepted = if let Some(accepted) = self.menu.accept().cloned() {
+            accepted
+        } else {
+            return Ok(());
+        };
+
         // first remove current word
         // TODO could implement a delete_before
+        // TODO make use of ReplaceMethod
         ctx.cb
             .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
         ctx.cb.delete(
@@ -524,8 +528,10 @@ impl Line {
             Location::Rel(ctx.current_word.len() as isize),
         )?;
 
+        ctx.current_word.clear();
+
         // then replace with the completion word
-        ctx.cb.insert(Location::Cursor(), accepted)?;
+        ctx.cb.insert(Location::Cursor(), &accepted.accept())?;
 
         Ok(())
     }
@@ -563,6 +569,26 @@ impl Line {
                 ctx.cb.insert(Location::Cursor(), history_item)?;
             },
         }
+        Ok(())
+    }
+
+    fn to_normal_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        line_ctx
+            .ctx
+            .state
+            .get_mut::<CursorStyle>()
+            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBlock);
+        line_ctx.mode = LineMode::Normal;
+        Ok(())
+    }
+
+    fn to_insert_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        line_ctx
+            .ctx
+            .state
+            .get_mut::<CursorStyle>()
+            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBar);
+        line_ctx.mode = LineMode::Insert;
         Ok(())
     }
 }

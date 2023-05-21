@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    fmt::Display,
     io::{stdout, BufWriter, Write},
     ops::{Index, Range, RangeBounds},
 };
@@ -13,7 +14,7 @@ use crossterm::{
 use shrs_core::{Context, Runtime, Shell};
 use unicode_width::UnicodeWidthStr;
 
-use crate::{cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
+use crate::{completion::Completion, line::LineCtx, menu::Menu, prompt::Prompt, CursorStyle};
 
 /// Text to be renderered by painter
 pub struct StyledBuf {
@@ -45,17 +46,26 @@ impl StyledBuf {
         use unicode_width::UnicodeWidthStr;
         // TODO this copies the entire contents just to get the len, can probably optimize by using
         // borrowed version
-        let raw = self.as_string();
+        let raw = self.contents();
         UnicodeWidthStr::width(raw.as_str())
     }
 
     /// Return the contents of StyledBuf with just the raw characters and no formatting
-    pub fn as_string(&self) -> String {
+    pub fn contents(&self) -> String {
         self.spans
             .iter()
             .map(|s| s.content().as_str())
             .collect::<Vec<_>>()
             .join("")
+    }
+}
+
+impl Display for StyledBuf {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for span in self.spans() {
+            write!(f, "{}", span)?;
+        }
+        Ok(())
     }
 }
 
@@ -103,10 +113,9 @@ impl Painter {
         &mut self,
         line_ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
-        menu: &Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
+        menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: StyledBuf,
         cursor_ind: usize,
-        cursor: &Box<dyn Cursor>,
     ) -> anyhow::Result<()> {
         self.out.queue(cursor::Hide)?;
 
@@ -136,7 +145,7 @@ impl Painter {
 
         // render line (with syntax highlight spans)
         // TODO introduce better slicing of StyledBuf
-        let slice = &styled_buf.as_string();
+        let slice = &styled_buf.contents();
         let chars = slice.as_str().chars().take(cursor_ind).collect::<String>();
         left_space += UnicodeWidthStr::width(chars.as_str());
         for span in styled_buf.spans() {
@@ -160,7 +169,11 @@ impl Painter {
         // self.out.queue(cursor::RestorePosition)?;
         self.out.queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.queue(cursor::Show)?;
-        self.out.queue(cursor.get_cursor())?;
+
+        // set cursor style
+        let cursor_style = line_ctx.ctx.state.get_or_default::<CursorStyle>();
+        self.out.queue(cursor_style.style)?;
+
         self.out.flush()?;
 
         Ok(())

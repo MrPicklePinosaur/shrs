@@ -7,7 +7,7 @@ mod line;
 pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode};
 
 mod cursor;
-pub use cursor::{Cursor, DefaultCursor};
+pub use cursor::CursorStyle;
 
 mod history;
 pub use history::{DefaultHistory, FileBackedHistory, History};
@@ -16,7 +16,7 @@ mod menu;
 pub use menu::{DefaultMenu, Menu};
 
 mod prompt;
-pub use prompt::{DefaultPrompt, Prompt};
+pub use prompt::{DefaultPrompt, Prompt, *};
 
 pub mod completion;
 pub mod vi;

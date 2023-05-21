@@ -38,13 +38,6 @@ mod jobs;
 pub use anyhow;
 pub use jobs::{ExitStatus, JobId, JobInfo, Jobs};
 
-pub mod crossterm {
-    pub use crossterm::{
-        style::{Print, Stylize},
-        QueueableCommand,
-    };
-}
-
 /*
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,7 @@
 use std::{borrow::BorrowMut, io::Write, time::Duration};
 
 use crossterm::{
+    cursor::SetCursorStyle,
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
@@ -12,7 +13,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 use crate::{
     buffer_history::{BufferHistory, DefaultBufferHistory},
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
-    cursor::{Cursor, DefaultCursor},
+    cursor::CursorStyle,
     highlight::{DefaultHighlighter, Highlighter},
     history::{DefaultHistory, History},
     menu::{DefaultMenu, Menu},
@@ -51,10 +52,6 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultBufferHistory::new())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
-
-    #[builder(default = "Box::new(DefaultCursor::default())")]
-    #[builder(setter(custom))]
-    cursor: Box<dyn Cursor>,
 
     #[builder(default = "Box::new(DefaultHighlighter::default())")]
     #[builder(setter(custom))]
@@ -136,12 +133,12 @@ pub struct LineCtx<'a> {
     mode: LineMode,
 
     pub sh: &'a Shell,
-    pub ctx: &'a Context,
-    pub rt: &'a Runtime,
+    pub ctx: &'a mut Context,
+    pub rt: &'a mut Runtime,
 }
 
 impl<'a> LineCtx<'a> {
-    pub fn new(sh: &'a Shell, ctx: &'a Context, rt: &'a Runtime) -> Self {
+    pub fn new(sh: &'a Shell, ctx: &'a mut Context, rt: &'a mut Runtime) -> Self {
         LineCtx {
             cb: CursorBuffer::new(),
             current_word: String::new(),
@@ -187,10 +184,6 @@ impl LineBuilder {
         self.history = Some(Box::new(history));
         self
     }
-    pub fn with_cursor(mut self, cursor: impl Cursor + 'static) -> Self {
-        self.cursor = Some(Box::new(cursor));
-        self
-    }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
         self.highlighter = Some(Box::new(highlighter));
         self
@@ -232,7 +225,6 @@ impl Line {
             &self.menu,
             StyledBuf::new(),
             line_ctx.cb.cursor(),
-            &self.cursor,
         )?;
 
         loop {
@@ -291,7 +283,6 @@ impl Line {
                     &self.menu,
                     styled_buf,
                     line_ctx.cb.cursor(),
-                    &self.cursor,
                 )?;
             }
         }
@@ -412,7 +403,7 @@ impl Line {
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
-                ctx.mode = LineMode::Normal;
+                self.to_normal_mode(ctx)?;
                 self.buffer_history.add(&ctx.cb);
             },
             Event::Key(KeyEvent {
@@ -464,7 +455,10 @@ impl Line {
                         // special cases (possibly consulidate with execute_vi somehow)
 
                         if let Ok(mode) = ctx.cb.execute_vi(action.clone()) {
-                            ctx.mode = mode;
+                            match mode {
+                                LineMode::Insert => self.to_insert_mode(ctx)?,
+                                LineMode::Normal => self.to_normal_mode(ctx)?,
+                            };
                         }
                         match action {
                             Action::Undo => self.buffer_history.prev(ctx.cb.borrow_mut()),
@@ -575,6 +569,26 @@ impl Line {
                 ctx.cb.insert(Location::Cursor(), history_item)?;
             },
         }
+        Ok(())
+    }
+
+    fn to_normal_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        line_ctx
+            .ctx
+            .state
+            .get_mut::<CursorStyle>()
+            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBlock);
+        line_ctx.mode = LineMode::Normal;
+        Ok(())
+    }
+
+    fn to_insert_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        line_ctx
+            .ctx
+            .state
+            .get_mut::<CursorStyle>()
+            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBar);
+        line_ctx.mode = LineMode::Insert;
         Ok(())
     }
 }

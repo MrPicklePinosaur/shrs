@@ -31,4 +31,27 @@ impl State {
             .get_mut(&TypeId::of::<T>())
             .and_then(|data_any| data_any.downcast_mut::<T>())
     }
+
+    /// Get data or return default if not exist
+    ///
+    /// Also inserts default into state store to ensure future gets don't fail
+    pub fn get_or_default<T: 'static + Default>(&mut self) -> &T {
+        if !self.store.contains_key(&TypeId::of::<T>()) {
+            self.insert(T::default());
+        }
+
+        // TODO i think this is safe?
+        self.get::<T>().unwrap()
+    }
+
+    /// Get data or return default if not exist
+    ///
+    /// Also inserts default into state store to ensure future gets don't fail
+    pub fn get_mut_or_default<T: 'static + Default>(&mut self) -> &mut T {
+        if !self.store.contains_key(&TypeId::of::<T>()) {
+            self.insert(T::default());
+        }
+
+        self.get_mut::<T>().unwrap()
+    }
 }

@@ -9,10 +9,12 @@ use crossterm::{
     QueueableCommand,
 };
 
+use crate::completion::Completion;
+
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 
 pub trait Menu {
-    type MenuItem: Display;
+    type MenuItem;
     type PreviewItem: Display;
 
     fn next(&mut self);
@@ -35,7 +37,7 @@ pub trait Menu {
 
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
-    selections: Vec<(String, String)>,
+    selections: Vec<(String, Completion)>,
     /// Currently selected item
     cursor: u32,
     active: bool,
@@ -58,7 +60,7 @@ impl DefaultMenu {
 }
 
 impl Menu for DefaultMenu {
-    type MenuItem = String;
+    type MenuItem = Completion;
     type PreviewItem = String;
 
     fn next(&mut self) {
@@ -75,11 +77,11 @@ impl Menu for DefaultMenu {
             self.cursor = self.cursor.saturating_sub(1);
         }
     }
-    fn accept(&mut self) -> Option<&String> {
+    fn accept(&mut self) -> Option<&Self::MenuItem> {
         self.disactivate();
         self.current_selection()
     }
-    fn current_selection(&self) -> Option<&String> {
+    fn current_selection(&self) -> Option<&Self::MenuItem> {
         self.selections.get(self.cursor as usize).map(|x| &x.1)
     }
     fn cursor(&self) -> u32 {

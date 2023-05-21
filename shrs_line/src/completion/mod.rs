@@ -9,6 +9,16 @@ pub use utils::*;
 mod context;
 pub use context::*;
 
+/// How should the completion be substituted
+#[derive(Clone)]
+pub enum ReplaceMethod {
+    /// Append the returned value after the cursor
+    Append,
+    /// Replace the last word
+    Replace,
+}
+
+#[derive(Clone)]
 pub struct Completion {
     /// If space should be added after completion
     pub(crate) add_space: bool,
@@ -16,6 +26,8 @@ pub struct Completion {
     pub(crate) display: Option<String>,
     /// Actual value to perform completion with
     pub(crate) completion: String,
+    /// Replace method
+    pub(crate) replace_method: ReplaceMethod,
 }
 
 impl Completion {

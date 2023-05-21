@@ -14,7 +14,7 @@ use crossterm::{
 use shrs_core::{Context, Runtime, Shell};
 use unicode_width::UnicodeWidthStr;
 
-use crate::{cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
+use crate::{completion::Completion, cursor::Cursor, line::LineCtx, menu::Menu, prompt::Prompt};
 
 /// Text to be renderered by painter
 pub struct StyledBuf {
@@ -113,7 +113,7 @@ impl Painter {
         &mut self,
         line_ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
-        menu: &Box<dyn Menu<MenuItem = String, PreviewItem = String>>,
+        menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: StyledBuf,
         cursor_ind: usize,
         cursor: &Box<dyn Cursor>,

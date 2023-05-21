@@ -4,6 +4,7 @@ use shrs_core::builtin::Builtins;
 
 use super::{
     drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
+    ReplaceMethod,
 };
 
 // TODO make this FnMut?
@@ -145,6 +146,7 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
                 add_space: !is_dir,
                 display: Some(filename.to_owned()),
                 completion: drop_end.to_owned() + &filename,
+                replace_method: ReplaceMethod::Append,
             }
         })
         .collect::<Vec<_>>()
@@ -223,6 +225,7 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
             add_space: true,
             display: None,
             completion: x.to_owned(),
+            replace_method: ReplaceMethod::Replace,
         })
         .collect::<Vec<_>>()
 }

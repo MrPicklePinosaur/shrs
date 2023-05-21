@@ -67,7 +67,6 @@ impl Default for SyntaxTheme {
         };
         let is_string: RuleFn = |t: &Token| -> bool {
             if let Token::WORD(w) = t {
-                println!("{:?}", t);
                 return w.starts_with('\'') || w.starts_with('\"');
             }
             false

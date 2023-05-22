@@ -1098,6 +1098,7 @@ dependencies = [
  "shrs",
  "shrs_cd_tools",
  "shrs_command_timer",
+ "shrs_lang_nu",
  "shrs_output_capture",
  "shrs_run_context",
 ]
@@ -1115,6 +1116,13 @@ dependencies = [
  "rexpect",
  "shrs_core",
  "thiserror",
+]
+
+[[package]]
+name = "shrs_lang_nu"
+version = "0.1.0"
+dependencies = [
+ "shrs",
 ]
 
 [[package]]

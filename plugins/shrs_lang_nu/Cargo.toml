@@ -1,0 +1,11 @@
+[package]
+name = "shrs_lang_nu"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "nushell command language for shrs"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+shrs = { path = "../../shrs" }

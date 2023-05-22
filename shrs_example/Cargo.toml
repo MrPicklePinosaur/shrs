@@ -14,6 +14,7 @@ shrs_output_capture = { path = "../plugins/shrs_output_capture" }
 shrs_cd_tools = { path = "../plugins/shrs_cd_tools" }
 shrs_command_timer = { path = "../plugins/shrs_command_timer" }
 shrs_run_context = { path = "../plugins/shrs_run_context" }
+shrs_lang_nu = { path = "../plugins/shrs_lang_nu" }
 
 dirs = "5"
 anyhow = "1"

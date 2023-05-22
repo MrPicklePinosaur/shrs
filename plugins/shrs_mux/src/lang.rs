@@ -2,14 +2,6 @@ use std::process::Command;
 
 use shrs::prelude::*;
 
-pub struct NuLangPlugin;
-
-impl Plugin for NuLangPlugin {
-    fn init(&self, shell: &mut ShellConfig) {
-        shell.lang = Box::new(NuLang);
-    }
-}
-
 pub struct NuLang;
 
 impl Lang for NuLang {

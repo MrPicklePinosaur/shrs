@@ -1070,7 +1070,6 @@ dependencies = [
  "pino_deref",
  "regex",
  "rexpect",
- "shrs_lang",
  "signal-hook",
  "thiserror",
 ]
@@ -1114,6 +1113,7 @@ dependencies = [
  "pino_deref",
  "regex",
  "rexpect",
+ "shrs_core",
  "thiserror",
 ]
 

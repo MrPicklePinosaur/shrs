@@ -10,7 +10,10 @@
 // - env hook (when envrionment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::{io::BufWriter, marker::PhantomData, path::PathBuf, time::Duration};
+use std::{
+    any::TypeId, collections::HashMap, io::BufWriter, marker::PhantomData, path::PathBuf,
+    time::Duration,
+};
 
 use crossterm::{style::Print, QueueableCommand};
 
@@ -116,6 +119,7 @@ pub fn job_exit_hook(
 /// Collection of all the hooks that are avaliable
 #[derive(Clone)]
 pub struct Hooks {
+    // TODO how to uniquely identify a hook? using the Ctx type?
     /// Runs before first prompt is shown
     pub startup: HookList<StartupCtx>,
     /// Runs before each command is executed

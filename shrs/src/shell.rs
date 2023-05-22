@@ -149,9 +149,41 @@ fn run_shell(
 
     loop {
         let line = readline.read_line(sh, ctx, rt);
+
+        // attempt to expand alias
+        // TODO IFS
+        let mut words = line
+            .split(' ')
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>();
+        if let Some(first) = words.get_mut(0) {
+            if let Some(expanded) = ctx.alias.get(first.clone()) {
+                *first = expanded;
+            }
+        }
+        let line = words.join(" ");
+
+        // TODO not sure if hook should run here (since not all vars are expanded yet)
+        let hook_ctx = BeforeCommandCtx {
+            raw_command: line.clone(),
+            command: line.clone(),
+        };
+        sh.hooks.before_command.run(sh, ctx, rt, &hook_ctx)?;
+
         match sh.lang.eval(sh, ctx, rt, line) {
             Ok(_) => {},
             Err(_) => {},
+        }
+
+        // check up on running jobs
+        let mut exit_statuses = vec![];
+        ctx.jobs.retain(|status: ExitStatus| {
+            exit_statuses.push(status);
+        });
+
+        for status in exit_statuses.into_iter() {
+            sh.hooks.job_exit.run(sh, ctx, rt, &JobExitCtx { status });
         }
     }
 }

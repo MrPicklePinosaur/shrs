@@ -45,29 +45,8 @@ impl Lang for PosixLang {
         sh: &shrs_core::Shell,
         ctx: &mut shrs_core::Context,
         rt: &mut shrs_core::Runtime,
-        cmd: String,
+        line: String,
     ) -> anyhow::Result<()> {
-        // attempt to expand alias
-        // TODO IFS
-        let mut words = cmd
-            .split(' ')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>();
-        if let Some(first) = words.get_mut(0) {
-            if let Some(expanded) = ctx.alias.get(first.clone()) {
-                *first = expanded;
-            }
-        }
-        let line = words.join(" ");
-
-        // TODO not sure if hook should run here (since not all vars are expanded yet)
-        let hook_ctx = BeforeCommandCtx {
-            raw_command: line.clone(),
-            command: line.clone(),
-        };
-        sh.hooks.before_command.run(sh, ctx, rt, &hook_ctx)?;
-
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let mut parser = Parser::new();
@@ -88,16 +67,6 @@ impl Lang for PosixLang {
                 },
             };
         command_output(sh, ctx, rt, &mut cmd_handle)?;
-
-        // check up on running jobs
-        let mut exit_statuses = vec![];
-        ctx.jobs.retain(|status: ExitStatus| {
-            exit_statuses.push(status);
-        });
-
-        for status in exit_statuses.into_iter() {
-            sh.hooks.job_exit.run(sh, ctx, rt, &JobExitCtx { status });
-        }
 
         Ok(())
     }

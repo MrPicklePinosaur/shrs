@@ -1118,6 +1118,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_lang_nu"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+]
+
+[[package]]
 name = "shrs_line"
 version = "0.1.0"
 dependencies = [

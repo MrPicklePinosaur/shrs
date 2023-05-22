@@ -147,7 +147,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin)
-        .with_plugin(NuLangPlugin)
+        // .with_plugin(NuLangPlugin)
         .build()
         .unwrap();
 

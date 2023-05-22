@@ -9,6 +9,7 @@ repository = "https://github.com/MrPicklePinosaur/shrs"
 build = "build.rs"
 
 [dependencies]
+shrs_core = { path = "../shrs_core" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 

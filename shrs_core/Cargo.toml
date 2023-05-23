@@ -22,7 +22,5 @@ thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"
 
-shrs_lang = { path = "../shrs_lang" }
-
 [dev-dependencies]
 rexpect = "0.5"

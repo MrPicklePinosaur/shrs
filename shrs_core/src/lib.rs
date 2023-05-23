@@ -22,7 +22,7 @@ pub mod hooks;
 pub mod prompt;
 
 mod shell;
-pub use shell::{command_output, dummy_child, run_external_command, Context, Runtime, Shell};
+pub use shell::{command_output, dummy_child, Context, Runtime, Shell};
 
 mod signal;
 pub use signal::sig_handler;
@@ -32,6 +32,9 @@ pub use theme::Theme;
 
 mod state;
 pub use state::State;
+
+mod lang;
+pub use lang::Lang;
 
 mod jobs;
 // TODO temp re-export anyhow

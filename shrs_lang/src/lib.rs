@@ -14,3 +14,6 @@ mod lexer;
 pub use lexer::{Lexer, Token, RESERVED_WORDS};
 
 pub mod ast;
+
+mod eval;
+pub use eval::{PosixError, PosixLang};

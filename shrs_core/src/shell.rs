@@ -1,6 +1,7 @@
 //! Implementation and runtime for POSIX shell
 
 use std::{
+    cell::RefCell,
     collections::HashMap,
     env,
     fs::File,
@@ -15,7 +16,6 @@ use std::{
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
-use shrs_lang::{ast, Lexer, Parser, RESERVED_WORDS};
 use thiserror::Error;
 
 use crate::{
@@ -27,6 +27,7 @@ use crate::{
     signal::sig_handler,
     state::State,
     theme::Theme,
+    Lang,
 };
 
 /// Constant shell data
@@ -38,6 +39,8 @@ pub struct Shell {
     pub builtins: Builtins,
     /// Color theme
     pub theme: Theme,
+    /// The command language
+    pub lang: Box<dyn Lang>,
 }
 
 /// Shared global shell context
@@ -51,7 +54,6 @@ pub struct Context {
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
     pub jobs: Jobs,
-
     pub startup_time: Instant,
 }
 
@@ -71,9 +73,11 @@ pub struct Runtime {
     pub args: Vec<String>,
     /// Exit status of most recent pipeline
     pub exit_status: i32,
-    /// List of defined functions
-    pub functions: HashMap<String, Box<ast::Command>>,
+    // /// List of defined functions
+    // pub functions: HashMap<String, Box<ast::Command>>,
 }
+
+// some utilitiy commands that should be cleaned up or moved later
 
 pub fn dummy_child() -> anyhow::Result<Child> {
     use std::process::Command;
@@ -117,32 +121,4 @@ pub fn command_output(
     sh.hooks.after_command.run(sh, ctx, rt, &hook_ctx)?;
 
     Ok(ExitStatus(exit_status))
-}
-
-pub fn run_external_command(
-    sh: &Shell,
-    ctx: &mut Context,
-    rt: &mut Runtime,
-    cmd: &str,
-    args: &Vec<String>,
-    stdin: Stdio,
-    stdout: Stdio,
-    pgid: Option<i32>,
-    assigns: &Vec<ast::Assign>,
-) -> anyhow::Result<Child> {
-    use std::process::Command;
-
-    let envs = assigns.iter().map(|word| (&word.var, &word.val));
-
-    // TODO might need to do subst on cmd too
-    let child = Command::new(cmd)
-        .args(args)
-        .stdin(stdin)
-        .stdout(stdout)
-        // .process_group(pgid.unwrap_or(0)) // pgid of 0 means use own pid as pgid
-        .current_dir(rt.working_dir.to_str().unwrap())
-        .envs(envs)
-        .spawn()?;
-
-    Ok(child)
 }

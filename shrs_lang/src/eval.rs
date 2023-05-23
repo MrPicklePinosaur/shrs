@@ -196,7 +196,6 @@ fn eval_command(
 
             // TODO doing args subst here is a waste if we evaluating function body
             let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
-
             for (builtin_name, builtin_cmd) in sh.builtins.iter() {
                 if builtin_name == &cmd_name.as_str() {
                     return builtin_cmd.run(sh, ctx, rt, &subst_args);

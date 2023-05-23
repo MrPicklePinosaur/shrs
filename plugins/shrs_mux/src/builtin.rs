@@ -21,6 +21,8 @@ impl BuiltinCmd for MuxBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
         // TODO hardcoded for now
+        // TODO think about how to implement shell switching at runtime (currently running into
+        // some ownership issues in shrs/shell.rs)
         match args.get(0).map(|s| s.as_str()) {
             Some("nu") => {},
             Some("shrs") => {},

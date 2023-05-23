@@ -154,12 +154,12 @@ fn run_shell(
         // TODO IFS
         let mut words = line
             .split(' ')
-            .map(|s| s.trim())
+            .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>();
         if let Some(first) = words.get_mut(0) {
-            if let Some(expanded) = ctx.alias.get(first.clone()) {
-                *first = expanded;
+            if let Some(expanded) = ctx.alias.get(&first) {
+                *first = expanded.to_owned().to_string();
             }
         }
         let line = words.join(" ");

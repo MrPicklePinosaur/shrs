@@ -17,12 +17,12 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
-        let vi_mode = match line_ctx.mode() {
-            shrs::line::LineMode::Insert => String::from("[i]").bold().yellow(),
-            shrs::line::LineMode::Normal => String::from("[n]").bold().cyan(),
+        let indicator = match line_ctx.mode() {
+            LineMode::Insert => String::from(":").cyan(),
+            LineMode::Normal => String::from(">").yellow(),
         };
 
-        styled! {vi_mode, " ", @(blue)username(), "@", @(blue)hostname(), " ", @(white,bold)top_pwd(), " ", @(blue)"> "}
+        styled! {" ", @(blue)username(), " ", @(white,bold)top_pwd(), " ", indicator, " "}
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         let time_str = line_ctx
@@ -147,7 +147,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin)
-        // .with_plugin(NuLangPlugin)
+        .with_plugin(MuxPlugin)
         .build()
         .unwrap();
 

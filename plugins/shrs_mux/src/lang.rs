@@ -78,7 +78,7 @@ impl Lang for NuLang {
         for (builtin_name, builtin_cmd) in sh.builtins.iter() {
             if builtin_name == &cmd_name {
                 builtin_cmd.run(sh, ctx, rt, &args)?;
-                continue;
+                return Ok(());
             }
         }
 

@@ -35,13 +35,21 @@ impl Highlighter for DefaultHighlighter {
 }
 pub type RuleFn = fn(&Token) -> bool;
 pub struct SyntaxTheme {
-    command: ContentStyle,
-    auto: ContentStyle, // path: ContentStyle
-    style_rules: Vec<(RuleFn, ContentStyle)>,
+    pub command: ContentStyle,
+    pub auto: ContentStyle, // path: ContentStyle
+    //RuleFn returns true if style should be applied to token
+    pub style_rules: Vec<(RuleFn, ContentStyle)>,
 }
 impl SyntaxTheme {
     pub fn push_rule(&mut self, rule: RuleFn, style: ContentStyle) {
         self.style_rules.push((rule, style));
+    }
+    fn new(command: ContentStyle, auto: ContentStyle) -> Self {
+        Self {
+            command,
+            auto,
+            style_rules: vec![],
+        }
     }
 }
 impl Default for SyntaxTheme {
@@ -152,6 +160,7 @@ impl Highlighter for SyntaxHighlighter {
                     }
                 }
 
+                //pushes spaces before token to end of token
                 styled_buf.push(StyledContent::new(
                     style,
                     buf[last_index..token.2].to_string(),
@@ -159,6 +168,7 @@ impl Highlighter for SyntaxHighlighter {
                 last_index = token.2
             }
         }
+        //pushes remaining content after last token
         styled_buf.push(StyledContent::new(
             style,
             buf[last_index..buf.len()].to_string(),

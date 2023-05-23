@@ -1,8 +1,57 @@
-use std::process::Command;
+use std::{collections::HashMap, process::Command};
 
 use shrs::prelude::*;
 
-pub struct NuLang;
+use crate::MuxState;
+
+pub struct MuxLang {
+    langs: HashMap<String, Box<dyn Lang>>,
+}
+
+impl MuxLang {
+    pub fn new() -> Self {
+        // TODO should be configurable later
+        Self {
+            langs: HashMap::from_iter(vec![
+                (
+                    "shrs".into(),
+                    Box::new(PosixLang::default()) as Box<dyn Lang>,
+                ),
+                ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
+            ]),
+        }
+    }
+}
+
+impl Lang for MuxLang {
+    fn eval(
+        &self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        cmd: String,
+    ) -> anyhow::Result<()> {
+        let lang_name = match ctx.state.get::<MuxState>() {
+            Some(state) => &state.lang,
+            None => return Ok(()),
+        };
+        // TODO maybe return error if we can't find a lang
+
+        self.langs.get(lang_name).map(|lang| {
+            lang.eval(sh, ctx, rt, cmd);
+        });
+
+        Ok(())
+    }
+}
+
+pub struct NuLang {}
+
+impl NuLang {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl Lang for NuLang {
     fn eval(

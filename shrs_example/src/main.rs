@@ -7,7 +7,7 @@ use std::{
 use shrs::prelude::*;
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
-use shrs_lang_nu::NuLangPlugin;
+use shrs_mux::MuxPlugin;
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
 

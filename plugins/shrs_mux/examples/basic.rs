@@ -1,9 +1,9 @@
 use shrs::prelude::*;
-use shrs_lang_nu::NuLangPlugin;
+use shrs_mux::MuxPlugin;
 
 fn main() {
     let myshell = ShellConfigBuilder::default()
-        .with_plugin(NuLangPlugin)
+        .with_plugin(MuxPlugin)
         .build()
         .unwrap();
 

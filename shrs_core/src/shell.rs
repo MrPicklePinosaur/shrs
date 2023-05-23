@@ -1,6 +1,7 @@
 //! Implementation and runtime for POSIX shell
 
 use std::{
+    cell::RefCell,
     collections::HashMap,
     env,
     fs::File,
@@ -53,7 +54,6 @@ pub struct Context {
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
     pub jobs: Jobs,
-
     pub startup_time: Instant,
 }
 

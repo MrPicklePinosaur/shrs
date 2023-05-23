@@ -1127,6 +1127,7 @@ dependencies = [
  "derive_builder",
  "dirs",
  "shrs_core",
+ "shrs_lang",
  "shrs_utils",
  "shrs_vi",
  "thiserror",

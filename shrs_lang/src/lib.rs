@@ -11,7 +11,7 @@ mod parser;
 pub use parser::{Error, Parser};
 
 mod lexer;
-pub use lexer::{Lexer, RESERVED_WORDS};
+pub use lexer::{Lexer, Token, RESERVED_WORDS};
 
 pub mod ast;
 

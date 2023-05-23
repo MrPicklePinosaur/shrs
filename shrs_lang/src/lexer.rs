@@ -118,7 +118,7 @@ impl<'input> Lexer<'input> {
         start: usize,
         end: usize,
     ) -> Result<(usize, Token<'input>, usize), Error> {
-        let (word, end) = self.take_while(start, end, is_word_continue);
+        let (word, end) = self.take_until(start, end, |ch| !is_word_continue(ch));
         let token = match word {
             "if" => Token::IF,
             "then" => Token::THEN,
@@ -144,9 +144,9 @@ impl<'input> Lexer<'input> {
         start: usize,
         end: usize,
     ) -> Result<(usize, Token<'input>, usize), Error> {
-        let (_, end) = self.take_while(start, end, |ch| ch != '\'');
+        let (_, end) = self.take_until_inclusive(start, end, |ch| ch == '\'');
         self.advance();
-        Ok((start, Token::WORD(&self.input[start + 1..end]), end))
+        Ok((start, Token::WORD(&self.input[start..end]), end))
     }
 
     fn double_quote(
@@ -154,9 +154,9 @@ impl<'input> Lexer<'input> {
         start: usize,
         end: usize,
     ) -> Result<(usize, Token<'input>, usize), Error> {
-        let (_, end) = self.take_while(start, end, |ch| ch != '"');
+        let (_, end) = self.take_until_inclusive(start, end, |ch| ch == '"');
         self.advance();
-        Ok((start, Token::WORD(&self.input[start + 1..end]), end))
+        Ok((start, Token::WORD(&self.input[start..end]), end))
     }
 
     // utils for reading until condition is met
@@ -178,12 +178,23 @@ impl<'input> Lexer<'input> {
         }
         (&self.input[start..end], end)
     }
-
-    fn take_while<F>(&mut self, start: usize, end: usize, mut keep_going: F) -> (&'input str, usize)
+    fn take_until_inclusive<F>(
+        &mut self,
+        start: usize,
+        mut end: usize,
+        mut terminate: F,
+    ) -> (&'input str, usize)
     where
         F: FnMut(char) -> bool,
     {
-        self.take_until(start, end, |c| !keep_going(c))
+        while let Some((_, ch, _)) = self.lookahead {
+            if terminate(ch) {
+                return (&self.input[start..=end], end + 1);
+            } else if let Some((_, _, e)) = self.advance() {
+                end = e;
+            }
+        }
+        (&self.input[start..end], end)
     }
 }
 

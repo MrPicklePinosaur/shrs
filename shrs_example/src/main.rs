@@ -76,7 +76,7 @@ fn main() {
     let history_file = config_dir.as_path().join("history");
     let history = FileBackedHistory::new(history_file).unwrap();
 
-    let highlighter = DefaultHighlighter::default();
+    let highlighter = SyntaxHighlighter::new(SyntaxTheme::default());
 
     // =-=-= Keybindings =-=-=
     // Add basic keybindings

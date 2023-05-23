@@ -134,7 +134,6 @@ fn run_shell(
     // init stuff
     sig_handler()?;
     rt.env.load();
-    let mut parser = Parser::new();
 
     let res = sh.hooks.startup.run(
         sh,

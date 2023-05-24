@@ -138,10 +138,8 @@ a rusty POSIX shell | build {}"#,
         println!("{welcome_str}");
         Ok(())
     };
-    let hooks = Hooks {
-        startup: HookList::from_iter(vec![startup_msg]),
-        ..Default::default()
-    };
+    let mut hooks = Hooks::default();
+    hooks.register(startup_msg);
 
     // =-=-= Shell =-=-=
     // Construct the final shell

@@ -22,7 +22,7 @@ pub struct OutputCapturePlugin;
 
 impl Plugin for OutputCapturePlugin {
     fn init(&self, shell: &mut shrs::ShellConfig) {
-        shell.hooks.after_command.register(after_command_hook);
+        shell.hooks.register(after_command_hook);
         shell.builtins.insert("again", AgainBuiltin::new());
         shell.state.insert(OutputCaptureState::new());
     }

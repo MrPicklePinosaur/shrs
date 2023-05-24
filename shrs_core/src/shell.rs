@@ -118,7 +118,7 @@ pub fn command_output(
         cmd_time: 0.0,
         cmd_output: output,
     };
-    sh.hooks.after_command.run(sh, ctx, rt, &hook_ctx)?;
+    sh.hooks.run::<AfterCommandCtx>(sh, ctx, rt, hook_ctx)?;
 
     Ok(ExitStatus(exit_status))
 }

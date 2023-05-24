@@ -115,9 +115,9 @@ impl ShellConfig {
         };
         let sh = Shell {
             builtins: self.builtins,
-            hooks: self.hooks,
             theme: self.theme,
             lang: self.lang,
+            hooks: self.hooks,
         };
         let mut readline = self.readline;
 
@@ -135,11 +135,11 @@ fn run_shell(
     sig_handler()?;
     rt.env.load();
 
-    let res = sh.hooks.startup.run(
+    let res = sh.hooks.run::<StartupCtx>(
         sh,
         ctx,
         rt,
-        &StartupCtx {
+        StartupCtx {
             startup_time: ctx.startup_time.elapsed(),
         },
     );
@@ -170,7 +170,7 @@ fn run_shell(
             raw_command: line.clone(),
             command: line.clone(),
         };
-        sh.hooks.before_command.run(sh, ctx, rt, &hook_ctx)?;
+        sh.hooks.run::<BeforeCommandCtx>(sh, ctx, rt, hook_ctx)?;
 
         match sh.lang.eval(sh, ctx, rt, line) {
             Ok(_) => {},
@@ -184,7 +184,8 @@ fn run_shell(
         });
 
         for status in exit_statuses.into_iter() {
-            sh.hooks.job_exit.run(sh, ctx, rt, &JobExitCtx { status });
+            sh.hooks
+                .run::<JobExitCtx>(sh, ctx, rt, JobExitCtx { status });
         }
     }
 }

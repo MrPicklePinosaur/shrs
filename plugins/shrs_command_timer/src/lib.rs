@@ -55,8 +55,8 @@ pub struct CommandTimerPlugin;
 
 impl Plugin for CommandTimerPlugin {
     fn init(&self, shell: &mut shrs::ShellConfig) {
-        shell.hooks.before_command.register(before_command_hook);
-        shell.hooks.after_command.register(after_command_hook);
+        shell.hooks.register(before_command_hook);
+        shell.hooks.register(after_command_hook);
         shell.state.insert(CommandTimerState::new());
     }
 }

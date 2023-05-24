@@ -48,6 +48,11 @@ impl MuxState {
     pub fn get_lang(&self) -> &str {
         &self.lang
     }
+
+    /// Get an iterator for list of all the avaliable langauges
+    pub fn registered_langs(&self) -> impl Iterator<Item = &String> {
+        self.registered_langs.iter()
+    }
 }
 
 pub struct MuxPlugin;

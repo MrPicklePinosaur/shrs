@@ -25,11 +25,15 @@ impl BuiltinCmd for MuxBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<std::process::Child> {
         // TODO flag to list all possible languages
-
-        // TODO hardcoded for now
-        // TODO think about how to implement shell switching at runtime (currently running into
-        // some ownership issues in shrs/shell.rs)
         match args.get(0).map(|s| s.as_str()) {
+            Some("-l") => {
+                ctx.state.get::<MuxState>().map(|state| {
+                    println!("Available languages:");
+                    for lang in state.registered_langs() {
+                        println!("{}", lang);
+                    }
+                });
+            },
             Some(lang_name) => {
                 ctx.state
                     .get_mut::<MuxState>()

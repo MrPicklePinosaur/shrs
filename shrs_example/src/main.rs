@@ -7,7 +7,7 @@ use std::{
 use shrs::prelude::*;
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
-use shrs_mux::MuxPlugin;
+use shrs_mux::{MuxPlugin, MuxState};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
 
@@ -32,8 +32,14 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{:?}", x));
 
+        let lang = line_ctx
+            .ctx
+            .state
+            .get::<MuxState>()
+            .map(|state| state.get_lang());
+
         let git_branch = git::branch().map(|s| format!("git:{}", s));
-        styled! {@(bold,blue)git_branch, " ", time_str, " "}
+        styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
     }
 }
 

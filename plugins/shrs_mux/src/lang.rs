@@ -9,17 +9,9 @@ pub struct MuxLang {
 }
 
 impl MuxLang {
-    pub fn new() -> Self {
+    pub fn new(langs: HashMap<String, Box<dyn Lang>>) -> Self {
         // TODO should be configurable later
-        Self {
-            langs: HashMap::from_iter(vec![
-                (
-                    "shrs".into(),
-                    Box::new(PosixLang::default()) as Box<dyn Lang>,
-                ),
-                ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
-            ]),
-        }
+        Self { langs }
     }
 }
 
@@ -83,6 +75,51 @@ impl Lang for NuLang {
         }
 
         let mut handle = Command::new("nu").args(vec!["-c", &cmd]).spawn()?;
+
+        handle.wait()?;
+
+        Ok(())
+    }
+}
+
+pub struct PythonLang {}
+
+impl PythonLang {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Lang for PythonLang {
+    fn eval(
+        &self,
+        sh: &shrs::Shell,
+        ctx: &mut shrs::Context,
+        rt: &mut shrs::Runtime,
+        cmd: String,
+    ) -> shrs::anyhow::Result<()> {
+        let mut words_it = cmd
+            .split(' ')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
+        // Retrieve command name or return immediately (empty command)
+        let cmd_name = match words_it.next() {
+            Some(cmd_name) => cmd_name,
+            None => return Ok(()),
+        };
+        let args = words_it
+            .map(|s| s.to_owned().to_string())
+            .collect::<Vec<_>>();
+
+        for (builtin_name, builtin_cmd) in sh.builtins.iter() {
+            if builtin_name == &cmd_name {
+                builtin_cmd.run(sh, ctx, rt, &args)?;
+                return Ok(());
+            }
+        }
+
+        let mut handle = Command::new("python").args(vec!["-c", &cmd]).spawn()?;
 
         handle.wait()?;
 

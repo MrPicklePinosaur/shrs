@@ -43,6 +43,11 @@ impl MuxState {
             Err(anyhow!("invalid lang"))
         }
     }
+
+    /// Get the currently used langauge
+    pub fn get_lang(&self) -> &str {
+        &self.lang
+    }
 }
 
 pub struct MuxPlugin;
@@ -55,6 +60,7 @@ impl MuxPlugin {
 
 impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) {
+        // This might be able to be indexed by typeid?
         let langs: HashMap<String, Box<dyn Lang>> = HashMap::from_iter(vec![
             (
                 "shrs".into(),

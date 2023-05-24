@@ -9,18 +9,9 @@ pub struct MuxLang {
 }
 
 impl MuxLang {
-    pub fn new() -> Self {
+    pub fn new(langs: HashMap<String, Box<dyn Lang>>) -> Self {
         // TODO should be configurable later
-        Self {
-            langs: HashMap::from_iter(vec![
-                (
-                    "shrs".into(),
-                    Box::new(PosixLang::default()) as Box<dyn Lang>,
-                ),
-                ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
-                ("py".into(), Box::new(PythonLang::new()) as Box<dyn Lang>),
-            ]),
-        }
+        Self { langs }
     }
 }
 

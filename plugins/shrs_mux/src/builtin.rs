@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use shrs::prelude::*;
 
 use crate::{lang::NuLang, MuxState};
@@ -6,11 +8,15 @@ use crate::{lang::NuLang, MuxState};
 // TODO add custom hook from when we switch shell mode
 
 #[derive(Default)]
-pub struct MuxBuiltin {}
+pub struct MuxBuiltin {
+    registered_langs: HashSet<String>,
+}
 
-impl MuxBuiltin {
-    pub fn new() -> Self {
-        MuxBuiltin {}
+impl FromIterator<String> for MuxBuiltin {
+    fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
+        MuxBuiltin {
+            registered_langs: HashSet::from_iter(iter),
+        }
     }
 }
 
@@ -28,9 +34,14 @@ impl BuiltinCmd for MuxBuiltin {
         match args.get(0).map(|s| s.as_str()) {
             Some(lang_name) => {
                 ctx.state.get_mut::<MuxState>().map(|state| {
-                    state.lang = lang_name.to_owned().to_string();
+                    // first check that lang is valid
+                    if self.registered_langs.contains(lang_name) {
+                        state.lang = lang_name.to_owned().to_string();
+                        println!("setting lang to {}", lang_name);
+                    } else {
+                        eprintln!("invalid lang {}", lang_name);
+                    }
                 });
-                println!("setting lang to {}", lang_name);
             },
             _ => return dummy_child(),
         };

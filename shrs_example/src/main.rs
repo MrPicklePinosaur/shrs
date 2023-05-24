@@ -138,7 +138,7 @@ a rusty POSIX shell | build {}"#,
         println!("{welcome_str}");
         Ok(())
     };
-    let mut hooks = Hooks::default();
+    let mut hooks = Hooks::new();
     hooks.register(startup_msg);
 
     // =-=-= Shell =-=-=

@@ -1,8 +1,8 @@
 
-default: debug
+default: example
 
-debug:
-    cargo +nightly run shrs_example
+example:
+    cargo run shrs_example
 
 build:
     cargo build --release --target x86_64-unknown-linux-gnu

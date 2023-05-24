@@ -11,7 +11,11 @@
 // - exit hook (tricky, make sure we know what cases to call this)
 
 use std::{
-    any::TypeId, collections::HashMap, io::BufWriter, marker::PhantomData, path::PathBuf,
+    any::{Any, TypeId},
+    collections::HashMap,
+    io::BufWriter,
+    marker::PhantomData,
+    path::PathBuf,
     time::Duration,
 };
 
@@ -21,6 +25,11 @@ use crate::{jobs::ExitStatus, Context, Runtime, Shell};
 
 pub type HookFn<C: Clone> =
     fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
+
+// TODO this is some pretty sus implementation
+pub trait Hook<C>: FnMut(&Shell, &mut Context, &mut Runtime, &C) -> anyhow::Result<()> {}
+
+impl<C, T: FnMut(&Shell, &mut Context, &mut Runtime, &C) -> anyhow::Result<()>> Hook<C> for T {}
 
 /// Context for [StartupHook]
 #[derive(Clone)]
@@ -116,74 +125,62 @@ pub fn job_exit_hook(
     Ok(())
 }
 
-/// Collection of all the hooks that are avaliable
-#[derive(Clone)]
+/// Collection of all the hooks that are available
 pub struct Hooks {
     // TODO how to uniquely identify a hook? using the Ctx type?
-    /// Runs before first prompt is shown
-    pub startup: HookList<StartupCtx>,
-    /// Runs before each command is executed
-    pub before_command: HookList<BeforeCommandCtx>,
-    /// Runs after each command is executed
-    pub after_command: HookList<AfterCommandCtx>,
-    /// Run each time the directory is changed
-    pub change_dir: HookList<ChangeDirCtx>,
-    /// Run each time the directory is changed
-    pub job_exit: HookList<JobExitCtx>,
-}
-
-#[derive(Clone)]
-pub struct HookList<C> {
-    hooks: Vec<HookFn<C>>,
-}
-
-impl<C> HookList<C> {
-    pub fn new() -> Self {
-        HookList { hooks: vec![] }
-    }
-
-    /// Registers a new hook
-    pub fn register(&mut self, hook: HookFn<C>) {
-        self.hooks.push(hook);
-    }
-
-    /// Executes all registered hooks
-    pub fn run(
-        &self,
-        sh: &Shell,
-        sh_ctx: &mut Context,
-        sh_rt: &mut Runtime,
-        ctx: &C,
-    ) -> anyhow::Result<()> {
-        for hook in self.hooks.iter() {
-            (hook)(sh, sh_ctx, sh_rt, &ctx)?;
-        }
-        Ok(())
-    }
-}
-
-impl<C> Default for HookList<C> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<C> FromIterator<HookFn<C>> for HookList<C> {
-    fn from_iter<T: IntoIterator<Item = HookFn<C>>>(iter: T) -> Self {
-        HookList {
-            hooks: Vec::from_iter(iter),
-        }
-    }
+    hooks: anymap::Map,
 }
 
 impl Default for Hooks {
     fn default() -> Self {
-        Hooks {
-            startup: HookList::from_iter([startup_hook as HookFn<StartupCtx>]),
-            before_command: HookList::from_iter([before_command_hook as HookFn<BeforeCommandCtx>]),
-            after_command: HookList::from_iter([after_command_hook as HookFn<AfterCommandCtx>]),
-            change_dir: HookList::from_iter([change_dir_hook as HookFn<ChangeDirCtx>]),
-            job_exit: HookList::from_iter([job_exit_hook as HookFn<JobExitCtx>]),
+        let mut hooks = Hooks::new();
+
+        hooks.register(startup_hook);
+        hooks.register(before_command_hook);
+        hooks.register(after_command_hook);
+        hooks.register(change_dir_hook);
+        hooks.register(job_exit_hook);
+
+        hooks
+    }
+}
+
+impl Hooks {
+    pub fn new() -> Self {
+        Self {
+            hooks: anymap::Map::new(),
         }
+    }
+
+    /// Registers a new hook
+    pub fn register<C: Clone + 'static>(&mut self, hook: HookFn<C>) {
+        match self.hooks.get_mut::<Vec<HookFn<C>>>() {
+            Some(hook_list) => {
+                hook_list.push(hook);
+            },
+            None => {
+                // register any empty vector for the type
+                self.hooks.insert::<Vec<HookFn<C>>>(vec![hook]);
+            },
+        };
+    }
+
+    /// Register from an iterator
+    pub fn register_iter(&mut self) {}
+
+    /// Executes all registered hooks
+    pub fn run<C: Clone + 'static>(
+        &self,
+        sh: &Shell,
+        sh_ctx: &mut Context,
+        sh_rt: &mut Runtime,
+        ctx: C,
+    ) -> anyhow::Result<()> {
+        if let Some(hook_list) = self.hooks.get::<Vec<HookFn<C>>>() {
+            for hook in hook_list.iter() {
+                (hook)(sh, sh_ctx, sh_rt, &ctx)?;
+            }
+        }
+        Ok(())
     }
 }

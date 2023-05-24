@@ -48,7 +48,7 @@ impl BuiltinCmd for CdBuiltin {
             new_dir: path.clone(),
         };
         // need to be able to call hook from here
-        sh.hooks.change_dir.run(sh, ctx, rt, &hook_ctx);
+        sh.hooks.run::<ChangeDirCtx>(sh, ctx, rt, hook_ctx);
 
         rt.working_dir = path.clone();
         rt.env.set("PWD", path.to_str().unwrap());

@@ -1,21 +1,46 @@
 mod builtin;
 mod lang;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
+use anyhow::anyhow;
 use builtin::MuxBuiltin;
 use lang::{MuxLang, NuLang, PythonLang};
 use shrs::prelude::*;
 
-struct MuxState {
+pub struct MuxState {
     // TODO I don't very like this 'string'-typing
-    pub lang: String,
+    lang: String,
+    registered_langs: HashSet<String>,
 }
 
-impl Default for MuxState {
-    fn default() -> Self {
-        MuxState {
-            lang: String::from("shrs"),
+impl MuxState {
+    /// Construct a new container for keeping track of the currently used shell language
+    ///
+    /// At least one language must be supplied. The first langauge that is supplied is used as the
+    /// starting language
+    pub fn new(langs: Vec<String>) -> anyhow::Result<MuxState> {
+        let first_lang = match langs.get(0) {
+            Some(first_lang) => first_lang,
+            None => return Err(anyhow!("require at least one langauge")),
+        };
+
+        let res = MuxState {
+            lang: first_lang.to_owned(),
+            registered_langs: HashSet::from_iter(langs.into_iter()),
+        };
+        Ok(res)
+    }
+
+    /// Set the current language being used by the MuxLang
+    ///
+    /// If an invalid language is used an error is returned
+    pub fn set_lang(&mut self, lang: &str) -> anyhow::Result<()> {
+        if self.registered_langs.contains(lang) {
+            self.lang = lang.to_owned().to_string();
+            Ok(())
+        } else {
+            Err(anyhow!("invalid lang"))
         }
     }
 }
@@ -39,11 +64,12 @@ impl Plugin for MuxPlugin {
             ("py".into(), Box::new(PythonLang::new()) as Box<dyn Lang>),
         ]);
 
-        shell.builtins.insert(
-            "mux",
-            MuxBuiltin::from_iter(langs.iter().map(|(lang_name, _)| lang_name.to_owned())),
-        );
+        shell.builtins.insert("mux", MuxBuiltin::new());
+        let lang_names = langs
+            .iter()
+            .map(|(lang_name, _)| lang_name.to_owned())
+            .collect::<Vec<_>>();
+        shell.state.insert(MuxState::new(lang_names).unwrap());
         shell.lang = Box::new(MuxLang::new(langs));
-        shell.state.insert(MuxState::default())
     }
 }

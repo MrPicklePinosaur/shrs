@@ -66,14 +66,14 @@ impl MuxPlugin {
 impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) {
         // This might be able to be indexed by typeid?
-        let langs: HashMap<String, Box<dyn Lang>> = HashMap::from_iter(vec![
+        let langs: Vec<(String, Box<dyn Lang>)> = vec![
             (
                 "shrs".into(),
                 Box::new(PosixLang::default()) as Box<dyn Lang>,
             ),
             ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
             ("py".into(), Box::new(PythonLang::new()) as Box<dyn Lang>),
-        ]);
+        ];
 
         shell.builtins.insert("mux", MuxBuiltin::new());
         let lang_names = langs
@@ -81,6 +81,7 @@ impl Plugin for MuxPlugin {
             .map(|(lang_name, _)| lang_name.to_owned())
             .collect::<Vec<_>>();
         shell.state.insert(MuxState::new(lang_names).unwrap());
-        shell.lang = Box::new(MuxLang::new(langs));
+        let langs_map = HashMap::from_iter(langs);
+        shell.lang = Box::new(MuxLang::new(langs_map));
     }
 }

@@ -32,3 +32,8 @@ rexpect = "0.5"
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 
+criterion = { verison = "0.5" }
+
+[[bench]]
+name = "bench"
+harness = false

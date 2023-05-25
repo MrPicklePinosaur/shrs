@@ -80,7 +80,7 @@ fn main() {
     // =-=-= History =-=-=
     // Use history that writes to file on disk
     let history_file = config_dir.as_path().join("history");
-    let history = FileBackedHistory::new(history_file).unwrap();
+    let history = FileBackedHistory::new(history_file).expect("Could not open history file");
 
     let highlighter = SyntaxHighlighter::new(SyntaxTheme::default());
 
@@ -104,7 +104,7 @@ fn main() {
         .with_keybinding(keybinding)
         .with_prompt(prompt)
         .build()
-        .unwrap();
+        .expect("Could not construct readline");
 
     // =-=-= Aliases =-=-=
     // Set aliases
@@ -153,7 +153,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(RunContextPlugin)
         .with_plugin(MuxPlugin)
         .build()
-        .unwrap();
+        .expect("Could not construct shell");
 
     myshell.run();
 }

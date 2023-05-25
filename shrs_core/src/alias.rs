@@ -43,6 +43,16 @@ impl Alias {
     }
 }
 
+impl FromIterator<(String, String)> for Alias {
+    fn from_iter<T: IntoIterator<Item = (String, String)>>(iter: T) -> Self {
+        Alias {
+            aliases: HashMap::from_iter(
+                iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())),
+            ),
+        }
+    }
+}
+
 impl FromIterator<(&'static str, &'static str)> for Alias {
     fn from_iter<T: IntoIterator<Item = (&'static str, &'static str)>>(iter: T) -> Self {
         Alias {

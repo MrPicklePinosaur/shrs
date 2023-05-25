@@ -28,3 +28,7 @@ shrs_lang = { path = "../shrs_lang" }
 
 [dev-dependencies]
 rexpect = "0.5"
+
+ron = "0.8"
+serde = { version = "1", features = ["derive"] }
+

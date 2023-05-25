@@ -1,0 +1,10 @@
+Config (
+    envs: [
+        ("VAR", "foo"),
+    ],
+    aliases: [
+        ("l", "ls"),
+        ("v", "vim"),
+        ("c", "cd"),
+    ],
+)

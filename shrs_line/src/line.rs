@@ -20,7 +20,7 @@ use crate::{
     painter::{Painter, StyledBuf},
     prompt::{DefaultPrompt, Prompt},
     vi::ViCursorBuffer,
-    DefaultKeybinding, Keybinding,
+    DefaultKeybinding, Keybinding, LineModeSwitchCtx,
 };
 
 /// Operating mode of readline
@@ -579,6 +579,16 @@ impl Line {
             .get_mut::<CursorStyle>()
             .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBlock);
         line_ctx.mode = LineMode::Normal;
+
+        let hook_ctx = LineModeSwitchCtx {
+            line_mode: LineMode::Normal,
+        };
+        line_ctx.sh.hooks.run::<LineModeSwitchCtx>(
+            line_ctx.sh,
+            line_ctx.ctx,
+            line_ctx.rt,
+            hook_ctx,
+        )?;
         Ok(())
     }
 
@@ -589,6 +599,16 @@ impl Line {
             .get_mut::<CursorStyle>()
             .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBar);
         line_ctx.mode = LineMode::Insert;
+
+        let hook_ctx = LineModeSwitchCtx {
+            line_mode: LineMode::Insert,
+        };
+        line_ctx.sh.hooks.run::<LineModeSwitchCtx>(
+            line_ctx.sh,
+            line_ctx.ctx,
+            line_ctx.rt,
+            hook_ctx,
+        )?;
         Ok(())
     }
 }

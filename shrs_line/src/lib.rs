@@ -33,5 +33,8 @@ pub use keybinding::{parse_keybinding, DefaultKeybinding, Keybinding};
 mod buffer_history;
 pub use buffer_history::{BufferHistory, DefaultBufferHistory};
 
+mod hooks;
+pub use hooks::*;
+
 #[cfg(test)]
 mod tests {}

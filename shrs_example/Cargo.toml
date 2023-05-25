@@ -26,3 +26,6 @@ chrono = "0.4"
 [[bin]]
 name = "shrs_example"
 path = "src/main.rs"
+
+[profile.release]
+debug = true

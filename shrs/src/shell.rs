@@ -132,7 +132,7 @@ fn run_shell(
     readline: &mut Line,
 ) -> anyhow::Result<()> {
     // init stuff
-    sig_handler()?;
+    // sig_handler()?;
     rt.env.load();
 
     let res = sh.hooks.run::<StartupCtx>(

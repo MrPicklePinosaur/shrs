@@ -19,6 +19,9 @@ fmt:
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo
 
+flamegraph:
+    cargo flamegraph --profile=release
+
 doc:
     cargo doc --workspace --all-features
 

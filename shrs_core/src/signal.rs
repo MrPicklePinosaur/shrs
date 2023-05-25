@@ -4,6 +4,7 @@ use crossbeam_channel::{bounded, Receiver};
 use signal_hook::{consts::*, iterator::Signals};
 
 pub fn sig_handler() -> anyhow::Result<Receiver<()>> {
+    // TODO this code is very very very inefficient. Should not be checking this frequently
     thread::spawn(move || {
         let mut signals = Signals::new(TERM_SIGNALS).unwrap();
         loop {

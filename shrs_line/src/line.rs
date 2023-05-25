@@ -346,7 +346,10 @@ impl Line {
     fn needs_multiline(&self, ctx: &mut LineCtx) -> bool {
         //TODO check if open quotes or brackets
 
-        if let Some(last_char) = ctx.cb.char_at(Location::Abs(ctx.cb.len() - 1)) {
+        if let Some(last_char) = ctx
+            .cb
+            .char_at(Location::Abs(ctx.cb.len().saturating_sub(1)))
+        {
             if last_char == '\\' {
                 return true;
             }
@@ -428,11 +431,11 @@ impl Line {
                 ..
             }) => {
                 self.buffer_history.clear();
-                self.painter.newline()?;
+                self.painter.newline();
 
                 if self.needs_multiline(ctx) {
                     ctx.lines += ctx.cb.as_str().into_owned().as_str();
-                    ctx.lines += "\r\n";
+                    ctx.lines += "\n";
                     ctx.cb.clear();
 
                     return Ok(false);

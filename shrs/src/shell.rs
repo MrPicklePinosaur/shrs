@@ -155,7 +155,7 @@ fn run_shell(
         // TODO IFS
         let mut words = line
             .split(' ')
-            .map(|s| s.trim_start_matches("\\\r\n").trim().to_string())
+            .map(|s| s.trim_start_matches("\\\n").trim().to_string())
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>();
         if let Some(first) = words.get_mut(0) {

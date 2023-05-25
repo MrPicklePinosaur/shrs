@@ -9,7 +9,7 @@ use shrs_lang::{ast, Lexer, Parser, Token, RESERVED_WORDS};
 use crate::painter::StyledBuf;
 
 pub trait Highlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf;
+    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf;
 }
 
 /// Simple highlighter that colors the entire line one color
@@ -19,7 +19,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf {
+    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf {
         let mut styled_buf = StyledBuf::new();
 
         styled_buf.push(StyledContent::new(
@@ -122,8 +122,8 @@ impl SyntaxHighlighter {
 }
 
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf {
-        let mut last_index = 0;
+    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf {
+        let mut last_index = begin;
         let mut is_cmd = true;
         let mut style = self.theme.auto;
 
@@ -164,13 +164,14 @@ impl Highlighter for SyntaxHighlighter {
                         break;
                     }
                 }
-
-                // pushes spaces before token to end of token
-                styled_buf.push(StyledContent::new(
-                    style,
-                    buf[last_index..token.2].to_string(),
-                ));
-                last_index = token.2
+                if (..token.2).contains(&begin) {
+                    styled_buf.push(StyledContent::new(
+                        style,
+                        buf[last_index..token.2].to_string(),
+                    ));
+                    // pushes spaces before token to end of token
+                    last_index = token.2
+                }
             }
         }
         // pushes remaining content after last token

@@ -131,6 +131,7 @@ pub struct LineCtx<'a> {
     // line contents that were present before entering history mode
     saved_line: String,
     mode: LineMode,
+    lines: String,
 
     pub sh: &'a Shell,
     pub ctx: &'a mut Context,
@@ -145,6 +146,7 @@ impl<'a> LineCtx<'a> {
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
             mode: LineMode::Insert,
+            lines: "".to_string(),
             sh,
             ctx,
             rt,
@@ -258,10 +260,10 @@ impl Line {
                     }
                 }
 
-                let res: String = line_ctx.cb.as_str().into();
+                let res = self.get_full_command(line_ctx);
 
                 // syntax highlight
-                let mut styled_buf = self.highlighter.highlight(&res);
+                let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
 
                 // add currently selected completion to buf
                 if self.menu.is_active() {
@@ -287,7 +289,7 @@ impl Line {
             }
         }
 
-        let res: String = line_ctx.cb.as_str().into();
+        let res = self.get_full_command(line_ctx);
         if !res.is_empty() {
             self.history.add(res.clone());
         }
@@ -340,6 +342,23 @@ impl Line {
         };
         Ok(())
     }
+    fn needs_newline(&self, ctx: &mut LineCtx) -> bool {
+        //TODO check if open quotes or brackets
+        if let Some(last_token) = ctx.cb.as_str().split_inclusive(' ').last() {
+            if last_token == "\\" {
+                return true;
+            }
+        };
+
+        false
+    }
+    fn get_full_command(&self, ctx: &mut LineCtx) -> String {
+        let mut res: String = ctx.lines.clone();
+        let cur_line: String = ctx.cb.as_str().into();
+        res += cur_line.as_str();
+
+        res
+    }
 
     fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
@@ -350,6 +369,15 @@ impl Line {
             }) => {
                 self.buffer_history.clear();
                 self.painter.newline()?;
+
+                if self.needs_newline(ctx) {
+                    ctx.lines += ctx.cb.as_str().into_owned().as_str();
+                    ctx.lines += "\r\n";
+                    ctx.cb.clear();
+
+                    return Ok(false);
+                }
+
                 return Ok(true);
             },
             Event::Key(KeyEvent {

@@ -523,10 +523,10 @@ impl Line {
         // TODO make use of ReplaceMethod
         ctx.cb
             .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
-        ctx.cb.delete(
-            Location::Cursor(),
-            Location::Rel(ctx.current_word.len() as isize),
-        )?;
+
+        let cur_word_len = unicode_width::UnicodeWidthStr::width(ctx.current_word.as_str());
+        ctx.cb
+            .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
 
         ctx.current_word.clear();
 

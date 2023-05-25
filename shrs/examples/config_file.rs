@@ -16,12 +16,19 @@ struct Config {
 
 fn main() {
     // TODO make this relative to this file
-    let config_file = fs::read_to_string(PathBuf::from("./config.ron")).unwrap();
+    let config_file =
+        fs::read_to_string(PathBuf::from("config.ron")).expect("Could not open config file");
     let myconfig: Config = ron::from_str(&config_file).unwrap();
 
     let alias = Alias::from_iter(myconfig.aliases);
+    let mut env = Env::new();
+    env.load();
+    for (ref k, ref v) in myconfig.envs {
+        env.set(k, v);
+    }
 
     let myshell = ShellConfigBuilder::default()
+        .with_env(env)
         .with_alias(alias)
         .build()
         .unwrap();

@@ -1,5 +1,7 @@
 Config (
-    envs: [],
+    envs: [
+        ("VAR", "foo"),
+    ],
     aliases: [
         ("l", "ls"),
         ("v", "vim"),

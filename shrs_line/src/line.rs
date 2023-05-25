@@ -131,7 +131,7 @@ pub struct LineCtx<'a> {
     // line contents that were present before entering history mode
     saved_line: String,
     mode: LineMode,
-    lines: String,
+    pub lines: String,
 
     pub sh: &'a Shell,
     pub ctx: &'a mut Context,

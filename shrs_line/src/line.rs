@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, io::Write, time::Duration};
+use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -7,6 +7,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_core::{Context, Runtime, Shell};
+use shrs_lang::{Lexer, Token};
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
@@ -342,15 +343,74 @@ impl Line {
         };
         Ok(())
     }
-    fn needs_newline(&self, ctx: &mut LineCtx) -> bool {
+    fn needs_multiline(&self, ctx: &mut LineCtx) -> bool {
         //TODO check if open quotes or brackets
-        if let Some(last_token) = ctx.cb.as_str().split_inclusive(' ').last() {
-            if last_token == "\\" {
+
+        if let Some(last_char) = ctx.cb.char_at(Location::Abs(ctx.cb.len() - 1)) {
+            if last_char == '\\' {
                 return true;
             }
         };
 
-        false
+        let mut brackets: Vec<Token> = vec![];
+        let command = self.get_full_command(ctx);
+        let lexer = Lexer::new(command.as_str());
+
+        for t in lexer {
+            if let Ok(token) = t {
+                match token.1 {
+                    Token::LBRACE => brackets.push(token.1),
+                    Token::LPAREN => brackets.push(token.1),
+                    Token::RPAREN => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LPAREN {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::RBRACE => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LBRACE {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::WORD(w) => {
+                        if let Some(c) = w.chars().next() {
+                            if c == '\'' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\'';
+                                } else {
+                                    return true;
+                                }
+                            }
+                            if c == '\"' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\"';
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+
+                    _ => (),
+                }
+            }
+        }
+
+        !brackets.is_empty()
     }
     fn get_full_command(&self, ctx: &mut LineCtx) -> String {
         let mut res: String = ctx.lines.clone();
@@ -370,7 +430,7 @@ impl Line {
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
-                if self.needs_newline(ctx) {
+                if self.needs_multiline(ctx) {
                     ctx.lines += ctx.cb.as_str().into_owned().as_str();
                     ctx.lines += "\r\n";
                     ctx.cb.clear();

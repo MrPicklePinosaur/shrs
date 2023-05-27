@@ -7,6 +7,7 @@ members = [
     "shrs_example",
     "shrs_vi",
     "shrs_utils",
+    "shrs_os",
     "plugins/shrs_output_capture",
     "plugins/shrs_cd_tools",
     "plugins/shrs_command_timer",

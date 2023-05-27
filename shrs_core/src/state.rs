@@ -1,42 +1,33 @@
 //! Globally accessable state store
 
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-};
-
 pub struct State {
-    store: HashMap<TypeId, Box<dyn Any>>,
+    store: anymap::Map,
 }
 
 impl State {
     pub fn new() -> State {
         State {
-            store: HashMap::new(),
+            store: anymap::Map::new()
         }
     }
 
     pub fn insert<T: 'static>(&mut self, data: T) {
-        self.store.insert(TypeId::of::<T>(), Box::new(data));
+        self.store.insert::<T>(data);
     }
 
     pub fn get<T: 'static>(&self) -> Option<&T> {
-        self.store
-            .get(&TypeId::of::<T>())
-            .and_then(|data_any| data_any.downcast_ref::<T>())
+        self.store.get::<T>()
     }
 
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
-        self.store
-            .get_mut(&TypeId::of::<T>())
-            .and_then(|data_any| data_any.downcast_mut::<T>())
+        self.store.get_mut::<T>()
     }
 
     /// Get data or return default if not exist
     ///
     /// Also inserts default into state store to ensure future gets don't fail
     pub fn get_or_default<T: 'static + Default>(&mut self) -> &T {
-        if !self.store.contains_key(&TypeId::of::<T>()) {
+        if !self.store.contains::<T>() {
             self.insert(T::default());
         }
 
@@ -48,7 +39,7 @@ impl State {
     ///
     /// Also inserts default into state store to ensure future gets don't fail
     pub fn get_mut_or_default<T: 'static + Default>(&mut self) -> &mut T {
-        if !self.store.contains_key(&TypeId::of::<T>()) {
+        if !self.store.contains::<T>() {
             self.insert(T::default());
         }
 

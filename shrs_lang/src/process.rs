@@ -32,8 +32,13 @@ pub struct Process {
     pub argv: Vec<String>,
 }
 
+/// Unique identifier to keep track of job
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct JobId(pub usize);
+
 /// A job corresponds to a pipeline of processes
 pub struct Job {
+    pub jobid: JobId,
     /// Process group id
     pub pgid: Pid,
     /// All of the processes in this job
@@ -175,12 +180,14 @@ impl Job {
 
 /// Context related to state of processes and jobs
 pub struct Os {
+    jobs: HashMap<JobId, Job>,
     proc_state: HashMap<Pid, ProcessState>,
 }
 
 impl Os {
     pub fn new() -> Self {
         Self {
+            jobs: HashMap::new(),
             proc_state: HashMap::new(),
         }
     }
@@ -219,9 +226,38 @@ impl Os {
         Ok(())
     }
 
+    // JOB RELATED
+    pub fn create_job(&mut self, pgid: Pid, proceses: Vec<Pid>) -> Result<JobId, std::io::Error> {
+        let jobid = self.find_free_job_id();
+        let new_job = Job {
+            jobid: jobid.clone(),
+            pgid,
+            proceses,
+        };
+        self.jobs.insert(jobid.clone(), new_job);
+        Ok(jobid)
+    }
+
+    fn find_free_job_id(&self) -> JobId {
+        let mut id = 1usize;
+        while self.jobs.contains_key(&JobId(id)) {
+            id += 1;
+        }
+        JobId(id)
+    }
+
     /// Wait for entire job to finish
-    pub fn wait_for_job(&mut self) -> Result<(), std::io::Error> {
-        todo!()
+    pub fn wait_for_job(&mut self, jobid: JobId) -> Result<(), std::io::Error> {
+        loop {
+            // TODO throw proper error here
+            let job = self.jobs.get(&jobid).expect("non existant jobid");
+            if job.exited(self) {
+                // remove from tracked job list
+                self.remove_job(&jobid);
+                return Ok(());
+            }
+            self.wait_for_any_process()?;
+        }
     }
 
     /// Block until any process terminates
@@ -243,5 +279,9 @@ impl Os {
     }
     pub fn get_process_state(&self, pid: &Pid) -> Option<&ProcessState> {
         self.proc_state.get(pid)
+    }
+
+    fn remove_job(&mut self, jobid: &JobId) {
+        self.jobs.remove(jobid);
     }
 }

@@ -73,10 +73,6 @@ pub fn eval_command(cmd: &ast::Command, ctx: &process::Context) -> anyhow::Resul
                 Some(ExitStatus::Exited(status)) => ExitStatus::Exited(status),
                 Some(ExitStatus::Running(pid)) => {
                     // wait for last command in pipeline to finish
-                    let job = Job {
-                        pgid: pid,
-                        proceses: children,
-                    };
 
                     // TODO wait for job to finish executing and report exit status
                     todo!()

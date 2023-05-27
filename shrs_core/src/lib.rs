@@ -22,7 +22,7 @@ pub mod hooks;
 pub mod prompt;
 
 mod shell;
-pub use shell::{command_output, dummy_child, Context, Runtime, Shell};
+pub use shell::{dummy_child, Context, Runtime, Shell};
 
 mod signal;
 pub use signal::Signals;

@@ -11,7 +11,7 @@ use std::{
 use lazy_static::lazy_static;
 use shrs_core::{
     builtin::Builtins,
-    command_output, dummy_child,
+    dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
 };

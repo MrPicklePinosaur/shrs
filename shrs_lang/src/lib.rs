@@ -16,4 +16,4 @@ pub use lexer::{Lexer, Token, RESERVED_WORDS};
 pub mod ast;
 
 mod eval;
-pub use eval::{PosixError, PosixLang};
+pub use eval::{command_output, run_external_command, PosixError, PosixLang};

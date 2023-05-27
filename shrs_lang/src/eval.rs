@@ -1,13 +1,14 @@
 use std::{
     fs::File,
+    io::{BufRead, BufReader},
     path::Path,
     process::{Child, Stdio},
 };
 
 use lazy_static::lazy_static;
 use shrs_core::{
-    command_output, dummy_child,
-    hooks::{BeforeCommandCtx, JobExitCtx},
+    dummy_child,
+    hooks::{AfterCommandCtx, BeforeCommandCtx, JobExitCtx},
     Context, ExitStatus, Lang, Runtime, Shell,
 };
 use thiserror::Error;
@@ -474,6 +475,44 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     let subst = R_2.replace_all(&subst, home).to_string();
 
     subst
+}
+
+/// Small wrapper that outputs command output if exists
+pub fn command_output(
+    sh: &Shell,
+    ctx: &mut Context,
+    rt: &mut Runtime,
+    cmd_handle: &mut Child,
+) -> anyhow::Result<ExitStatus> {
+    // TODO also handle stderr
+    let output = if let Some(out) = cmd_handle.stdout.take() {
+        let reader = BufReader::new(out);
+        reader
+            .lines()
+            .map(|line| {
+                let line = line.unwrap();
+                println!("{}", line);
+                line
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        String::new()
+    };
+
+    // Fetch output status
+    let exit_status = cmd_handle.wait().unwrap().code().unwrap();
+    rt.exit_status = exit_status;
+
+    // Call hook
+    let hook_ctx = AfterCommandCtx {
+        exit_code: exit_status,
+        cmd_time: 0.0,
+        cmd_output: output,
+    };
+    sh.hooks.run::<AfterCommandCtx>(sh, ctx, rt, hook_ctx)?;
+
+    Ok(ExitStatus(exit_status))
 }
 
 /*

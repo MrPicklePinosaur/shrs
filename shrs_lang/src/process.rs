@@ -1,6 +1,7 @@
 //! Process management
 
 use std::{
+    collections::HashMap,
     ffi::{CStr, CString},
     io::{stdin, Stdin},
     os::fd::{AsRawFd, RawFd},
@@ -8,13 +9,14 @@ use std::{
 };
 
 use nix::{
-    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO},
+    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO, WNOHANG, WUNTRACED},
     sys::{
         signal::{
             kill, signal, sigprocmask, SigHandler, SigmaskHow,
             Signal::{self, SIGTTIN},
         },
         signalfd::SigSet,
+        wait::{waitpid, WaitPidFlag, WaitStatus},
     },
     unistd::{
         close, dup2, execvp, fork, getpgrp, getpid, isatty, setpgid, tcgetpgrp, tcsetpgrp,
@@ -49,6 +51,11 @@ pub struct Context {
     pub is_interactive: bool,
 }
 
+pub enum ProcessState {
+    Running,
+    Exited(i32),
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum ExitStatus {
     Exited(i32),
@@ -79,6 +86,7 @@ pub fn run_process(
     }
 }
 
+// Code to run in child after new process is forked
 fn setup_process(argv: &Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
     // If interactive need to give the current process control of the tty
     let shell_term = STDIN_FILENO;
@@ -132,43 +140,108 @@ fn setup_process(argv: &Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), st
 }
 
 impl Job {
-    pub fn leader(&self) -> &Process {
-        // Job should always have at least one process in the pipeline
-        // &self.pipeline.get(0).unwrap()
-        todo!()
+    /// Place job onto foreground
+    pub fn run_in_foreground(&self) -> Result<(), std::io::Error> {
+        let shell_term = STDIN_FILENO;
+
+        // Put the job into foreground
+        tcsetpgrp(shell_term, self.pgid)?;
+
+        // TODO send job continue signal
+
+        // Wait for the job
+
+        // Return foreground to the shell
+
+        Ok(())
+    }
+
+    /// Place job onto background
+    pub fn run_in_background(&self) -> Result<(), std::io::Error> {
+        // TODO send job continue signal
+        Ok(())
+    }
+
+    /// Check job has completed
+    ///
+    /// Jobs are completed when all the processes in the job has completed
+    pub fn exited(&self, os: &Os) -> bool {
+        self.proceses.iter().all(|pid| {
+            let state = os.get_process_state(pid).expect("missing process");
+            matches!(state, ProcessState::Exited(_))
+        })
     }
 }
 
-/// Initialize job control for the shell
-pub fn init_shell() -> Result<(), std::io::Error> {
-    // Check if the current shell is allowed to run it's own job control
-    let shell_term = STDIN_FILENO;
+/// Context related to state of processes and jobs
+pub struct Os {
+    proc_state: HashMap<Pid, ProcessState>,
+}
 
-    if !isatty(shell_term)? {
-        return Ok(());
+impl Os {
+    pub fn new() -> Self {
+        Self {
+            proc_state: HashMap::new(),
+        }
     }
 
-    // Wait until parent puts us into foreground
-    while tcgetpgrp(shell_term)? != getpgrp() {
-        // SIGTTIN tells process to suspend since it's not in foreground
-        kill(getpgrp(), SIGTTIN)?;
+    /// Initialize job control for the shell
+    pub fn init_shell(&self) -> Result<(), std::io::Error> {
+        // Check if the current shell is allowed to run it's own job control
+        let shell_term = STDIN_FILENO;
+
+        if !isatty(shell_term)? {
+            return Ok(());
+        }
+
+        // Wait until parent puts us into foreground
+        while tcgetpgrp(shell_term)? != getpgrp() {
+            // SIGTTIN tells process to suspend since it's not in foreground
+            kill(getpgrp(), SIGTTIN)?;
+        }
+
+        // Ignore interactive and job control signals
+        // TODO double check correctness of unsafe code
+        unsafe {
+            signal(Signal::SIGINT, SigHandler::SigIgn);
+            signal(Signal::SIGQUIT, SigHandler::SigIgn);
+            signal(Signal::SIGTSTP, SigHandler::SigIgn);
+            signal(Signal::SIGTTIN, SigHandler::SigIgn);
+            signal(Signal::SIGTTOU, SigHandler::SigIgn);
+            signal(Signal::SIGCHLD, SigHandler::SigIgn);
+        };
+
+        // Put self in own process group
+        let shell_pid = getpid();
+        setpgid(shell_pid, shell_pid)?;
+        tcsetpgrp(shell_term, shell_pid)?;
+
+        Ok(())
     }
 
-    // Ignore interactive and job control signals
-    // TODO double check correctness of unsafe code
-    unsafe {
-        signal(Signal::SIGINT, SigHandler::SigIgn);
-        signal(Signal::SIGQUIT, SigHandler::SigIgn);
-        signal(Signal::SIGTSTP, SigHandler::SigIgn);
-        signal(Signal::SIGTTIN, SigHandler::SigIgn);
-        signal(Signal::SIGTTOU, SigHandler::SigIgn);
-        signal(Signal::SIGCHLD, SigHandler::SigIgn);
-    };
+    /// Wait for entire job to finish
+    pub fn wait_for_job(&mut self) -> Result<(), std::io::Error> {
+        todo!()
+    }
 
-    // Put self in own process group
-    let shell_pid = getpid();
-    setpgid(shell_pid, shell_pid)?;
-    tcsetpgrp(shell_term, shell_pid)?;
+    /// Block until any process terminates
+    fn wait_for_any_process(&mut self) -> Result<Option<Pid>, std::io::Error> {
+        // PID of None means wait for any child process
+        let wait_status = waitpid(None, WaitPidFlag::from_bits(WUNTRACED | WNOHANG))?;
+        match wait_status {
+            WaitStatus::Exited(pid, status) => {
+                self.set_process_state(pid, ProcessState::Exited(status));
+                Ok(Some(pid))
+            },
+            WaitStatus::StillAlive => Ok(None),
+            _ => todo!(),
+        }
+    }
 
-    Ok(())
+    fn set_process_state(&mut self, pid: Pid, state: ProcessState) {
+        self.proc_state.insert(pid, state);
+    }
+    pub fn get_process_state(&self, pid: &Pid) -> Option<&ProcessState> {
+        self.proc_state.get(pid)
+    }
 }

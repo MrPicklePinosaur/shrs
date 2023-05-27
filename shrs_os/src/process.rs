@@ -16,13 +16,6 @@ use nix::{
     unistd::{close, dup2, execvp, fork, getpid, isatty, setpgid, tcsetpgrp, ForkResult, Pid},
 };
 
-pub enum Pgid {
-    /// Pgid of current corresponds to using the same Pgid as the current group is using
-    Current,
-    /// A specific Pgid
-    Pgid(Pid),
-}
-
 /// A single OS process
 pub struct Process {
     /// Process id
@@ -50,7 +43,36 @@ pub struct Context {
     pub is_interactive: bool,
 }
 
-pub fn run_job(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
+pub enum ExitStatus {
+    Exited(i32),
+    Running(Pid),
+}
+
+pub enum Pgid {
+    /// Pgid of current corresponds to using the same Pgid as the current group is using
+    Current,
+    /// A specific Pgid
+    Pgid(Pid),
+}
+
+// Run a command
+pub fn run_process(
+    argv: Vec<String>,
+    pgid: Pgid,
+    ctx: &Context,
+) -> Result<ExitStatus, std::io::Error> {
+    // fork the child
+    match unsafe { fork() } {
+        Ok(ForkResult::Parent { child }) => Ok(ExitStatus::Running(child)),
+        Ok(ForkResult::Child) => {
+            setup_process(argv, pgid, ctx)?;
+            unreachable!()
+        },
+        Err(_) => todo!(),
+    }
+}
+
+fn setup_process(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
     // If interactive need to give the current process control of the tty
     let shell_term = STDIN_FILENO;
     if ctx.is_interactive {
@@ -103,29 +125,6 @@ pub fn run_job(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::
 }
 
 impl Job {
-    /*
-    pub fn run(&self, ctx: &Context) -> Result<(), std::io::Error> {
-        for process in self.pipeline.iter() {
-            // set up pipes
-
-            // fork the child
-            match unsafe { fork() } {
-                Ok(ForkResult::Parent { child }) => {},
-                Ok(ForkResult::Child) => {
-                    process.run(
-                        Pgid::Pgid(self.pgid),
-                        ctx
-                    )?;
-                },
-                Err(_) => todo!(),
-            }
-
-            // clean up each pipe
-        }
-        Ok(())
-    }
-    */
-
     pub fn leader(&self) -> &Process {
         // Job should always have at least one process in the pipeline
         // &self.pipeline.get(0).unwrap()

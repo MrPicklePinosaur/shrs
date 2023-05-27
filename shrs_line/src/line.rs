@@ -347,7 +347,12 @@ impl Line {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) => {
+            }) | 
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('j'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            })=> {
                 self.buffer_history.clear();
                 self.painter.newline()?;
                 return Ok(true);
@@ -410,11 +415,27 @@ impl Line {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
                 ..
+            }) | 
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('h'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
             }) => {
                 if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
                     ctx.cb.delete(Location::Before(), Location::Cursor())?;
                 }
             },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('w'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                    let start = ctx.cb.motion_to_loc(Motion::BackWord)?;
+                    ctx.cb.delete(start, Location::Cursor())?;
+                }
+            },
+
             Event::Key(KeyEvent {
                 code: KeyCode::Char('d'),
                 modifiers: KeyModifiers::CONTROL,

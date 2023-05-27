@@ -35,78 +35,76 @@ pub struct Process {
 pub struct Job {
     /// Process group id
     pub pgid: Pid,
-    /// Pipeline of processes
-    pipeline: Vec<Process>,
+    /// All of the processes in this job
+    pub proceses: Vec<Process>,
+}
+
+/// Execution context for a process
+pub struct Context {
     pub stdin: RawFd,
     pub stdout: RawFd,
     pub stderr: RawFd,
+    /// Is the current job running in the foreground
     pub is_foreground: bool,
+    /// Is the shell in interactive mode
+    pub is_interactive: bool,
 }
 
-impl Process {
-    pub fn run(
-        &self,
-        pgid: Pgid,
-        is_foreground: bool,
-        stdin: RawFd,
-        stdout: RawFd,
-        stderr: RawFd,
-    ) -> Result<(), std::io::Error> {
-        // If interactive need to give the current process control of the tty
-        let shell_term = STDIN_FILENO;
-        if isatty(shell_term)? {
-            let pid = getpid();
-            let new_pgid = match pgid {
-                Pgid::Current => pid,
-                Pgid::Pgid(pgid) => pgid,
-            };
-            setpgid(pid, new_pgid)?;
+pub fn run_job(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
+    // If interactive need to give the current process control of the tty
+    let shell_term = STDIN_FILENO;
+    if ctx.is_interactive {
+        let pid = getpid();
+        let new_pgid = match pgid {
+            Pgid::Current => pid,
+            Pgid::Pgid(pgid) => pgid,
+        };
+        setpgid(pid, new_pgid)?;
 
-            // If process is being launched by foreground job, we also need the process to be in
-            // the foreground
-            if is_foreground {
-                tcsetpgrp(shell_term, new_pgid)?;
-            }
-
-            // Reset signals
-            unsafe {
-                signal(Signal::SIGINT, SigHandler::SigIgn);
-                signal(Signal::SIGQUIT, SigHandler::SigIgn);
-                signal(Signal::SIGTSTP, SigHandler::SigIgn);
-                signal(Signal::SIGTTIN, SigHandler::SigIgn);
-                signal(Signal::SIGTTOU, SigHandler::SigIgn);
-                signal(Signal::SIGCHLD, SigHandler::SigIgn);
-            };
+        // If process is being launched by foreground job, we also need the process to be in
+        // the foreground
+        if ctx.is_foreground {
+            tcsetpgrp(shell_term, new_pgid)?;
         }
 
-        // Set stdio of new process
-        if stdin != STDIN_FILENO {
-            dup2(stdin, STDIN_FILENO)?;
-            close(stdin)?;
-        }
-        if stdout != STDOUT_FILENO {
-            dup2(stdout, STDOUT_FILENO)?;
-            close(stdout)?;
-        }
-        if stderr != STDERR_FILENO {
-            dup2(stderr, STDERR_FILENO)?;
-            close(stderr)?;
-        }
-
-        // We can fork now
-        let filename = self.argv.get(0).unwrap();
-        let args = self
-            .argv
-            .iter()
-            .map(|s| CString::new(s.clone()).unwrap())
-            .collect::<Vec<_>>();
-        execvp(&CString::new(filename.clone()).unwrap(), &args)?;
-        exit(1);
+        // Reset signals
+        unsafe {
+            signal(Signal::SIGINT, SigHandler::SigIgn);
+            signal(Signal::SIGQUIT, SigHandler::SigIgn);
+            signal(Signal::SIGTSTP, SigHandler::SigIgn);
+            signal(Signal::SIGTTIN, SigHandler::SigIgn);
+            signal(Signal::SIGTTOU, SigHandler::SigIgn);
+            signal(Signal::SIGCHLD, SigHandler::SigIgn);
+        };
     }
+
+    // Set stdio of new process
+    if ctx.stdin != STDIN_FILENO {
+        dup2(ctx.stdin, STDIN_FILENO)?;
+        close(ctx.stdin)?;
+    }
+    if ctx.stdout != STDOUT_FILENO {
+        dup2(ctx.stdout, STDOUT_FILENO)?;
+        close(ctx.stdout)?;
+    }
+    if ctx.stderr != STDERR_FILENO {
+        dup2(ctx.stderr, STDERR_FILENO)?;
+        close(ctx.stderr)?;
+    }
+
+    // We can fork now
+    let filename = argv.get(0).unwrap();
+    let args = argv
+        .iter()
+        .map(|s| CString::new(s.clone()).unwrap())
+        .collect::<Vec<_>>();
+    execvp(&CString::new(filename.clone()).unwrap(), &args)?;
+    exit(1);
 }
 
 impl Job {
-    pub fn run(&self) -> Result<(), std::io::Error> {
+    /*
+    pub fn run(&self, ctx: &Context) -> Result<(), std::io::Error> {
         for process in self.pipeline.iter() {
             // set up pipes
 
@@ -116,10 +114,7 @@ impl Job {
                 Ok(ForkResult::Child) => {
                     process.run(
                         Pgid::Pgid(self.pgid),
-                        self.is_foreground,
-                        self.stdin,
-                        self.stdout,
-                        self.stderr,
+                        ctx
                     )?;
                 },
                 Err(_) => todo!(),
@@ -129,9 +124,11 @@ impl Job {
         }
         Ok(())
     }
+    */
 
     pub fn leader(&self) -> &Process {
         // Job should always have at least one process in the pipeline
-        &self.pipeline.get(0).unwrap()
+        // &self.pipeline.get(0).unwrap()
+        todo!()
     }
 }

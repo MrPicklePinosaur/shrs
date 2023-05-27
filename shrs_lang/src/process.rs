@@ -35,7 +35,7 @@ pub struct Job {
     /// Process group id
     pub pgid: Pid,
     /// All of the processes in this job
-    pub proceses: Vec<Process>,
+    pub proceses: Vec<Pid>,
 }
 
 /// Execution context for a process

@@ -54,7 +54,7 @@ pub enum Command {
     /// ```sh
     /// cat .bashrc | wc -l
     /// ```
-    Pipeline(Box<Command>, Box<Command>),
+    Pipeline(Vec<Box<Command>>),
 
     /// Compound command of And
     And(Box<Command>, Box<Command>),

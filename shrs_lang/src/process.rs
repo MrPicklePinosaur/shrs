@@ -49,6 +49,7 @@ pub struct Context {
     pub is_interactive: bool,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum ExitStatus {
     Exited(i32),
     Running(Pid),

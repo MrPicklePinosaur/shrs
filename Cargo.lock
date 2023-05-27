@@ -1232,6 +1232,7 @@ dependencies = [
  "derive_builder",
  "dirs",
  "lazy_static",
+ "nix 0.26.2",
  "pino_deref",
  "regex",
  "rexpect",

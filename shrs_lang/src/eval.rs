@@ -6,14 +6,14 @@ use std::{
 };
 
 use lazy_static::lazy_static;
+use nix::unistd::Pid;
 use shrs_core::{
-    dummy_child,
     hooks::{AfterCommandCtx, BeforeCommandCtx, JobExitCtx},
-    Context, ExitStatus, Lang, Runtime, Shell,
+    Context, Lang, Runtime, Shell,
 };
 use thiserror::Error;
 
-use crate::{ast, parser, Lexer, Parser};
+use crate::{ast, parser, process::ExitStatus, Lexer, Parser};
 
 #[derive(Error, Debug)]
 pub enum PosixError {
@@ -67,7 +67,6 @@ impl Lang for PosixLang {
                     return Err(e);
                 },
             };
-        command_output(sh, ctx, rt, &mut cmd_handle)?;
 
         Ok(())
     }
@@ -85,7 +84,7 @@ pub fn run_external_command(
     stdout: Stdio,
     pgid: Option<i32>,
     assigns: &Vec<ast::Assign>,
-) -> anyhow::Result<Child> {
+) -> anyhow::Result<ExitStatus> {
     use std::process::Command;
 
     let envs = assigns.iter().map(|word| (&word.var, &word.val));
@@ -100,7 +99,11 @@ pub fn run_external_command(
         .envs(envs)
         .spawn()?;
 
-    Ok(child)
+    Ok(ExitStatus::Running(Pid::from_raw(child.id() as i32)))
+}
+
+fn dummy_child() -> ExitStatus {
+    ExitStatus::Exited(0)
 }
 
 fn eval_command(
@@ -111,7 +114,7 @@ fn eval_command(
     stdin: Stdio,
     stdout: Stdio,
     _pgid: Option<i32>,
-) -> anyhow::Result<Child> {
+) -> anyhow::Result<ExitStatus> {
     match cmd {
         ast::Command::Simple {
             assigns,
@@ -123,7 +126,7 @@ fn eval_command(
             // Retrieve command name or return immediately (empty command)
             let cmd_name = match it.next() {
                 Some(cmd_name) => cmd_name,
-                None => return dummy_child(),
+                None => return Ok(dummy_child()),
             };
             let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
 
@@ -199,7 +202,8 @@ fn eval_command(
             let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
             for (builtin_name, builtin_cmd) in sh.builtins.iter() {
                 if builtin_name == &cmd_name.as_str() {
-                    return builtin_cmd.run(sh, ctx, rt, &subst_args);
+                    // TODO finish the builtin cmd
+                    // return builtin_cmd.run(sh, ctx, rt, &subst_args);
                 }
             }
 
@@ -232,6 +236,7 @@ fn eval_command(
                 ),
             }
         },
+        /*
         ast::Command::Pipeline(a_cmd, b_cmd) => {
             // TODO double check that pgid works properly for pipelines that are longer than one pipe (left recursiveness of parser might mess this up)
             let mut a_cmd_handle = eval_command(sh, ctx, rt, a_cmd, stdin, Stdio::piped(), None)?;
@@ -241,6 +246,7 @@ fn eval_command(
                 eval_command(sh, ctx, rt, b_cmd, piped_stdin, stdout, Some(pgid as i32))?;
             Ok(b_cmd_handle)
         },
+        */
         ast::Command::Or(a_cmd, b_cmd) | ast::Command::And(a_cmd, b_cmd) => {
             let negate = match cmd {
                 ast::Command::Or { .. } => false,
@@ -250,10 +256,9 @@ fn eval_command(
             // TODO double check if these stdin and stdou params are correct
             let mut a_cmd_handle =
                 eval_command(sh, ctx, rt, a_cmd, Stdio::inherit(), Stdio::piped(), None)?;
-            let output_status = command_output(sh, ctx, rt, &mut a_cmd_handle)?;
-            if output_status.success() ^ negate {
+            if (a_cmd_handle == ExitStatus::Exited(0)) ^ negate {
                 // TODO return something better (indicate that command failed with exit code)
-                return dummy_child();
+                return Ok(dummy_child());
             }
             let b_cmd_handle =
                 eval_command(sh, ctx, rt, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
@@ -271,8 +276,9 @@ fn eval_command(
             match b_cmd {
                 None => {
                     // TODO might need a Command display trait implementation
-                    ctx.jobs.push(a_cmd_handle, String::new());
-                    dummy_child()
+                    // TODO create the job
+                    // ctx.jobs.push(a_cmd_handle, String::new());
+                    Ok(dummy_child())
                 },
                 Some(b_cmd) => {
                     let b_cmd_handle =
@@ -289,7 +295,6 @@ fn eval_command(
             match b_cmd {
                 None => Ok(a_cmd_handle),
                 Some(b_cmd) => {
-                    command_output(sh, ctx, rt, &mut a_cmd_handle)?;
                     let b_cmd_handle =
                         eval_command(sh, ctx, rt, b_cmd, Stdio::inherit(), Stdio::piped(), None)?;
                     Ok(b_cmd_handle)
@@ -319,8 +324,8 @@ fn eval_command(
                 let mut cond_handle =
                     eval_command(sh, ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
                 // TODO sorta similar to and statements
-                let output_status = command_output(sh, ctx, rt, &mut cond_handle)?;
-                if output_status.success() {
+
+                if cond_handle == ExitStatus::Exited(0) {
                     let body_handle =
                         eval_command(sh, ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
                     return Ok(body_handle);
@@ -340,7 +345,7 @@ fn eval_command(
                 return Ok(else_handle);
             }
 
-            dummy_child()
+            Ok(dummy_child())
         },
         ast::Command::While { cond, body } | ast::Command::Until { cond, body } => {
             let negate = match cmd {
@@ -352,17 +357,14 @@ fn eval_command(
             loop {
                 let mut cond_handle =
                     eval_command(sh, ctx, rt, cond, Stdio::inherit(), Stdio::piped(), None)?;
-                // TODO sorta similar to if statements
-                let output_status = command_output(sh, ctx, rt, &mut cond_handle)?;
-                if output_status.success() ^ negate {
+                if (cond_handle == ExitStatus::Exited(0)) ^ negate {
                     let mut body_handle =
                         eval_command(sh, ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                    command_output(sh, ctx, rt, &mut body_handle)?;
                 } else {
                     break; // TODO not sure if there should be break here
                 }
             }
-            dummy_child()
+            Ok(dummy_child())
         },
         ast::Command::For {
             name,
@@ -384,10 +386,9 @@ fn eval_command(
                 rt.env.set(name, word); // TODO unset the var after the loop?
                 let mut body_handle =
                     eval_command(sh, ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                command_output(sh, ctx, rt, &mut body_handle)?;
             }
 
-            dummy_child()
+            Ok(dummy_child())
         },
         ast::Command::Case { word, arms } => {
             // println!("word {:?}, arms {:?}", word, arms);
@@ -398,12 +399,11 @@ fn eval_command(
                 if pattern.iter().any(|x| x == &subst_word) {
                     let mut body_handle =
                         eval_command(sh, ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
-                    command_output(sh, ctx, rt, &mut body_handle)?;
                     // TODO should we break? (should multiple match arms be matched?)
                 }
             }
 
-            dummy_child()
+            Ok(dummy_child())
         },
         ast::Command::Fn { fname, body } => {
             // TODO disabling functions for now since it is technically command language dependent
@@ -411,17 +411,18 @@ fn eval_command(
             /*
             if RESERVED_WORDS.contains(&fname.as_str()) {
                 eprintln!("function nane cannot be a reserved keyword");
-                return dummy_child(); // TODO come up with better return value
+                return Ok(dummy_child()); // TODO come up with better return value
             }
 
             // TODO hook for redefining function?
             rt.functions.insert(fname.to_string(), body.to_owned());
 
-            dummy_child()
+            Ok(dummy_child())
             */
             todo!()
         },
-        ast::Command::None => dummy_child(),
+        ast::Command::None => Ok(dummy_child()),
+        _ => Ok(dummy_child()),
     }
 }
 
@@ -512,7 +513,7 @@ pub fn command_output(
     };
     sh.hooks.run::<AfterCommandCtx>(sh, ctx, rt, hook_ctx)?;
 
-    Ok(ExitStatus(exit_status))
+    Ok(ExitStatus::Exited(exit_status))
 }
 
 /*

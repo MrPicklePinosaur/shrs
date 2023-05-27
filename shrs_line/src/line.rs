@@ -416,6 +416,24 @@ impl Line {
                 }
             },
             Event::Key(KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                println!("ctrl d");
+                // if current input is empty exit the shell, otherwise treat it as enter
+                if ctx.cb.len() == 0 {
+                    // TODO maybe unify exiting the shell
+                    disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
+                                        // handling cleanup code
+                    std::process::exit(0);
+                } else {
+                    self.buffer_history.clear();
+                    self.painter.newline()?;
+                    return Ok(true);
+                }
+            },
+            Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {

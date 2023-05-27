@@ -13,7 +13,7 @@ use nix::{
         signal::{signal, sigprocmask, SigHandler, SigmaskHow, Signal},
         signalfd::SigSet,
     },
-    unistd::{close, dup2, execvp, getpid, isatty, setpgid, tcsetpgrp, Pid},
+    unistd::{close, dup2, execvp, fork, getpid, isatty, setpgid, tcsetpgrp, ForkResult, Pid},
 };
 
 pub enum Pgid {
@@ -108,10 +108,24 @@ impl Process {
 impl Job {
     pub fn run(&self) -> Result<(), std::io::Error> {
         for process in self.pipeline.iter() {
-
             // set up pipes
 
-            // for the child
+            // fork the child
+            match unsafe { fork() } {
+                Ok(ForkResult::Parent { child }) => {},
+                Ok(ForkResult::Child) => {
+                    process.run(
+                        Pgid::Pgid(self.pgid),
+                        self.is_foreground,
+                        self.stdin,
+                        self.stdout,
+                        self.stderr,
+                    )?;
+                },
+                Err(_) => todo!(),
+            }
+
+            // clean up each pipe
         }
         Ok(())
     }

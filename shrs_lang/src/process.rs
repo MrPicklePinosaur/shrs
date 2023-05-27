@@ -64,7 +64,7 @@ pub enum Pgid {
 
 // Run a command
 pub fn run_process(
-    argv: Vec<String>,
+    argv: &Vec<String>,
     pgid: Pgid,
     ctx: &Context,
 ) -> Result<ExitStatus, std::io::Error> {
@@ -79,7 +79,7 @@ pub fn run_process(
     }
 }
 
-fn setup_process(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
+fn setup_process(argv: &Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
     // If interactive need to give the current process control of the tty
     let shell_term = STDIN_FILENO;
     if ctx.is_interactive {

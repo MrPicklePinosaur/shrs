@@ -18,4 +18,6 @@ pub mod ast;
 mod eval;
 pub use eval::{command_output, run_external_command, PosixError, PosixLang};
 
-mod process;
+pub mod eval2;
+
+pub mod process;

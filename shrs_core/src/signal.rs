@@ -1,27 +1,20 @@
-use std::thread;
+use std::{
+    sync::{atomic::AtomicBool, Arc},
+    thread,
+};
 
-use crossbeam_channel::{bounded, Receiver};
-use signal_hook::{consts::*, iterator::Signals};
+use signal_hook::{consts::*, flag};
 
-pub fn sig_handler() -> anyhow::Result<Receiver<()>> {
-    // TODO this code is very very very inefficient. Should not be checking this frequently
-    thread::spawn(move || {
-        let mut signals = Signals::new(TERM_SIGNALS).unwrap();
-        loop {
-            for signal in signals.pending() {
-                match signal {
-                    SIGINT => {
-                        println!("\nSIGINT received");
-                    },
-                    SIGTERM => {
-                        println!("\nSIGTERM received");
-                    },
-                    _ => {},
-                }
-            }
-        }
-    });
+pub struct Signals {
+    pub int: Arc<AtomicBool>,
+}
 
-    let (sender, receiver) = bounded(100);
-    Ok(receiver)
+impl Signals {
+    pub fn new() -> Result<Self, std::io::Error> {
+        let int = Arc::new(AtomicBool::new(false));
+
+        flag::register(SIGINT, Arc::clone(&int))?;
+
+        Ok(Self { int })
+    }
 }

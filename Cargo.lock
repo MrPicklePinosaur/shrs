@@ -1216,7 +1216,6 @@ dependencies = [
  "anyhow",
  "anymap",
  "clap",
- "crossbeam-channel",
  "crossterm",
  "derive_builder",
  "dirs",

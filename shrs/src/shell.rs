@@ -13,7 +13,7 @@ use shrs_core::{
     builtin::Builtins,
     command_output, dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    sig_handler, Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, State, Theme,
+    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, State, Theme,
 };
 use shrs_lang::PosixLang;
 use shrs_line::{DefaultPrompt, Line, Prompt};
@@ -132,9 +132,6 @@ fn run_shell(
     readline: &mut Line,
 ) -> anyhow::Result<()> {
     // init stuff
-    // sig_handler()?;
-    rt.env.load();
-
     let res = sh.hooks.run::<StartupCtx>(
         sh,
         ctx,

@@ -24,7 +24,6 @@ use crate::{
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
-    signal::sig_handler,
     state::State,
     theme::Theme,
     Lang,

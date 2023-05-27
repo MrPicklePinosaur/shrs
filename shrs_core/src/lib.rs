@@ -25,7 +25,6 @@ mod shell;
 pub use shell::{command_output, dummy_child, Context, Runtime, Shell};
 
 mod signal;
-pub use signal::sig_handler;
 
 mod theme;
 pub use theme::Theme;

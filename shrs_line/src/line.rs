@@ -420,7 +420,6 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                println!("ctrl d");
                 // if current input is empty exit the shell, otherwise treat it as enter
                 if ctx.cb.len() == 0 {
                     // TODO maybe unify exiting the shell

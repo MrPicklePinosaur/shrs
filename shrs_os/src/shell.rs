@@ -7,17 +7,22 @@ use std::{
 };
 
 use nix::{
+    libc::STDIN_FILENO,
     sys::{
-        signal::{kill, sigprocmask, SigmaskHow, Signal, Signal::SIGTTIN},
+        signal::{kill, signal, sigprocmask, SigHandler, SigmaskHow, Signal, Signal::SIGTTIN},
         signalfd::SigSet,
     },
     unistd::{getpgrp, getpid, isatty, setpgid, tcgetpgrp, tcsetpgrp},
 };
 
+// pub struct Shell {
+
+// }
+
 /// Initialize job control for the shell
 pub fn init_shell() -> Result<(), std::io::Error> {
     // Check if the current shell is allowed to run it's own job control
-    let shell_term = stdin().as_raw_fd();
+    let shell_term = STDIN_FILENO;
 
     if !isatty(shell_term)? {
         return Ok(());
@@ -30,14 +35,15 @@ pub fn init_shell() -> Result<(), std::io::Error> {
     }
 
     // Ignore interactive and job control signals
-    let mut sigset = SigSet::empty();
-    sigset.add(Signal::SIGINT);
-    sigset.add(Signal::SIGQUIT);
-    sigset.add(Signal::SIGTSTP);
-    sigset.add(Signal::SIGTTIN);
-    sigset.add(Signal::SIGTTOU);
-    sigset.add(Signal::SIGCHLD);
-    sigprocmask(SigmaskHow::SIG_BLOCK, Some(&sigset), None)?;
+    // TODO double check correctness of unsafe code
+    unsafe {
+        signal(Signal::SIGINT, SigHandler::SigIgn);
+        signal(Signal::SIGQUIT, SigHandler::SigIgn);
+        signal(Signal::SIGTSTP, SigHandler::SigIgn);
+        signal(Signal::SIGTTIN, SigHandler::SigIgn);
+        signal(Signal::SIGTTOU, SigHandler::SigIgn);
+        signal(Signal::SIGCHLD, SigHandler::SigIgn);
+    };
 
     // Put self in own process group
     let shell_pid = getpid();
@@ -45,4 +51,14 @@ pub fn init_shell() -> Result<(), std::io::Error> {
     tcsetpgrp(shell_term, shell_pid)?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::init_shell;
+
+    #[test]
+    fn init() {
+        init_shell().unwrap();
+    }
 }

@@ -12,6 +12,7 @@ build = "build.rs"
 shrs_core = { path = "../shrs_core" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
+nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}
 
 pino_deref = "0.1"
 

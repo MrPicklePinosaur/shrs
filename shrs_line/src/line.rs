@@ -347,12 +347,12 @@ impl Line {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) | 
-            Event::Key(KeyEvent {
+            })
+            | Event::Key(KeyEvent {
                 code: KeyCode::Char('j'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
-            })=> {
+            }) => {
                 self.buffer_history.clear();
                 self.painter.newline()?;
                 return Ok(true);
@@ -415,8 +415,8 @@ impl Line {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) | 
-            Event::Key(KeyEvent {
+            })
+            | Event::Key(KeyEvent {
                 code: KeyCode::Char('h'),
                 modifiers: KeyModifiers::CONTROL,
                 ..

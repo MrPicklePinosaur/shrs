@@ -1276,6 +1276,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "lazy_static",
+ "nix 0.26.2",
  "pino_deref",
  "regex",
  "rexpect",
@@ -1305,15 +1306,6 @@ name = "shrs_mux"
 version = "0.1.0"
 dependencies = [
  "shrs",
-]
-
-[[package]]
-name = "shrs_os"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "nix 0.26.2",
- "thiserror",
 ]
 
 [[package]]

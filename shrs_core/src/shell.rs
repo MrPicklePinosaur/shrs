@@ -24,7 +24,7 @@ use crate::{
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
-    signal::sig_handler,
+    signal::Signals,
     state::State,
     theme::Theme,
     Lang,
@@ -41,6 +41,8 @@ pub struct Shell {
     pub theme: Theme,
     /// The command language
     pub lang: Box<dyn Lang>,
+    /// Signals to be handled
+    pub signals: Signals,
 }
 
 /// Shared global shell context
@@ -83,42 +85,4 @@ pub fn dummy_child() -> anyhow::Result<Child> {
     use std::process::Command;
     let cmd = Command::new("true").spawn()?;
     Ok(cmd)
-}
-
-/// Small wrapper that outputs command output if exists
-pub fn command_output(
-    sh: &Shell,
-    ctx: &mut Context,
-    rt: &mut Runtime,
-    cmd_handle: &mut Child,
-) -> anyhow::Result<ExitStatus> {
-    // TODO also handle stderr
-    let output = if let Some(out) = cmd_handle.stdout.take() {
-        let reader = BufReader::new(out);
-        reader
-            .lines()
-            .map(|line| {
-                let line = line.unwrap();
-                println!("{}", line);
-                line
-            })
-            .collect::<Vec<_>>()
-            .join("\n")
-    } else {
-        String::new()
-    };
-
-    // Fetch output status
-    let exit_status = cmd_handle.wait().unwrap().code().unwrap();
-    rt.exit_status = exit_status;
-
-    // Call hook
-    let hook_ctx = AfterCommandCtx {
-        exit_code: exit_status,
-        cmd_time: 0.0,
-        cmd_output: output,
-    };
-    sh.hooks.run::<AfterCommandCtx>(sh, ctx, rt, hook_ctx)?;
-
-    Ok(ExitStatus(exit_status))
 }

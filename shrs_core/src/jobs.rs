@@ -4,6 +4,7 @@ use std::{
     process::Child,
 };
 
+use anyhow::anyhow;
 use pino_deref::Deref;
 
 pub type JobId = u32;
@@ -27,6 +28,7 @@ pub struct JobInfo {
 
 /// Keeps track of all the current running jobs
 pub struct Jobs {
+    foreground: Option<Child>,
     next_id: JobId,
     jobs: HashMap<JobId, JobInfo>,
 }
@@ -36,6 +38,7 @@ impl Jobs {
         Jobs {
             next_id: 0,
             jobs: HashMap::new(),
+            foreground: None,
         }
     }
 
@@ -75,5 +78,23 @@ impl Jobs {
     fn get_next_id(&mut self) -> JobId {
         self.next_id += 1;
         self.next_id
+    }
+
+    /// Set the current foreground process
+    pub fn set_foreground(&mut self, child: Child) -> anyhow::Result<()> {
+        if self.foreground.is_some() {
+            // TODO move the current foreground to a background task?
+            return Err(anyhow!("There is already a foreground process"));
+        }
+        self.foreground = Some(child);
+        Ok(())
+    }
+
+    /// Wait for foreground to terminate
+    pub fn wait_foreground(&mut self) -> anyhow::Result<std::process::ExitStatus> {
+        match self.foreground.take() {
+            Some(mut fg) => fg.wait().map_err(|e| anyhow!("{e:?}")),
+            None => Err(anyhow!("No running foreground process")),
+        }
     }
 }

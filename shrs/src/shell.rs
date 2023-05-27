@@ -11,9 +11,9 @@ use std::{
 use lazy_static::lazy_static;
 use shrs_core::{
     builtin::Builtins,
-    command_output, dummy_child,
+    dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    sig_handler, Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, State, Theme,
+    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
 };
 use shrs_lang::PosixLang;
 use shrs_line::{DefaultPrompt, Line, Prompt};
@@ -118,6 +118,7 @@ impl ShellConfig {
             theme: self.theme,
             lang: self.lang,
             hooks: self.hooks,
+            signals: Signals::new().unwrap(),
         };
         let mut readline = self.readline;
 
@@ -132,9 +133,6 @@ fn run_shell(
     readline: &mut Line,
 ) -> anyhow::Result<()> {
     // init stuff
-    // sig_handler()?;
-    rt.env.load();
-
     let res = sh.hooks.run::<StartupCtx>(
         sh,
         ctx,

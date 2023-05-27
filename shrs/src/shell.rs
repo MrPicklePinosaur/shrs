@@ -13,7 +13,7 @@ use shrs_core::{
     builtin::Builtins,
     command_output, dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, State, Theme,
+    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
 };
 use shrs_lang::PosixLang;
 use shrs_line::{DefaultPrompt, Line, Prompt};
@@ -118,6 +118,7 @@ impl ShellConfig {
             theme: self.theme,
             lang: self.lang,
             hooks: self.hooks,
+            signals: Signals::new().unwrap(),
         };
         let mut readline = self.readline;
 

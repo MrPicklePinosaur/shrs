@@ -24,6 +24,7 @@ use crate::{
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
+    signal::Signals,
     state::State,
     theme::Theme,
     Lang,
@@ -40,6 +41,8 @@ pub struct Shell {
     pub theme: Theme,
     /// The command language
     pub lang: Box<dyn Lang>,
+    /// Signals to be handled
+    pub signals: Signals,
 }
 
 /// Shared global shell context

@@ -1,7 +1,4 @@
-use std::{
-    sync::{atomic::AtomicBool, Arc},
-    thread,
-};
+use std::sync::{atomic::AtomicBool, Arc};
 
 use signal_hook::{consts::*, flag};
 

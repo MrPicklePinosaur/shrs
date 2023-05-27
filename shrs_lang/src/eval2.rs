@@ -5,10 +5,14 @@ use shrs_core::{Context, Runtime, Shell};
 
 use crate::{
     ast,
-    process::{self, run_process, ExitStatus, Job, Pgid},
+    process::{self, run_process, ExitStatus, Job, Os, Pgid, ProcessState},
 };
 
-pub fn eval_command(cmd: &ast::Command, ctx: &process::Context) -> anyhow::Result<ExitStatus> {
+pub fn eval_command(
+    os: &mut Os,
+    cmd: &ast::Command,
+    ctx: &process::Context,
+) -> anyhow::Result<ExitStatus> {
     match cmd {
         ast::Command::Simple {
             assigns,
@@ -43,7 +47,7 @@ pub fn eval_command(cmd: &ast::Command, ctx: &process::Context) -> anyhow::Resul
                     stdout: cur_stdout,
                     ..*ctx
                 };
-                let a_res = eval_command(pipe_cmd, &ctx)?;
+                let a_res = eval_command(os, pipe_cmd, &ctx)?;
 
                 // Close pipe if necessary
                 if let Some((pipe_out, pipe_in)) = pipe {
@@ -73,9 +77,13 @@ pub fn eval_command(cmd: &ast::Command, ctx: &process::Context) -> anyhow::Resul
                 Some(ExitStatus::Exited(status)) => ExitStatus::Exited(status),
                 Some(ExitStatus::Running(pid)) => {
                     // wait for last command in pipeline to finish
+                    let jobid = os.create_job(pid, children)?;
 
-                    // TODO wait for job to finish executing and report exit status
-                    todo!()
+                    // Wait for job to finish executing and report exit status
+                    match os.wait_for_job(jobid)? {
+                        ProcessState::Running => ExitStatus::Running(pgid.unwrap()),
+                        ProcessState::Exited(status) => ExitStatus::Exited(status),
+                    }
                 },
                 None => ExitStatus::Exited(0),
             };

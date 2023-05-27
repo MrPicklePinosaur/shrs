@@ -56,6 +56,7 @@ pub struct Context {
     pub is_interactive: bool,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ProcessState {
     Running,
     Exited(i32),
@@ -176,6 +177,14 @@ impl Job {
             matches!(state, ProcessState::Exited(_))
         })
     }
+
+    /// Get the state of the last process in the job
+    pub fn last_process_state(&self, os: &Os) -> Option<ProcessState> {
+        self.proceses
+            .iter()
+            .last()
+            .map(|pid| os.get_process_state(pid).expect("missing process").clone())
+    }
 }
 
 /// Context related to state of processes and jobs
@@ -247,16 +256,24 @@ impl Os {
     }
 
     /// Wait for entire job to finish
-    pub fn wait_for_job(&mut self, jobid: JobId) -> Result<(), std::io::Error> {
+    pub fn wait_for_job(&mut self, jobid: JobId) -> Result<ProcessState, std::io::Error> {
         loop {
             // TODO throw proper error here
             let job = self.jobs.get(&jobid).expect("non existant jobid");
             if job.exited(self) {
-                // remove from tracked job list
-                self.remove_job(&jobid);
-                return Ok(());
+                break;
             }
             self.wait_for_any_process()?;
+        }
+        // remove from tracked job list
+        let job = self.jobs.get(&jobid).expect("non existant jobid");
+        let process_state = job.last_process_state(self).unwrap();
+        match process_state {
+            ProcessState::Exited(status) => {
+                self.remove_job(&jobid);
+                Ok(process_state)
+            },
+            _ => unreachable!(),
         }
     }
 

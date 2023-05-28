@@ -9,12 +9,9 @@ use std::{
 
 use nix::{
     libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO},
-    sys::{
-        signal::{
-            kill, signal, sigprocmask, SigHandler, SigmaskHow,
-            Signal::{self, SIGTTIN},
-        },
-        signalfd::SigSet,
+    sys::signal::{
+        kill, signal, sigprocmask, SigHandler, SigmaskHow,
+        Signal::{self, SIGTTIN},
     },
     unistd::{
         close, dup2, execvp, fork, getpgrp, getpid, isatty, setpgid, tcgetpgrp, tcsetpgrp,

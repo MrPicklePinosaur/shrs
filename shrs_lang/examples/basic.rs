@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     let mut os = Os::new();
     os.init_shell()?;
 
-    let cmd = ast::Command::Pipeline(vec![
+    let inner_cmd = ast::Command::Pipeline(vec![
         Box::new(ast::Command::Simple {
             assigns: vec![],
             redirects: vec![],
@@ -21,6 +21,14 @@ fn main() -> anyhow::Result<()> {
             args: vec!["tr".into(), "o".into(), "e".into()],
         }),
     ]);
+    let cmd = ast::Command::AsyncList(
+        Box::new(inner_cmd),
+        Some(Box::new(ast::Command::Simple {
+            assigns: vec![],
+            redirects: vec![],
+            args: vec!["echo".into(), "poo".into()],
+        })),
+    );
 
     let ctx = process::Context {
         stdin: 0,

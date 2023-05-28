@@ -13,7 +13,7 @@ use nix::{
     sys::{
         signal::{
             kill, signal, sigprocmask, SigHandler, SigmaskHow,
-            Signal::{self, SIGTTIN},
+            Signal::{self, SIGCONT, SIGTTIN},
         },
         signalfd::SigSet,
         wait::{waitpid, WaitPidFlag, WaitStatus},
@@ -33,7 +33,7 @@ pub struct Process {
 }
 
 /// Unique identifier to keep track of job
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct JobId(pub usize);
 
 /// A job corresponds to a pipeline of processes
@@ -146,28 +146,6 @@ fn setup_process(argv: &Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), st
 }
 
 impl Job {
-    /// Place job onto foreground
-    pub fn run_in_foreground(&self) -> Result<(), std::io::Error> {
-        let shell_term = STDIN_FILENO;
-
-        // Put the job into foreground
-        tcsetpgrp(shell_term, self.pgid)?;
-
-        // TODO send job continue signal
-
-        // Wait for the job
-
-        // Return foreground to the shell
-
-        Ok(())
-    }
-
-    /// Place job onto background
-    pub fn run_in_background(&self) -> Result<(), std::io::Error> {
-        // TODO send job continue signal
-        Ok(())
-    }
-
     /// Check job has completed
     ///
     /// Jobs are completed when all the processes in the job has completed
@@ -189,6 +167,7 @@ impl Job {
 
 /// Context related to state of processes and jobs
 pub struct Os {
+    pgid: Pid,
     jobs: HashMap<JobId, Job>,
     proc_state: HashMap<Pid, ProcessState>,
 }
@@ -196,6 +175,7 @@ pub struct Os {
 impl Os {
     pub fn new() -> Self {
         Self {
+            pgid: getpid(),
             jobs: HashMap::new(),
             proc_state: HashMap::new(),
         }
@@ -228,11 +208,14 @@ impl Os {
         };
 
         // Put self in own process group
-        let shell_pid = getpid();
-        setpgid(shell_pid, shell_pid)?;
-        tcsetpgrp(shell_term, shell_pid)?;
+        setpgid(self.pgid, self.pgid)?;
+        tcsetpgrp(shell_term, self.pgid)?;
 
         Ok(())
+    }
+
+    pub fn shell_pgid(&self) -> Pid {
+        self.pgid
     }
 
     // JOB RELATED
@@ -300,5 +283,34 @@ impl Os {
 
     fn remove_job(&mut self, jobid: &JobId) {
         self.jobs.remove(jobid);
+    }
+
+    /// Place job onto foreground
+    pub fn run_in_foreground(&mut self, jobid: JobId) -> Result<(), std::io::Error> {
+        let shell_term = STDIN_FILENO;
+
+        // Put the job into foreground
+        tcsetpgrp(shell_term, self.pgid)?;
+
+        // TODO also run tcsetattr
+        // Send job continue signal
+        kill(self.pgid, SIGCONT)?;
+
+        // Wait for the job
+        self.wait_for_job(jobid)?;
+
+        // Return foreground to the shell
+        tcsetpgrp(shell_term, self.shell_pgid())?;
+
+        // TODO restore terminal mode
+
+        Ok(())
+    }
+
+    /// Place job onto background
+    pub fn run_in_background(&self, jobid: JobId) -> Result<(), std::io::Error> {
+        let job = self.jobs.get(&jobid).unwrap();
+        kill(job.pgid, SIGCONT)?;
+        Ok(())
     }
 }

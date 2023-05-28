@@ -89,6 +89,23 @@ pub fn eval_command(
             };
             Ok(res)
         },
+        ast::Command::AsyncList(a_cmd, b_cmd) => {
+            // spawn a_cmd in background
+            let res = eval_command(os, a_cmd, ctx)?;
+            match res {
+                ExitStatus::Exited(status) => {},
+                ExitStatus::Running(pid) => {
+                    // spawn new job
+                    let jobid = os.create_job(pid, vec![pid])?;
+                    os.run_in_background(jobid)?;
+                },
+            }
+
+            match b_cmd {
+                Some(b_cmd) => eval_command(os, b_cmd, ctx),
+                None => Ok(ExitStatus::Exited(0)),
+            }
+        },
         _ => todo!(),
     }
 }

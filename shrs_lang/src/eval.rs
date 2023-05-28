@@ -128,7 +128,22 @@ fn eval_command(
                 Some(cmd_name) => cmd_name,
                 None => return Ok(dummy_child()),
             };
-            let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
+            let args = it
+                .map(|a| -> String {
+                    if a.len() > 1 {
+                        let mut chars = a.chars();
+
+                        let first = chars.next().unwrap();
+                        let last = chars.next_back().unwrap();
+                        if first == '\'' || first == '\"' {
+                            if first == last {
+                                return a[1..a.len() - 1].into();
+                            }
+                        }
+                    }
+                    (*a).clone()
+                })
+                .collect::<Vec<_>>();
 
             // println!("redirects {:?}", redirects);
             // println!("assigns {:?}", assigns);
@@ -202,8 +217,9 @@ fn eval_command(
             let subst_args = args.iter().map(|x| envsubst(rt, x)).collect::<Vec<_>>();
             for (builtin_name, builtin_cmd) in sh.builtins.iter() {
                 if builtin_name == &cmd_name.as_str() {
-                    // TODO finish the builtin cmd
-                    // return builtin_cmd.run(sh, ctx, rt, &subst_args);
+                    // TODO actually return the output of builtin
+                    let builtin_output = builtin_cmd.run(sh, ctx, rt, &subst_args)?;
+                    return Ok(dummy_child());
                 }
             }
 
@@ -426,7 +442,7 @@ fn eval_command(
     }
 }
 
-/// Performs environment substation on a string
+/// Performs environment substitution on a string
 // TODO regex replace might not be the best way. could also recognize the env var during parsing
 // TODO handle escaped characters
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {

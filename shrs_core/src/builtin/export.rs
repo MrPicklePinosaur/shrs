@@ -1,12 +1,9 @@
-use std::{
-    io::{stdout, Write},
-    process::Child,
-};
+use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::BuiltinCmd;
-use crate::shell::{dummy_child, Context, Runtime, Shell};
+use super::{BuiltinCmd, BuiltinStatus};
+use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
 struct Cli {
@@ -30,7 +27,7 @@ impl BuiltinCmd for ExportBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = Cli::parse_from(vec!["export".to_string()].iter().chain(args.iter()));
 
         // remove arg
@@ -38,7 +35,7 @@ impl BuiltinCmd for ExportBuiltin {
             for var in cli.vars {
                 rt.env.remove(&var);
             }
-            return dummy_child();
+            return Ok(BuiltinStatus::success());
         }
 
         // print all env vars
@@ -46,7 +43,7 @@ impl BuiltinCmd for ExportBuiltin {
             for (var, val) in rt.env.all().iter() {
                 println!("export {}={}", var, val);
             }
-            return dummy_child();
+            return Ok(BuiltinStatus::success());
         }
 
         for var in cli.vars {
@@ -57,6 +54,6 @@ impl BuiltinCmd for ExportBuiltin {
             rt.env.set(var, val);
         }
 
-        dummy_child()
+        Ok(BuiltinStatus::success())
     }
 }

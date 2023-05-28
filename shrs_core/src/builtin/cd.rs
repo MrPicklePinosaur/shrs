@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::BuiltinCmd;
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::{
     hooks::ChangeDirCtx,
-    shell::{dummy_child, Context, Runtime},
+    shell::{Context, Runtime},
     Shell,
 };
 
@@ -20,7 +20,7 @@ impl BuiltinCmd for CdBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let path = if let Some(path) = args.get(0) {
             // `cd -` moves us back to previous directory
             if path == "-" {
@@ -28,7 +28,7 @@ impl BuiltinCmd for CdBuiltin {
                     PathBuf::from(old_pwd)
                 } else {
                     eprintln!("no OLDPWD");
-                    return dummy_child();
+                    return Ok(BuiltinStatus::error());
                 }
             } else {
                 rt.working_dir.join(Path::new(path))
@@ -54,6 +54,6 @@ impl BuiltinCmd for CdBuiltin {
         rt.env.set("PWD", path.to_str().unwrap());
 
         // return a dummy command
-        dummy_child()
+        Ok(BuiltinStatus::success())
     }
 }

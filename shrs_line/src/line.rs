@@ -226,7 +226,7 @@ impl Line {
             line_ctx,
             &self.prompt,
             &self.menu,
-            StyledBuf::new(),
+            StyledBuf::empty(),
             line_ctx.cb.cursor(),
         )?;
 
@@ -270,13 +270,13 @@ impl Line {
                 if self.menu.is_active() {
                     if let Some(selection) = self.menu.current_selection() {
                         let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                        styled_buf.push(StyledContent::new(
+                        styled_buf.push(
+                            trimmed_selection,
                             ContentStyle {
                                 foreground_color: Some(Color::Red),
                                 ..Default::default()
                             },
-                            trimmed_selection.to_string(),
-                        ));
+                        );
                     }
                 }
 
@@ -431,7 +431,7 @@ impl Line {
                 ..
             }) => {
                 self.buffer_history.clear();
-                self.painter.newline();
+                self.painter.newline()?;
 
                 if self.needs_multiline(ctx) {
                     ctx.lines += ctx.cb.as_str().into_owned().as_str();

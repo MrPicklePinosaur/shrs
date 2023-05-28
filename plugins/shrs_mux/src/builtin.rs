@@ -23,7 +23,7 @@ impl BuiltinCmd for MuxBuiltin {
         ctx: &mut Context,
         _rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         // TODO flag to list all possible languages
         match args.get(0).map(|s| s.as_str()) {
             Some("-l") => {
@@ -42,9 +42,9 @@ impl BuiltinCmd for MuxBuiltin {
                         Err(e) => eprintln!("{}", e),
                     });
             },
-            _ => return dummy_child(),
+            _ => return Ok(BuiltinStatus::error()),
         };
 
-        dummy_child()
+        Ok(BuiltinStatus::success())
     }
 }

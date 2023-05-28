@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::BuiltinCmd;
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::{
     hooks::ChangeDirCtx,
-    shell::{dummy_child, Context, Runtime},
+    shell::{Context, Runtime},
     Shell,
 };
 
@@ -20,11 +20,11 @@ impl BuiltinCmd for JobsBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         for (job_id, _) in ctx.jobs.iter() {
             println!("{}", job_id);
         }
 
-        dummy_child()
+        Ok(BuiltinStatus::success())
     }
 }

@@ -2,15 +2,12 @@
 
 // debatable if crate::history should be moved to crate::builtin::history
 
-use std::{
-    io::{stdout, Write},
-    process::Child,
-};
+use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::BuiltinCmd;
-use crate::shell::{dummy_child, Context, Runtime, Shell};
+use super::{BuiltinCmd, BuiltinStatus};
+use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
 struct Cli {
@@ -35,7 +32,7 @@ impl BuiltinCmd for HistoryBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         // TODO hack
         let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
 
@@ -58,6 +55,6 @@ impl BuiltinCmd for HistoryBuiltin {
             },
         }
 
-        dummy_child()
+        Ok(BuiltinStatus::success())
     }
 }

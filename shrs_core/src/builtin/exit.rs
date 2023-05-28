@@ -1,4 +1,4 @@
-use super::BuiltinCmd;
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::{
     shell::{Context, Runtime},
     Shell,
@@ -14,7 +14,7 @@ impl BuiltinCmd for ExitBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<BuiltinStatus> {
         std::process::exit(0)
     }
 }

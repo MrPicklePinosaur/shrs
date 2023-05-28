@@ -125,7 +125,22 @@ fn eval_command(
                 Some(cmd_name) => cmd_name,
                 None => return dummy_child(),
             };
-            let args = it.map(|a| (*a).clone()).collect::<Vec<_>>();
+            let args = it
+                .map(|a| -> String {
+                    if a.len() > 1 {
+                        let mut chars = a.chars();
+
+                        let first = chars.next().unwrap();
+                        let last = chars.next_back().unwrap();
+                        if first == '\'' || first == '\"' {
+                            if first == last {
+                                return a[1..a.len() - 1].into();
+                            }
+                        }
+                    }
+                    (*a).clone()
+                })
+                .collect::<Vec<_>>();
 
             // println!("redirects {:?}", redirects);
             // println!("assigns {:?}", assigns);
@@ -425,7 +440,7 @@ fn eval_command(
     }
 }
 
-/// Performs environment substation on a string
+/// Performs environment substitution on a string
 // TODO regex replace might not be the best way. could also recognize the env var during parsing
 // TODO handle escaped characters
 fn envsubst(rt: &mut Runtime, arg: &str) -> String {

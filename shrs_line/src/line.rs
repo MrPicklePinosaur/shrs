@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, io::Write, time::Duration};
+use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -7,6 +7,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_core::{Context, Runtime, Shell};
+use shrs_lang::{Lexer, Token};
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
@@ -131,6 +132,7 @@ pub struct LineCtx<'a> {
     // line contents that were present before entering history mode
     saved_line: String,
     mode: LineMode,
+    pub lines: String,
 
     pub sh: &'a Shell,
     pub ctx: &'a mut Context,
@@ -145,6 +147,7 @@ impl<'a> LineCtx<'a> {
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
             mode: LineMode::Insert,
+            lines: "".to_string(),
             sh,
             ctx,
             rt,
@@ -223,7 +226,7 @@ impl Line {
             line_ctx,
             &self.prompt,
             &self.menu,
-            StyledBuf::new(),
+            StyledBuf::empty(),
             line_ctx.cb.cursor(),
         )?;
 
@@ -258,22 +261,22 @@ impl Line {
                     }
                 }
 
-                let res: String = line_ctx.cb.as_str().into();
+                let res = self.get_full_command(line_ctx);
 
                 // syntax highlight
-                let mut styled_buf = self.highlighter.highlight(&res);
+                let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
 
                 // add currently selected completion to buf
                 if self.menu.is_active() {
                     if let Some(selection) = self.menu.current_selection() {
                         let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                        styled_buf.push(StyledContent::new(
+                        styled_buf.push(
+                            trimmed_selection,
                             ContentStyle {
                                 foreground_color: Some(Color::Red),
                                 ..Default::default()
                             },
-                            trimmed_selection.to_string(),
-                        ));
+                        );
                     }
                 }
 
@@ -287,7 +290,7 @@ impl Line {
             }
         }
 
-        let res: String = line_ctx.cb.as_str().into();
+        let res = self.get_full_command(line_ctx);
         if !res.is_empty() {
             self.history.add(res.clone());
         }
@@ -340,6 +343,85 @@ impl Line {
         };
         Ok(())
     }
+    fn needs_multiline(&self, ctx: &mut LineCtx) -> bool {
+        //TODO check if open quotes or brackets
+
+        if let Some(last_char) = ctx
+            .cb
+            .char_at(Location::Abs(ctx.cb.len().saturating_sub(1)))
+        {
+            if last_char == '\\' {
+                return true;
+            }
+        };
+
+        let mut brackets: Vec<Token> = vec![];
+        let command = self.get_full_command(ctx);
+        let lexer = Lexer::new(command.as_str());
+
+        for t in lexer {
+            if let Ok(token) = t {
+                match token.1 {
+                    Token::LBRACE => brackets.push(token.1),
+                    Token::LPAREN => brackets.push(token.1),
+                    Token::RPAREN => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LPAREN {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::RBRACE => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LBRACE {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::WORD(w) => {
+                        if let Some(c) = w.chars().next() {
+                            if c == '\'' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\'';
+                                } else {
+                                    return true;
+                                }
+                            }
+                            if c == '\"' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\"';
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+
+                    _ => (),
+                }
+            }
+        }
+
+        !brackets.is_empty()
+    }
+    fn get_full_command(&self, ctx: &mut LineCtx) -> String {
+        let mut res: String = ctx.lines.clone();
+        let cur_line: String = ctx.cb.as_str().into();
+        res += cur_line.as_str();
+
+        res
+    }
 
     fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
@@ -355,6 +437,15 @@ impl Line {
             }) => {
                 self.buffer_history.clear();
                 self.painter.newline()?;
+
+                if self.needs_multiline(ctx) {
+                    ctx.lines += ctx.cb.as_str().into_owned().as_str();
+                    ctx.lines += "\n";
+                    ctx.cb.clear();
+
+                    return Ok(false);
+                }
+
                 return Ok(true);
             },
             Event::Key(KeyEvent {

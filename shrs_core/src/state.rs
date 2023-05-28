@@ -7,7 +7,7 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         State {
-            store: anymap::Map::new()
+            store: anymap::Map::new(),
         }
     }
 

@@ -50,7 +50,7 @@ pub struct ShellConfig {
     pub theme: Theme,
 
     /// Command language
-    #[builder(default = "Box::new(PosixLang::default())")]
+    #[builder(default = "Box::new(PosixLang::new())")]
     #[builder(setter(custom))]
     pub lang: Box<dyn Lang>,
 

@@ -9,13 +9,14 @@ use std::{
 };
 
 use nix::{
-    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO, WNOHANG, WUNTRACED},
+    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO, TCSADRAIN, WNOHANG, WUNTRACED},
     sys::{
         signal::{
             kill, signal, sigprocmask, SigHandler, SigmaskHow,
             Signal::{self, SIGCONT, SIGTTIN},
         },
         signalfd::SigSet,
+        termios::{tcgetattr, tcsetattr, SetArg, Termios},
         wait::{waitpid, WaitPidFlag, WaitStatus},
     },
     unistd::{
@@ -168,26 +169,20 @@ impl Job {
 /// Context related to state of processes and jobs
 pub struct Os {
     pgid: Pid,
+    tmods: Termios,
     jobs: HashMap<JobId, Job>,
     proc_state: HashMap<Pid, ProcessState>,
 }
 
 impl Os {
-    pub fn new() -> Self {
-        Self {
-            pgid: getpid(),
-            jobs: HashMap::new(),
-            proc_state: HashMap::new(),
-        }
-    }
-
     /// Initialize job control for the shell
-    pub fn init_shell(&self) -> Result<(), std::io::Error> {
+    pub fn init_shell() -> Result<Self, std::io::Error> {
         // Check if the current shell is allowed to run it's own job control
         let shell_term = STDIN_FILENO;
 
         if !isatty(shell_term)? {
-            return Ok(());
+            // return Ok(());
+            panic!("Not interactive")
         }
 
         // Wait until parent puts us into foreground
@@ -208,10 +203,19 @@ impl Os {
         };
 
         // Put self in own process group
-        setpgid(self.pgid, self.pgid)?;
-        tcsetpgrp(shell_term, self.pgid)?;
+        let pgid = getpid();
+        setpgid(pgid, pgid)?;
+        tcsetpgrp(shell_term, pgid)?;
 
-        Ok(())
+        let tmods = tcgetattr(shell_term)?;
+
+        let os = Os {
+            pgid,
+            tmods,
+            jobs: HashMap::new(),
+            proc_state: HashMap::new(),
+        };
+        Ok(os)
     }
 
     pub fn shell_pgid(&self) -> Pid {
@@ -303,6 +307,7 @@ impl Os {
         tcsetpgrp(shell_term, self.shell_pgid())?;
 
         // TODO restore terminal mode
+        tcsetattr(shell_term, SetArg::TCSADRAIN, &self.tmods)?;
 
         Ok(proc_state)
     }

@@ -6,8 +6,7 @@ use shrs_lang::{
 };
 
 fn main() -> anyhow::Result<()> {
-    let mut os = Os::new();
-    os.init_shell()?;
+    let mut os = Os::init_shell()?;
 
     let inner_cmd = ast::Command::Pipeline(vec![
         Box::new(ast::Command::Simple {

@@ -18,11 +18,11 @@ impl BuiltinCmd for AgainBuiltin {
         ctx: &mut Context,
         _rt: &mut Runtime,
         _args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<Output> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
             print!("{}", state.last_command);
         }
 
-        dummy_child()
+        Ok(Output::success())
     }
 }

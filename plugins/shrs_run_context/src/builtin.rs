@@ -17,14 +17,14 @@ impl BuiltinCmd for SaveBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<Output> {
         let cli = SaveBuiltinCli::parse_from(vec!["save".to_string()].iter().chain(args.iter()));
 
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {
             state.run_contexts.insert(cli.context_name, rt.clone());
         }
 
-        dummy_child()
+        Ok(Output::success)
     }
 }
 
@@ -42,7 +42,7 @@ impl BuiltinCmd for LoadBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<Output> {
         use std::mem;
 
         let cli = LoadBuiltinCli::parse_from(vec!["load".to_string()].iter().chain(args.iter()));
@@ -53,6 +53,6 @@ impl BuiltinCmd for LoadBuiltin {
             }
         }
 
-        dummy_child()
+        Ok(Output::success())
     }
 }

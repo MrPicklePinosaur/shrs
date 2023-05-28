@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::{BuiltinCmd, Builtins};
+use super::{BuiltinCmd, Builtins, Output};
 use crate::{
     hooks::ChangeDirCtx,
-    shell::{dummy_child, Context, Runtime},
+    shell::{Context, Runtime},
     Shell,
 };
 
@@ -19,7 +19,7 @@ impl BuiltinCmd for HelpBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<std::process::Child> {
+    ) -> anyhow::Result<Output> {
         let cmds = sh.builtins.builtins.keys();
 
         println!("Builtin Commands:");
@@ -28,6 +28,6 @@ impl BuiltinCmd for HelpBuiltin {
             println!("{}", cmd);
         }
 
-        dummy_child()
+        Ok(Output::success())
     }
 }

@@ -9,10 +9,7 @@ mod jobs;
 mod source;
 mod unalias;
 
-use std::{
-    collections::{hash_map::Iter, HashMap},
-    process::Child,
-};
+use std::collections::{hash_map::Iter, HashMap};
 
 use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
@@ -35,6 +32,20 @@ macro_rules! hashmap (
 	}
     };
 );
+
+/// Output status for builtin command
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct Output(pub isize);
+
+impl Output {
+    pub fn success() -> Output {
+        Output(0)
+    }
+
+    pub fn error() -> Output {
+        Output(1)
+    }
+}
 
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
@@ -111,5 +122,5 @@ pub trait BuiltinCmd {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Child>;
+    ) -> anyhow::Result<Output>;
 }

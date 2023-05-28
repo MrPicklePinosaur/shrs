@@ -1,14 +1,11 @@
 //! Builtin command that has access to shell env for debug and prototyping
 
-use std::{
-    io::{stdout, Write},
-    process::Child,
-};
+use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::BuiltinCmd;
-use crate::shell::{dummy_child, Context, Runtime, Shell};
+use super::{BuiltinCmd, Output};
+use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
 struct Cli {
@@ -31,7 +28,7 @@ impl BuiltinCmd for DebugBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Child> {
+    ) -> anyhow::Result<Output> {
         let cli = Cli::parse_from(vec!["debug".to_string()].iter().chain(args.iter()));
 
         match &cli.command {
@@ -45,6 +42,6 @@ impl BuiltinCmd for DebugBuiltin {
             },
         }
 
-        dummy_child()
+        Ok(Output::success())
     }
 }

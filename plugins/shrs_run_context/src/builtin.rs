@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime, Shell};
+use shrs::prelude::*;
 
 use crate::RunContextState;
 
@@ -17,14 +17,14 @@ impl BuiltinCmd for SaveBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = SaveBuiltinCli::parse_from(vec!["save".to_string()].iter().chain(args.iter()));
 
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {
             state.run_contexts.insert(cli.context_name, rt.clone());
         }
 
-        Ok(Output::success)
+        Ok(BuiltinStatus::success())
     }
 }
 
@@ -42,7 +42,7 @@ impl BuiltinCmd for LoadBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         use std::mem;
 
         let cli = LoadBuiltinCli::parse_from(vec!["load".to_string()].iter().chain(args.iter()));
@@ -53,6 +53,6 @@ impl BuiltinCmd for LoadBuiltin {
             }
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

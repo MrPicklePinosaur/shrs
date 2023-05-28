@@ -4,7 +4,7 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
@@ -28,7 +28,7 @@ impl BuiltinCmd for DebugBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = Cli::parse_from(vec!["debug".to_string()].iter().chain(args.iter()));
 
         match &cli.command {
@@ -42,6 +42,6 @@ impl BuiltinCmd for DebugBuiltin {
             },
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

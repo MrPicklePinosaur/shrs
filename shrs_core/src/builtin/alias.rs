@@ -2,7 +2,7 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
@@ -23,12 +23,12 @@ impl BuiltinCmd for AliasBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = match Cli::try_parse_from(vec!["alias".to_string()].iter().chain(args.iter())) {
             Ok(cli) => cli,
             Err(e) => {
                 eprintln!("{}", e);
-                return Ok(Output::error());
+                return Ok(BuiltinStatus::error());
             },
         };
 
@@ -52,6 +52,6 @@ impl BuiltinCmd for AliasBuiltin {
             },
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

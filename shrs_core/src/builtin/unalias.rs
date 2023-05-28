@@ -2,7 +2,7 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
@@ -25,18 +25,18 @@ impl BuiltinCmd for UnaliasBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = Cli::parse_from(vec!["unalias".to_string()].iter().chain(args.iter()));
 
         if cli.a {
             ctx.alias.clear();
-            return Ok(Output::success());
+            return Ok(BuiltinStatus::success());
         }
 
         for alias in cli.aliases.iter() {
             ctx.alias.unset(alias);
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

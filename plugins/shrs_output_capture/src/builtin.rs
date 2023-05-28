@@ -1,4 +1,4 @@
-use shrs::{anyhow, builtin::BuiltinCmd, dummy_child, Context, Runtime, Shell};
+use shrs::prelude::*;
 
 use crate::OutputCaptureState;
 
@@ -18,11 +18,11 @@ impl BuiltinCmd for AgainBuiltin {
         ctx: &mut Context,
         _rt: &mut Runtime,
         _args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
             print!("{}", state.last_command);
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

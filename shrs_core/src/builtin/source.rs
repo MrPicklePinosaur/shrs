@@ -8,7 +8,7 @@ use std::{
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::{
     shell::{Context, Runtime},
     Shell,
@@ -28,9 +28,9 @@ impl BuiltinCmd for SourceBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         if args.len() != 1 {
-            return Ok(Output::error());
+            return Ok(BuiltinStatus::error());
         }
 
         let file_path_str = args.get(0).unwrap();
@@ -56,7 +56,7 @@ impl BuiltinCmd for SourceBuiltin {
                 // TODO temp disable this
                 // command_output(sh, ctx, rt, &mut child)?;
 
-                Ok(Output::success())
+                Ok(BuiltinStatus::success())
             },
             None => {
                 // otherwise evaluate with self

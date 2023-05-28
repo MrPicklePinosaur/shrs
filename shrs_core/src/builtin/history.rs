@@ -6,7 +6,7 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
@@ -32,7 +32,7 @@ impl BuiltinCmd for HistoryBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         // TODO hack
         let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
 
@@ -55,6 +55,6 @@ impl BuiltinCmd for HistoryBuiltin {
             },
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

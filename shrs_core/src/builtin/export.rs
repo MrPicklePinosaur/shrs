@@ -2,7 +2,7 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Output};
+use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Parser)]
@@ -27,7 +27,7 @@ impl BuiltinCmd for ExportBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output> {
+    ) -> anyhow::Result<BuiltinStatus> {
         let cli = Cli::parse_from(vec!["export".to_string()].iter().chain(args.iter()));
 
         // remove arg
@@ -35,7 +35,7 @@ impl BuiltinCmd for ExportBuiltin {
             for var in cli.vars {
                 rt.env.remove(&var);
             }
-            return Ok(Output::success());
+            return Ok(BuiltinStatus::success());
         }
 
         // print all env vars
@@ -43,7 +43,7 @@ impl BuiltinCmd for ExportBuiltin {
             for (var, val) in rt.env.all().iter() {
                 println!("export {}={}", var, val);
             }
-            return Ok(Output::success());
+            return Ok(BuiltinStatus::success());
         }
 
         for var in cli.vars {
@@ -54,6 +54,6 @@ impl BuiltinCmd for ExportBuiltin {
             rt.env.set(var, val);
         }
 
-        Ok(Output::success())
+        Ok(BuiltinStatus::success())
     }
 }

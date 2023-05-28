@@ -35,15 +35,15 @@ macro_rules! hashmap (
 
 /// Output status for builtin command
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct Output(pub isize);
+pub struct BuiltinStatus(pub isize);
 
-impl Output {
-    pub fn success() -> Output {
-        Output(0)
+impl BuiltinStatus {
+    pub fn success() -> BuiltinStatus {
+        BuiltinStatus(0)
     }
 
-    pub fn error() -> Output {
-        Output(1)
+    pub fn error() -> BuiltinStatus {
+        BuiltinStatus(1)
     }
 }
 
@@ -122,5 +122,5 @@ pub trait BuiltinCmd {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<Output>;
+    ) -> anyhow::Result<BuiltinStatus>;
 }

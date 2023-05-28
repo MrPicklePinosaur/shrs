@@ -38,6 +38,11 @@ fn main() -> anyhow::Result<()> {
         is_interactive: true,
     };
 
-    eval_command(&mut os, &cmd, &ctx);
+    let res = eval_command(&mut os, &cmd, &ctx)?;
+    match res {
+        process::ExitStatus::Exited(status) => println!("exited {status}"),
+        process::ExitStatus::Running(pid) => {},
+    }
+
     Ok(())
 }

@@ -79,10 +79,15 @@ pub fn eval_command(
                     // wait for last command in pipeline to finish
                     let jobid = os.create_job(pid, children)?;
 
-                    // Wait for job to finish executing and report exit status
-                    match os.wait_for_job(jobid)? {
-                        ProcessState::Running => ExitStatus::Running(pgid.unwrap()),
-                        ProcessState::Exited(status) => ExitStatus::Exited(status),
+                    if ctx.is_foreground {
+                        // Wait for job to finish executing and report exit status
+                        match os.run_in_foreground(jobid)? {
+                            ProcessState::Running => ExitStatus::Running(pgid.unwrap()),
+                            ProcessState::Exited(status) => ExitStatus::Exited(status),
+                        }
+                    } else {
+                        os.run_in_background(jobid)?;
+                        ExitStatus::Running(pid)
                     }
                 },
                 None => ExitStatus::Exited(0),
@@ -91,14 +96,12 @@ pub fn eval_command(
         },
         ast::Command::AsyncList(a_cmd, b_cmd) => {
             // spawn a_cmd in background
-            let res = eval_command(os, a_cmd, ctx)?;
-            match res {
-                ExitStatus::Exited(status) => {},
-                ExitStatus::Running(pid) => {
-                    // spawn new job
-                    let jobid = os.create_job(pid, vec![pid])?;
-                    os.run_in_background(jobid)?;
-                },
+            {
+                let ctx = process::Context {
+                    is_foreground: false,
+                    ..*ctx
+                };
+                eval_command(os, a_cmd, &ctx)?;
             }
 
             match b_cmd {

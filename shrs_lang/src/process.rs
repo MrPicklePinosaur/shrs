@@ -286,7 +286,7 @@ impl Os {
     }
 
     /// Place job onto foreground
-    pub fn run_in_foreground(&mut self, jobid: JobId) -> Result<(), std::io::Error> {
+    pub fn run_in_foreground(&mut self, jobid: JobId) -> Result<ProcessState, std::io::Error> {
         let shell_term = STDIN_FILENO;
 
         // Put the job into foreground
@@ -297,14 +297,14 @@ impl Os {
         kill(self.pgid, SIGCONT)?;
 
         // Wait for the job
-        self.wait_for_job(jobid)?;
+        let proc_state = self.wait_for_job(jobid)?;
 
         // Return foreground to the shell
         tcsetpgrp(shell_term, self.shell_pgid())?;
 
         // TODO restore terminal mode
 
-        Ok(())
+        Ok(proc_state)
     }
 
     /// Place job onto background

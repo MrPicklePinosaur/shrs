@@ -172,7 +172,7 @@ fn run_shell(
 
         match sh.lang.eval(sh, ctx, rt, line) {
             Ok(_) => {},
-            Err(_) => {},
+            Err(e) => eprintln!("{e:?}"),
         }
 
         // check up on running jobs

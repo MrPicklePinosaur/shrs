@@ -297,13 +297,15 @@ impl Os {
     ) -> Result<ProcessState, std::io::Error> {
         let shell_term = STDIN_FILENO;
 
+        let job = self.jobs.get(&jobid).unwrap();
+
         // Put the job into foreground
-        tcsetpgrp(shell_term, self.pgid)?;
+        tcsetpgrp(shell_term, job.pgid)?;
 
         // TODO also run tcsetattr
         // Send job continue signal
         if cont {
-            kill(self.pgid, SIGCONT)?;
+            kill(job.pgid, SIGCONT)?;
         }
 
         // Wait for the job

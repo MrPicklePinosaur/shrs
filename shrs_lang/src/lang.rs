@@ -68,7 +68,7 @@ impl Lang for PosixLang {
             is_interactive: true,
         };
         let mut os = self.os.borrow_mut();
-        let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx)?;
+        let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx).expect("eval failed");
         match res {
             process::ExitStatus::Exited(status) => println!("exited {status}"),
             process::ExitStatus::Running(pid) => println!("running {pid:?}"),

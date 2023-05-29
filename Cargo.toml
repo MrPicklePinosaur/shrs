@@ -13,4 +13,5 @@ members = [
     "plugins/shrs_derive_completion",
     "plugins/shrs_run_context",
     "plugins/shrs_mux",
+    "plugins/shrs_insulter"
 ]

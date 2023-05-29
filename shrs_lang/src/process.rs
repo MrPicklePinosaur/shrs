@@ -166,6 +166,18 @@ impl Job {
     }
 }
 
+/*
+/// Store context related to jobs
+pub struct JobMap {
+
+}
+
+/// Store status of all processes
+pub struct ProcMap {
+
+}
+*/
+
 /// Context related to state of processes and jobs
 pub struct Os {
     pgid: Pid,

@@ -1,14 +1,15 @@
 #[cfg(unix)]
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::RawFd;
 use std::{
     ffi::OsStr,
     fmt,
     fs::{File, OpenOptions},
     io, iter,
+    os::fd::AsRawFd,
     process::{Child, ChildStdout, Command, ExitStatus, Stdio},
 };
 
-pub const STDIN_FILENO: i32 = 0;
+use nix::libc::STDIN_FILENO;
 
 #[derive(Debug)]
 pub enum Stdin {
@@ -19,7 +20,7 @@ pub enum Stdin {
 }
 
 #[derive(Debug)]
-enum Output {
+pub enum Output {
     Inherit,
     File(File),
     FileDescriptor(i32),

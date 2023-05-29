@@ -3,11 +3,7 @@ use std::cell::RefCell;
 use shrs_core::Lang;
 use thiserror::Error;
 
-use crate::{
-    eval2, parser,
-    process::{self, Os},
-    Lexer, Parser,
-};
+use crate::{eval2, parser, Lexer, Parser};
 
 #[derive(Error, Debug)]
 pub enum PosixError {
@@ -28,16 +24,17 @@ pub enum PosixError {
 /// Posix implementation of shell command language
 pub struct PosixLang {
     // TODO move to Shell?
-    os: RefCell<Os>,
+    // os: RefCell<Os>,
 }
 
 impl PosixLang {
     pub fn new() -> Self {
         // TODO get rid of this unwrap
-        let os = Os::init_shell().unwrap();
-        Self {
-            os: RefCell::new(os),
-        }
+        // let os = Os::init_shell().unwrap();
+        // Self {
+        //     os: RefCell::new(os),
+        // }
+        Self {}
     }
 }
 
@@ -60,19 +57,19 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
-        let cmd_ctx = process::Context {
-            stdin: 0,
-            stdout: 1,
-            stderr: 2,
-            is_foreground: true,
-            is_interactive: true,
-        };
-        let mut os = self.os.borrow_mut();
-        let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx).expect("eval failed");
-        match res {
-            process::ExitStatus::Exited(status) => println!("exited {status}"),
-            process::ExitStatus::Running(pid) => println!("running {pid:?}"),
-        }
+        // let cmd_ctx = process::Context {
+        //     stdin: 0,
+        //     stdout: 1,
+        //     stderr: 2,
+        //     is_foreground: true,
+        //     is_interactive: true,
+        // };
+        // let mut os = self.os.borrow_mut();
+        // let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx).expect("eval failed");
+        // match res {
+        //     process::ExitStatus::Exited(status) => println!("exited {status}"),
+        //     process::ExitStatus::Running(pid) => println!("running {pid:?}"),
+        // }
 
         Ok(())
     }

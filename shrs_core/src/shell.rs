@@ -26,7 +26,6 @@ use crate::{
     jobs::{ExitStatus, Jobs},
     signal::Signals,
     state::State,
-    theme::Theme,
     Lang,
 };
 
@@ -37,8 +36,6 @@ pub struct Shell {
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
-    /// Color theme
-    pub theme: Theme,
     /// The command language
     pub lang: Box<dyn Lang>,
     /// Signals to be handled

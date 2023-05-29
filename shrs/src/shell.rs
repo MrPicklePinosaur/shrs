@@ -13,7 +13,7 @@ use shrs_core::{
     builtin::Builtins,
     dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
+    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State,
 };
 use shrs_lang::PosixLang;
 use shrs_line::{DefaultPrompt, Line, Prompt};
@@ -45,10 +45,7 @@ pub struct ShellConfig {
     // /// List of defined functions
     // #[builder(default = "HashMap::new()")]
     // pub functions: HashMap<String, Box<ast::Command>>,
-    /// Color theme
-    #[builder(default = "Theme::default()")]
-    pub theme: Theme,
-
+    //
     /// Command language
     #[builder(default = "Box::new(PosixLang::default())")]
     #[builder(setter(custom))]
@@ -115,7 +112,6 @@ impl ShellConfig {
         };
         let sh = Shell {
             builtins: self.builtins,
-            theme: self.theme,
             lang: self.lang,
             hooks: self.hooks,
             signals: Signals::new().unwrap(),

@@ -27,9 +27,6 @@ pub use shell::{dummy_child, Context, Runtime, Shell};
 mod signal;
 pub use signal::Signals;
 
-mod theme;
-pub use theme::Theme;
-
 mod state;
 pub use state::State;
 

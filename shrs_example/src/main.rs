@@ -160,7 +160,6 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin)
         .with_plugin(MuxPlugin)
-        .with_plugin(InsulterPlugin::new(vec![], 0.5, true))
         .build()
         .expect("Could not construct shell");
 

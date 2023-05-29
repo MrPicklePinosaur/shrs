@@ -10,4 +10,5 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 [dependencies]
 shrs = { path = "../../shrs" }
 rand = "0.8.5"
+lazy_static = "1.4.0"
 

@@ -1,21 +1,15 @@
+use std::cell::RefCell;
+
+use lazy_static::lazy_static;
 use rand::{rngs::ThreadRng, thread_rng, Rng};
 use shrs::{
     anyhow,
-    prelude::{AfterCommandCtx, Plugin, Print},
+    prelude::{AfterCommandCtx, Plugin},
     Context, Runtime, Shell,
 };
-
-pub struct InsulterState {
-    insults: Vec<String>,
-    freq: f32,
-    rand: ThreadRng,
-}
-
-impl InsulterState {
-    pub fn new(insults: Vec<String>, freq: f32, include_default: bool) -> Self {
-        let mut insults_c = insults.clone();
-        if include_default {
-            let mut def_insults: Vec<&str>  = vec![
+lazy_static! {
+    static ref DEFAULT_INSULTS: Vec<&'static str> = {
+        let def_insults: Vec<&str>  = vec![
                 "Boooo!",
                 "Don't you know anything?",
                 "RTFM!",
@@ -79,21 +73,34 @@ impl InsulterState {
                 "You can make a happy meal sad :(",
                 "I don't think you can write out the alphabet let alone code"
             ];
+        def_insults
+    };
+}
 
-            insults_c.append(&mut def_insults.iter().map(|i| i.to_string()).collect());
+pub struct InsulterState {
+    insults: RefCell<Vec<String>>,
+    freq: f32,
+}
+
+impl InsulterState {
+    pub fn new(insults: Vec<String>, freq: f32, include_default: bool) -> Self {
+        let mut insults_c = insults.clone();
+        if include_default {
+            insults_c.append(&mut DEFAULT_INSULTS.iter().map(|i| i.to_string()).collect());
         }
         Self {
-            insults: insults_c.iter().map(|i| i.to_string()).collect(),
+            insults: RefCell::new(insults_c.iter().map(|i| i.to_string()).collect()),
             freq,
-            rand: thread_rng(),
         }
     }
 
-    fn should_insult(&mut self) -> bool {
-        self.rand.gen::<f32>() <= self.freq
+    fn should_insult(&self) -> bool {
+        thread_rng().gen::<f32>() <= self.freq
     }
-    fn rand_insult(&mut self) -> &str {
-        return self.insults[self.rand.gen_range(0..self.insults.len())].as_str();
+    fn rand_insult(&self) -> String {
+        let i = self.insults.borrow_mut();
+
+        return i[thread_rng().gen_range(0..i.len())].clone();
     }
 }
 pub struct InsulterPlugin {
@@ -120,6 +127,11 @@ impl Plugin for InsulterPlugin {
             self.freq,
             self.include_default,
         ));
+    }
+}
+impl Default for InsulterPlugin {
+    fn default() -> Self {
+        Self::new(vec![], 1., true)
     }
 }
 fn insult_hook(

@@ -1309,6 +1309,7 @@ dependencies = [
 name = "shrs_insulter"
 version = "0.1.0"
 dependencies = [
+ "lazy_static",
  "rand",
  "shrs",
 ]

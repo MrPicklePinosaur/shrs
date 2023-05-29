@@ -81,12 +81,12 @@ pub fn eval_command(
 
                     if ctx.is_foreground {
                         // Wait for job to finish executing and report exit status
-                        match os.run_in_foreground(jobid)? {
-                            ProcessState::Running => ExitStatus::Running(pgid.unwrap()),
+                        match os.run_in_foreground(jobid, false)? {
                             ProcessState::Exited(status) => ExitStatus::Exited(status),
+                            ProcessState::Running => unreachable!(),
                         }
                     } else {
-                        os.run_in_background(jobid)?;
+                        os.run_in_background(jobid, false)?;
                         ExitStatus::Running(pid)
                     }
                 },

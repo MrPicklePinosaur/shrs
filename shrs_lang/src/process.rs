@@ -290,7 +290,11 @@ impl Os {
     }
 
     /// Place job onto foreground
-    pub fn run_in_foreground(&mut self, jobid: JobId) -> Result<ProcessState, std::io::Error> {
+    pub fn run_in_foreground(
+        &mut self,
+        jobid: JobId,
+        cont: bool,
+    ) -> Result<ProcessState, std::io::Error> {
         let shell_term = STDIN_FILENO;
 
         // Put the job into foreground
@@ -298,7 +302,9 @@ impl Os {
 
         // TODO also run tcsetattr
         // Send job continue signal
-        kill(self.pgid, SIGCONT)?;
+        if cont {
+            kill(self.pgid, SIGCONT)?;
+        }
 
         // Wait for the job
         let proc_state = self.wait_for_job(jobid)?;
@@ -313,9 +319,11 @@ impl Os {
     }
 
     /// Place job onto background
-    pub fn run_in_background(&self, jobid: JobId) -> Result<(), std::io::Error> {
-        let job = self.jobs.get(&jobid).unwrap();
-        kill(job.pgid, SIGCONT)?;
+    pub fn run_in_background(&self, jobid: JobId, cont: bool) -> Result<(), std::io::Error> {
+        if cont {
+            let job = self.jobs.get(&jobid).unwrap();
+            kill(job.pgid, SIGCONT)?;
+        }
         Ok(())
     }
 }

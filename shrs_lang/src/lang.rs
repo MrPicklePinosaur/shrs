@@ -69,6 +69,10 @@ impl Lang for PosixLang {
         };
         let mut os = self.os.borrow_mut();
         let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx)?;
+        match res {
+            process::ExitStatus::Exited(status) => println!("exited {status}"),
+            process::ExitStatus::Running(pid) => println!("running {pid:?}"),
+        }
 
         Ok(())
     }

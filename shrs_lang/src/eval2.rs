@@ -14,8 +14,32 @@ pub struct Os {
     last_exit_status: ExitStatus,
 }
 
+pub fn run_job(
+    job_manager: &mut JobManager,
+    procs: Vec<Box<dyn Process>>,
+    pgid: Option<u32>,
+    foreground: bool,
+) -> anyhow::Result<()> {
+    let proc_group = ProcessGroup {
+        id: pgid,
+        processes: procs,
+        foreground,
+    };
+
+    let is_foreground = proc_group.foreground;
+    let job_id = job_manager.create_job("", proc_group);
+
+    if is_foreground {
+        job_manager.put_job_in_foreground(Some(job_id), false)?;
+    } else {
+        job_manager.put_job_in_background(Some(job_id), false)?;
+    }
+    Ok(())
+}
+
 /// Returns group of processes and also the pgid if it has one
 pub fn eval_command(
+    job_manager: &mut JobManager,
     cmd: &ast::Command,
     stdin: Option<Stdin>,
     stdout: Option<Output>,
@@ -44,16 +68,27 @@ pub fn eval_command(
             Ok((vec![proc], pgid))
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {
-            // Create a process group
-            let (mut a_procs, a_pgid) = eval_command(a_cmd, stdin, Some(Output::CreatePipe))?;
-            let (b_procs, b_pgid) =
-                eval_command(b_cmd, a_procs.last_mut().unwrap().stdout(), stdout)?;
+            let (mut a_procs, a_pgid) =
+                eval_command(job_manager, a_cmd, stdin, Some(Output::CreatePipe))?;
+            let (b_procs, b_pgid) = eval_command(
+                job_manager,
+                b_cmd,
+                a_procs.last_mut().unwrap().stdout(),
+                stdout,
+            )?;
             a_procs.extend(b_procs);
             Ok((a_procs, b_pgid))
         },
         ast::Command::AsyncList(a_cmd, b_cmd) => {
-            // create a process group
-            todo!()
+            // TODO double check stdin and stdout
+            let (procs, pgid) = eval_command(job_manager, a_cmd, None, None)?;
+            run_job(job_manager, procs, pgid, false)?;
+
+            if let Some(b_cmd) = b_cmd {
+                eval_command(job_manager, b_cmd, None, None)
+            } else {
+                Ok((vec![], None))
+            }
         },
         ast::Command::None => Ok((vec![], None)),
         _ => todo!(),

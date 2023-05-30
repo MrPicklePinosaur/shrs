@@ -4,7 +4,10 @@ use shrs_core::Lang;
 use shrs_job::{initialize_job_control, JobManager, ProcessGroup};
 use thiserror::Error;
 
-use crate::{eval2, parser, Lexer, Parser};
+use crate::{
+    eval2::{self, run_job},
+    parser, Lexer, Parser,
+};
 
 #[derive(Error, Debug)]
 pub enum PosixError {
@@ -50,7 +53,7 @@ impl Lang for PosixLang {
     ) -> anyhow::Result<()> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let mut parser = Parser::new();
+        let parser = Parser::new();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {
@@ -61,22 +64,11 @@ impl Lang for PosixLang {
         };
         println!("{:?}", cmd);
 
-        let (procs, pgid) = eval2::eval_command(&cmd, None, None)?;
-        let proc_group = ProcessGroup {
-            id: pgid,
-            processes: procs,
-            foreground: true,
-        };
-
         let mut job_manager = JobManager::default();
-        let is_foreground = proc_group.foreground;
-        let job_id = job_manager.create_job("", proc_group);
+        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
 
-        if is_foreground {
-            job_manager.put_job_in_foreground(Some(job_id), false)?;
-        } else {
-            todo!()
-        }
+        run_job(&mut job_manager, procs, pgid, true)?;
+
         Ok(())
     }
 }

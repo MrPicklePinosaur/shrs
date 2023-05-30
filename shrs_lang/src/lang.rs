@@ -1,9 +1,13 @@
 use std::cell::RefCell;
 
 use shrs_core::Lang;
+use shrs_job::{initialize_job_control, JobManager, ProcessGroup};
 use thiserror::Error;
 
-use crate::{eval2, parser, Lexer, Parser};
+use crate::{
+    eval2::{self, run_job},
+    parser, Lexer, Parser,
+};
 
 #[derive(Error, Debug)]
 pub enum PosixError {
@@ -34,6 +38,7 @@ impl PosixLang {
         // Self {
         //     os: RefCell::new(os),
         // }
+        initialize_job_control().unwrap();
         Self {}
     }
 }
@@ -48,7 +53,7 @@ impl Lang for PosixLang {
     ) -> anyhow::Result<()> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let mut parser = Parser::new();
+        let parser = Parser::new();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {
@@ -57,20 +62,12 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
-        eval2::eval_command(&cmd)?;
-        // let cmd_ctx = process::Context {
-        //     stdin: 0,
-        //     stdout: 1,
-        //     stderr: 2,
-        //     is_foreground: true,
-        //     is_interactive: true,
-        // };
-        // let mut os = self.os.borrow_mut();
-        // let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx).expect("eval failed");
-        // match res {
-        //     process::ExitStatus::Exited(status) => println!("exited {status}"),
-        //     process::ExitStatus::Running(pid) => println!("running {pid:?}"),
-        // }
+        println!("{:?}", cmd);
+
+        let mut job_manager = JobManager::default();
+        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
+
+        run_job(&mut job_manager, procs, pgid, true)?;
 
         Ok(())
     }

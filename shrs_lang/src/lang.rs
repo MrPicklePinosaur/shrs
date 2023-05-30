@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 
 use shrs_core::Lang;
+use shrs_job::{initialize_job_control, JobManager, ProcessGroup};
 use thiserror::Error;
 
 use crate::{eval2, parser, Lexer, Parser};
@@ -34,6 +35,7 @@ impl PosixLang {
         // Self {
         //     os: RefCell::new(os),
         // }
+        initialize_job_control().unwrap();
         Self {}
     }
 }
@@ -57,21 +59,24 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
-        eval2::eval_command(&cmd)?;
-        // let cmd_ctx = process::Context {
-        //     stdin: 0,
-        //     stdout: 1,
-        //     stderr: 2,
-        //     is_foreground: true,
-        //     is_interactive: true,
-        // };
-        // let mut os = self.os.borrow_mut();
-        // let res = eval2::eval_command(&mut os, &cmd, &cmd_ctx).expect("eval failed");
-        // match res {
-        //     process::ExitStatus::Exited(status) => println!("exited {status}"),
-        //     process::ExitStatus::Running(pid) => println!("running {pid:?}"),
-        // }
+        println!("{:?}", cmd);
 
+        let (procs, pgid) = eval2::eval_command(&cmd)?;
+        let proc_group = ProcessGroup {
+            id: pgid,
+            processes: procs,
+            foreground: true,
+        };
+
+        let mut job_manager = JobManager::default();
+        let is_foreground = proc_group.foreground;
+        let job_id = job_manager.create_job("", proc_group);
+
+        if is_foreground {
+            job_manager.put_job_in_foreground(Some(job_id), false)?;
+        } else {
+            todo!()
+        }
         Ok(())
     }
 }

@@ -46,6 +46,7 @@ pub fn eval_command(cmd: &ast::Command) -> anyhow::Result<(Vec<Box<dyn Process>>
             // create a process group
             todo!()
         },
+        ast::Command::None => Ok((vec![], None)),
         _ => todo!(),
     }
 }

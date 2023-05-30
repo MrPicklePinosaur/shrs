@@ -5,9 +5,11 @@ use std::{
     process::{Child, ChildStdout, Command, ExitStatus, Stdio},
 };
 
+use log::*;
 use nix::libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 
 use super::{io::Stdin, pid_t, util, Output};
+use crate::log_if_err;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ProcessId(u32);
@@ -304,8 +306,7 @@ where
         Ok(child) => child,
         Err(e) => {
             if job_control_is_enabled {
-                // use log::warn;
-                // warn!("failed to spawn child, resetting terminal's pgrp");
+                warn!("failed to spawn child, resetting terminal's pgrp");
                 // see above comment for tcsetpgrp(2) failing being programmer
                 // error
                 unistd::tcsetpgrp(util::get_terminal(), unistd::getpgrp()).unwrap();
@@ -322,12 +323,12 @@ where
             Pid::from_raw(pgid as pid_t),
         );
 
-        // log_if_err!(
-        //     temp_result,
-        //     "failed to set pgid ({}) for pid ({})",
-        //     child.id(),
-        //     pgid
-        // );
+        log_if_err!(
+            temp_result,
+            "failed to set pgid ({}) for pid ({})",
+            child.id(),
+            pgid
+        );
     }
 
     Ok((

@@ -5,6 +5,7 @@ use std::{
     process::{self, ExitStatus},
 };
 
+use log::*;
 use nix::{
     sys::{
         signal::{self, SigHandler, Signal},
@@ -18,6 +19,7 @@ use super::{
     process::{Process, ProcessGroup, ProcessStatus},
     util,
 };
+use crate::log_if_err;
 
 pub type pid_t = i32;
 
@@ -115,7 +117,7 @@ impl JobManager {
         let job_id = job_id
             .or(self.current_job)
             .ok_or_else(|| Error::NoSuchJob("current".into()))?;
-        // debug!("putting job [{}] in foreground", job_id);
+        debug!("putting job [{}] in foreground", job_id);
 
         let _terminal_state = {
             let job_index = self
@@ -134,11 +136,11 @@ impl JobManager {
                         termios::SetArg::TCSADRAIN,
                         tmodes,
                     );
-                    // log_if_err!(
-                    //     temp_result,
-                    //     "error setting terminal configuration for job ({})",
-                    //     job_id
-                    // );
+                    log_if_err!(
+                        temp_result,
+                        "error setting terminal configuration for job ({})",
+                        job_id
+                    );
                 }
                 if let Some(ref pgid) = job_pgid {
                     signal::kill(Pid::from_raw(-pgid), Signal::SIGCONT)?;
@@ -157,7 +159,7 @@ impl JobManager {
         let job_id = job_id
             .or(self.current_job)
             .ok_or_else(|| Error::NoSuchJob("current".into()))?;
-        // debug!("putting job [{}] in background", job_id);
+        debug!("putting job [{}] in background", job_id);
 
         let job_pgid = {
             let job_index = self
@@ -200,7 +202,7 @@ impl JobManager {
     /// jobs from the active job list.
     pub fn do_job_notification(&mut self) {
         let temp_result = self.update_job_statues();
-        // log_if_err!(temp_result, "do_job_notification");
+        log_if_err!(temp_result, "do_job_notification");
 
         for job in &mut self.jobs.iter_mut() {
             if job.is_completed() && !job.last_running_in_foreground() {
@@ -401,7 +403,7 @@ struct TerminalState {
 
 impl TerminalState {
     fn new(new_pgid: Pid) -> TerminalState {
-        // debug!("setting terminal process group to job's process group");
+        debug!("setting terminal process group to job's process group");
         let shell_terminal = util::get_terminal();
         unistd::tcsetpgrp(shell_terminal, new_pgid).unwrap();
         TerminalState {
@@ -413,16 +415,16 @@ impl TerminalState {
 
 impl Drop for TerminalState {
     fn drop(&mut self) {
-        // debug!("putting shell back into foreground and restoring shell's terminal modes");
+        debug!("putting shell back into foreground and restoring shell's terminal modes");
         let shell_terminal = util::get_terminal();
         unistd::tcsetpgrp(shell_terminal, self.prev_pgid).unwrap();
         if let Some(ref prev_tmodes) = self.prev_tmodes {
             let temp_result =
                 termios::tcsetattr(shell_terminal, termios::SetArg::TCSADRAIN, prev_tmodes);
-            // log_if_err!(
-            //     temp_result,
-            //     "error restoring terminal configuration for shell"
-            // );
+            log_if_err!(
+                temp_result,
+                "error restoring terminal configuration for shell"
+            );
         }
     }
 }

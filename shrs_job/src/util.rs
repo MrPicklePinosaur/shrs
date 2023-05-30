@@ -7,6 +7,25 @@ use nix::{
 
 use super::job::pid_t;
 
+#[macro_export]
+macro_rules! log_if_err {
+    ($result:expr) => {{
+        if let Err(e) = $result {
+            log::error!("{}", e);
+        }
+    }};
+    ($result:expr, $fmt:expr) => {{
+        if let Err(e) = $result {
+            log::error!(concat!($fmt, ": {}"), e);
+        }
+    }};
+    ($result:expr, $fmt:expr, $($arg:tt)*) => {{
+        if let Err(e) = $result {
+            log::error!(concat!($fmt, ": {}"), $($arg)*, e);
+        }
+    }};
+}
+
 pub fn get_terminal() -> RawFd {
     std::io::stdin().as_raw_fd()
 }
@@ -40,7 +59,7 @@ pub fn initialize_job_control() -> anyhow::Result<()> {
     // Grab control of the terminal and save default terminal attributes
     let shell_terminal = get_terminal();
     let temp_result = unistd::tcsetpgrp(shell_terminal, shell_pgid);
-    // log_if_err!(temp_result, "failed to grab control of terminal");
+    log_if_err!(temp_result, "failed to grab control of terminal");
 
     Ok(())
 }

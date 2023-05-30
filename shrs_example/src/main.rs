@@ -52,6 +52,8 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
+    env_logger::init();
+
     let _out = BufWriter::new(stdout());
 
     // =-=-= Configuration directory =-=-=

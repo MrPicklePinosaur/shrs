@@ -13,4 +13,4 @@ nix = { version = "0.26", default-features = false, features = ["fs", "term", "p
 lazy_static = "1.4"
 thiserror = "1"
 anyhow = "1"
-
+log = "0.4"

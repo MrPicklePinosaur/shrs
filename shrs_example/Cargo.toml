@@ -21,6 +21,9 @@ dirs = "5"
 anyhow = "1"
 crossterm = "0.26"
 
+log = "0.4"
+env_logger = "0.10"
+
 [build-dependencies]
 chrono = "0.4"
 

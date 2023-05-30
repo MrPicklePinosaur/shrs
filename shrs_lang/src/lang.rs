@@ -57,6 +57,7 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
+        eval2::eval_command(&cmd)?;
         // let cmd_ctx = process::Context {
         //     stdin: 0,
         //     stdout: 1,

@@ -100,16 +100,13 @@ pub AndOr: ast::Command = {
 }
 
 pub Pipeline: ast::Command = {
-    "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ast::Command::Pipeline(ps))),
-    <ps:PipeSequence> => ast::Command::Pipeline(ps),
+    "!" <ps:PipeSequence> => ast::Command::Not(Box::new(ps)),
+    <ps:PipeSequence> => ps,
 }
 
-pub PipeSequence: Vec<Box<ast::Command>> = {
-    <mut ps:PipeSequence> "|" Linebreak <c:Command> => {
-        ps.push(Box::new(c)); 
-        ps
-    },
-    <c:Command> => vec![Box::new(c)],
+pub PipeSequence: ast::Command = {
+    <ps:PipeSequence> "|" Linebreak <c:Command> => ast::Command::Pipeline(Box::new(ps), Box::new(c)),
+    <c:Command> => c,
 }
 
 pub Command: ast::Command = {

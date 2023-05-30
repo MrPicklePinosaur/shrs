@@ -13,7 +13,7 @@ use shrs_core::{
     builtin::Builtins,
     dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
+    Alias, Context, Env, Lang, Runtime, Shell, Signals, State, Theme,
 };
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
@@ -101,7 +101,6 @@ impl ShellConfig {
             alias: self.alias,
             out: BufWriter::new(stdout()),
             state: self.state,
-            jobs: Jobs::new(),
             startup_time: Instant::now(),
         };
         let mut rt = Runtime {
@@ -178,14 +177,14 @@ fn run_shell(
         }
 
         // check up on running jobs
-        let mut exit_statuses = vec![];
-        ctx.jobs.retain(|status: ExitStatus| {
-            exit_statuses.push(status);
-        });
+        // let mut exit_statuses = vec![];
+        // ctx.jobs.retain(|status: ExitStatus| {
+        //     exit_statuses.push(status);
+        // });
 
-        for status in exit_statuses.into_iter() {
-            sh.hooks
-                .run::<JobExitCtx>(sh, ctx, rt, JobExitCtx { status });
-        }
+        // for status in exit_statuses.into_iter() {
+        //     sh.hooks
+        //         .run::<JobExitCtx>(sh, ctx, rt, JobExitCtx { status });
+        // }
     }
 }

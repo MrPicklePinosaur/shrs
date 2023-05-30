@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     env,
     path::{Path, PathBuf},
 };
@@ -21,8 +22,9 @@ impl BuiltinCmd for JobsBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        for (job_id, _) in ctx.jobs.iter() {
-            println!("{}", job_id);
+        let job_manager = sh.job_manager.borrow();
+        for job in job_manager.get_jobs() {
+            println!("{} {}", job.id(), job.display());
         }
 
         Ok(BuiltinStatus::success())

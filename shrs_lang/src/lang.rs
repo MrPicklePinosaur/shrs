@@ -57,7 +57,8 @@ impl Lang for PosixLang {
         println!("{:?}", cmd);
 
         let mut job_manager = sh.job_manager.borrow_mut();
-        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
+        job_manager.do_job_notification();
+        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None, None)?;
 
         run_job(&mut job_manager, procs, pgid, true)?;
 

@@ -1235,6 +1235,7 @@ dependencies = [
  "ron",
  "serde",
  "shrs_core",
+ "shrs_job",
  "shrs_lang",
  "shrs_line",
  "signal-hook",
@@ -1272,6 +1273,7 @@ dependencies = [
  "pino_deref",
  "regex",
  "rexpect",
+ "shrs_job",
  "signal-hook",
  "thiserror",
 ]

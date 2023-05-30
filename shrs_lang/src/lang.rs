@@ -26,18 +26,10 @@ pub enum PosixError {
 }
 
 /// Posix implementation of shell command language
-pub struct PosixLang {
-    // TODO move to Shell?
-    // os: RefCell<Os>,
-}
+pub struct PosixLang {}
 
 impl PosixLang {
     pub fn new() -> Self {
-        // TODO get rid of this unwrap
-        // let os = Os::init_shell().unwrap();
-        // Self {
-        //     os: RefCell::new(os),
-        // }
         initialize_job_control().unwrap();
         Self {}
     }
@@ -64,7 +56,7 @@ impl Lang for PosixLang {
         };
         println!("{:?}", cmd);
 
-        let mut job_manager = JobManager::default();
+        let mut job_manager = sh.job_manager.borrow_mut();
         let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
 
         run_job(&mut job_manager, procs, pgid, true)?;

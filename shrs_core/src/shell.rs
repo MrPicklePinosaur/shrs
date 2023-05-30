@@ -16,6 +16,7 @@ use std::{
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
+use shrs_job::JobManager;
 use thiserror::Error;
 
 use crate::{
@@ -34,6 +35,7 @@ use crate::{
 ///
 /// Data here is generally not mutated at runtime.
 pub struct Shell {
+    pub job_manager: RefCell<JobManager>,
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,

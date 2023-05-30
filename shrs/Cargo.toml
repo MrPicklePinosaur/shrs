@@ -25,6 +25,7 @@ lazy_static = "1.4"
 shrs_core = { path = "../shrs_core" }
 shrs_line = { path = "../shrs_line" }
 shrs_lang = { path = "../shrs_lang" }
+shrs_job = { path = "../shrs_job" }
 
 [dev-dependencies]
 rexpect = "0.5"

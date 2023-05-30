@@ -15,6 +15,7 @@ use shrs_core::{
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
 };
+use shrs_job::JobManager;
 use shrs_lang::PosixLang;
 use shrs_line::{DefaultPrompt, Line, Prompt};
 use thiserror::Error;
@@ -114,6 +115,7 @@ impl ShellConfig {
             // functions: self.functions,
         };
         let sh = Shell {
+            job_manager: RefCell::new(JobManager::default()),
             builtins: self.builtins,
             theme: self.theme,
             lang: self.lang,

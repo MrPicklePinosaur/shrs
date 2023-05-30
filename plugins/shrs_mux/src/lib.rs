@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-use lang::{MuxLang, NuLang, PythonLang};
+use lang::{BashLang, MuxLang, NuLang, PythonLang};
 use shrs::prelude::*;
 
 pub struct MuxState {
@@ -67,6 +67,7 @@ impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) {
         // This might be able to be indexed by typeid?
         let langs: Vec<(String, Box<dyn Lang>)> = vec![
+            ("bash".into(), Box::new(BashLang::new()) as Box<dyn Lang>),
             (
                 "shrs".into(),
                 Box::new(PosixLang::default()) as Box<dyn Lang>,

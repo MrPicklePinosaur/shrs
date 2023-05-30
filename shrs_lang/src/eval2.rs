@@ -4,11 +4,9 @@ use std::process::ExitStatus;
 
 use nix::unistd::{close, pipe, setpgid, Pid};
 use shrs_core::{Context, Runtime, Shell};
+use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 
-use crate::{
-    ast,
-    job_control::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin},
-};
+use crate::ast;
 
 pub struct Os {
     job_manager: JobManager,

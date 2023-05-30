@@ -19,7 +19,5 @@ pub mod eval2;
 
 // pub mod process;
 
-pub mod job_control;
-
 mod lang;
 pub use lang::{PosixError, PosixLang};

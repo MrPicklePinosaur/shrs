@@ -10,6 +10,7 @@ build = "build.rs"
 
 [dependencies]
 shrs_core = { path = "../shrs_core" }
+shrs_job = { path = "../shrs_job" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}

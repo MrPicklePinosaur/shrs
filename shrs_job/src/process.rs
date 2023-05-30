@@ -7,8 +7,7 @@ use std::{
 
 use nix::libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 
-use super::{io::Stdin, util, Output};
-use crate::job_control::pid_t;
+use super::{io::Stdin, pid_t, util, Output};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ProcessId(u32);

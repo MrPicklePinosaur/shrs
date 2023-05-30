@@ -61,7 +61,7 @@ impl Lang for PosixLang {
         };
         println!("{:?}", cmd);
 
-        let (procs, pgid) = eval2::eval_command(&cmd)?;
+        let (procs, pgid) = eval2::eval_command(&cmd, None, None)?;
         let proc_group = ProcessGroup {
             id: pgid,
             processes: procs,

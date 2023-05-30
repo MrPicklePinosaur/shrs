@@ -15,7 +15,11 @@ pub struct Os {
 }
 
 /// Returns group of processes and also the pgid if it has one
-pub fn eval_command(cmd: &ast::Command) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
+pub fn eval_command(
+    cmd: &ast::Command,
+    stdin: Option<Stdin>,
+    stdout: Option<Output>,
+) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
     match cmd {
         ast::Command::Simple {
             assigns,
@@ -25,11 +29,15 @@ pub fn eval_command(cmd: &ast::Command) -> anyhow::Result<(Vec<Box<dyn Process>>
             let mut args_it = args.iter();
             let program = args_it.next().unwrap();
             let args = args_it.collect::<Vec<_>>();
+
+            let proc_stdin = stdin.unwrap_or(Stdin::Inherit);
+            let proc_stdout = stdout.unwrap_or(Output::Inherit);
+
             let (proc, pgid) = run_external_command(
                 program,
                 &args,
-                Stdin::Inherit,
-                Output::Inherit,
+                proc_stdin,
+                proc_stdout,
                 Output::Inherit,
                 None,
             )?;
@@ -37,8 +45,9 @@ pub fn eval_command(cmd: &ast::Command) -> anyhow::Result<(Vec<Box<dyn Process>>
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {
             // Create a process group
-            let (mut a_procs, a_pgid) = eval_command(a_cmd)?;
-            let (b_procs, b_pgid) = eval_command(b_cmd)?;
+            let (mut a_procs, a_pgid) = eval_command(a_cmd, stdin, Some(Output::CreatePipe))?;
+            let (b_procs, b_pgid) =
+                eval_command(b_cmd, a_procs.last_mut().unwrap().stdout(), stdout)?;
             a_procs.extend(b_procs);
             Ok((a_procs, b_pgid))
         },

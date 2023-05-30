@@ -50,7 +50,7 @@ pub struct ShellConfig {
     pub theme: Theme,
 
     /// Command language
-    #[builder(default = "Box::new(PosixLang::default())")]
+    #[builder(default = "Box::new(PosixLang::new())")]
     #[builder(setter(custom))]
     pub lang: Box<dyn Lang>,
 
@@ -172,7 +172,7 @@ fn run_shell(
 
         match sh.lang.eval(sh, ctx, rt, line) {
             Ok(_) => {},
-            Err(_) => {},
+            Err(e) => eprintln!("{e:?}"),
         }
 
         // check up on running jobs

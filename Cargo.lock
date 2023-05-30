@@ -1268,6 +1268,7 @@ dependencies = [
  "derive_builder",
  "dirs",
  "lazy_static",
+ "nix 0.26.2",
  "pino_deref",
  "regex",
  "rexpect",
@@ -1315,6 +1316,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_job"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "nix 0.26.2",
+ "thiserror",
+]
+
+[[package]]
 name = "shrs_lang"
 version = "0.1.0"
 dependencies = [
@@ -1327,6 +1338,7 @@ dependencies = [
  "regex",
  "rexpect",
  "shrs_core",
+ "shrs_job",
  "thiserror",
 ]
 

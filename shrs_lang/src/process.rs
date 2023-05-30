@@ -1,6 +1,7 @@
 //! Process management
 
 use std::{
+    collections::HashMap,
     ffi::{CStr, CString},
     io::{stdin, Stdin},
     os::fd::{AsRawFd, RawFd},
@@ -8,10 +9,15 @@ use std::{
 };
 
 use nix::{
-    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO},
-    sys::signal::{
-        kill, signal, sigprocmask, SigHandler, SigmaskHow,
-        Signal::{self, SIGTTIN},
+    libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO, TCSADRAIN, WNOHANG, WUNTRACED},
+    sys::{
+        signal::{
+            kill, signal, sigprocmask, SigHandler, SigmaskHow,
+            Signal::{self, SIGCONT, SIGTTIN},
+        },
+        signalfd::SigSet,
+        termios::{tcgetattr, tcsetattr, SetArg, Termios},
+        wait::{waitpid, WaitPidFlag, WaitStatus},
     },
     unistd::{
         close, dup2, execvp, fork, getpgrp, getpid, isatty, setpgid, tcgetpgrp, tcsetpgrp,
@@ -27,12 +33,17 @@ pub struct Process {
     pub argv: Vec<String>,
 }
 
+/// Unique identifier to keep track of job
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct JobId(pub usize);
+
 /// A job corresponds to a pipeline of processes
 pub struct Job {
+    pub jobid: JobId,
     /// Process group id
     pub pgid: Pid,
     /// All of the processes in this job
-    pub proceses: Vec<Process>,
+    pub proceses: Vec<Pid>,
 }
 
 /// Execution context for a process
@@ -46,6 +57,13 @@ pub struct Context {
     pub is_interactive: bool,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum ProcessState {
+    Running,
+    Exited(i32),
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum ExitStatus {
     Exited(i32),
     Running(Pid),
@@ -60,7 +78,7 @@ pub enum Pgid {
 
 // Run a command
 pub fn run_process(
-    argv: Vec<String>,
+    argv: &Vec<String>,
     pgid: Pgid,
     ctx: &Context,
 ) -> Result<ExitStatus, std::io::Error> {
@@ -75,7 +93,8 @@ pub fn run_process(
     }
 }
 
-fn setup_process(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
+// Code to run in child after new process is forked
+fn setup_process(argv: &Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std::io::Error> {
     // If interactive need to give the current process control of the tty
     let shell_term = STDIN_FILENO;
     if ctx.is_interactive {
@@ -128,43 +147,197 @@ fn setup_process(argv: Vec<String>, pgid: Pgid, ctx: &Context) -> Result<(), std
 }
 
 impl Job {
-    pub fn leader(&self) -> &Process {
-        // Job should always have at least one process in the pipeline
-        // &self.pipeline.get(0).unwrap()
-        todo!()
+    /// Check job has completed
+    ///
+    /// Jobs are completed when all the processes in the job has completed
+    pub fn exited(&self, os: &Os) -> bool {
+        self.proceses.iter().all(|pid| {
+            let state = os.get_process_state(pid).expect("missing process");
+            matches!(state, ProcessState::Exited(_))
+        })
+    }
+
+    /// Get the state of the last process in the job
+    pub fn last_process_state(&self, os: &Os) -> Option<ProcessState> {
+        self.proceses
+            .iter()
+            .last()
+            .map(|pid| os.get_process_state(pid).expect("missing process").clone())
     }
 }
 
-/// Initialize job control for the shell
-pub fn init_shell() -> Result<(), std::io::Error> {
-    // Check if the current shell is allowed to run it's own job control
-    let shell_term = STDIN_FILENO;
+/*
+/// Store context related to jobs
+pub struct JobMap {
 
-    if !isatty(shell_term)? {
-        return Ok(());
+}
+
+/// Store status of all processes
+pub struct ProcMap {
+
+}
+*/
+
+/// Context related to state of processes and jobs
+pub struct Os {
+    pgid: Pid,
+    tmods: Termios,
+    jobs: HashMap<JobId, Job>,
+    proc_state: HashMap<Pid, ProcessState>,
+}
+
+impl Os {
+    /// Initialize job control for the shell
+    pub fn init_shell() -> Result<Self, std::io::Error> {
+        // Check if the current shell is allowed to run it's own job control
+        let shell_term = STDIN_FILENO;
+
+        if !isatty(shell_term)? {
+            // return Ok(());
+            panic!("Not interactive")
+        }
+
+        // Wait until parent puts us into foreground
+        while tcgetpgrp(shell_term)? != getpgrp() {
+            // SIGTTIN tells process to suspend since it's not in foreground
+            kill(getpgrp(), SIGTTIN)?;
+        }
+
+        // Ignore interactive and job control signals
+        // TODO double check correctness of unsafe code
+        unsafe {
+            signal(Signal::SIGINT, SigHandler::SigIgn);
+            signal(Signal::SIGQUIT, SigHandler::SigIgn);
+            signal(Signal::SIGTSTP, SigHandler::SigIgn);
+            signal(Signal::SIGTTIN, SigHandler::SigIgn);
+            signal(Signal::SIGTTOU, SigHandler::SigIgn);
+            signal(Signal::SIGCHLD, SigHandler::SigIgn);
+        };
+
+        // Put self in own process group
+        let pgid = getpid();
+        setpgid(pgid, pgid)?;
+        tcsetpgrp(shell_term, pgid)?;
+
+        let tmods = tcgetattr(shell_term)?;
+
+        let os = Os {
+            pgid,
+            tmods,
+            jobs: HashMap::new(),
+            proc_state: HashMap::new(),
+        };
+        Ok(os)
     }
 
-    // Wait until parent puts us into foreground
-    while tcgetpgrp(shell_term)? != getpgrp() {
-        // SIGTTIN tells process to suspend since it's not in foreground
-        kill(getpgrp(), SIGTTIN)?;
+    pub fn shell_pgid(&self) -> Pid {
+        self.pgid
     }
 
-    // Ignore interactive and job control signals
-    // TODO double check correctness of unsafe code
-    unsafe {
-        signal(Signal::SIGINT, SigHandler::SigIgn);
-        signal(Signal::SIGQUIT, SigHandler::SigIgn);
-        signal(Signal::SIGTSTP, SigHandler::SigIgn);
-        signal(Signal::SIGTTIN, SigHandler::SigIgn);
-        signal(Signal::SIGTTOU, SigHandler::SigIgn);
-        signal(Signal::SIGCHLD, SigHandler::SigIgn);
-    };
+    // JOB RELATED
+    pub fn create_job(&mut self, pgid: Pid, proceses: Vec<Pid>) -> Result<JobId, std::io::Error> {
+        let jobid = self.find_free_job_id();
+        let new_job = Job {
+            jobid: jobid.clone(),
+            pgid,
+            proceses,
+        };
+        self.jobs.insert(jobid.clone(), new_job);
+        Ok(jobid)
+    }
 
-    // Put self in own process group
-    let shell_pid = getpid();
-    setpgid(shell_pid, shell_pid)?;
-    tcsetpgrp(shell_term, shell_pid)?;
+    fn find_free_job_id(&self) -> JobId {
+        let mut id = 1usize;
+        while self.jobs.contains_key(&JobId(id)) {
+            id += 1;
+        }
+        JobId(id)
+    }
 
-    Ok(())
+    /// Wait for entire job to finish
+    pub fn wait_for_job(&mut self, jobid: JobId) -> Result<ProcessState, std::io::Error> {
+        loop {
+            // TODO throw proper error here
+            let job = self.jobs.get(&jobid).expect("non existant jobid");
+            if job.exited(self) {
+                break;
+            }
+            self.wait_for_any_process()?;
+        }
+        // remove from tracked job list
+        let job = self.jobs.get(&jobid).expect("non existant jobid");
+        let process_state = job.last_process_state(self).unwrap();
+        match process_state {
+            ProcessState::Exited(status) => {
+                self.remove_job(&jobid);
+                Ok(process_state)
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    /// Block until any process terminates
+    fn wait_for_any_process(&mut self) -> Result<Option<Pid>, std::io::Error> {
+        // PID of None means wait for any child process
+        let wait_status = waitpid(None, WaitPidFlag::from_bits(WUNTRACED | WNOHANG))?;
+        match wait_status {
+            WaitStatus::Exited(pid, status) => {
+                self.set_process_state(pid, ProcessState::Exited(status));
+                Ok(Some(pid))
+            },
+            WaitStatus::StillAlive => Ok(None),
+            _ => todo!(),
+        }
+    }
+
+    fn set_process_state(&mut self, pid: Pid, state: ProcessState) {
+        self.proc_state.insert(pid, state);
+    }
+    pub fn get_process_state(&self, pid: &Pid) -> Option<&ProcessState> {
+        self.proc_state.get(pid)
+    }
+
+    fn remove_job(&mut self, jobid: &JobId) {
+        self.jobs.remove(jobid);
+    }
+
+    /// Place job onto foreground
+    pub fn run_in_foreground(
+        &mut self,
+        jobid: JobId,
+        cont: bool,
+    ) -> Result<ProcessState, std::io::Error> {
+        let shell_term = STDIN_FILENO;
+
+        let job = self.jobs.get(&jobid).unwrap();
+
+        // Put the job into foreground
+        tcsetpgrp(shell_term, job.pgid)?;
+
+        // TODO also run tcsetattr
+        // Send job continue signal
+        if cont {
+            kill(job.pgid, SIGCONT)?;
+        }
+
+        // Wait for the job
+        let proc_state = self.wait_for_job(jobid)?;
+
+        // Return foreground to the shell
+        tcsetpgrp(shell_term, self.shell_pgid())?;
+
+        // TODO restore terminal mode
+        tcsetattr(shell_term, SetArg::TCSADRAIN, &self.tmods)?;
+
+        Ok(proc_state)
+    }
+
+    /// Place job onto background
+    pub fn run_in_background(&self, jobid: JobId, cont: bool) -> Result<(), std::io::Error> {
+        if cont {
+            let job = self.jobs.get(&jobid).unwrap();
+            kill(job.pgid, SIGCONT)?;
+        }
+        Ok(())
+    }
 }

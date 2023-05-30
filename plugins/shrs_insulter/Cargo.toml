@@ -1,0 +1,14 @@
+[package]
+name = "shrs_insulter"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["nithinmuthukumar"]
+description = "Implementation of bash insulter"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+shrs = { path = "../../shrs" }
+rand = "0.8.5"
+lazy_static = "1.4.0"
+

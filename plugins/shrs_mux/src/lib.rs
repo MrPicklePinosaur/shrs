@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-use lang::{MuxLang, NuLang, PythonLang};
+use lang::{BashLang, MuxLang, NuLang, PythonLang};
 use shrs::prelude::*;
 
 pub struct MuxState {

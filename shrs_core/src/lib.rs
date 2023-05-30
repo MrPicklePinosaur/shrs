@@ -13,6 +13,7 @@ mod alias;
 pub use alias::Alias;
 
 pub mod builtin;
+pub use builtin::BuiltinStatus;
 
 mod env;
 pub use env::Env;

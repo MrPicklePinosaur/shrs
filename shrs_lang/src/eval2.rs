@@ -20,6 +20,10 @@ pub fn run_job(
     pgid: Option<u32>,
     foreground: bool,
 ) -> anyhow::Result<()> {
+    if procs.is_empty() {
+        return Ok(());
+    }
+
     let proc_group = ProcessGroup {
         id: pgid,
         processes: procs,
@@ -41,6 +45,7 @@ pub fn run_job(
 pub fn eval_command(
     job_manager: &mut JobManager,
     cmd: &ast::Command,
+    pgid: Option<u32>,
     stdin: Option<Stdin>,
     stdout: Option<Output>,
 ) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
@@ -63,29 +68,30 @@ pub fn eval_command(
                 proc_stdin,
                 proc_stdout,
                 Output::Inherit,
-                None,
+                pgid,
             )?;
             Ok((vec![proc], pgid))
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {
-            let (mut a_procs, a_pgid) =
-                eval_command(job_manager, a_cmd, stdin, Some(Output::CreatePipe))?;
-            let (b_procs, b_pgid) = eval_command(
+            let (mut a_procs, pgid) =
+                eval_command(job_manager, a_cmd, pgid, stdin, Some(Output::CreatePipe))?;
+            let (b_procs, pgid) = eval_command(
                 job_manager,
                 b_cmd,
+                pgid,
                 a_procs.last_mut().unwrap().stdout(),
                 stdout,
             )?;
             a_procs.extend(b_procs);
-            Ok((a_procs, b_pgid))
+            Ok((a_procs, pgid))
         },
         ast::Command::AsyncList(a_cmd, b_cmd) => {
             // TODO double check stdin and stdout
-            let (procs, pgid) = eval_command(job_manager, a_cmd, None, None)?;
+            let (procs, pgid) = eval_command(job_manager, a_cmd, pgid, None, None)?;
             run_job(job_manager, procs, pgid, false)?;
 
             if let Some(b_cmd) = b_cmd {
-                eval_command(job_manager, b_cmd, None, None)
+                eval_command(job_manager, b_cmd, pgid, None, None)
             } else {
                 Ok((vec![], None))
             }

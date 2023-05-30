@@ -35,12 +35,9 @@ mod state;
 pub use state::State;
 
 mod lang;
-pub use lang::Lang;
-
-mod jobs;
 // TODO temp re-export anyhow
 pub use anyhow;
-pub use jobs::{ExitStatus, JobId, JobInfo, Jobs};
+pub use lang::Lang;
 
 /*
 #[cfg(test)]

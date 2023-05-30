@@ -24,7 +24,6 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    jobs::{ExitStatus, Jobs},
     signal::Signals,
     state::State,
     theme::Theme,
@@ -57,7 +56,6 @@ pub struct Context {
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
-    pub jobs: Jobs,
     pub startup_time: Instant,
 }
 

@@ -21,7 +21,7 @@ use std::{
 
 use crossterm::{style::Print, QueueableCommand};
 
-use crate::{jobs::ExitStatus, Context, Runtime, Shell};
+use crate::{Context, Runtime, Shell};
 
 pub type HookFn<C: Clone> =
     fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
@@ -111,7 +111,7 @@ pub fn change_dir_hook(
 /// Context for [JobExit]
 #[derive(Clone)]
 pub struct JobExitCtx {
-    pub status: ExitStatus,
+    // pub status: ExitStatus,
 }
 
 /// Default [JobExitHook]
@@ -121,7 +121,7 @@ pub fn job_exit_hook(
     sh_rt: &mut Runtime,
     ctx: &JobExitCtx,
 ) -> anyhow::Result<()> {
-    println!("[exit +{}]", ctx.status.code());
+    // println!("[exit +{}]", ctx.status.code());
     Ok(())
 }
 

@@ -17,13 +17,23 @@ pub trait History {
     fn add(&mut self, cmd: Self::HistoryItem);
     /// Remove all history entries
     fn clear(&mut self);
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem>;
     /// Query for a history entry
     fn search(&self, query: &str) -> Option<&Self::HistoryItem>;
     /// Get number of history entries
     fn len(&self) -> usize;
     /// Get a history entry by index
     fn get(&self, i: usize) -> Option<&Self::HistoryItem>;
+    fn iter(&self) -> HistoryIter<Self::HistoryItem>;
+}
+
+pub struct HistoryIter<'a, It>(Box<dyn Iterator<Item = &'a It>>);
+
+impl<'a, It> Iterator for HistoryIter<'a, It> {
+    type Item = &'a It;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
 }
 
 /// Default implementation of [History] that saves history in process memory
@@ -48,10 +58,6 @@ impl History for DefaultHistory {
         self.hist.clear();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem> {
-    //     todo!()
-    // }
-
     fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
         todo!()
     }
@@ -63,6 +69,10 @@ impl History for DefaultHistory {
     /// Get index starts at most recent (index zero is previous command)
     fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
         self.hist.get(i)
+    }
+
+    fn iter(&self) -> HistoryIter<Self::HistoryItem> {
+        HistoryIter(Box::new(self.hist.iter()))
     }
 }
 
@@ -135,10 +145,6 @@ impl History for FileBackedHistory {
         self.flush().unwrap();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem> {
-    //     todo!()
-    // }
-
     fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
         todo!()
     }
@@ -149,6 +155,10 @@ impl History for FileBackedHistory {
 
     fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
         self.hist.get(i)
+    }
+
+    fn iter(&self) -> HistoryIter<Self::HistoryItem> {
+        HistoryIter(Box::new(self.hist.iter()))
     }
 }
 

@@ -13,7 +13,7 @@ mod history;
 pub use history::{DefaultHistory, FileBackedHistory, History};
 
 mod menu;
-pub use menu::{DefaultMenu, Menu};
+pub use menu::{DefaultMenu, Menu, Out};
 
 mod prompt;
 pub use prompt::{DefaultPrompt, Prompt, *};

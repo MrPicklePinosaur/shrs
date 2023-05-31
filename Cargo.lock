@@ -1323,6 +1323,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "shrs_floating_menu"
+version = "0.1.0"
+dependencies = [
+ "shrs",
+]
+
+[[package]]
 name = "shrs_insulter"
 version = "0.1.0"
 dependencies = [

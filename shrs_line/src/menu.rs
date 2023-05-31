@@ -17,19 +17,21 @@ pub trait Menu {
     type MenuItem;
     type PreviewItem: Display;
 
+    /// Select the next item in menu
     fn next(&mut self);
+    /// Select the previous item in menu
     fn previous(&mut self);
+    /// Return the currently selected item
     fn accept(&mut self) -> Option<&Self::MenuItem>;
+    /// Get the currently selected item
     fn current_selection(&self) -> Option<&Self::MenuItem>;
+    /// Get the index of the currently selected item
     fn cursor(&self) -> u32;
     fn is_active(&self) -> bool;
     fn activate(&mut self);
     fn disactivate(&mut self);
     fn items(&self) -> Vec<&(Self::PreviewItem, Self::MenuItem)>;
     fn set_items(&mut self, items: Vec<(Self::PreviewItem, Self::MenuItem)>);
-
-    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
-    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
 
     fn render(&self, out: &mut Out) -> anyhow::Result<()>;
     fn required_lines(&self) -> usize;
@@ -57,6 +59,20 @@ impl DefaultMenu {
             column_padding: 2,
         }
     }
+
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(
+            out,
+            SetBackgroundColor(Color::White),
+            SetForegroundColor(Color::Black),
+        )?;
+        Ok(())
+    }
+
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(out, ResetColor)?;
+        Ok(())
+    }
 }
 
 impl Menu for DefaultMenu {
@@ -64,18 +80,10 @@ impl Menu for DefaultMenu {
     type PreviewItem = String;
 
     fn next(&mut self) {
-        if self.cursor as usize == self.selections.len().saturating_sub(1) {
-            self.cursor = 0;
-        } else {
-            self.cursor += 1;
-        }
+        self.cursor = (self.cursor + 1) % self.selections.len() as u32;
     }
     fn previous(&mut self) {
-        if self.cursor == 0 {
-            self.cursor = self.selections.len().saturating_sub(1) as u32;
-        } else {
-            self.cursor = self.cursor.saturating_sub(1);
-        }
+        self.cursor = (self.cursor - 1) % self.selections.len() as u32;
     }
     fn accept(&mut self) -> Option<&Self::MenuItem> {
         self.disactivate();
@@ -105,20 +113,6 @@ impl Menu for DefaultMenu {
         self.selections.clear();
         self.selections.append(&mut items);
         self.cursor = 0;
-    }
-
-    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
-        execute!(
-            out,
-            SetBackgroundColor(Color::White),
-            SetForegroundColor(Color::Black),
-        )?;
-        Ok(())
-    }
-
-    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
-        execute!(out, ResetColor)?;
-        Ok(())
     }
 
     fn render(&self, out: &mut Out) -> anyhow::Result<()> {

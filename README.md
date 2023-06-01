@@ -50,7 +50,7 @@ fn main() {
 }
 ```
 
-See the [developer documentation](mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/) for more in depth information.
+See the [developer documentation](https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/) for more in depth information.
 
 ## CONTRIBUTING
 

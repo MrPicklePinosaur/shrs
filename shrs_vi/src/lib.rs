@@ -39,4 +39,17 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn char_toggle_case() -> anyhow::Result<()> {
+        let res = grammar::CommandParser::new().parse("~")?;
+        assert_eq!(
+            res,
+            Command {
+                repeat: 1,
+                action: Action::ToggleCase
+            }
+        );
+        Ok(())
+    }
 }

@@ -337,13 +337,16 @@ impl Line {
             }) => {
                 self.menu.next();
             },
-            _ => match ctx.mode {
-                LineMode::Insert => {
-                    self.handle_insert_keys(ctx, event)?;
-                },
-                LineMode::Normal => {
-                    self.handle_normal_keys(ctx, event)?;
-                },
+            _ => {
+                self.menu.disactivate();
+                match ctx.mode {
+                    LineMode::Insert => {
+                        self.handle_insert_keys(ctx, event)?;
+                    },
+                    LineMode::Normal => {
+                        self.handle_normal_keys(ctx, event)?;
+                    },
+                };
             },
         };
         Ok(())

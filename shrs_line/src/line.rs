@@ -240,23 +240,21 @@ impl Line {
                     }
                 }
 
+                let should_break = self.handle_standard_keys(line_ctx, event.clone())?;
+                if should_break {
+                    break;
+                }
+
                 // handle menu events
                 if self.menu.is_active() {
                     self.handle_menu_keys(line_ctx, event.clone())?;
                 } else {
-                    // TODO bit hacky bubbling up control flow from funtion
                     match line_ctx.mode {
                         LineMode::Insert => {
-                            let should_break = self.handle_insert_keys(line_ctx, event)?;
-                            if should_break {
-                                break;
-                            }
+                            self.handle_insert_keys(line_ctx, event)?;
                         },
                         LineMode::Normal => {
-                            let should_break = self.handle_normal_keys(line_ctx, event)?;
-                            if should_break {
-                                break;
-                            }
+                            self.handle_normal_keys(line_ctx, event)?;
                         },
                     }
                 }
@@ -339,7 +337,17 @@ impl Line {
             }) => {
                 self.menu.next();
             },
-            _ => {},
+            _ => {
+                self.menu.disactivate();
+                match ctx.mode {
+                    LineMode::Insert => {
+                        self.handle_insert_keys(ctx, event)?;
+                    },
+                    LineMode::Normal => {
+                        self.handle_normal_keys(ctx, event)?;
+                    },
+                };
+            },
         };
         Ok(())
     }
@@ -422,8 +430,8 @@ impl Line {
 
         res
     }
-
-    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
+    //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
+    fn handle_standard_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -435,6 +443,9 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
+                if self.menu.is_active() {
+                    return Ok(false);
+                }
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
@@ -448,6 +459,32 @@ impl Line {
 
                 return Ok(true);
             },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                // if current input is empty exit the shell, otherwise treat it as enter
+                if ctx.cb.len() == 0 {
+                    // TODO maybe unify exiting the shell
+                    disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
+                                        // handling cleanup code
+                    std::process::exit(0);
+                } else {
+                    self.buffer_history.clear();
+                    self.painter.newline()?;
+                    return Ok(true);
+                }
+            },
+
+            _ => (),
+        };
+
+        Ok(false)
+    }
+
+    fn handle_insert_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
+        match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
@@ -528,23 +565,6 @@ impl Line {
             },
 
             Event::Key(KeyEvent {
-                code: KeyCode::Char('d'),
-                modifiers: KeyModifiers::CONTROL,
-                ..
-            }) => {
-                // if current input is empty exit the shell, otherwise treat it as enter
-                if ctx.cb.len() == 0 {
-                    // TODO maybe unify exiting the shell
-                    disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
-                                        // handling cleanup code
-                    std::process::exit(0);
-                } else {
-                    self.buffer_history.clear();
-                    self.painter.newline()?;
-                    return Ok(true);
-                }
-            },
-            Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {
@@ -552,22 +572,12 @@ impl Line {
             },
             _ => {},
         };
-        Ok(false)
+        Ok(())
     }
 
-    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
+    fn handle_normal_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<()> {
         // TODO write better system toString support key combinations
         match event {
-            Event::Key(KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }) => {
-                self.buffer_history.clear();
-
-                self.painter.newline()?;
-                return Ok(true);
-            },
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
@@ -609,7 +619,7 @@ impl Line {
             },
             _ => {},
         }
-        Ok(false)
+        Ok(())
     }
 
     // recalculate the current completions

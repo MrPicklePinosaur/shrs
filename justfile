@@ -2,10 +2,7 @@
 default: example
 
 example:
-    cargo run shrs_example
-
-build:
-    cargo build --release --target x86_64-unknown-linux-gnu
+    cd shrs_example && cargo run shrs_example
 
 install:
     cargo install --profile=release --path shrs_example
@@ -15,6 +12,9 @@ devsetup:
 
 fmt:
     cargo +nightly fmt --all
+
+check:
+    cargo check --workspace
 
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo

@@ -13,10 +13,10 @@ repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [workspace]
 members = [
+    "shrs_example",
     "crates/shrs_core",
     "crates/shrs_line",
     "crates/shrs_lang",
-    "crates/shrs_example",
     "crates/shrs_vi",
     "crates/shrs_utils",
     "crates/shrs_job",
@@ -28,6 +28,9 @@ members = [
     "plugins/shrs_mux",
     "plugins/shrs_insulter"
 ]
+
+[features]
+default = []
 
 [dependencies]
 regex = "1"
@@ -54,8 +57,7 @@ rexpect = "0.5"
 
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
-
-criterion = { verison = "0.5" }
+criterion = { version = "0.5" }
 
 [target.x86_64-unknown-linux-gnu]
 linker = "/usr/bin/clang"

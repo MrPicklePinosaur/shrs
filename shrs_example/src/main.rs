@@ -7,7 +7,6 @@ use std::{
 use shrs::prelude::*;
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
-use shrs_insulter::InsulterPlugin;
 use shrs_mux::{MuxPlugin, MuxState};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
@@ -22,7 +21,7 @@ impl Prompt for MyPrompt {
             LineMode::Insert => String::from(">").cyan(),
             LineMode::Normal => String::from(":").yellow(),
         };
-        if line_ctx.lines.len() > 0 {
+        if !line_ctx.lines.is_empty() {
             return styled! {" ", indicator, " "};
         }
 
@@ -34,7 +33,7 @@ impl Prompt for MyPrompt {
             .state
             .get::<CommandTimerState>()
             .and_then(|x| x.command_time())
-            .map(|x| format!("{:?}", x));
+            .map(|x| format!("{x:?}"));
 
         let lang = line_ctx
             .ctx
@@ -42,8 +41,8 @@ impl Prompt for MyPrompt {
             .get::<MuxState>()
             .map(|state| state.get_lang());
 
-        let git_branch = git::branch().map(|s| format!("git:{}", s));
-        if line_ctx.lines.len() > 0 {
+        let git_branch = git::branch().map(|s| format!("git:{s}"));
+        if !line_ctx.lines.is_empty() {
             return styled! {""};
         }
 

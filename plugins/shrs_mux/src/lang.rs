@@ -29,9 +29,9 @@ impl Lang for MuxLang {
         };
         // TODO maybe return error if we can't find a lang
 
-        self.langs.get(lang_name).map(|lang| {
+        if let Some(lang) = self.langs.get(lang_name) {
             lang.eval(sh, ctx, rt, cmd);
-        });
+        }
 
         Ok(())
     }
@@ -63,9 +63,7 @@ impl Lang for NuLang {
             Some(cmd_name) => cmd_name,
             None => return Ok(()),
         };
-        let args = words_it
-            .map(|s| s.to_owned().to_string())
-            .collect::<Vec<_>>();
+        let args = words_it.collect::<Vec<_>>();
 
         for (builtin_name, builtin_cmd) in sh.builtins.iter() {
             if builtin_name == &cmd_name {
@@ -108,9 +106,7 @@ impl Lang for PythonLang {
             Some(cmd_name) => cmd_name,
             None => return Ok(()),
         };
-        let args = words_it
-            .map(|s| s.to_owned().to_string())
-            .collect::<Vec<_>>();
+        let args = words_it.collect::<Vec<_>>();
 
         for (builtin_name, builtin_cmd) in sh.builtins.iter() {
             if builtin_name == &cmd_name {
@@ -153,9 +149,7 @@ impl Lang for BashLang {
             Some(cmd_name) => cmd_name,
             None => return Ok(()),
         };
-        let args = words_it
-            .map(|s| s.to_owned().to_string())
-            .collect::<Vec<_>>();
+        let args = words_it.collect::<Vec<_>>();
 
         for (builtin_name, builtin_cmd) in sh.builtins.iter() {
             if builtin_name == &cmd_name {

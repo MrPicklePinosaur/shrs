@@ -1,0 +1,30 @@
+[package]
+name = "shrs_core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "modular library to build your own shell in rust"
+repository = "https://github.com/MrPicklePinosaur/shrs"
+
+[dependencies]
+regex = "1"
+signal-hook = "0.3"
+clap = { version = "4.1", features = ["derive"] }
+nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}
+crossterm = "0.26"
+derive_builder = "0.12"
+dirs = "5"
+anymap = "1.0.0-beta.2"
+multimap = "0.9"
+
+shrs_job = { path = "../shrs_job" }
+
+pino_deref = "0.1"
+
+thiserror = "1"
+anyhow = "1"
+lazy_static = "1.4"
+
+[dev-dependencies]
+rexpect = "0.5"

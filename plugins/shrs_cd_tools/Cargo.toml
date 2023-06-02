@@ -8,7 +8,7 @@ description = "Variety of utilities for running commands conditionally on direct
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-shrs = { path = "../../shrs" }
+shrs = { path = "../../" }
 
 derive_builder = "0.12"
 

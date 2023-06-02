@@ -4,20 +4,10 @@
 
 mod builtin;
 
-use std::{
-    collections::HashMap,
-    io::BufWriter,
-    marker::PhantomData,
-    time::{Duration, Instant},
-};
+use std::collections::HashMap;
 
 use builtin::{LoadBuiltin, SaveBuiltin};
-use shrs::{
-    anyhow,
-    hooks::{AfterCommandCtx, BeforeCommandCtx},
-    plugin::{Plugin, ShellPlugin},
-    Context, Runtime, Shell,
-};
+use shrs::{plugin::Plugin, Runtime};
 
 pub struct RunContextState {
     pub(crate) run_contexts: HashMap<String, Runtime>,

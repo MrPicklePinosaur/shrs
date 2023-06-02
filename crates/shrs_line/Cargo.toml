@@ -1,0 +1,23 @@
+[package]
+name = "shrs_line"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "readline implementation"
+repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+[dependencies]
+crossterm = {version = "0.26", features = ["bracketed-paste"]}
+trie-rs = "0.1"
+derive_builder = "0.12"
+dirs = "5"
+unicode-width = "0.1"
+
+anyhow = "1"
+thiserror = "1"
+shrs_core = { path = "../shrs_core" }
+shrs_vi = { path = "../shrs_vi" }
+shrs_utils = { path = "../shrs_utils" }
+shrs_lang = {path = "../shrs_lang"}
+# shrs_core = { path = "../shrs_utils" }

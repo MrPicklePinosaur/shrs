@@ -52,13 +52,12 @@ pub struct Shell {
 /// Context here is shared by each subshell
 // TODO can technically unify shell and context
 pub struct Context {
-    // TODO alias is currently unused
-    pub alias: Alias,
     /// Output stream
     pub out: BufWriter<std::io::Stdout>,
     pub state: State,
     pub jobs: Jobs,
     pub startup_time: Instant,
+    pub alias: Alias,
 }
 
 /// Runtime context for the shell

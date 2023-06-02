@@ -13,7 +13,8 @@ use shrs_core::{
     builtin::Builtins,
     dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    Alias, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State, Theme,
+    Alias, AliasRuleCtx, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State,
+    Theme,
 };
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
@@ -159,7 +160,15 @@ fn run_shell(
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>();
         if let Some(first) = words.get_mut(0) {
-            if let Some(expanded) = ctx.alias.get(&first) {
+            let alias_ctx = AliasRuleCtx {
+                alias_name: first,
+                sh,
+                ctx,
+                rt,
+            };
+
+            // Currently only use the last alias, can also render a menu
+            if let Some(expanded) = ctx.alias.get(&alias_ctx).last() {
                 *first = expanded.to_owned().to_string();
             }
         }

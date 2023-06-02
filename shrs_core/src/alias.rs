@@ -2,39 +2,86 @@
 
 use std::collections::HashMap;
 
+use multimap::MultiMap;
+
+use crate::{Context, Runtime, Shell};
+
+/// Parameters passed to alias rule
+pub struct AliasRuleCtx<'a> {
+    pub alias_name: &'a str,
+    pub sh: &'a Shell,
+    pub ctx: &'a Context,
+    pub rt: &'a Runtime,
+}
+/// Predicate to decide if an alias should be used or not
+pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);
+
+pub struct AliasInfo {
+    /// The actual value to be substituted
+    pub subst: String,
+    /// Predicate to decide if the alias should be taken or not
+    pub rule: AliasRule,
+}
+
+impl AliasInfo {
+    /// Always use this alias
+    pub fn always<S: ToString>(subst: S) -> Self {
+        Self {
+            subst: subst.to_string(),
+            rule: AliasRule(Box::new(|ctx| -> bool { true })),
+        }
+    }
+    pub fn with_rule<S, R>(subst: S, rule: R) -> Self
+    where
+        S: ToString,
+        R: Fn(&AliasRuleCtx) -> bool + 'static,
+    {
+        Self {
+            subst: subst.to_string(),
+            rule: AliasRule(Box::new(rule)),
+        }
+    }
+}
+
 /// Query and set aliases
 ///
 /// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
 /// but upon substition the error is emitted. This may be changed in the future.
-#[derive(Clone)]
 pub struct Alias {
-    aliases: HashMap<String, String>,
+    aliases: MultiMap<String, AliasInfo>,
 }
 
 impl Alias {
     pub fn new() -> Self {
         Alias {
-            aliases: HashMap::new(),
+            aliases: MultiMap::new(),
         }
     }
 
-    /// Fetch an alias by name
-    pub fn get(&self, alias: &str) -> Option<&String> {
-        self.aliases.get(alias)
+    /// Fetch all possible aliases
+    pub fn get(&self, alias_ctx: &AliasRuleCtx) -> Vec<&String> {
+        let alias_list = match self.aliases.get_vec(alias_ctx.alias_name) {
+            Some(alias_list) => alias_list,
+            None => return vec![],
+        };
+
+        alias_list
+            .iter()
+            .filter(|alias_info| (alias_info.rule.0)(&alias_ctx))
+            .map(|alias_info| &alias_info.subst)
+            .collect::<Vec<_>>()
     }
 
     /// Set an alias
-    ///
-    /// Overrides previously defined aliases
-    pub fn set(&mut self, alias: &str, cmd: &str) {
-        self.aliases.insert(alias.into(), cmd.into());
+    pub fn set(&mut self, alias_name: &str, alias_info: AliasInfo) {
+        self.aliases.insert(alias_name.into(), alias_info);
     }
 
-    /// Remove an alias
+    /// Clear an aliass
     ///
-    /// NOOP if alias was not previously defined
-    pub fn unset(&mut self, alias: &str) {
-        self.aliases.remove(alias);
+    /// This removes ALL aliases of a given name
+    pub fn unset(&mut self, alias_name: &str) {
+        self.aliases.remove(alias_name);
     }
 
     /// Remove all defined aliases
@@ -43,22 +90,17 @@ impl Alias {
     }
 }
 
-impl FromIterator<(String, String)> for Alias {
-    fn from_iter<T: IntoIterator<Item = (String, String)>>(iter: T) -> Self {
+/// Construct an alias from iterator
+///
+/// Currently it is not possible to insert rules using FromIterator method. If you wish to add a
+/// conditional alias, please insert directly it using the [set()] method
+impl<S: ToString> FromIterator<(S, S)> for Alias {
+    fn from_iter<T: IntoIterator<Item = (S, S)>>(iter: T) -> Self {
+        let iter = iter
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), AliasInfo::always(v)));
         Alias {
-            aliases: HashMap::from_iter(
-                iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())),
-            ),
-        }
-    }
-}
-
-impl FromIterator<(&'static str, &'static str)> for Alias {
-    fn from_iter<T: IntoIterator<Item = (&'static str, &'static str)>>(iter: T) -> Self {
-        Alias {
-            aliases: HashMap::from_iter(
-                iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())),
-            ),
+            aliases: MultiMap::from_iter(iter),
         }
     }
 }

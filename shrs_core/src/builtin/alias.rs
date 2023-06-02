@@ -3,7 +3,10 @@ use std::io::{stdout, Write};
 use clap::{Parser, Subcommand};
 
 use super::{BuiltinCmd, BuiltinStatus};
-use crate::shell::{Context, Runtime, Shell};
+use crate::{
+    alias::AliasInfo,
+    shell::{Context, Runtime, Shell},
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -37,10 +40,11 @@ impl BuiltinCmd for AliasBuiltin {
         match it.next() {
             Some(alias_def) => {
                 // if alias body is passed, set the alias
-                ctx.alias.set(alias_name, alias_def);
+                ctx.alias.set(alias_name, AliasInfo::always(alias_def));
             },
             None => {
                 // if alias body is not passed, print the alias definition
+                /*
                 match ctx.alias.get(alias_name) {
                     Some(alias_def) => {
                         println!("alias {}={}", alias_name, alias_def);
@@ -49,6 +53,8 @@ impl BuiltinCmd for AliasBuiltin {
                         eprintln!("{} not defined", alias_name);
                     },
                 };
+                */
+                todo!()
             },
         }
 

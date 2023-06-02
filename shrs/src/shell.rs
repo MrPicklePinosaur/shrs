@@ -159,9 +159,11 @@ fn run_shell(
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>();
         if let Some(first) = words.get_mut(0) {
+            /*
             if let Some(expanded) = ctx.alias.get(&first) {
                 *first = expanded.to_owned().to_string();
             }
+            */
         }
         let line = words.join(" ");
 

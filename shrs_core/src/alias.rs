@@ -4,7 +4,16 @@ use std::collections::HashMap;
 
 use multimap::MultiMap;
 
-pub struct AliasRuleCtx {}
+use crate::{Context, Runtime, Shell};
+
+/// Parameters passed to alias rule
+pub struct AliasRuleCtx<'a> {
+    alias_name: &'a str,
+    sh: &'a Shell,
+    ctx: &'a Context,
+    rt: &'a Runtime,
+}
+/// Predicate to decide if an alias should be used or not
 pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);
 
 pub struct AliasInfo {
@@ -16,9 +25,9 @@ pub struct AliasInfo {
 
 impl AliasInfo {
     /// Always use this alias
-    pub fn always(subst: String) -> Self {
+    pub fn always<S: ToString>(subst: S) -> Self {
         Self {
-            subst,
+            subst: subst.to_string(),
             rule: AliasRule(Box::new(|ctx| -> bool { true })),
         }
     }
@@ -39,32 +48,37 @@ impl Alias {
         }
     }
 
-    /// Fetch an alias by name while respecting alias rules
-    pub fn get(&self, alias: &str) -> Option<&String> {
-        self.aliases
-            .get_vec(alias)
-            .unwrap()
+    /// Fetch all possible aliases
+    pub fn get(&self, sh: &Shell, ctx: &Context, rt: &Runtime, alias_name: &str) -> Vec<&String> {
+        let alias_ctx = AliasRuleCtx {
+            alias_name,
+            sh,
+            ctx,
+            rt,
+        };
+
+        let alias_list = match self.aliases.get_vec(alias_name) {
+            Some(alias_list) => alias_list,
+            None => return vec![],
+        };
+
+        alias_list
             .iter()
-            .filter(|alias_info| {
-                // alias_info.rule()
-                todo!()
-            });
-        todo!()
+            .filter(|alias_info| (alias_info.rule.0)(&alias_ctx))
+            .map(|alias_info| &alias_info.subst)
+            .collect::<Vec<_>>()
     }
 
     /// Set an alias
-    ///
-    /// Overrides previously defined aliases
-    pub fn set(&mut self, alias: &str, cmd: &str) {
-        // self.aliases.insert(alias.into(), cmd.into());
-        todo!()
+    pub fn set(&mut self, alias_name: &str, alias_info: AliasInfo) {
+        self.aliases.insert(alias_name.into(), alias_info);
     }
 
-    /// Remove an alias
+    /// Clear an aliass
     ///
-    /// NOOP if alias was not previously defined
-    pub fn unset(&mut self, alias: &str) {
-        self.aliases.remove(alias);
+    /// This removes ALL aliases of a given name
+    pub fn unset(&mut self, alias_name: &str) {
+        self.aliases.remove(alias_name);
     }
 
     /// Remove all defined aliases

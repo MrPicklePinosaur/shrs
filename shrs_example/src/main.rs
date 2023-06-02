@@ -118,7 +118,7 @@ fn main() {
 
     // =-=-= Aliases =-=-=
     // Set aliases
-    let alias = Alias::from_iter([
+    let mut alias = Alias::from_iter([
         ("ls", "ls --color=auto"),
         ("l", "ls --color=auto"),
         ("c", "cd"),

@@ -10,7 +10,7 @@ extern crate derive_builder;
 // pub use <mod>::{ ... }
 
 mod alias;
-pub use alias::{Alias, AliasRule, AliasRuleCtx};
+pub use alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx};
 
 pub mod builtin;
 pub use builtin::BuiltinStatus;

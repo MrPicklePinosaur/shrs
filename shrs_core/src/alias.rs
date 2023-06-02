@@ -31,6 +31,16 @@ impl AliasInfo {
             rule: AliasRule(Box::new(|ctx| -> bool { true })),
         }
     }
+    pub fn with_rule<S, R>(subst: S, rule: R) -> Self
+    where
+        S: ToString,
+        R: Fn(&AliasRuleCtx) -> bool + 'static,
+    {
+        Self {
+            subst: subst.to_string(),
+            rule: AliasRule(Box::new(rule)),
+        }
+    }
 }
 
 /// Query and set aliases

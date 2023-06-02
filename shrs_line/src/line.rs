@@ -433,6 +433,9 @@ impl Line {
     //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
     fn handle_standard_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
+            Event::Resize(a, b) => {
+                self.painter.set_term_size(a, b);
+            },
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,

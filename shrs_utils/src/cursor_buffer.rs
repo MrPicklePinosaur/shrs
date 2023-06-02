@@ -286,7 +286,7 @@ impl CursorBuffer {
 
 #[cfg(test)]
 mod tests {
-    use super::{CursorBuffer, Error, Location, Result};
+    use super::{CursorBuffer, Location, Result};
 
     #[test]
     /// Basic insert and delete test

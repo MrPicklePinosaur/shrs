@@ -2,7 +2,7 @@ use std::{
     ffi::OsStr,
     fmt, iter,
     os::fd::AsRawFd,
-    process::{Child, ChildStdout, Command, ExitStatus, Stdio},
+    process::{Child, Command, ExitStatus},
 };
 
 use log::*;

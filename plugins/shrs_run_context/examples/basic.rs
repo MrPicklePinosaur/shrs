@@ -1,9 +1,4 @@
-use shrs::{
-    crossterm::Stylize,
-    line::{LineBuilder, LineCtx, Prompt, StyledBuf},
-    plugin::ShellPlugin,
-    ShellConfigBuilder,
-};
+use shrs::{line::LineBuilder, plugin::ShellPlugin, ShellConfigBuilder};
 use shrs_run_context::RunContextPlugin;
 
 fn main() {

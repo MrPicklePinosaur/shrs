@@ -1,25 +1,18 @@
 use std::{
     cell::RefCell,
-    collections::HashMap,
-    fs::File,
     io::{stdout, BufRead, BufWriter, Write},
-    path::Path,
-    process::{Child, Stdio},
     time::Instant,
 };
 
-use lazy_static::lazy_static;
 use shrs_core::{
     builtin::Builtins,
-    dummy_child,
     hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     Alias, AliasRuleCtx, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State,
     Theme,
 };
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
-use shrs_line::{DefaultPrompt, Line, Prompt};
-use thiserror::Error;
+use shrs_line::Line;
 
 use crate::plugin::Plugin;
 

@@ -2,8 +2,6 @@
 
 use std::process::ExitStatus;
 
-use nix::unistd::{close, pipe, setpgid, Pid};
-use shrs_core::{Context, Runtime, Shell};
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 
 use crate::ast;
@@ -46,8 +44,8 @@ pub fn eval_command(
 ) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
     match cmd {
         ast::Command::Simple {
-            assigns,
-            redirects,
+            assigns: _,
+            redirects: _,
             args,
         } => {
             let mut args_it = args.iter();
@@ -68,7 +66,7 @@ pub fn eval_command(
             Ok((vec![proc], pgid))
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {
-            let (mut a_procs, a_pgid) =
+            let (mut a_procs, _a_pgid) =
                 eval_command(job_manager, a_cmd, stdin, Some(Output::CreatePipe))?;
             let (b_procs, b_pgid) = eval_command(
                 job_manager,

@@ -14,11 +14,11 @@ fn main() {
     let mut alias = Alias::new();
     alias.set(
         "inhome",
-        AliasInfo::with_rule("true", |ctx| in_home_directory()),
+        AliasInfo::with_rule("true", |_ctx| in_home_directory()),
     );
     alias.set(
         "inhome",
-        AliasInfo::with_rule("false", |ctx| !in_home_directory()),
+        AliasInfo::with_rule("false", |_ctx| !in_home_directory()),
     );
 
     let myshell = ShellConfigBuilder::default()

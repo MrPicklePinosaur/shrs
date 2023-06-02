@@ -3,7 +3,7 @@ use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
 use crossterm::{
     cursor::SetCursorStyle,
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::{Color, ContentStyle, StyledContent},
+    style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_core::{Context, Runtime, Shell};
@@ -649,7 +649,7 @@ impl Line {
     fn accept_completion(
         &mut self,
         ctx: &mut LineCtx,
-        completion: Completion,
+        _completion: Completion,
     ) -> anyhow::Result<()> {
         let accepted = if let Some(accepted) = self.menu.accept().cloned() {
             accepted

@@ -1,10 +1,6 @@
 //! Shell prompt
 
-use std::{any::Any, fmt::Display};
-
-use crossterm::style::{ContentStyle, StyledContent, Stylize};
-use shrs_core::{Context, Runtime, Shell};
-use thiserror::__private::DisplayAsDisplay;
+use crossterm::style::{ContentStyle, StyledContent};
 
 use crate::{line::LineCtx, painter::StyledBuf};
 
@@ -24,14 +20,14 @@ impl DefaultPrompt {
 
 impl Prompt for DefaultPrompt {
     // TODO i still don't like passing all this context down
-    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
         StyledBuf::from_iter(vec![StyledContent::new(
             ContentStyle::new(),
             "> ".to_string(),
         )])
     }
 
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
         StyledBuf::from_iter(vec![])
     }
 }
@@ -115,8 +111,6 @@ macro_rules! styled {
 #[cfg(test)]
 mod tests {
 
-    use std::any::Any;
-
     #[test]
     fn styled_macro() {
         use crossterm::style::Stylize;
@@ -129,6 +123,6 @@ mod tests {
             "lol".blue(),
             styled! { "lol" }
         };
-        println!("out {}", styled_buf);
+        println!("out {styled_buf}");
     }
 }

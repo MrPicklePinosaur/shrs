@@ -9,7 +9,7 @@ use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
         StyledBuf::from_iter(vec!["> ".to_string().reset()])
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
@@ -18,7 +18,7 @@ impl Prompt for MyPrompt {
             .state
             .get::<CommandTimerState>()
             .and_then(|x| x.command_time())
-            .map(|x| format!("{:?}", x))
+            .map(|x| format!("{x:?}"))
             .unwrap_or(String::new());
 
         StyledBuf::from_iter(vec![time_str.reset()])

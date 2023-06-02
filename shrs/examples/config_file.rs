@@ -1,9 +1,6 @@
 //! This example shows how to write create a config file, parse it using serde and configure shrs.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use shrs::prelude::*;

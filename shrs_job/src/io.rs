@@ -1,12 +1,9 @@
 #[cfg(unix)]
 use std::os::unix::io::RawFd;
 use std::{
-    ffi::OsStr,
-    fmt,
-    fs::{File, OpenOptions},
-    io, iter,
+    fs::File,
     os::fd::AsRawFd,
-    process::{Child, ChildStdout, Command, ExitStatus, Stdio},
+    process::{ChildStdout, Stdio},
 };
 
 use nix::libc::STDIN_FILENO;

@@ -37,7 +37,7 @@ impl MuxState {
     /// If an invalid language is used an error is returned
     pub fn set_lang(&mut self, lang: &str) -> anyhow::Result<()> {
         if self.registered_langs.contains(lang) {
-            self.lang = lang.to_owned().to_string();
+            self.lang = lang.to_owned();
             Ok(())
         } else {
             Err(anyhow!("invalid lang"))

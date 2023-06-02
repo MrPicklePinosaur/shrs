@@ -1,14 +1,9 @@
-use std::{
-    env, fmt,
-    fs::File,
-    path::{Path, PathBuf},
-    process::{self, ExitStatus},
-};
+use std::{fmt, process::ExitStatus};
 
 use log::*;
 use nix::{
     sys::{
-        signal::{self, SigHandler, Signal},
+        signal::{self, Signal},
         termios::{self, Termios},
     },
     unistd::{self, Pid},
@@ -122,7 +117,7 @@ impl JobManager {
         let _terminal_state = {
             let job_index = self
                 .find_job(job_id)
-                .ok_or_else(|| Error::NoSuchJob(format!("{}", job_id)))?;
+                .ok_or_else(|| Error::NoSuchJob(format!("{job_id}")))?;
             self.jobs[job_index].set_last_running_in_foreground(true);
             let job_pgid = self.jobs[job_index].pgid();
             let job_tmodes = self.jobs[job_index].tmodes().clone();
@@ -164,7 +159,7 @@ impl JobManager {
         let job_pgid = {
             let job_index = self
                 .find_job(job_id)
-                .ok_or_else(|| Error::NoSuchJob(format!("{}", job_id)))?;
+                .ok_or_else(|| Error::NoSuchJob(format!("{job_id}")))?;
             self.jobs[job_index].set_last_running_in_foreground(false);
             self.jobs[job_index].pgid()
         };
@@ -240,7 +235,7 @@ impl fmt::Debug for JobManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{} jobs\tjob_count: {}", self.jobs.len(), self.job_count)?;
         for job in &self.jobs {
-            write!(f, "{:?}", job)?;
+            write!(f, "{job:?}")?;
         }
 
         Ok(())

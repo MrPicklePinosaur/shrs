@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, str::FromStr};
+use std::collections::HashMap;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
@@ -36,7 +36,7 @@ pub enum BindingFromStrError {
 }
 
 pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
-    let mut parts = s.split("-").collect::<Vec<_>>();
+    let mut parts = s.split('-').collect::<Vec<_>>();
 
     // last part is always the keycode
     let keycode_str = parts.pop().ok_or(BindingFromStrError::EmptyKeybinding)?;
@@ -56,7 +56,7 @@ pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
 fn parse_keycode(s: &str) -> Result<KeyCode, BindingFromStrError> {
     if s.len() == 1 {
         if let Some(c) = s.chars().next() {
-            if '!' <= c && c <= '~' {
+            if ('!'..='~').contains(&c) {
                 return Ok(KeyCode::Char(c));
             }
         }

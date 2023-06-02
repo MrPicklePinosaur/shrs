@@ -1,7 +1,7 @@
 use std::{collections::HashMap, usize};
 
-use crossterm::style::{Color, ContentStyle, StyledContent};
-use shrs_lang::{ast, Lexer, Parser, Token, RESERVED_WORDS};
+use crossterm::style::{Color, ContentStyle};
+use shrs_lang::{Lexer, Token};
 
 use crate::painter::StyledBuf;
 
@@ -46,7 +46,7 @@ impl SyntaxTheme {
             style_rules: vec![],
         }
     }
-    pub fn push_rule(&mut self, rule: RuleFn, style: ContentStyle) {
+    pub fn push_rule(&mut self, rule: RuleFn, _style: ContentStyle) {
         self.style_rules.push(rule);
     }
 }

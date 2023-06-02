@@ -1,18 +1,15 @@
 use std::{
-    borrow::Cow,
     collections::HashMap,
     fmt::Display,
     io::{stdout, BufWriter, Stdout, Write},
-    ops::{Add, Index, Range, RangeBounds},
 };
 
 use crossterm::{
     cursor::{self, MoveToColumn},
-    style::{ContentStyle, Print, PrintStyledContent, StyledContent, Stylize},
+    style::{ContentStyle, Print, PrintStyledContent, StyledContent},
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
-use shrs_core::{Context, Runtime, Shell};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{completion::Completion, line::LineCtx, menu::Menu, prompt::Prompt, CursorStyle};
@@ -157,7 +154,7 @@ impl Painter {
         let prompt_left = prompt.as_ref().prompt_left(line_ctx);
         let prompt_right = prompt.as_ref().prompt_right(line_ctx);
         let mut prompt_right_rendered = false;
-        let mut render_prompt_right = |out: &mut BufWriter<Stdout>| -> anyhow::Result<()> {
+        let render_prompt_right = |out: &mut BufWriter<Stdout>| -> anyhow::Result<()> {
             let mut right_space = self.term_size.0;
             right_space -= prompt_right.content_len() as u16;
             out.queue(MoveToColumn(right_space))?;
@@ -197,7 +194,7 @@ impl Painter {
         let chars = styled_buf
             .content
             .as_str()
-            .split("\n")
+            .split('\n')
             .last()
             .unwrap()
             .chars()

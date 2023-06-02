@@ -8,5 +8,5 @@ description = "Save and load run context"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-shrs = { path = "../../shrs" }
+shrs = { path = "../../" }
 clap = { version = "4.1", features = ["derive"] }

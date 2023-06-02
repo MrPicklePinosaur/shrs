@@ -8,4 +8,4 @@ description = "shrs plugin to time how long the previous command took to run"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-shrs = { path = "../../shrs" }
+shrs = { path = "../../" }

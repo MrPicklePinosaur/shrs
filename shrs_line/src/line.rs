@@ -2,7 +2,11 @@ use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,
-    event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{
+        poll, read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent,
+        KeyModifiers,
+    },
+    execute,
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
@@ -214,11 +218,13 @@ impl Line {
         impl Drop for CleanUp {
             fn drop(&mut self) {
                 disable_raw_mode();
+                execute!(std::io::stdout(), DisableBracketedPaste);
             }
         }
         let _cleanup = CleanUp;
 
         enable_raw_mode()?;
+        execute!(std::io::stdout(), EnableBracketedPaste)?;
 
         self.painter.init().unwrap();
 
@@ -231,61 +237,59 @@ impl Line {
         )?;
 
         loop {
-            if poll(Duration::from_millis(1000))? {
-                let event = read()?;
+            let event = read()?;
 
-                if let Event::Key(key_event) = event {
-                    if self.keybinding.handle_key_event(key_event) {
-                        break;
-                    }
-                }
-
-                let should_break = self.handle_standard_keys(line_ctx, event.clone())?;
-                if should_break {
+            if let Event::Key(key_event) = event {
+                if self.keybinding.handle_key_event(key_event) {
                     break;
                 }
-
-                // handle menu events
-                if self.menu.is_active() {
-                    self.handle_menu_keys(line_ctx, event.clone())?;
-                } else {
-                    match line_ctx.mode {
-                        LineMode::Insert => {
-                            self.handle_insert_keys(line_ctx, event)?;
-                        },
-                        LineMode::Normal => {
-                            self.handle_normal_keys(line_ctx, event)?;
-                        },
-                    }
-                }
-
-                let res = self.get_full_command(line_ctx);
-
-                // syntax highlight
-                let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
-
-                // add currently selected completion to buf
-                if self.menu.is_active() {
-                    if let Some(selection) = self.menu.current_selection() {
-                        let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                        styled_buf.push(
-                            trimmed_selection,
-                            ContentStyle {
-                                foreground_color: Some(Color::Red),
-                                ..Default::default()
-                            },
-                        );
-                    }
-                }
-
-                self.painter.paint(
-                    line_ctx,
-                    &self.prompt,
-                    &self.menu,
-                    styled_buf,
-                    line_ctx.cb.cursor(),
-                )?;
             }
+
+            let should_break = self.handle_standard_keys(line_ctx, event.clone())?;
+            if should_break {
+                break;
+            }
+
+            // handle menu events
+            if self.menu.is_active() {
+                self.handle_menu_keys(line_ctx, event.clone())?;
+            } else {
+                match line_ctx.mode {
+                    LineMode::Insert => {
+                        self.handle_insert_keys(line_ctx, event)?;
+                    },
+                    LineMode::Normal => {
+                        self.handle_normal_keys(line_ctx, event)?;
+                    },
+                }
+            }
+
+            let res = self.get_full_command(line_ctx);
+
+            // syntax highlight
+            let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
+
+            // add currently selected completion to buf
+            if self.menu.is_active() {
+                if let Some(selection) = self.menu.current_selection() {
+                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
+                    styled_buf.push(
+                        trimmed_selection,
+                        ContentStyle {
+                            foreground_color: Some(Color::Red),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+
+            self.painter.paint(
+                line_ctx,
+                &self.prompt,
+                &self.menu,
+                styled_buf,
+                line_ctx.cb.cursor(),
+            )?;
         }
 
         let res = self.get_full_command(line_ctx);
@@ -433,6 +437,10 @@ impl Line {
     //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
     fn handle_standard_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {
+            Event::Paste(p) => {
+                ctx.cb.insert(Location::Cursor(), p.as_str())?;
+            },
+
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,

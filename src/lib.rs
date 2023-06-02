@@ -1,3 +1,5 @@
+#![doc(html_root_url = "https://docs.rs/shrs/0.0.1")]
+
 #[macro_use]
 extern crate derive_builder;
 

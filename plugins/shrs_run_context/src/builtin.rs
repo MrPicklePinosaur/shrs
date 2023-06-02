@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use shrs::prelude::*;
 
 use crate::RunContextState;

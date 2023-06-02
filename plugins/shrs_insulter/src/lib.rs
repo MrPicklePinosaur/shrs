@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use lazy_static::lazy_static;
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 use shrs::{
     anyhow,
     prelude::{AfterCommandCtx, Plugin},
@@ -84,7 +84,7 @@ pub struct InsulterState {
 
 impl InsulterState {
     pub fn new(insults: Vec<String>, freq: f32, include_default: bool) -> Self {
-        let mut insults_c = insults.clone();
+        let mut insults_c = insults;
         if include_default {
             insults_c.append(&mut DEFAULT_INSULTS.iter().map(|i| i.to_string()).collect());
         }
@@ -100,7 +100,7 @@ impl InsulterState {
     fn rand_insult(&self) -> String {
         let i = self.insults.borrow_mut();
 
-        return i[thread_rng().gen_range(0..i.len())].clone();
+        i[thread_rng().gen_range(0..i.len())].clone()
     }
 }
 pub struct InsulterPlugin {
@@ -135,9 +135,9 @@ impl Default for InsulterPlugin {
     }
 }
 fn insult_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
+    _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     if ctx.exit_code != 0 {

@@ -1,10 +1,6 @@
 //! Scan file system to match project type
 
-use std::{
-    ffi::OsString,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{ffi::OsString, fs, path::Path};
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
@@ -31,9 +27,7 @@ impl Query {
         // look for required files
         let found_files = self.files.iter().all(|required_file| {
             let mut dir_contents = fs::read_dir(dir).unwrap();
-            dir_contents
-                .find(|f| f.as_ref().unwrap().file_name() == OsString::from(required_file))
-                .is_some()
+            dir_contents.any(|f| f.as_ref().unwrap().file_name() == OsString::from(required_file))
         });
 
         // look for required file extensions

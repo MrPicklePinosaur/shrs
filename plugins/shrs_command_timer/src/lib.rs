@@ -2,16 +2,12 @@
 //!
 //!
 
-use std::{
-    io::BufWriter,
-    marker::PhantomData,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use shrs::{
     anyhow,
     hooks::{AfterCommandCtx, BeforeCommandCtx},
-    plugin::{Plugin, ShellPlugin},
+    plugin::Plugin,
     Context, Runtime, Shell,
 };
 
@@ -62,10 +58,10 @@ impl Plugin for CommandTimerPlugin {
 }
 
 fn before_command_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
-    ctx: &BeforeCommandCtx,
+    _sh_rt: &mut Runtime,
+    _ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<CommandTimerState>() {
         state.start();
@@ -74,10 +70,10 @@ fn before_command_hook(
 }
 
 fn after_command_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
-    ctx: &AfterCommandCtx,
+    _sh_rt: &mut Runtime,
+    _ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<CommandTimerState>() {
         state.end()

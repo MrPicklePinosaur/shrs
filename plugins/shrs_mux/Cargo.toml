@@ -8,4 +8,4 @@ description = "nushell command language for shrs"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-shrs = { path = "../../shrs" }
+shrs = { path = "../../" }

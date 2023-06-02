@@ -8,7 +8,7 @@ extern crate derive_builder;
 extern crate proc_macro;
 
 use quote::quote;
-use syn::{parse_macro_input, Attribute, Fields, Item, ItemStruct, LitChar, LitStr, Meta};
+use syn::{parse_macro_input, Item, ItemStruct, LitStr};
 use thiserror::__private::DisplayAsDisplay;
 
 /// Information on the CLI itself
@@ -87,7 +87,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
                         };
                         let c = c
                             .chars()
-                            .nth(0)
+                            .next()
                             .ok_or(meta.error("expected short flag with single character"))?;
                         flag.short(Some(c));
                     } else {
@@ -120,8 +120,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
                 comp.register(#_flag_rules);
             }
         }
-    }
-    .into();
+    };
     Ok(output)
 }
 
@@ -140,7 +139,7 @@ fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<proc_macro2::TokenStream, Er
         .iter()
         .filter_map(|f| {
             f.short.map(|f| {
-                let f = format!("-{}", f);
+                let f = format!("-{f}");
                 quote! { #f.into() }
             })
         })
@@ -162,7 +161,6 @@ fn flag_rules(cli: Cli, flags: Vec<Flag>) -> Result<proc_macro2::TokenStream, Er
                 Box::new(flags_action)
             )
         }
-    }
-    .into();
+    };
     Ok(output)
 }

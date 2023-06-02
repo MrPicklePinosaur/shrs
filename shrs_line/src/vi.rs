@@ -135,7 +135,17 @@ impl ViCursorBuffer for CursorBuffer {
                 self.execute_vi(*action1)?;
                 return self.execute_vi(*action2);
             },
-
+            Action::ToggleCase => {
+                let loc = Location::Rel(0);
+                if let Some(c) = self.char_at(loc) {
+                    let c = if c.is_uppercase() {
+                        c.to_lowercase().collect::<String>()
+                    } else {
+                        c.to_uppercase().collect::<String>()
+                    };
+                    self.insert_inplace(loc, &c)?;
+                }
+            },
             _ => (),
         }
         Ok(LineMode::Normal)

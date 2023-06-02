@@ -7,7 +7,7 @@ pub Command: Command = <r:Repeat?> <a:Action> => {
     Command {
         repeat: r.unwrap_or(1),
         action: a,
-    } 
+    }
 };
 
 pub Motion: Motion = {
@@ -50,7 +50,7 @@ pub ChangeAction: Action = {
     "c" <m:Motion> => Action::Chain(Box::new(Action::Delete(m)), Box::new(Action::Insert)),
     "s" => Action::Chain(Box::new(Action::Delete(Motion::Right)), Box::new(Action::Insert)),
     "S" => Action::Chain(Box::new(Action::Delete(Motion::All)), Box::new(Action::Insert)),
-
+    "~" => Action::ToggleCase,
 };
 
 pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();

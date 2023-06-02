@@ -30,4 +30,5 @@ pub enum Action {
     Move(Motion),
     Insert,
     Chain(Box<Action>, Box<Action>),
+    ToggleCase,
 }

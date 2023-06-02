@@ -8,10 +8,10 @@ use crate::{Context, Runtime, Shell};
 
 /// Parameters passed to alias rule
 pub struct AliasRuleCtx<'a> {
-    alias_name: &'a str,
-    sh: &'a Shell,
-    ctx: &'a Context,
-    rt: &'a Runtime,
+    pub alias_name: &'a str,
+    pub sh: &'a Shell,
+    pub ctx: &'a Context,
+    pub rt: &'a Runtime,
 }
 /// Predicate to decide if an alias should be used or not
 pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);
@@ -49,15 +49,8 @@ impl Alias {
     }
 
     /// Fetch all possible aliases
-    pub fn get(&self, sh: &Shell, ctx: &Context, rt: &Runtime, alias_name: &str) -> Vec<&String> {
-        let alias_ctx = AliasRuleCtx {
-            alias_name,
-            sh,
-            ctx,
-            rt,
-        };
-
-        let alias_list = match self.aliases.get_vec(alias_name) {
+    pub fn get(&self, alias_ctx: &AliasRuleCtx) -> Vec<&String> {
+        let alias_list = match self.aliases.get_vec(alias_ctx.alias_name) {
             Some(alias_list) => alias_list,
             None => return vec![],
         };
@@ -87,24 +80,17 @@ impl Alias {
     }
 }
 
-impl FromIterator<(String, String)> for Alias {
-    fn from_iter<T: IntoIterator<Item = (String, String)>>(iter: T) -> Self {
-        // Alias {
-        //     aliases: HashMap::from_iter(
-        //         iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())),
-        //     ),
-        // }
-        todo!()
-    }
-}
-
-impl FromIterator<(&'static str, &'static str)> for Alias {
-    fn from_iter<T: IntoIterator<Item = (&'static str, &'static str)>>(iter: T) -> Self {
-        // Alias {
-        //     aliases: HashMap::from_iter(
-        //         iter.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())),
-        //     ),
-        // }
-        todo!()
+/// Construct an alias from iterator
+///
+/// Currently it is not possible to insert rules using FromIterator method. If you wish to add a
+/// conditional alias, please insert directly it using the [set()] method
+impl<S: ToString> FromIterator<(S, S)> for Alias {
+    fn from_iter<T: IntoIterator<Item = (S, S)>>(iter: T) -> Self {
+        let iter = iter
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), AliasInfo::always(v)));
+        Alias {
+            aliases: MultiMap::from_iter(iter),
+        }
     }
 }

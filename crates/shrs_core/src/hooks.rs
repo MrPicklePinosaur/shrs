@@ -34,13 +34,14 @@ pub trait Hook<C>: FnMut(&Shell, &mut Context, &mut Runtime, &C) -> anyhow::Resu
 
 impl<C, T: FnMut(&Shell, &mut Context, &mut Runtime, &C) -> anyhow::Result<()>> Hook<C> for T {}
 
-/// Context for [StartupHook]
+/// Runs when the shell starts up
 #[derive(Clone)]
 pub struct StartupCtx {
+    /// How long it took the shell to statup
     pub startup_time: Duration,
 }
 
-/// Default [StartupHook]
+/// Default impementation for [StartupCtx]
 pub fn startup_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
@@ -51,7 +52,7 @@ pub fn startup_hook(
     Ok(())
 }
 
-/// Context for [BeforeCommandHook]
+/// Runs before a command is executed
 #[derive(Clone)]
 pub struct BeforeCommandCtx {
     /// Literal command entered by user
@@ -59,7 +60,7 @@ pub struct BeforeCommandCtx {
     /// Command to be executed, after performing all substitutions
     pub command: String,
 }
-/// Default [BeforeCommandHook]
+/// Default implementation for [BeforeCommandCtx]
 pub fn before_command_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
@@ -71,7 +72,7 @@ pub fn before_command_hook(
     Ok(())
 }
 
-/// Context for [AfterCommandHook]
+/// Runs after a command is executed
 #[derive(Clone)]
 pub struct AfterCommandCtx {
     /// Exit code of previous command
@@ -82,7 +83,7 @@ pub struct AfterCommandCtx {
     pub cmd_output: String,
 }
 
-/// Default [AfterCommandHook]
+/// Default implementation for [AfterCommandCtx]
 pub fn after_command_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
@@ -94,14 +95,14 @@ pub fn after_command_hook(
     Ok(())
 }
 
-/// Context for [ChangeDirHook]
+/// Runs when the current working directory is modified
 #[derive(Clone)]
 pub struct ChangeDirCtx {
     pub old_dir: PathBuf,
     pub new_dir: PathBuf,
 }
 
-/// Default [AfterCommandHook]
+/// Default implementation for [ChangeDirCtx]
 pub fn change_dir_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
@@ -111,13 +112,13 @@ pub fn change_dir_hook(
     Ok(())
 }
 
-/// Context for [JobExit]
+/// Runs when a job is completed
 #[derive(Clone)]
 pub struct JobExitCtx {
     pub status: ExitStatus,
 }
 
-/// Default [JobExitHook]
+/// Default implementation for [JobExitCtx]
 pub fn job_exit_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
@@ -135,6 +136,7 @@ pub struct Hooks {
 }
 
 impl Default for Hooks {
+    /// Register default hooks
     fn default() -> Self {
         let mut hooks = Hooks::new();
 

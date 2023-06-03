@@ -4,7 +4,7 @@
 //!
 //! # Example
 //! The most basic shell can be created very easily:
-//! ```
+//! ```no_run
 //! use shrs::prelude::*;
 //!
 //! fn main() {

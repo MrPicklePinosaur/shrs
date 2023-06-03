@@ -1519,7 +1519,6 @@ dependencies = [
  "anyhow",
  "clap",
  "criterion",
- "crossbeam-channel",
  "crossterm",
  "derive_builder",
  "dirs",

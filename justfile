@@ -22,6 +22,9 @@ lint:
 flamegraph:
     cargo flamegraph --profile=release
 
+test:
+    cargo test --workspace 
+
 doc:
     cargo doc --workspace --all-features --no-deps --open
 

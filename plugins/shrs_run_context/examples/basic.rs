@@ -1,10 +1,10 @@
-use shrs::{line::LineBuilder, plugin::ShellPlugin, ShellConfigBuilder};
+use shrs::{line::LineBuilder, plugin::ShellPlugin, ShellBuilder};
 use shrs_run_context::RunContextPlugin;
 
 fn main() {
     let myline = LineBuilder::default().build().unwrap();
 
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_plugin(RunContextPlugin)
         .with_readline(myline)
         .build()

@@ -1,4 +1,4 @@
-use shrs::{line::LineBuilder, ShellConfigBuilder};
+use shrs::{line::LineBuilder, ShellBuilder};
 use shrs_derive_completion::Completion;
 
 #[derive(Completion)]
@@ -15,7 +15,7 @@ fn main() {
 
     let readline = LineBuilder::default().with_completer(comp).build().unwrap();
 
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_readline(readline)
         .build()
         .unwrap();

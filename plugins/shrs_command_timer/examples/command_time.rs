@@ -2,7 +2,7 @@ use shrs::{
     crossterm::Stylize,
     line::{LineBuilder, LineCtx, Prompt, StyledBuf},
     plugin::ShellPlugin,
-    ShellConfigBuilder,
+    ShellBuilder,
 };
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 
@@ -31,7 +31,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_plugin(CommandTimerPlugin)
         .with_readline(myline)
         .build()

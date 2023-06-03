@@ -41,7 +41,7 @@ shrs = { version = "0.1" }
 
 Next, you can create a basic shell using all of the **shrs** provided defaults with the following:
 ```rust
-use shrs::ShellConfigBuilder;
+use shrs::prelude::*;
 
 fn main() {
     let myshell = ShellConfigBuilder::default()

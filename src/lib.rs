@@ -7,7 +7,7 @@
 //! use shrs::prelude::*;
 //!
 //! fn main() {
-//!     let myshell = ShellConfigBuilder::default()
+//!     let myshell = ShellBuilder::default()
 //!         .build()
 //!         .unwrap();
 //!

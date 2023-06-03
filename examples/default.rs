@@ -3,7 +3,7 @@
 use shrs::prelude::*;
 
 fn main() {
-    let myshell = ShellConfigBuilder::default().build().unwrap();
+    let myshell = ShellBuilder::default().build().unwrap();
 
     myshell.run();
 }

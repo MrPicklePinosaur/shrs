@@ -1,7 +1,7 @@
 use shrs::{
     crossterm::Stylize,
     line::{LineBuilder, LineCtx, Prompt, StyledBuf},
-    ShellConfigBuilder,
+    ShellBuilder,
 };
 use shrs_cd_tools::git;
 
@@ -23,7 +23,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_readline(readline)
         .build()
         .unwrap();

@@ -87,7 +87,7 @@ impl ShellConfig {
     /// execution of the shell.
     pub fn run(mut self) -> anyhow::Result<()> {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
-        // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
+        // calls in ShellBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
 
         // run plugins first

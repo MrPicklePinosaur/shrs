@@ -1554,7 +1554,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_core"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "anymap",
@@ -1616,7 +1616,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_job"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -1627,7 +1627,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_lang"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "lalrpop",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_line"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "arboard",
@@ -1684,7 +1684,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_utils"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "crossterm",
@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_vi"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "lalrpop",

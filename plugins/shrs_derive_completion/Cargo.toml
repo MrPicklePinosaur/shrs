@@ -1,6 +1,6 @@
 [package]
 name = "shrs_derive_completion"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -15,7 +15,7 @@ name = "tests"
 path = "tests/test.rs"
 
 [dependencies]
-shrs = { path = "../../" }
+shrs = { path = "../../", version = "0.0.1" }
 
 derive_builder = "0.12"
 

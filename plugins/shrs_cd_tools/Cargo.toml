@@ -1,6 +1,6 @@
 [package]
 name = "shrs_cd_tools"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -8,7 +8,7 @@ description = "Variety of utilities for running commands conditionally on direct
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-shrs = { path = "../../" }
+shrs = { path = "../../", version = "0.0.1" }
 
 derive_builder = "0.12"
 

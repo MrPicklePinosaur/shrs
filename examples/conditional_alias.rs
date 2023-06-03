@@ -21,10 +21,7 @@ fn main() {
         AliasInfo::with_rule("false", |_ctx| !in_home_directory()),
     );
 
-    let myshell = ShellConfigBuilder::default()
-        .with_alias(alias)
-        .build()
-        .unwrap();
+    let myshell = ShellBuilder::default().with_alias(alias).build().unwrap();
 
     myshell.run();
 }

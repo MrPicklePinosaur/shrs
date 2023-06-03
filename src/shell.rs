@@ -1,39 +1,40 @@
+//! Shell configuration options
+
 use std::{
     cell::RefCell,
     io::{stdout, BufRead, BufWriter, Write},
     time::Instant,
 };
 
-use shrs_core::{
-    builtin::Builtins,
-    hooks::{BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
-    Alias, AliasRuleCtx, Context, Env, ExitStatus, Jobs, Lang, Runtime, Shell, Signals, State,
-    Theme,
-};
+use shrs_core::prelude::*;
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
-use shrs_line::Line;
+use shrs_line::prelude::*;
 
 use crate::plugin::Plugin;
 
 /// Unified shell config struct
 #[derive(Builder)]
-#[builder(pattern = "owned")]
+#[builder(name = "ShellBuilder", pattern = "owned")]
 #[builder(setter(prefix = "with"))]
 pub struct ShellConfig {
+    /// Runtime hooks, see [Hooks]
     #[builder(default = "Hooks::default()")]
     pub hooks: Hooks,
 
+    /// Builtin shell commands, see [Builtins]
     #[builder(default = "Builtins::default()")]
     pub builtins: Builtins,
 
+    ///
     #[builder(default = "Line::default()")]
     pub readline: Line,
 
+    /// Aliases, see [Alias]
     #[builder(default = "Alias::new()")]
     pub alias: Alias,
 
-    /// Environment variables
+    /// Environment variables, see [Env]
     #[builder(default = "Env::new()")]
     pub env: Env,
 
@@ -49,18 +50,18 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub lang: Box<dyn Lang>,
 
-    /// Plugins
+    /// Plugins, see [Plugins]
     #[builder(default = "Vec::new()")]
     #[builder(setter(custom))]
     pub plugins: Vec<Box<dyn Plugin>>,
 
-    /// Globally accessable state
+    /// Globally accessable state, see [State]
     #[builder(default = "State::new()")]
     #[builder(setter(custom))]
     pub state: State,
 }
 
-impl ShellConfigBuilder {
+impl ShellBuilder {
     pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
         let mut cur_plugin = self.plugins.unwrap_or(vec![]);
         cur_plugin.push(Box::new(plugin));
@@ -80,9 +81,13 @@ impl ShellConfigBuilder {
 }
 
 impl ShellConfig {
+    /// Start up the shell
+    ///
+    /// This function contains the main loop of the shell and thus will block for the entire
+    /// execution of the shell.
     pub fn run(mut self) -> anyhow::Result<()> {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
-        // calls in ShellConfigBuilder, so we are sort of defining the full default here. Maybe end
+        // calls in ShellBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
 
         // run plugins first
@@ -122,6 +127,7 @@ impl ShellConfig {
     }
 }
 
+///
 fn run_shell(
     sh: &Shell,
     ctx: &mut Context,

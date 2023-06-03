@@ -1,3 +1,5 @@
+//! Syntax highlighting
+
 use std::{collections::HashMap, usize};
 
 use crossterm::style::{Color, ContentStyle};

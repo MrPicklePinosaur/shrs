@@ -1,10 +1,12 @@
 //! Globally accessable state store
 
+/// State store that uses types to index
 pub struct State {
     store: anymap::Map,
 }
 
 impl State {
+    /// Initialize the state store
     pub fn new() -> State {
         State {
             store: anymap::Map::new(),

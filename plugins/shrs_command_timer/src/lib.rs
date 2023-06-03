@@ -4,12 +4,7 @@
 
 use std::time::{Duration, Instant};
 
-use shrs::{
-    anyhow,
-    hooks::{AfterCommandCtx, BeforeCommandCtx},
-    plugin::Plugin,
-    Context, Runtime, Shell,
-};
+use shrs::prelude::*;
 
 pub struct CommandTimerState {
     /// The time the previous command was started at

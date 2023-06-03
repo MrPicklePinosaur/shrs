@@ -48,9 +48,9 @@ impl NuLang {
 impl Lang for NuLang {
     fn eval(
         &self,
-        sh: &shrs::Shell,
-        ctx: &mut shrs::Context,
-        rt: &mut shrs::Runtime,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
         let mut words_it = cmd
@@ -91,9 +91,9 @@ impl PythonLang {
 impl Lang for PythonLang {
     fn eval(
         &self,
-        sh: &shrs::Shell,
-        ctx: &mut shrs::Context,
-        rt: &mut shrs::Runtime,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
         let mut words_it = cmd
@@ -134,9 +134,9 @@ impl BashLang {
 impl Lang for BashLang {
     fn eval(
         &self,
-        sh: &shrs::Shell,
-        ctx: &mut shrs::Context,
-        rt: &mut shrs::Runtime,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
         let mut words_it = cmd

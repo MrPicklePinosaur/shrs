@@ -14,7 +14,7 @@ fmt:
     cargo +nightly fmt --all
 
 check:
-    cargo check --workspace
+    cargo check --workspace --examples --tests
 
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo
@@ -23,7 +23,7 @@ flamegraph:
     cargo flamegraph --profile=release
 
 doc:
-    cargo doc --workspace --all-features
+    cargo doc --workspace --all-features --no-deps --open
 
 book:
     cd docs && zola serve

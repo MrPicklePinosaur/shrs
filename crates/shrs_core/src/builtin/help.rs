@@ -6,8 +6,7 @@ use std::{
 use super::{BuiltinCmd, BuiltinStatus, Builtins};
 use crate::{
     hooks::ChangeDirCtx,
-    shell::{Context, Runtime},
-    Shell,
+    shell::{Context, Runtime, Shell},
 };
 
 #[derive(Default)]

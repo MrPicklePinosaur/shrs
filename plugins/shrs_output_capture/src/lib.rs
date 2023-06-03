@@ -4,7 +4,7 @@
 mod builtin;
 
 use builtin::AgainBuiltin;
-use shrs::{anyhow, hooks::AfterCommandCtx, plugin::Plugin, Context, Runtime, Shell};
+use shrs::prelude::*;
 
 struct OutputCaptureState {
     pub last_command: String,
@@ -42,13 +42,13 @@ fn after_command_hook(
 
 #[cfg(test)]
 mod tests {
-    use shrs::{plugin::ShellPlugin, ShellConfigBuilder};
+    use shrs::{plugin::ShellPlugin, ShellBuilder};
 
     use crate::OutputCapturePlugin;
 
     #[test]
     pub fn register() {
-        let _myshell = ShellConfigBuilder::default()
+        let _myshell = ShellBuilder::default()
             .with_plugin(OutputCapturePlugin)
             .build()
             .unwrap();

@@ -35,6 +35,8 @@ pub Action: Action = {
     "x" => Action::Delete(Motion::Right),
     "u" => Action::Undo,
     "r" => Action::Redo,
+    "p" => Action::Paste(Motion::Right),
+    "P" => Action::Paste(Motion::None),
     <m:Motion> => Action::Move(m)
 };
 

@@ -39,10 +39,10 @@ cargo run
 
 To get started with building your own shell, it's as easy as creating a new cargo project with:
 ```rust
-use shrs::ShellConfigBuilder;
+use shrs::prelude::*;
 
 fn main() {
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .build()
         .unwrap();
 

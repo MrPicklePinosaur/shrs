@@ -44,7 +44,7 @@ Next, you can create a basic shell using all of the **shrs** provided defaults w
 use shrs::prelude::*;
 
 fn main() {
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .build()
         .unwrap();
 

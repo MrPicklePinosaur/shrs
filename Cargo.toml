@@ -1,6 +1,6 @@
 [package]
 name = "shrs"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -35,7 +35,6 @@ default = []
 [dependencies]
 regex = "1"
 signal-hook = "0.3"
-crossbeam-channel = "0.5"
 clap = { version = "4.1", features = ["derive"] }
 crossterm = "0.26"
 derive_builder = "0.12"
@@ -47,10 +46,10 @@ thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"
 
-shrs_core = { path = "crates/shrs_core" }
-shrs_line = { path = "crates/shrs_line" }
-shrs_lang = { path = "crates/shrs_lang" }
-shrs_job = { path = "crates/shrs_job" }
+shrs_core = { path = "crates/shrs_core", version = "0.0.1" }
+shrs_line = { path = "crates/shrs_line", version = "0.0.1" }
+shrs_lang = { path = "crates/shrs_lang", version = "0.0.1" }
+shrs_job = { path = "crates/shrs_job", version = "0.0.1" }
 
 [dev-dependencies]
 rexpect = "0.5"

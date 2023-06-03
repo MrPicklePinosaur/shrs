@@ -5,7 +5,7 @@
 
 The rusty POSIX shell library for hackers
 
-[![crates.io](https://img.shields.io/crates/v/shrs.svg)](#)
+[![crates.io](https://img.shields.io/crates/v/shrs.svg)](https://crates.io/crates/shrs)
 [![book](https://img.shields.io/badge/book-website-orange)](https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/)
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](#)
 [![Discord](https://img.shields.io/discord/1109393362626297856?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/XYeMseQrbM)
@@ -39,10 +39,10 @@ cargo run
 
 To get started with building your own shell, it's as easy as creating a new cargo project with:
 ```rust
-use shrs::ShellConfigBuilder;
+use shrs::prelude::*;
 
 fn main() {
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .build()
         .unwrap();
 

@@ -304,7 +304,10 @@ mod tests {
     #[test]
     fn single_quote() {
         let mut lexer = Lexer::new("'hello world'");
-        assert_eq!(lexer.next(), Some(Ok((0, Token::WORD("hello world"), 12))));
+        assert_eq!(
+            lexer.next(),
+            Some(Ok((0, Token::WORD("'hello world'"), 13)))
+        );
     }
 
     #[test]

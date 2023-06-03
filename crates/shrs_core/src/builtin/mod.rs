@@ -1,3 +1,10 @@
+//! Builtin commands
+//!
+//! The main difference between builtin commands and external commands is that builtin commands
+//! have access to the shell's context during execution. This may be useful if you specifically
+//! need to query or mutate the shell's state. Some uses of this include switching the working
+//! directory, calling hooks or accessing the state store.
+
 mod alias;
 mod cd;
 mod debug;
@@ -16,10 +23,7 @@ use self::{
     export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
     source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
-use crate::{
-    shell::{Context, Runtime},
-    Shell,
-};
+use crate::shell::{Context, Runtime, Shell};
 
 macro_rules! hashmap (
     { $($key:expr => $value:expr),+ } => {
@@ -49,6 +53,7 @@ impl BuiltinStatus {
 
 // TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
+/// Store for all registered builtin commands
 pub struct Builtins {
     builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
 }
@@ -60,10 +65,14 @@ impl Builtins {
         }
     }
 
+    /// Insert a builtin command of the given name
+    ///
+    /// If a builtin of the same name has been registered, it will be overwritten.
     pub fn insert(&mut self, name: &'static str, builtin: impl BuiltinCmd + 'static) {
         self.builtins.insert(name, Box::new(builtin));
     }
 
+    /// Get iterator of all registered builtin commands
     pub fn iter(&self) -> Iter<'_, &str, Box<dyn BuiltinCmd>> {
         self.builtins.iter()
     }
@@ -115,6 +124,7 @@ impl Default for Builtins {
     }
 }
 
+/// Implement this trait to define your own builtin command
 pub trait BuiltinCmd {
     fn run(
         &self,

@@ -1,3 +1,5 @@
+//! Core readline configuration
+
 use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
 
 use crossterm::{
@@ -10,11 +12,13 @@ use crossterm::{
     style::{Color, ContentStyle, StyledContent},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use shrs_core::{Context, Runtime, Shell};
+use shrs_core::shell::{Context, Runtime, Shell};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
+use crate::{painter::Painter, prelude::*};
+/*
 use crate::{
     buffer_history::{BufferHistory, DefaultBufferHistory},
     completion::{Completer, Completion, CompletionCtx, DefaultCompleter},
@@ -27,6 +31,7 @@ use crate::{
     vi::ViCursorBuffer,
     DefaultKeybinding, Keybinding, LineModeSwitchCtx,
 };
+*/
 
 /// Operating mode of readline
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -42,14 +47,17 @@ pub enum LineMode {
 #[builder(pattern = "owned")]
 #[builder(setter(prefix = "with"))]
 pub struct Line {
+    /// Completion menu, see [Menu]
     #[builder(default = "Box::new(DefaultMenu::new())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
 
+    /// Completion system, see [Completer]
     #[builder(default = "Box::new(DefaultCompleter::default())")]
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 
+    /// History, see [History]
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
     history: Box<dyn History<HistoryItem = String>>,
@@ -58,15 +66,17 @@ pub struct Line {
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
 
+    /// Syntax highlighter, see [Highlighter]
     #[builder(default = "Box::new(DefaultHighlighter::default())")]
     #[builder(setter(custom))]
     highlighter: Box<dyn Highlighter>,
 
+    /// Keybindings, see [Keybinding]
     #[builder(default = "Box::new(DefaultKeybinding::new())")]
     #[builder(setter(custom))]
     keybinding: Box<dyn Keybinding>,
 
-    /// Custom prompt
+    /// Custom prompt, see [Prompt]
     #[builder(default = "Box::new(DefaultPrompt::new())")]
     #[builder(setter(custom))]
     prompt: Box<dyn Prompt>,
@@ -127,6 +137,7 @@ impl HistoryInd {
     }
 }
 
+/// Context that is passed to [Line]
 pub struct LineCtx<'a> {
     cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word

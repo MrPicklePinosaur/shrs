@@ -20,7 +20,7 @@ Plugins are just regular crates that can be obtained from
 it's as using as using `with_plugin` when constructing the shell and pass in
 the plugin.
 ```rust
-let myshell = ShellConfigBuilder::default()
+let myshell = ShellBuilder::default()
     .with_plugin(OutputCapturePlugin)
     .build()
     .unwrap();

@@ -24,7 +24,7 @@ fn main() {
         env.set(k, v);
     }
 
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_env(env)
         .with_alias(alias)
         .build()

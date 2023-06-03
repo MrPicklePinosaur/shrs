@@ -1,8 +1,5 @@
 use super::{BuiltinCmd, BuiltinStatus};
-use crate::{
-    shell::{Context, Runtime},
-    Shell,
-};
+use crate::shell::{Context, Runtime, Shell};
 
 #[derive(Default)]
 pub struct ExitBuiltin {}

@@ -1,46 +1,37 @@
-//! sh.rs - a rusty shell library
-//!
-//!
+//! Core functionality of shrs
 
 #[macro_use]
 extern crate derive_builder;
 
-// TODO refactor to
-// mod <mod>
-// pub use <mod>::{ ... }
-
-mod alias;
-pub use alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx};
-
+pub mod alias;
 pub mod builtin;
-pub use builtin::BuiltinStatus;
-
-mod env;
-pub use env::Env;
-
+pub mod env;
 pub mod hooks;
-
+pub mod jobs;
+pub mod lang;
 pub mod prompt;
+pub mod shell;
+pub mod signal;
+pub mod state;
+pub mod theme;
 
-mod shell;
-pub use shell::{dummy_child, Context, Runtime, Shell};
+pub mod prelude {
+    //! Conveniently import commonly used types
 
-mod signal;
-pub use signal::Signals;
-
-mod theme;
-pub use theme::Theme;
-
-mod state;
-pub use state::State;
-
-mod lang;
-pub use lang::Lang;
-
-mod jobs;
-// TODO temp re-export anyhow
-pub use anyhow;
-pub use jobs::{ExitStatus, JobId, JobInfo, Jobs};
+    pub use crate::{
+        alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
+        builtin::{BuiltinCmd, BuiltinStatus, Builtins},
+        env::Env,
+        hooks::{Hook, HookFn, Hooks, *},
+        jobs::{ExitStatus, JobId, JobInfo, Jobs},
+        lang::Lang,
+        prompt::*,
+        shell::{Context, Runtime, Shell},
+        signal::Signals,
+        state::State,
+        theme::Theme,
+    };
+}
 
 /*
 #[cfg(test)]

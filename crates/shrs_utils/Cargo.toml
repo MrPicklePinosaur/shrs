@@ -1,10 +1,10 @@
 [package]
 name = "shrs_utils"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
-description = "common utilities"
+description = "common utilities for shrs"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]

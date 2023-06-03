@@ -1,4 +1,7 @@
-use shrs_core::Lang;
+use shrs_core::{
+    lang::Lang,
+    shell::{Context, Runtime, Shell},
+};
 use shrs_job::initialize_job_control;
 use thiserror::Error;
 
@@ -36,9 +39,9 @@ impl PosixLang {
 impl Lang for PosixLang {
     fn eval(
         &self,
-        sh: &shrs_core::Shell,
-        _ctx: &mut shrs_core::Context,
-        _rt: &mut shrs_core::Runtime,
+        sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         line: String,
     ) -> anyhow::Result<()> {
         // TODO rewrite the error handling here better

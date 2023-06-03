@@ -1,9 +1,9 @@
+/// Vi mode for shrs_line
 use arboard::Clipboard;
-/// Vi mode for readline
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
-use crate::LineMode;
+use crate::line::LineMode;
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {

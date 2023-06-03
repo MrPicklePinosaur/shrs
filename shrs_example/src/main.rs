@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate shrs;
+
 use std::{
     fs,
     io::{stdout, BufWriter},
@@ -152,7 +155,7 @@ a rusty POSIX shell | build {}"#,
 
     // =-=-= Shell =-=-=
     // Construct the final shell
-    let myshell = ShellConfigBuilder::default()
+    let myshell = ShellBuilder::default()
         .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)

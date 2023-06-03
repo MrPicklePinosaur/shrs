@@ -13,18 +13,28 @@ use crate::completion::Completion;
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 
+/// Implement this trait to define your own menu
 pub trait Menu {
     type MenuItem;
     type PreviewItem: Display;
 
+    /// Go to the next selection
     fn next(&mut self);
+    /// Go to the previous selection
     fn previous(&mut self);
+    /// Accept the current selection
     fn accept(&mut self) -> Option<&Self::MenuItem>;
+    /// Get the current selection
     fn current_selection(&self) -> Option<&Self::MenuItem>;
+    /// Get the position of the cursor
     fn cursor(&self) -> u32;
+    /// Check if menu is currently active
     fn is_active(&self) -> bool;
+    /// Activate the menu
     fn activate(&mut self);
+    /// Disactivate the menu
     fn disactivate(&mut self);
+    /// Get the current items in the menu
     fn items(&self) -> Vec<&(Self::PreviewItem, Self::MenuItem)>;
     fn set_items(&mut self, items: Vec<(Self::PreviewItem, Self::MenuItem)>);
 

@@ -7,7 +7,7 @@ mod builtin;
 use std::collections::HashMap;
 
 use builtin::{LoadBuiltin, SaveBuiltin};
-use shrs::{plugin::Plugin, Runtime};
+use shrs::prelude::*;
 
 pub struct RunContextState {
     pub(crate) run_contexts: HashMap<String, Runtime>,

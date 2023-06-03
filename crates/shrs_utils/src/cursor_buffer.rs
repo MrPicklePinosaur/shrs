@@ -180,14 +180,23 @@ impl CursorBuffer {
 
     /// Delete a length of text starting from location and move cursor to start of deleted text
     pub fn delete(&mut self, start: Location, end: Location) -> Result<()> {
+        let range = self.location_range(start, end)?;
+
+        self.data.remove(range.clone());
+        self.move_cursor(Location::Abs(range.start))?;
+        Ok(())
+    }
+    fn location_range(&self, start: Location, end: Location) -> Result<std::ops::Range<usize>> {
         let start = self.to_absolute(start)?;
         let end = self.to_absolute(end)?;
-
-        let range = if start <= end { start..end } else { end..start };
-
-        self.data.remove(range);
-        self.move_cursor(Location::Abs(start.min(end)))?;
-        Ok(())
+        if start <= end {
+            Ok(start..end)
+        } else {
+            Ok(end..start)
+        }
+    }
+    pub fn location_slice(&mut self, start: Location, end: Location) -> Result<RopeSlice<'_>> {
+        Ok(self.slice(self.location_range(start, end)?))
     }
 
     /// Delete a length of text starting from location and offset the cursor accordingly such that

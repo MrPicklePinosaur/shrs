@@ -156,6 +156,7 @@ impl ViCursorBuffer for CursorBuffer {
 
                 self.insert(l, clipboard.get_text().unwrap().as_str())?;
             },
+            Action::Yank(motion) => {},
             _ => (),
         }
         Ok(LineMode::Normal)

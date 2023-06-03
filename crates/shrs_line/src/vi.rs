@@ -156,7 +156,16 @@ impl ViCursorBuffer for CursorBuffer {
 
                 self.insert(l, clipboard.get_text().unwrap().as_str())?;
             },
-            Action::Yank(motion) => {},
+            Action::Yank(motion) => {
+                let s = self
+                    .location_slice(Location::Cursor(), self.motion_to_loc(motion)?)?
+                    .as_str();
+
+                if let Some(yanked) = s {
+                    let mut clipboard = Clipboard::new().unwrap();
+                    clipboard.set_text(yanked).unwrap();
+                }
+            },
             _ => (),
         }
         Ok(LineMode::Normal)

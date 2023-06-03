@@ -1538,7 +1538,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_cd_tools"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "derive_builder",
  "shrs",
@@ -1547,7 +1547,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_command_timer"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "shrs",
 ]
@@ -1575,7 +1575,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_derive_completion"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "derive_builder",
  "proc-macro2",
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_example"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1607,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "shrs_insulter"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "lazy_static",
  "rand",
@@ -1662,21 +1662,21 @@ dependencies = [
 
 [[package]]
 name = "shrs_mux"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "shrs",
 ]
 
 [[package]]
 name = "shrs_output_capture"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "shrs",
 ]
 
 [[package]]
 name = "shrs_run_context"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "clap",
  "shrs",

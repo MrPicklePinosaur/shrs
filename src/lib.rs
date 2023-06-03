@@ -2,7 +2,8 @@
 
 //! **shrs** is a framework for building and configuring your own shell in rust.
 //!
-//! To get started with a simple shell with all the default options
+//! # Example
+//! The most basic shell can be created very easily:
 //! ```
 //! use shrs::prelude::*;
 //!
@@ -21,8 +22,18 @@
 extern crate derive_builder;
 
 pub use shrs_core::*;
-pub use shrs_lang as lang;
-pub use shrs_line as line;
+
+pub mod lang {
+    //! Shell command langauge
+
+    pub use shrs_lang::*;
+}
+
+pub mod line {
+    //! Readline implementation
+
+    pub use shrs_line::*;
+}
 
 mod shell;
 pub use shell::*;
@@ -39,7 +50,7 @@ pub mod crossterm {
 }
 
 pub mod anyhow {
-    ///! Re-export of anyhow crate for error handling
+    //! Re-export of anyhow crate for error handling
     pub use anyhow::{anyhow, Error, Result, *};
 }
 

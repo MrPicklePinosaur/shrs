@@ -95,7 +95,7 @@ impl StyledDisplay for StyledContent<&str> {
 #[macro_export]
 macro_rules! styled {
     ($($(@($($style:ident),*))? $part:expr),* $(,)*) => {{
-        use $crate::{StyledBuf, StyledDisplay};
+        use $crate::{painter::StyledBuf, prompt::StyledDisplay};
 
         StyledBuf::from_iter(vec![
             $({

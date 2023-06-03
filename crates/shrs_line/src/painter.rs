@@ -12,7 +12,9 @@ use crossterm::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::{completion::Completion, line::LineCtx, menu::Menu, prompt::Prompt, CursorStyle};
+use crate::{
+    completion::Completion, cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt,
+};
 
 /// Text to be renderered by painter
 #[derive(Clone)]

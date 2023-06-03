@@ -1,40 +1,53 @@
 //! Readline implementation for shrs
+//!
+//! Readline is the part of the shell that is responsible for taking in user input. It handles a
+//! variety of things like keeping track of history, syntax highlighting, tab completion, vi mode,
+//! and many more.
+//!
+//! shrs_line has a similar design philosophy to the rest of shrs in that it is also highly
+//! configurable and extensible. Simply construct your own readline and give it to shrs to use.
+//!
+//! # Example
+//! ```
+//! use shrs_line::prelude::*;
+//!
+//! let mut myline = LineBuilder::default();
+//! ```
 
 #[macro_use]
 extern crate derive_builder;
 
-mod line;
-pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode};
-
-mod cursor;
-pub use cursor::CursorStyle;
-
-mod history;
-pub use history::{DefaultHistory, FileBackedHistory, History};
-
-mod menu;
-pub use menu::{DefaultMenu, Menu};
-
-mod prompt;
-pub use prompt::{DefaultPrompt, Prompt, *};
-
+pub mod buffer_history;
 pub mod completion;
+pub mod cursor;
+pub mod highlight;
+pub mod history;
+pub mod hooks;
+pub mod keybinding;
+pub mod line;
+pub mod menu;
+pub mod painter;
+pub mod prompt;
 pub mod vi;
 
-mod painter;
-pub use painter::StyledBuf;
+pub mod prelude {
+    //! Imports the commonly used structs and types
 
-mod highlight;
-pub use highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme};
-
-mod keybinding;
-pub use keybinding::{parse_keybinding, DefaultKeybinding, Keybinding};
-
-mod buffer_history;
-pub use buffer_history::{BufferHistory, DefaultBufferHistory};
-
-mod hooks;
-pub use hooks::*;
+    pub use crate::{
+        buffer_history::{BufferHistory, DefaultBufferHistory},
+        completion::*,
+        cursor::CursorStyle,
+        highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme},
+        history::{DefaultHistory, FileBackedHistory, History},
+        hooks::*,
+        keybinding::{parse_keybinding, DefaultKeybinding, Keybinding},
+        line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode},
+        menu::{DefaultMenu, Menu},
+        painter::StyledBuf,
+        prompt::{DefaultPrompt, Prompt, *},
+        vi::*,
+    };
+}
 
 #[cfg(test)]
 mod tests {}

@@ -2,7 +2,7 @@
 //!
 //!
 
-use crate::{Context, Runtime, Shell};
+use crate::shell::{Context, Runtime, Shell};
 
 /// Trait to implement a shell command langauge
 pub trait Lang {

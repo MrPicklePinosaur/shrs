@@ -6,7 +6,7 @@ use crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use shrs_core::{Context, Runtime, Shell};
+use shrs_core::shell::{Context, Runtime, Shell};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};

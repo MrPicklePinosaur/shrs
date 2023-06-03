@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 
 /// Set and query environment variables
-// currently just wrapper around hashmap
 #[derive(Clone)]
 pub struct Env {
     vars: HashMap<String, String>,

@@ -1,10 +1,8 @@
 //! Shell aliasing
 
-use std::collections::HashMap;
-
 use multimap::MultiMap;
 
-use crate::{Context, Runtime, Shell};
+use crate::shell::{Context, Runtime, Shell};
 
 /// Parameters passed to alias rule
 pub struct AliasRuleCtx<'a> {
@@ -16,6 +14,7 @@ pub struct AliasRuleCtx<'a> {
 /// Predicate to decide if an alias should be used or not
 pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);
 
+/// Contains alias value and other metadata
 pub struct AliasInfo {
     /// The actual value to be substituted
     pub subst: String,
@@ -31,6 +30,8 @@ impl AliasInfo {
             rule: AliasRule(Box::new(|ctx| -> bool { true })),
         }
     }
+
+    /// Conditionally run this alias
     pub fn with_rule<S, R>(subst: S, rule: R) -> Self
     where
         S: ToString,
@@ -52,6 +53,7 @@ pub struct Alias {
 }
 
 impl Alias {
+    /// Construct a new instance of [Alias]
     pub fn new() -> Self {
         Alias {
             aliases: MultiMap::new(),

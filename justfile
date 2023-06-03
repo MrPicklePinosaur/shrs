@@ -23,7 +23,7 @@ flamegraph:
     cargo flamegraph --profile=release
 
 doc:
-    cargo doc --workspace --all-features
+    cargo doc --workspace --all-features --no-deps --open
 
 book:
     cd docs && zola serve

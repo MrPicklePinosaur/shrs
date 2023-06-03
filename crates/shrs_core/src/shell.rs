@@ -1,4 +1,4 @@
-//! Implementation and runtime for POSIX shell
+//! Types for internal context of shell
 
 use std::{
     cell::RefCell,
@@ -25,10 +25,10 @@ use crate::{
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
+    lang::Lang,
     signal::Signals,
     state::State,
     theme::Theme,
-    Lang,
 };
 
 /// Constant shell data
@@ -82,8 +82,8 @@ pub struct Runtime {
 
 // some utilitiy commands that should be cleaned up or moved later
 
-pub fn dummy_child() -> anyhow::Result<Child> {
-    use std::process::Command;
-    let cmd = Command::new("true").spawn()?;
-    Ok(cmd)
-}
+// pub fn dummy_child() -> anyhow::Result<Child> {
+//     use std::process::Command;
+//     let cmd = Command::new("true").spawn()?;
+//     Ok(cmd)
+// }

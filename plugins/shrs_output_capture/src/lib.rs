@@ -4,7 +4,7 @@
 mod builtin;
 
 use builtin::AgainBuiltin;
-use shrs::{anyhow, hooks::AfterCommandCtx, plugin::Plugin, Context, Runtime, Shell};
+use shrs::prelude::*;
 
 struct OutputCaptureState {
     pub last_command: String,

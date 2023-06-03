@@ -21,7 +21,10 @@ use std::{
 
 use crossterm::{style::Print, QueueableCommand};
 
-use crate::{jobs::ExitStatus, Context, Runtime, Shell};
+use crate::{
+    jobs::ExitStatus,
+    shell::{Context, Runtime, Shell},
+};
 
 pub type HookFn<C: Clone> =
     fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
@@ -165,8 +168,12 @@ impl Hooks {
         };
     }
 
+    /*
     /// Register from an iterator
-    pub fn register_iter(&mut self) {}
+    pub fn register_iter(&mut self) {
+        unimplemented!()
+    }
+    */
 
     /// Executes all registered hooks
     pub fn run<C: Clone + 'static>(

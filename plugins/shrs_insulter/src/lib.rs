@@ -2,11 +2,8 @@ use std::cell::RefCell;
 
 use lazy_static::lazy_static;
 use rand::{thread_rng, Rng};
-use shrs::{
-    anyhow,
-    prelude::{AfterCommandCtx, Plugin},
-    Context, Runtime, Shell,
-};
+use shrs::prelude::*;
+
 lazy_static! {
     static ref DEFAULT_INSULTS: Vec<&'static str> = {
         let def_insults: Vec<&str>  = vec![

@@ -9,10 +9,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 use super::{BuiltinCmd, BuiltinStatus};
-use crate::{
-    shell::{Context, Runtime},
-    Shell,
-};
+use crate::shell::{Context, Runtime, Shell};
 
 lazy_static! {
     static ref SHBANG_REGEX: Regex = Regex::new(r"#!(?P<interp>.+)").unwrap();

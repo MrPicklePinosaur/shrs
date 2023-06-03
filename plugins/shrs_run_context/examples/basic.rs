@@ -1,4 +1,4 @@
-use shrs::{line::LineBuilder, plugin::ShellPlugin, ShellBuilder};
+use shrs::prelude::*;
 use shrs_run_context::RunContextPlugin;
 
 fn main() {

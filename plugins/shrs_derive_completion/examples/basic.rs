@@ -1,4 +1,4 @@
-use shrs::{line::LineBuilder, ShellBuilder};
+use shrs::prelude::*;
 use shrs_derive_completion::Completion;
 
 #[derive(Completion)]

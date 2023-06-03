@@ -1,8 +1,4 @@
-use shrs::{
-    crossterm::Stylize,
-    line::{LineBuilder, LineCtx, Prompt, StyledBuf},
-    ShellBuilder,
-};
+use shrs::prelude::*;
 use shrs_cd_tools::git;
 
 struct MyPrompt;

@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate shrs;
 
 use std::{
@@ -6,7 +7,6 @@ use std::{
     process::Command,
 };
 
-#[macro_use]
 use shrs::prelude::*;
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};

@@ -1,9 +1,4 @@
-use shrs::{
-    crossterm::Stylize,
-    line::{LineBuilder, LineCtx, Prompt, StyledBuf},
-    plugin::ShellPlugin,
-    ShellBuilder,
-};
+use shrs::prelude::*;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 
 struct MyPrompt;

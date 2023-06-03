@@ -1,3 +1,5 @@
+//! Internal renderer
+
 use std::{
     collections::HashMap,
     fmt::Display,

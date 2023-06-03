@@ -1,4 +1,4 @@
-/// Vi mode for readline
+/// Vi mode for shrs_line
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 

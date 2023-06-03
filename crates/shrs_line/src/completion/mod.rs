@@ -6,9 +6,6 @@ pub use completer::*;
 mod utils;
 pub use utils::*;
 
-mod context;
-pub use context::*;
-
 /// How should the completion be substituted
 #[derive(Clone)]
 pub enum ReplaceMethod {
@@ -45,8 +42,38 @@ impl Completion {
     }
 }
 
+/// Implement this trait to define your own tab completion system
 pub trait Completer {
+    /// Given context on the current state of the input, output list of possible completions
     fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion>;
+}
+
+pub struct CompletionCtx {
+    /// The currently entered line split by arguments
+    ///
+    /// The cursor position is after the very last argument
+    line: Vec<String>,
+}
+
+impl CompletionCtx {
+    pub fn new(line: Vec<String>) -> Self {
+        Self { line }
+    }
+
+    /// Get the name of the command
+    pub fn cmd_name(&self) -> Option<&String> {
+        self.line.get(0)
+    }
+
+    /// Get the word that the user is currently typing
+    pub fn cur_word(&self) -> Option<&String> {
+        self.line.last()
+    }
+
+    /// Which argument are we currently on
+    pub fn arg_num(&self) -> usize {
+        self.line.len().saturating_sub(1)
+    }
 }
 
 #[cfg(test)]

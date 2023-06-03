@@ -1,3 +1,5 @@
+//! Implementation of default rule based completer
+
 use std::path::{Path, PathBuf};
 
 use shrs_core::builtin::Builtins;
@@ -8,23 +10,30 @@ use super::{
 };
 
 // TODO make this FnMut?
+/// Actions return a list of possible completions
 pub type Action = Box<dyn Fn(&CompletionCtx) -> Vec<Completion>>;
 
+/// Predicates are functions that take in some context and return a boolean
 pub struct Pred {
     pred: Box<dyn Fn(&CompletionCtx) -> bool>,
 }
 
 impl Pred {
+    /// Construct a new predicate from a function
     pub fn new(pred: impl Fn(&CompletionCtx) -> bool + 'static) -> Self {
         Self {
             pred: Box::new(pred),
         }
     }
+    /// Chain another predicate
+    ///
+    /// The predicates short circuit
     pub fn and(self, pred: impl Fn(&CompletionCtx) -> bool + 'static) -> Self {
         Self {
             pred: Box::new(move |ctx: &CompletionCtx| -> bool { (*self.pred)(ctx) && pred(ctx) }),
         }
     }
+    /// Check if predicate is satified
     pub fn test(&self, ctx: &CompletionCtx) -> bool {
         (self.pred)(ctx)
     }
@@ -33,8 +42,11 @@ impl Pred {
 pub type Filter = Box<dyn Fn(&String) -> bool>;
 pub type Format = Box<dyn Fn(String) -> Completion>;
 
+/// Rules for [DefaultCompleter]
 pub struct Rule {
+    /// Predicate to check
     pub pred: Pred,
+    /// Action to execute if predicate is satisfied
     pub action: Action,
     // pub filter: Filter,
     // pub format: Format,
@@ -53,6 +65,7 @@ impl Rule {
     // TODO this could maybe be rewritten as a builder pattern
 }
 
+/// Default rule-based completion system
 pub struct DefaultCompleter {
     rules: Vec<Rule>,
 }
@@ -67,7 +80,7 @@ impl DefaultCompleter {
         self.rules.push(rule);
     }
 
-    pub fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
+    fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
 
         let mut output = vec![];
@@ -96,6 +109,7 @@ impl Completer for DefaultCompleter {
 }
 
 impl Default for DefaultCompleter {
+    /// Register default rules
     fn default() -> Self {
         // collection of predefined rules
 
@@ -126,6 +140,7 @@ pub fn builtin_cmdname_action(builtin: &Builtins) -> impl Fn(&CompletionCtx) -> 
     move |_ctx: &CompletionCtx| -> Vec<Completion> { default_format(builtin_names.clone()) }
 }
 
+/// Look in current directory for potential filenames to complete
 pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let cur_word = ctx.cur_word().unwrap();
     let drop_end = drop_path_end(cur_word);
@@ -201,9 +216,11 @@ pub fn cmdname_eq_pred(cmd_name: String) -> impl Fn(&CompletionCtx) -> bool {
 pub fn flag_pred(ctx: &CompletionCtx) -> bool {
     long_flag_pred(ctx) || short_flag_pred(ctx)
 }
+/// Check if we are completing a short flag
 pub fn short_flag_pred(ctx: &CompletionCtx) -> bool {
     ctx.cur_word().unwrap_or(&String::new()).starts_with('-') && !long_flag_pred(ctx)
 }
+/// Check if we are completing a long flag
 pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
     ctx.cur_word().unwrap_or(&String::new()).starts_with("--")
 }
@@ -219,6 +236,7 @@ pub fn path_pred(ctx: &CompletionCtx) -> bool {
 }
 
 // TODO temp helper to create a list of completions
+/// Consturct a [Completion] with default options
 pub fn default_format(s: Vec<String>) -> Vec<Completion> {
     s.iter()
         .map(|x| Completion {

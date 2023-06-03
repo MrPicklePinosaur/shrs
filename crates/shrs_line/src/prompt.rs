@@ -4,6 +4,7 @@ use crossterm::style::{ContentStyle, StyledContent};
 
 use crate::{line::LineCtx, painter::StyledBuf};
 
+/// Implement this trait to create your own prompt
 pub trait Prompt {
     fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf;
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf;
@@ -91,6 +92,8 @@ impl StyledDisplay for StyledContent<&str> {
 // would technically like to make macro accept ToString but we want special behavior for option
 // type
 
+/// Macro to easily compose [StyledBuf] for use in prompt implementation
+///
 /// Note need crossterm::style::Stylize
 #[macro_export]
 macro_rules! styled {

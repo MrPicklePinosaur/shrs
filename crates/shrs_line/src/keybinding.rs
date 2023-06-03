@@ -1,8 +1,11 @@
+//! Keybinding system
+
 use std::collections::HashMap;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
+/// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
     fn handle_key_event(&mut self, key_event: KeyEvent) -> bool;
@@ -10,6 +13,7 @@ pub trait Keybinding {
 
 pub type Binding = (KeyCode, KeyModifiers);
 
+/// Macro to easily define keybindings
 #[macro_export]
 macro_rules! keybindings {
     ($($binding:expr => $func:expr),* $(,)*) => {{
@@ -25,6 +29,7 @@ macro_rules! keybindings {
     }};
 }
 
+/// Errors from parsing keybinding from string
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum BindingFromStrError {
     #[error("unknown key: {0}")]
@@ -35,6 +40,7 @@ pub enum BindingFromStrError {
     EmptyKeybinding,
 }
 
+/// Parse a keybinding from a keybinding string
 pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
     let mut parts = s.split('-').collect::<Vec<_>>();
 
@@ -89,6 +95,7 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
     }
 }
 
+/// Default implementation of [Keybinding]
 pub struct DefaultKeybinding {
     // TODO this can't take closure right now
     pub bindings: HashMap<Binding, Box<dyn FnMut()>>,

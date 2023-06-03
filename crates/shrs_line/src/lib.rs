@@ -47,6 +47,8 @@ pub mod prelude {
         prompt::{DefaultPrompt, Prompt, *},
         vi::*,
     };
+    // Macros
+    pub use crate::{keybindings, styled};
 }
 
 #[cfg(test)]

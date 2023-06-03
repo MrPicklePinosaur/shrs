@@ -1,9 +1,12 @@
+extern crate shrs;
+
 use std::{
     fs,
     io::{stdout, BufWriter},
     process::Command,
 };
 
+#[macro_use]
 use shrs::prelude::*;
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};

@@ -9,7 +9,7 @@ use std::{
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
-use shrs_line::Line;
+use shrs_line::prelude::*;
 
 use crate::plugin::Plugin;
 

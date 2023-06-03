@@ -28,6 +28,7 @@ pub Action: Action = {
     <a:DeleteAction> => a,
     <a:ChangeAction> => a,
     "y" <m:Motion> => Action::Yank(m),
+    "yy" => Action::Yank(Motion::End),
     "i" => Action::Insert,
     "I" => Action::Chain(Box::new(Action::Move(Motion::Start)), Box::new(Action::Insert)),
     "a" => Action::Chain(Box::new(Action::Move(Motion::Right)), Box::new(Action::Insert)),

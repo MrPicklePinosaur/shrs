@@ -1,4 +1,5 @@
 /// Vi mode for shrs_line
+use arboard::Clipboard;
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
@@ -145,6 +146,15 @@ impl ViCursorBuffer for CursorBuffer {
                     };
                     self.insert_inplace(loc, &c)?;
                 }
+            },
+            Action::Paste(motion) => {
+                let mut clipboard = Clipboard::new().unwrap();
+                let mut l = self.motion_to_loc(motion)?;
+                if self.to_absolute(l).is_err() {
+                    l = Location::Rel(0);
+                }
+
+                self.insert(l, clipboard.get_text().unwrap().as_str())?;
             },
             _ => (),
         }

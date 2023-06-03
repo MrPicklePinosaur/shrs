@@ -8,11 +8,12 @@ description = "readline implementation"
 repository = "https://github.com/MrPicklePinosaur/sh.rs"
 
 [dependencies]
-crossterm = "0.26"
+crossterm = {version = "0.26", features = ["bracketed-paste"]}
 trie-rs = "0.1"
 derive_builder = "0.12"
 dirs = "5"
 unicode-width = "0.1"
+arboard = "3.2.0"
 
 anyhow = "1"
 thiserror = "1"

@@ -133,6 +133,9 @@ impl Painter {
 
         Ok(())
     }
+    pub fn set_term_size(&mut self, w: u16, h: u16) {
+        self.term_size = (w, h);
+    }
 
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,

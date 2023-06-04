@@ -124,11 +124,3 @@ pub fn set_working_dir(
 pub fn get_working_dir(rt: &Runtime) -> &Path {
     &rt.working_dir
 }
-
-// some utilitiy commands that should be cleaned up or moved later
-
-// pub fn dummy_child() -> anyhow::Result<Child> {
-//     use std::process::Command;
-//     let cmd = Command::new("true").spawn()?;
-//     Ok(cmd)
-// }

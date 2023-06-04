@@ -23,7 +23,7 @@ use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, Hooks, JobExitCtx, StartupCtx},
+    hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::{ExitStatus, Jobs},
     lang::Lang,
     signal::Signals,
@@ -78,6 +78,51 @@ pub struct Runtime {
     pub exit_status: i32,
     // /// List of defined functions
     // pub functions: HashMap<String, Box<ast::Command>>,
+}
+
+/// Set the current working directory
+pub fn set_working_dir(
+    sh: &Shell,
+    ctx: &mut Context,
+    rt: &mut Runtime,
+    wd: &Path,
+) -> anyhow::Result<()> {
+    // Check working directory validity
+    let path = PathBuf::from(wd);
+    if !path.is_dir() {
+        return Err(anyhow!("Invalid path"));
+    }
+
+    // Save old working directory
+    let old_path = get_working_dir(rt).to_path_buf();
+    let old_path_str = old_path.to_str().expect("failed converting to str");
+    rt.env
+        .set("OLDPWD", old_path_str)
+        .expect("failed setting env var");
+
+    let path_str = path.to_str().expect("failed converting to str");
+    rt.env
+        .set("PATH", path_str)
+        .expect("failed setting env var");
+    rt.working_dir = path.clone();
+
+    // Set process working directory too
+    env::set_current_dir(path.clone()).expect("failed setting process current dir");
+
+    // Run change directory hook
+    let hook_ctx = ChangeDirCtx {
+        old_dir: old_path,
+        new_dir: path,
+    };
+    sh.hooks
+        .run(sh, ctx, rt, hook_ctx)
+        .expect("failed running hook");
+
+    Ok(())
+}
+
+pub fn get_working_dir(rt: &Runtime) -> &Path {
+    &rt.working_dir
 }
 
 // some utilitiy commands that should be cleaned up or moved later

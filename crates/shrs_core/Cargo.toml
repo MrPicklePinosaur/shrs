@@ -19,9 +19,11 @@ anymap = "1.0.0-beta.2"
 multimap = "0.9"
 
 shrs_job = { path = "../shrs_job", version = "0.0.1" }
+shrs_utils = { path = "../shrs_utils", version = "0.0.1" }
 
 pino_deref = "0.1"
 
+log = "0.4"
 thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"

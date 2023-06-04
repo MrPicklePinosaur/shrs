@@ -23,7 +23,7 @@ impl BuiltinCmd for CdBuiltin {
         let path = if let Some(path) = args.get(0) {
             // `cd -` moves us back to previous directory
             if path == "-" {
-                if let Some(old_pwd) = rt.env.get("OLDPWD") {
+                if let Ok(old_pwd) = rt.env.get("OLDPWD") {
                     PathBuf::from(old_pwd)
                 } else {
                     eprintln!("no OLDPWD");
@@ -34,7 +34,7 @@ impl BuiltinCmd for CdBuiltin {
             }
         } else {
             let home_dir = rt.env.get("HOME").unwrap();
-            Path::new(home_dir).to_path_buf()
+            Path::new(&home_dir).to_path_buf()
         };
 
         let old_pwd = env::current_dir().unwrap();

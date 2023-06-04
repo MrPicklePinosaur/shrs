@@ -37,7 +37,7 @@ impl BuiltinCmd for DebugBuiltin {
             },
             Some(Commands::Env) => {
                 for (var, val) in rt.env.all() {
-                    println!("{} = {}", var, val);
+                    println!("{:?} = {:?}", var, val);
                 }
             },
         }

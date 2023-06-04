@@ -40,7 +40,7 @@ impl BuiltinCmd for ExportBuiltin {
 
         // print all env vars
         if cli.p {
-            for (var, val) in rt.env.all() {
+            for (var, val) in rt.env.iter() {
                 println!("export {:?}={:?}", var, val);
             }
             return Ok(BuiltinStatus::success());

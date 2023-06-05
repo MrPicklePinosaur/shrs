@@ -41,6 +41,81 @@ pub enum LineMode {
     /// Vi normal mode
     Normal,
 }
+fn shrs_needs_line_check(ctx: &LineCtx) -> bool {
+    //TODO check if open quotes or brackets
+
+    if let Some(last_char) = ctx
+        .cb
+        .char_at(Location::Abs(ctx.cb.len().saturating_sub(1)))
+    {
+        if last_char == '\\' {
+            return true;
+        }
+    };
+
+    let mut brackets: Vec<Token> = vec![];
+    let mut command: String = ctx.lines.clone();
+    let cur_line: String = ctx.cb.as_str().into();
+    command += cur_line.as_str();
+
+    let lexer = Lexer::new(command.as_str());
+
+    for t in lexer {
+        if let Ok(token) = t {
+            match token.1 {
+                Token::LBRACE => brackets.push(token.1),
+                Token::LPAREN => brackets.push(token.1),
+                Token::RPAREN => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LPAREN {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::RBRACE => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LBRACE {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::WORD(w) => {
+                    if let Some(c) = w.chars().next() {
+                        if c == '\'' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+                            if let Some(e) = w.chars().last() {
+                                return e != '\'';
+                            } else {
+                                return true;
+                            }
+                        }
+                        if c == '\"' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+
+                            if let Some(e) = w.chars().last() {
+                                return e != '\"';
+                            } else {
+                                return true;
+                            }
+                        }
+                    }
+                },
+
+                _ => (),
+            }
+        }
+    }
+
+    !brackets.is_empty()
+}
 
 /// Configuration for readline
 #[derive(Builder)]
@@ -90,6 +165,10 @@ pub struct Line {
     #[builder(default = "String::new()")]
     #[builder(setter(skip))]
     normal_keys: String,
+
+    #[builder(default = "Box::new(shrs_needs_line_check)")]
+    #[builder(setter(skip))]
+    needs_line_check: Box<dyn Fn(&LineCtx) -> bool>,
 }
 
 impl Default for Line {
@@ -147,6 +226,7 @@ pub struct LineCtx<'a> {
     // line contents that were present before entering history mode
     saved_line: String,
     mode: LineMode,
+    // stored lines in a multiprompt command
     pub lines: String,
 
     pub sh: &'a Shell,
@@ -366,78 +446,7 @@ impl Line {
         };
         Ok(())
     }
-    fn needs_multiline(&self, ctx: &mut LineCtx) -> bool {
-        //TODO check if open quotes or brackets
 
-        if let Some(last_char) = ctx
-            .cb
-            .char_at(Location::Abs(ctx.cb.len().saturating_sub(1)))
-        {
-            if last_char == '\\' {
-                return true;
-            }
-        };
-
-        let mut brackets: Vec<Token> = vec![];
-        let command = self.get_full_command(ctx);
-        let lexer = Lexer::new(command.as_str());
-
-        for t in lexer {
-            if let Ok(token) = t {
-                match token.1 {
-                    Token::LBRACE => brackets.push(token.1),
-                    Token::LPAREN => brackets.push(token.1),
-                    Token::RPAREN => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LPAREN {
-                                brackets.pop();
-                            } else {
-                                return false;
-                            }
-                        }
-                    },
-                    Token::RBRACE => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LBRACE {
-                                brackets.pop();
-                            } else {
-                                return false;
-                            }
-                        }
-                    },
-                    Token::WORD(w) => {
-                        if let Some(c) = w.chars().next() {
-                            if c == '\'' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\'';
-                                } else {
-                                    return true;
-                                }
-                            }
-                            if c == '\"' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\"';
-                                } else {
-                                    return true;
-                                }
-                            }
-                        }
-                    },
-
-                    _ => (),
-                }
-            }
-        }
-
-        !brackets.is_empty()
-    }
     fn get_full_command(&self, ctx: &mut LineCtx) -> String {
         let mut res: String = ctx.lines.clone();
         let cur_line: String = ctx.cb.as_str().into();
@@ -471,7 +480,7 @@ impl Line {
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
-                if self.needs_multiline(ctx) {
+                if (self.needs_line_check)(ctx) {
                     ctx.lines += ctx.cb.as_str().into_owned().as_str();
                     ctx.lines += "\n";
                     ctx.cb.clear();

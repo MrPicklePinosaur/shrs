@@ -1,0 +1,16 @@
+[package]
+name = "shrs_mux_highlighter"
+version = "0.0.1"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["MrPicklePinosaur"]
+description = "nushell command language for shrs"
+homepage = "https://mrpicklepinosaur.github.io/shrs/"
+categories = ["command-line-interface", "command-line-utilities", "development-tools"]
+keywords = ["shrs", "shell", "posix", "unix"]
+readme = "README.md"
+repository = "https://github.com/MrPicklePinosaur/shrs"
+
+[dependencies]
+shrs = { path = "../../", version = "0.0.1" }
+

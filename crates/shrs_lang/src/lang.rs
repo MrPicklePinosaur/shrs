@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     eval2::{self, run_job},
-    parser, Lexer, Parser,
+    parser, Lexer, Parser, Token,
 };
 
 #[derive(Error, Debug)]
@@ -67,5 +67,74 @@ impl Lang for PosixLang {
 
     fn name(&self) -> String {
         "posix".to_string()
+    }
+    fn needs_line_check(&self, command: String) -> bool {
+        //TODO check if open quotes or brackets
+
+        if let Some(last_char) = command.chars().last() {
+            if last_char == '\\' {
+                return true;
+            }
+        };
+
+        let mut brackets: Vec<Token> = vec![];
+
+        let lexer = Lexer::new(command.as_str());
+
+        for t in lexer {
+            if let Ok(token) = t {
+                match token.1 {
+                    Token::LBRACE => brackets.push(token.1),
+                    Token::LPAREN => brackets.push(token.1),
+                    Token::RPAREN => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LPAREN {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::RBRACE => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LBRACE {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::WORD(w) => {
+                        if let Some(c) = w.chars().next() {
+                            if c == '\'' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\'';
+                                } else {
+                                    return true;
+                                }
+                            }
+                            if c == '\"' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\"';
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+
+                    _ => (),
+                }
+            }
+        }
+
+        !brackets.is_empty()
     }
 }

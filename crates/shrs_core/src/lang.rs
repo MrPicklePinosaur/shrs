@@ -15,4 +15,5 @@ pub trait Lang {
         cmd: String,
     ) -> anyhow::Result<()>;
     fn name(&self) -> String;
+    fn needs_line_check(&self, cmd: String) -> bool;
 }

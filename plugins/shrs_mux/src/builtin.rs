@@ -1,6 +1,6 @@
 use shrs::prelude::*;
 
-use crate::MuxState;
+use crate::{ChangeLangCtx, MuxState};
 
 // TODO make shell mode part of state so we can modify from anywhere?
 // TODO add custom hook from when we switch shell mode
@@ -17,9 +17,9 @@ impl MuxBuiltin {
 impl BuiltinCmd for MuxBuiltin {
     fn run(
         &self,
-        _sh: &Shell,
+        sh: &Shell,
         ctx: &mut Context,
-        _rt: &mut Runtime,
+        rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
         // TODO flag to list all possible languages
@@ -33,12 +33,20 @@ impl BuiltinCmd for MuxBuiltin {
                 });
             },
             Some(lang_name) => {
-                ctx.state
-                    .get_mut::<MuxState>()
-                    .map(|state| match state.set_lang(lang_name) {
+                if let Some(state) = ctx.state.get_mut::<MuxState>() {
+                    let hook_ctx = ChangeLangCtx {
+                        old_lang: state.get_lang().to_string(),
+                        new_lang: lang_name.to_string(),
+                    };
+                    match state.set_lang(lang_name) {
                         Ok(_) => println!("setting lang to {lang_name}"),
                         Err(e) => eprintln!("{e}"),
-                    });
+                    }
+
+                    sh.hooks
+                        .run(sh, ctx, rt, hook_ctx)
+                        .expect("failed running hook");
+                };
             },
             _ => return Ok(BuiltinStatus::error()),
         };

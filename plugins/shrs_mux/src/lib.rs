@@ -54,6 +54,11 @@ impl MuxState {
         self.registered_langs.iter()
     }
 }
+#[derive(Clone)]
+pub struct ChangeLangCtx {
+    old_lang: String,
+    new_lang: String,
+}
 
 pub struct MuxPlugin;
 

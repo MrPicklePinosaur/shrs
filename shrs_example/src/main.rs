@@ -99,7 +99,9 @@ fn main() {
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
     let keybinding = keybindings! {
-        "C-l" => Command::new("clear").spawn(),
+        |sh, ctx, rt|
+        "C-l" => { Command::new("clear").spawn() },
+        "C-p" => { println!("{:?}", ctx.startup_time) },
     };
 
     // =-=-= Prompt =-=-=

@@ -64,4 +64,8 @@ impl Lang for PosixLang {
 
         Ok(())
     }
+
+    fn name(&self) -> String {
+        "posix".to_string()
+    }
 }

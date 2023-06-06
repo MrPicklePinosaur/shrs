@@ -41,7 +41,7 @@ pub mod prelude {
         history::{DefaultHistory, FileBackedHistory, History},
         hooks::*,
         keybinding::{parse_keybinding, DefaultKeybinding, Keybinding},
-        line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode},
+        line::{Line, LineBuilder, LineBuilderError, LineCheckFn, LineCtx, LineMode},
         menu::{DefaultMenu, Menu},
         painter::StyledBuf,
         prompt::{DefaultPrompt, Prompt, *},

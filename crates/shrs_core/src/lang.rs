@@ -14,4 +14,5 @@ pub trait Lang {
         rt: &mut Runtime,
         cmd: String,
     ) -> anyhow::Result<()>;
+    fn name(&self) -> String;
 }

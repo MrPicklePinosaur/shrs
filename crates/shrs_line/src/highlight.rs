@@ -1,6 +1,6 @@
 //! Syntax highlighting
 
-use std::{collections::HashMap, usize};
+use std::{collections::HashMap, default, usize};
 
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
@@ -65,6 +65,11 @@ impl Default for SyntaxTheme {
 
 pub struct SyntaxHighlighter {
     theme: SyntaxTheme,
+}
+impl Default for SyntaxHighlighter {
+    fn default() -> Self {
+        SyntaxHighlighter::new(SyntaxTheme::default())
+    }
 }
 
 impl SyntaxHighlighter {

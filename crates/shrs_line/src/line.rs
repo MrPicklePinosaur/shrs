@@ -41,6 +41,8 @@ pub enum LineMode {
     /// Vi normal mode
     Normal,
 }
+pub type LineCheckFn = fn(&LineCtx) -> bool;
+
 fn shrs_needs_line_check(ctx: &LineCtx) -> bool {
     //TODO check if open quotes or brackets
 
@@ -142,7 +144,7 @@ pub struct Line {
     buffer_history: Box<dyn BufferHistory>,
 
     /// Syntax highlighter, see [Highlighter]
-    #[builder(default = "Box::new(DefaultHighlighter::default())")]
+    #[builder(default = "Box::new(SyntaxHighlighter::default())")]
     #[builder(setter(custom))]
     highlighter: Box<dyn Highlighter>,
 

@@ -166,6 +166,7 @@ pub struct Line {
     #[builder(setter(skip))]
     normal_keys: String,
 
+    /// Callback to determine whether the current command is completed
     #[builder(default = "Box::new(shrs_needs_line_check)")]
     #[builder(setter(skip))]
     needs_line_check: Box<dyn Fn(&LineCtx) -> bool>,
@@ -250,6 +251,13 @@ impl<'a> LineCtx<'a> {
     }
     pub fn mode(&self) -> LineMode {
         self.mode
+    }
+    fn get_full_command(&self) -> String {
+        let mut res: String = self.lines.clone();
+        let cur_line: String = self.cb.as_str().into();
+        res += cur_line.as_str();
+
+        res
     }
 }
 
@@ -355,7 +363,7 @@ impl Line {
                 }
             }
 
-            let res = self.get_full_command(line_ctx);
+            let res = line_ctx.get_full_command();
 
             // syntax highlight
             let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
@@ -383,7 +391,7 @@ impl Line {
             )?;
         }
 
-        let res = self.get_full_command(line_ctx);
+        let res = line_ctx.get_full_command();
         if !res.is_empty() {
             self.history.add(res.clone());
         }
@@ -447,13 +455,6 @@ impl Line {
         Ok(())
     }
 
-    fn get_full_command(&self, ctx: &mut LineCtx) -> String {
-        let mut res: String = ctx.lines.clone();
-        let cur_line: String = ctx.cb.as_str().into();
-        res += cur_line.as_str();
-
-        res
-    }
     //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
     fn handle_standard_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
         match event {

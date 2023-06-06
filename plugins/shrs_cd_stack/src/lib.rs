@@ -21,7 +21,8 @@ impl CdStackState {
     }
 
     pub fn pop(&mut self) -> Option<PathBuf> {
-        self.dir_stack.pop_back()
+        self.dir_stack.pop_back();
+        self.dir_stack.back().cloned()
     }
 }
 

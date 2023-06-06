@@ -17,7 +17,7 @@ pub struct MuxState {
 impl MuxState {
     /// Construct a new container for keeping track of the currently used shell language
     ///
-    /// At least one language must be supplied. The first langauge that is supplied is used as the
+    /// At least one language must be supplied. The first language that is supplied is used as the
     /// starting language
     pub fn new(langs: Vec<String>) -> anyhow::Result<MuxState> {
         let first_lang = match langs.get(0) {
@@ -53,6 +53,11 @@ impl MuxState {
     pub fn registered_langs(&self) -> impl Iterator<Item = &String> {
         self.registered_langs.iter()
     }
+}
+#[derive(Clone)]
+pub struct ChangeLangCtx {
+    old_lang: String,
+    new_lang: String,
 }
 
 pub struct MuxPlugin;

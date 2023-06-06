@@ -94,8 +94,6 @@ fn main() {
     let history_file = config_dir.as_path().join("history");
     let history = FileBackedHistory::new(history_file).expect("Could not open history file");
 
-    let highlighter = SyntaxHighlighter::new(SyntaxTheme::default());
-
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
     let keybinding = keybindings! {
@@ -113,7 +111,6 @@ fn main() {
         .with_completer(completer)
         .with_menu(menu)
         .with_history(history)
-        .with_highlighter(highlighter)
         .with_keybinding(keybinding)
         .with_prompt(prompt)
         .build()

@@ -3,12 +3,21 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use shrs_core::shell::{Context, Runtime, Shell};
 use thiserror::Error;
+
+pub type BindingFn = dyn FnMut(&Shell, &mut Context, &mut Runtime);
 
 /// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> bool;
+    fn handle_key_event(
+        &mut self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        key_event: KeyEvent,
+    ) -> bool;
 }
 
 pub type Binding = (KeyCode, KeyModifiers);
@@ -17,13 +26,14 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     ($($binding:expr => $func:expr),* $(,)*) => {{
-        use $crate::keybinding::{DefaultKeybinding, parse_keybinding};
+        use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
+        use shrs_core::shell::{Shell, Context, Runtime};
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),
-                Box::new(|| {
+                Box::new(|sh: &Shell, ctx: &mut Context, rt: &mut Runtime| {
                     $func;
-                }) as Box<dyn FnMut()>
+                }) as Box<BindingFn>
             )),*
         ])
     }};
@@ -98,7 +108,7 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 /// Default implementation of [Keybinding]
 pub struct DefaultKeybinding {
     // TODO this can't take closure right now
-    pub bindings: HashMap<Binding, Box<dyn FnMut()>>,
+    pub bindings: HashMap<Binding, Box<BindingFn>>,
 }
 
 impl DefaultKeybinding {
@@ -110,11 +120,17 @@ impl DefaultKeybinding {
 }
 
 impl Keybinding for DefaultKeybinding {
-    fn handle_key_event(&mut self, key_event: KeyEvent) -> bool {
+    fn handle_key_event(
+        &mut self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        key_event: KeyEvent,
+    ) -> bool {
         let mut event_handled = false;
         for (binding, binding_fn) in self.bindings.iter_mut() {
             if (key_event.code, key_event.modifiers) == *binding {
-                binding_fn();
+                binding_fn(sh, ctx, rt);
                 event_handled = true;
             }
         }
@@ -122,8 +138,8 @@ impl Keybinding for DefaultKeybinding {
     }
 }
 
-impl FromIterator<(Binding, Box<dyn FnMut()>)> for DefaultKeybinding {
-    fn from_iter<T: IntoIterator<Item = (Binding, Box<dyn FnMut()>)>>(iter: T) -> Self {
+impl FromIterator<(Binding, Box<BindingFn>)> for DefaultKeybinding {
+    fn from_iter<T: IntoIterator<Item = (Binding, Box<BindingFn>)>>(iter: T) -> Self {
         DefaultKeybinding {
             bindings: HashMap::from_iter(iter),
         }

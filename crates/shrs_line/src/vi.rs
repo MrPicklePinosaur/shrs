@@ -166,6 +166,36 @@ impl ViCursorBuffer for CursorBuffer {
                     clipboard.set_text(yanked).unwrap();
                 }
             },
+            action @ (Action::UpperCase(_) | Action::LowerCase(_)) => {
+                let motion = match action {
+                    Action::UpperCase(motion) => motion,
+                    Action::LowerCase(motion) => motion,
+                    _ => unreachable!("This match expr is only for upper/lower case actions"),
+                };
+                let loc = self.motion_to_loc(motion)?;
+                let selected = self
+                    .location_slice(Location::Cursor(), loc)?
+                    .as_str()
+                    .map(|s| match action {
+                        Action::UpperCase(_) => s.to_uppercase(),
+                        Action::LowerCase(_) => s.to_lowercase(),
+                        _ => unreachable!("This match expr is only for upper/lower case actions"),
+                    });
+
+                if let Some(selected) = selected.as_ref() {
+                    let abs_loc = self.to_absolute(loc)?;
+                    let curr_loc = self.to_absolute(Location::Cursor())?;
+
+                    self.insert_inplace(
+                        if abs_loc > curr_loc {
+                            Location::Cursor()
+                        } else {
+                            loc
+                        },
+                        selected,
+                    )?;
+                }
+            },
             _ => (),
         }
         Ok(LineMode::Normal)

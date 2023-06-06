@@ -54,6 +54,8 @@ pub ChangeAction: Action = {
     "s" => Action::Chain(Box::new(Action::Delete(Motion::Right)), Box::new(Action::Insert)),
     "S" => Action::Chain(Box::new(Action::Delete(Motion::All)), Box::new(Action::Insert)),
     "~" => Action::ToggleCase,
+    "g" "u" <m:Motion> => Action::LowerCase(m),
+    "g" "U" <m:Motion> => Action::UpperCase(m),
 };
 
 pub Repeat: u32 = <s:r"[0-9]+"> => u32::from_str_radix(s, 10).unwrap();

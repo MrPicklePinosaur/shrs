@@ -30,6 +30,9 @@ pub mod painter;
 pub mod prompt;
 pub mod vi;
 
+// TODO kinda ugly rexporting shrs_core here
+pub use shrs_core as _core;
+
 pub mod prelude {
     //! Imports the commonly used structs and types
 
@@ -40,7 +43,7 @@ pub mod prelude {
         highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme},
         history::{DefaultHistory, FileBackedHistory, History},
         hooks::*,
-        keybinding::{parse_keybinding, DefaultKeybinding, Keybinding},
+        keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode},
         menu::{DefaultMenu, Menu},
         painter::StyledBuf,

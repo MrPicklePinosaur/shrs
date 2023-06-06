@@ -173,8 +173,11 @@ impl CursorBuffer {
     /// Insert text and offset cursor to point to same text
     pub fn insert_inplace(&mut self, loc: Location, text: &str) -> Result<()> {
         let loc = self.to_absolute(loc)?;
-        self.data.remove(loc..(loc + text.len()));
+        self.data
+            .try_remove(loc..(loc + text.len()))
+            .map_err(|_| Error::DeletingTooMuch)?;
         self.data.insert(loc, text);
+
         Ok(())
     }
 

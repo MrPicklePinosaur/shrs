@@ -4,3 +4,4 @@
 *.~undo-tree~
 
 grammar.rs
+Cargo.lock

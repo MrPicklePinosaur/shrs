@@ -101,7 +101,6 @@ fn main() {
     let keybinding = keybindings! {
         |sh, ctx, rt|
         "C-l" => { Command::new("clear").spawn() },
-        "C-p" => { println!("{:?}", ctx.startup_time) },
     };
 
     // =-=-= Prompt =-=-=

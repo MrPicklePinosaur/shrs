@@ -251,7 +251,12 @@ impl Line {
             let event = read()?;
 
             if let Event::Key(key_event) = event {
-                if self.keybinding.handle_key_event(key_event) {
+                if self.keybinding.handle_key_event(
+                    line_ctx.sh,
+                    line_ctx.ctx,
+                    line_ctx.rt,
+                    key_event,
+                ) {
                     break;
                 }
             }

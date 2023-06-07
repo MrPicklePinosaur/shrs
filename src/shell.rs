@@ -26,9 +26,10 @@ pub struct ShellConfig {
     #[builder(default = "Builtins::default()")]
     pub builtins: Builtins,
 
-    ///
-    #[builder(default = "Line::default()")]
-    pub readline: Line,
+    /// Readline implementation
+    #[builder(default = "Box::new(Line::default())")]
+    #[builder(setter(custom))]
+    pub readline: Box<dyn Readline>,
 
     /// Aliases, see [Alias]
     #[builder(default = "Alias::new()")]
@@ -76,6 +77,10 @@ impl ShellBuilder {
     }
     pub fn with_lang(mut self, lang: impl Lang + 'static) -> Self {
         self.lang = Some(Box::new(lang));
+        self
+    }
+    pub fn with_readline(mut self, line: impl Readline + 'static) -> Self {
+        self.readline = Some(Box::new(line));
         self
     }
 }
@@ -132,7 +137,7 @@ fn run_shell(
     sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,
-    readline: &mut Line,
+    readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
     let res = sh.hooks.run::<StartupCtx>(

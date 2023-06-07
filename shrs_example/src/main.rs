@@ -104,7 +104,14 @@ fn main() {
         "C-l" => { Command::new("clear").spawn() },
         "C-p" => {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
-                if let Some(new_path) = state.pop() {
+                if let Some(new_path) = state.down() {
+                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
+                }
+            }
+        },
+        "C-n" => {
+            if let Some(state) = ctx.state.get_mut::<CdStackState>() {
+                if let Some(new_path) = state.up() {
                     set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }

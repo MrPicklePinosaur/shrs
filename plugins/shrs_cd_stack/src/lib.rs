@@ -6,24 +6,43 @@ use std::{
 
 use shrs::prelude::*;
 
+/// Resembles undo/redo but for file path histories
 pub struct CdStackState {
-    dir_stack: LinkedList<PathBuf>,
+    down_stack: LinkedList<PathBuf>,
+    /// Used to go back up path history if path history was not changed
+    up_stack: LinkedList<PathBuf>,
 }
 
 impl CdStackState {
     pub fn new() -> Self {
         Self {
-            dir_stack: LinkedList::new(),
+            down_stack: LinkedList::new(),
+            up_stack: LinkedList::new(),
         }
     }
 
+    /// Add new directory location to path
     pub fn push(&mut self, path: &Path) {
-        self.dir_stack.push_back(path.to_path_buf());
+        self.down_stack.push_back(path.to_path_buf());
+        self.up_stack.clear();
     }
 
-    pub fn pop(&mut self) -> Option<PathBuf> {
-        self.dir_stack.pop_back();
-        self.dir_stack.back().cloned()
+    /// Go back in path history
+    pub fn down(&mut self) -> Option<PathBuf> {
+        let top = self.down_stack.pop_back();
+        if let Some(top) = top {
+            self.up_stack.push_back(top);
+        }
+        self.down_stack.back().cloned()
+    }
+
+    /// Go forward in path history
+    pub fn up(&mut self) -> Option<PathBuf> {
+        let top = self.up_stack.pop_back();
+        if let Some(top) = top.clone() {
+            self.down_stack.push_back(top);
+        }
+        top
     }
 }
 

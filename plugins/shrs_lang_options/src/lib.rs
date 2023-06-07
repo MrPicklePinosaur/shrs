@@ -1,6 +1,7 @@
+use std::{collections::HashMap, default, usize};
+
 use shrs::prelude::*;
 use shrs_mux::ChangeLangCtx;
-use std::{collections::HashMap, default, usize};
 
 pub struct LangOptionsPlugin {
     highlighters: HashMap<String, Box<dyn Highlighter>>,

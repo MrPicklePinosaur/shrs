@@ -26,8 +26,9 @@ members = [
     "plugins/shrs_derive_completion",
     "plugins/shrs_run_context",
     "plugins/shrs_mux",
-    "plugins/shrs_insulter",
     "plugins/shrs_cd_stack"
+    "plugins/shrs_insulter",
+    "plugins/shrs_lang_options"
 ]
 
 [features]

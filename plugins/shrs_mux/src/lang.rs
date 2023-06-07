@@ -35,6 +35,14 @@ impl Lang for MuxLang {
 
         Ok(())
     }
+
+    fn name(&self) -> String {
+        "mux".to_string()
+    }
+
+    fn needs_line_check(&self, cmd: String) -> bool {
+        false
+    }
 }
 
 pub struct NuLang {}
@@ -77,6 +85,14 @@ impl Lang for NuLang {
         handle.wait()?;
 
         Ok(())
+    }
+
+    fn name(&self) -> String {
+        "nu".to_string()
+    }
+
+    fn needs_line_check(&self, cmd: String) -> bool {
+        false
     }
 }
 
@@ -121,6 +137,14 @@ impl Lang for PythonLang {
 
         Ok(())
     }
+
+    fn name(&self) -> String {
+        "python".to_string()
+    }
+
+    fn needs_line_check(&self, cmd: String) -> bool {
+        false
+    }
 }
 
 pub struct BashLang {}
@@ -163,5 +187,13 @@ impl Lang for BashLang {
         handle.wait()?;
 
         Ok(())
+    }
+
+    fn name(&self) -> String {
+        "bash".to_string()
+    }
+
+    fn needs_line_check(&self, cmd: String) -> bool {
+        false
     }
 }

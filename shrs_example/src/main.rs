@@ -105,9 +105,7 @@ fn main() {
         "C-p" => {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.pop() {
-                    set_working_dir(sh, ctx, rt, &new_path).unwrap();
-                    // TODO hacky, removing the directory we just went to
-                    // state.pop();
+                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }
         },

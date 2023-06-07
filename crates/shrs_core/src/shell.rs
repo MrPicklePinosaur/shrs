@@ -86,6 +86,7 @@ pub fn set_working_dir(
     ctx: &mut Context,
     rt: &mut Runtime,
     wd: &Path,
+    run_hook: bool,
 ) -> anyhow::Result<()> {
     // Check working directory validity
     let path = PathBuf::from(wd);
@@ -110,13 +111,15 @@ pub fn set_working_dir(
     env::set_current_dir(path.clone()).expect("failed setting process current dir");
 
     // Run change directory hook
-    let hook_ctx = ChangeDirCtx {
-        old_dir: old_path,
-        new_dir: path,
-    };
-    sh.hooks
-        .run(sh, ctx, rt, hook_ctx)
-        .expect("failed running hook");
+    if run_hook {
+        let hook_ctx = ChangeDirCtx {
+            old_dir: old_path,
+            new_dir: path,
+        };
+        sh.hooks
+            .run(sh, ctx, rt, hook_ctx)
+            .expect("failed running hook");
+    }
 
     Ok(())
 }

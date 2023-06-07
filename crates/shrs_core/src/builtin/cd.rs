@@ -37,7 +37,7 @@ impl BuiltinCmd for CdBuiltin {
             Path::new(&home_dir).to_path_buf()
         };
 
-        if let Err(_) = set_working_dir(sh, ctx, rt, &path) {
+        if let Err(_) = set_working_dir(sh, ctx, rt, &path, true) {
             return Ok(BuiltinStatus::error());
         }
 

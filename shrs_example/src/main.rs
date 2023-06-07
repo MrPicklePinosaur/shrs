@@ -7,7 +7,8 @@ use std::{
     process::Command,
 };
 
-use shrs::prelude::*;
+use shrs::{line::_core::shell::set_working_dir, prelude::*};
+use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_mux::{MuxPlugin, MuxState};
@@ -99,6 +100,20 @@ fn main() {
     let keybinding = keybindings! {
         |sh, ctx, rt|
         "C-l" => { Command::new("clear").spawn() },
+        "C-p" => {
+            if let Some(state) = ctx.state.get_mut::<CdStackState>() {
+                if let Some(new_path) = state.down() {
+                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
+                }
+            }
+        },
+        "C-n" => {
+            if let Some(state) = ctx.state.get_mut::<CdStackState>() {
+                if let Some(new_path) = state.up() {
+                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
+                }
+            }
+        },
     };
 
     // =-=-= Prompt =-=-=
@@ -162,6 +177,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin)
         .with_plugin(MuxPlugin)
+        .with_plugin(CdStackPlugin)
         .build()
         .expect("Could not construct shell");
 

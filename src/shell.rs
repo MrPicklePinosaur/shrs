@@ -168,7 +168,7 @@ fn run_shell(
 
             // Currently only use the last alias, can also render a menu
             if let Some(expanded) = ctx.alias.get(&alias_ctx).last() {
-                *first = expanded.to_owned().to_string();
+                *first = expanded.to_string();
             }
         }
         let line = words.join(" ");

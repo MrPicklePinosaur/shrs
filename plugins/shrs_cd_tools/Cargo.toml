@@ -11,5 +11,9 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 shrs = { path = "../../", version = "0.0.1" }
 
 derive_builder = "0.12"
+anymap = "0.12"
+multimap = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 thiserror = "1"

@@ -142,7 +142,7 @@ impl Painter {
         line_ctx: &mut LineCtx,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
-        styled_buf: StyledBuf,
+        styled_buf: &StyledBuf,
         cursor_ind: usize,
     ) -> anyhow::Result<()> {
         self.out.queue(cursor::Hide)?;

@@ -227,11 +227,13 @@ impl Line {
 
         self.painter.init().unwrap();
 
+        let mut styled_buf = StyledBuf::empty();
+
         self.painter.paint(
             line_ctx,
             &self.prompt,
             &self.menu,
-            StyledBuf::empty(),
+            &styled_buf,
             line_ctx.cb.cursor(),
         )?;
 
@@ -271,7 +273,7 @@ impl Line {
             let res = line_ctx.get_full_command();
 
             // syntax highlight
-            let mut styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
+            styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
 
             // add currently selected completion to buf
             if self.menu.is_active() {
@@ -291,7 +293,7 @@ impl Line {
                 line_ctx,
                 &self.prompt,
                 &self.menu,
-                styled_buf,
+                &styled_buf,
                 line_ctx.cb.cursor(),
             )?;
         }

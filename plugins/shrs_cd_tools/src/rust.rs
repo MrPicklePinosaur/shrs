@@ -7,21 +7,17 @@ use shrs::anyhow;
 
 use crate::query::{MetadataParser, Query, QueryBuilder, QueryBuilderError, QueryResult};
 
-pub struct RustModule {
-    pub cargo_toml: CargoToml,
-}
-
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
 pub struct CargoToml {
-    package: Package,
+    pub package: Package,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
 pub struct Package {
-    name: String,
-    version: String,
-    edition: String,
-    description: String,
+    pub name: String,
+    pub version: String,
+    pub edition: String,
+    pub description: String,
 }
 
 fn cargo_toml_parser(query_res: &mut QueryResult, content: &String) -> anyhow::Result<()> {

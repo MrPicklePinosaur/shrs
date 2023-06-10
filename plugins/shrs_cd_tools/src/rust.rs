@@ -7,9 +7,9 @@ use shrs::anyhow;
 
 use crate::query::{MetadataParser, Query, QueryBuilder, QueryBuilderError, QueryResult};
 
-// pub struct RustModule {
-//     pub cargo_toml:
-// }
+pub struct RustModule {
+    pub cargo_toml: CargoToml,
+}
 
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
 pub struct CargoToml {

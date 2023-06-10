@@ -1,6 +1,13 @@
 //! Scan file system to match project type
 
-use std::{any::TypeId, ffi::OsString, fs, marker::PhantomData, path::Path};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    ffi::OsString,
+    fs,
+    marker::PhantomData,
+    path::Path,
+};
 
 use anymap::AnyMap;
 use multimap::MultiMap;
@@ -26,8 +33,8 @@ pub struct Query {
     recursive: bool,
 
     /// List of parsers for metadata
-    #[builder(default = "MultiMap::new()")]
-    metadata_parsers: MultiMap<String, MetadataParser>,
+    #[builder(default = "HashMap::new()")]
+    metadata_parsers: HashMap<String, MetadataParser>,
 }
 
 /// Return information about the file directory scan
@@ -36,8 +43,21 @@ pub struct QueryResult {
     pub metadata: AnyMap,
 }
 
+impl QueryResult {
+    pub fn add_metadata<T>(&mut self, data: T) {
+        self.metadata.insert(data);
+    }
+    pub fn get_metadata<T>(&mut self) -> Option<&T> {
+        self.metadata.get::<T>()
+    }
+}
+
 /// How to parse metadata
-pub type MetadataParser = Box<dyn Fn(String) -> Value>;
+///
+/// This handler is responsible for inserting the metadata into the metadata map
+/// The current reason for this is that it's a limitation with the type system (or limitation of my
+/// abilities). Hopefully will come up with more ergonomic solution in the future
+pub type MetadataParser = Box<dyn Fn(&mut AnyMap, &String) -> anyhow::Result<()>>;
 
 impl Query {
     /// Runs filesystem query and returns if query matched
@@ -57,10 +77,12 @@ impl Query {
             let dir_item = dir_item.unwrap();
             if dir_item.file_type().unwrap().is_file() {
                 let file_name: String = dir_item.file_name().to_string_lossy().into();
-                if let Some(inner) = self.metadata_parsers.get_vec(&file_name) {
-                    for parser in inner {
-                        let res = (*parser)(String::new());
-                    }
+                let file_path = dir_item.path();
+
+                // run parser
+                if let Some(parser) = self.metadata_parsers.get(&file_name) {
+                    let contents = fs::read_to_string(file_path).unwrap();
+                    let res = (*parser)(&mut metadata, &contents);
                 }
             }
         }

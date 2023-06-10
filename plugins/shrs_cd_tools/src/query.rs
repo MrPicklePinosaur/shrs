@@ -62,7 +62,7 @@ impl QueryResult {
     pub fn add_metadata<T: 'static>(&mut self, data: T) {
         self.metadata.insert(data);
     }
-    pub fn get_metadata<T: 'static>(&mut self) -> Option<&T> {
+    pub fn get_metadata<T: 'static>(&self) -> Option<&T> {
         self.metadata.get::<T>()
     }
 }
@@ -90,7 +90,7 @@ impl Query {
         });
 
         // TODO redundant code
-        let mut dir_contents = fs::read_dir(dir).unwrap();
+        let dir_contents = fs::read_dir(dir).unwrap();
         for dir_item in dir_contents.into_iter() {
             let dir_item = dir_item.unwrap();
             if dir_item.file_type().unwrap().is_file() {
@@ -101,6 +101,7 @@ impl Query {
                 if let Some(parser) = self.metadata_parsers.get(&file_name) {
                     let contents = fs::read_to_string(file_path).unwrap();
                     let res = (*parser)(&mut query_res, &contents);
+                    // TODO warn or handle error if parser errors
                 }
             }
         }
@@ -171,15 +172,24 @@ mod tests {
     #[test]
     fn metadata_parse_build() {
         let metadata_parser = HashMap::from_iter([
-            (String::from("Cargo.toml"), Box::new(parser) as MetadataParser)
+            (String::from("parse_test.toml"), Box::new(parser) as MetadataParser)
         ]);
         let query = QueryBuilder::default()
             .metadata_parsers(metadata_parser)
             .build()
             .unwrap();
 
-        let path = PathBuf::from("/home/pinosaur/Repos/shrs");
-        // println!("{:?}", query.get_metadata());
+        // TODO make this work not only on my computer
+        let path = PathBuf::from("/home/pinosaur/Temp");
+        let query_res = query.scan(&path);
+
+        assert_eq!(
+            query_res.get_metadata::<TestParse>(),
+            Some(&TestParse {
+                ip: String::from("127.0.0.1"),
+                port: Some(5000)
+            })
+        );
     }
     */
 }

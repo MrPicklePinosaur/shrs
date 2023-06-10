@@ -11,7 +11,7 @@ use std::{
 
 use anymap::AnyMap;
 use multimap::MultiMap;
-use serde::{Deserialize, DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use shrs::anyhow;
 
@@ -37,6 +37,14 @@ pub struct Query {
     metadata_parsers: HashMap<String, MetadataParser>,
 }
 
+/// How to match a file
+pub enum FileMatcher {
+    /// Match a file based only on it's name
+    ///
+    /// TODO this can also be a regex
+    Filename(String),
+}
+
 /// Return information about the file directory scan
 pub struct QueryResult {
     pub matched: bool,
@@ -44,10 +52,17 @@ pub struct QueryResult {
 }
 
 impl QueryResult {
-    pub fn add_metadata<T>(&mut self, data: T) {
+    pub fn new() -> Self {
+        Self {
+            matched: false,
+            metadata: AnyMap::new(),
+        }
+    }
+
+    pub fn add_metadata<T: 'static>(&mut self, data: T) {
         self.metadata.insert(data);
     }
-    pub fn get_metadata<T>(&mut self) -> Option<&T> {
+    pub fn get_metadata<T: 'static>(&mut self) -> Option<&T> {
         self.metadata.get::<T>()
     }
 }
@@ -57,12 +72,15 @@ impl QueryResult {
 /// This handler is responsible for inserting the metadata into the metadata map
 /// The current reason for this is that it's a limitation with the type system (or limitation of my
 /// abilities). Hopefully will come up with more ergonomic solution in the future
-pub type MetadataParser = Box<dyn Fn(&mut AnyMap, &String) -> anyhow::Result<()>>;
+pub type MetadataParser = Box<dyn Fn(&mut QueryResult, &String) -> anyhow::Result<()>>;
 
 impl Query {
     /// Runs filesystem query and returns if query matched
     pub fn scan(&self, dir: &Path) -> QueryResult {
-        let mut metadata = AnyMap::new();
+        let mut query_res = QueryResult {
+            matched: false,
+            metadata: AnyMap::new(),
+        };
 
         // TODO run this recursively
         // look for required files
@@ -82,7 +100,7 @@ impl Query {
                 // run parser
                 if let Some(parser) = self.metadata_parsers.get(&file_name) {
                     let contents = fs::read_to_string(file_path).unwrap();
-                    let res = (*parser)(&mut metadata, &contents);
+                    let res = (*parser)(&mut query_res, &contents);
                 }
             }
         }
@@ -91,18 +109,19 @@ impl Query {
 
         // look for required dirs
 
-        QueryResult {
-            matched: found_files,
-            metadata,
-        }
+        query_res.matched = found_files;
+        query_res
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{collections::HashMap, path::PathBuf};
 
-    use super::QueryBuilder;
+    use serde::Deserialize;
+    use shrs::anyhow;
+
+    use super::{MetadataParser, QueryBuilder, QueryResult};
 
     #[test]
     fn basic() {
@@ -115,4 +134,52 @@ mod tests {
         let path = PathBuf::from("/home/pinosaur");
         assert!(query.scan(&path).matched);
     }
+
+    #[derive(Debug, Deserialize, PartialEq, Eq)]
+    struct TestParse {
+        ip: String,
+        port: Option<u16>,
+    }
+
+    fn parser(query_res: &mut QueryResult, content: &String) -> anyhow::Result<()> {
+        let parsed: TestParse = toml::from_str(content)?;
+        query_res.add_metadata(parsed);
+        Ok(())
+    }
+
+    #[test]
+    fn metadata_parse() -> anyhow::Result<()> {
+        let mut query_res = QueryResult::new();
+        let test_toml = r#"
+            ip = '127.0.0.1'
+            port = 5000
+        "#
+        .to_string();
+        parser(&mut query_res, &test_toml)?;
+
+        assert_eq!(
+            query_res.get_metadata::<TestParse>(),
+            Some(&TestParse {
+                ip: String::from("127.0.0.1"),
+                port: Some(5000)
+            })
+        );
+        Ok(())
+    }
+
+    /*
+    #[test]
+    fn metadata_parse_build() {
+        let metadata_parser = HashMap::from_iter([
+            (String::from("Cargo.toml"), Box::new(parser) as MetadataParser)
+        ]);
+        let query = QueryBuilder::default()
+            .metadata_parsers(metadata_parser)
+            .build()
+            .unwrap();
+
+        let path = PathBuf::from("/home/pinosaur/Repos/shrs");
+        // println!("{:?}", query.get_metadata());
+    }
+    */
 }

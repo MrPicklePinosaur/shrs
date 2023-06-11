@@ -43,13 +43,13 @@ pub struct SyntaxTheme {
 }
 
 impl SyntaxTheme {
-    fn new(auto: ContentStyle, rules: Vec<RuleFn>) -> Self {
+    pub fn new(auto: ContentStyle, rules: Vec<RuleFn>) -> Self {
         Self {
             auto,
             style_rules: rules,
         }
     }
-    pub fn push_rule(&mut self, rule: RuleFn, _style: ContentStyle) {
+    pub fn push_rule(&mut self, rule: RuleFn) {
         self.style_rules.push(rule);
     }
 }

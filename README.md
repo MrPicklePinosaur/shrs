@@ -57,3 +57,6 @@ See the [developer documentation](https://mrpicklepinosaur.github.io/shrs/docs/g
 
 If you encounter and bugs are have any feature requests, please don't hesitate to [leave an issue](https://github.com/MrPicklePinosaur/shrs/issues)! Also take a look at the section for contributors in the [documentation](https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/).
 
+## Community Plugins
+
+[shrs_insulter](https://github.com/nithinmuthukumar/shrs_insulter)

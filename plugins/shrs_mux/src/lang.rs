@@ -61,25 +61,6 @@ impl Lang for NuLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
-        let mut words_it = cmd
-            .split(' ')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty());
-
-        // Retrieve command name or return immediately (empty command)
-        let cmd_name = match words_it.next() {
-            Some(cmd_name) => cmd_name,
-            None => return Ok(()),
-        };
-        let args = words_it.collect::<Vec<_>>();
-
-        for (builtin_name, builtin_cmd) in sh.builtins.iter() {
-            if builtin_name == &cmd_name {
-                builtin_cmd.run(sh, ctx, rt, &args)?;
-                return Ok(());
-            }
-        }
-
         let mut handle = Command::new("nu").args(vec!["-c", &cmd]).spawn()?;
 
         handle.wait()?;
@@ -112,25 +93,6 @@ impl Lang for PythonLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
-        let mut words_it = cmd
-            .split(' ')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty());
-
-        // Retrieve command name or return immediately (empty command)
-        let cmd_name = match words_it.next() {
-            Some(cmd_name) => cmd_name,
-            None => return Ok(()),
-        };
-        let args = words_it.collect::<Vec<_>>();
-
-        for (builtin_name, builtin_cmd) in sh.builtins.iter() {
-            if builtin_name == &cmd_name {
-                builtin_cmd.run(sh, ctx, rt, &args)?;
-                return Ok(());
-            }
-        }
-
         let mut handle = Command::new("python").args(vec!["-c", &cmd]).spawn()?;
 
         handle.wait()?;
@@ -163,25 +125,6 @@ impl Lang for BashLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<()> {
-        let mut words_it = cmd
-            .split(' ')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty());
-
-        // Retrieve command name or return immediately (empty command)
-        let cmd_name = match words_it.next() {
-            Some(cmd_name) => cmd_name,
-            None => return Ok(()),
-        };
-        let args = words_it.collect::<Vec<_>>();
-
-        for (builtin_name, builtin_cmd) in sh.builtins.iter() {
-            if builtin_name == &cmd_name {
-                builtin_cmd.run(sh, ctx, rt, &args)?;
-                return Ok(());
-            }
-        }
-
         let mut handle = Command::new("bash").args(vec!["-c", &cmd]).spawn()?;
 
         handle.wait()?;

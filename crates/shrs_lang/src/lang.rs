@@ -40,8 +40,8 @@ impl Lang for PosixLang {
     fn eval(
         &self,
         sh: &Shell,
-        _ctx: &mut Context,
-        _rt: &mut Runtime,
+        ctx: &mut Context,
+        rt: &mut Runtime,
         line: String,
     ) -> anyhow::Result<()> {
         // TODO rewrite the error handling here better
@@ -55,7 +55,6 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
-        println!("{cmd:?}");
 
         let mut job_manager = sh.job_manager.borrow_mut();
         let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;

@@ -102,13 +102,12 @@ impl Query {
                     let contents = fs::read_to_string(file_path).unwrap();
                     let res = (*parser)(&mut query_res, &contents);
                     // TODO warn or handle error if parser errors
+                    if let Err(e) = res {
+                        eprintln!("{:?}", e);
+                    }
                 }
             }
         }
-
-        // look for required file extensions
-
-        // look for required dirs
 
         query_res.matched = found_files;
         query_res

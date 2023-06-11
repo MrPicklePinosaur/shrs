@@ -57,6 +57,16 @@ See the [developer documentation](https://mrpicklepinosaur.github.io/shrs/docs/g
 
 If you encounter and bugs are have any feature requests, please don't hesitate to [leave an issue](https://github.com/MrPicklePinosaur/shrs/issues)! Also take a look at the section for contributors in the [documentation](https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/).
 
-## Community Plugins
+## COMMUNITY PLUGINS
 
-[shrs_insulter](https://github.com/nithinmuthukumar/shrs_insulter)
+List of cool 3rd part plugins (create a PR to add yours to this list):
+
+- [shrs_insulter](https://github.com/nithinmuthukumar/shrs_insulter): port of [bash insulter](https://github.com/hkbakke/bash-insulter)
+- [shrs_reedline](https://github.com/MrPicklePinosaur/shrs_reedline): adapter layer to use [reedline](https://github.com/nushell/reedline) instead of shrs line
+
+## COMMUNITY SHELLS
+
+Full shells that were built with shrs
+
+- [pinosh](https://github.com/MrPicklePinosaur/pinosh): MrPicklePinosaur's build of shrs
+

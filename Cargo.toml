@@ -27,7 +27,8 @@ members = [
     "plugins/shrs_run_context",
     "plugins/shrs_mux",
     "plugins/shrs_cd_stack",
-    "plugins/shrs_lang_options"
+    "plugins/shrs_lang_options",
+    "plugins/shrs_file_logger"
 ]
 
 [features]

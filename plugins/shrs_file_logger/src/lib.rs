@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::LevelFilter;
+pub use log::LevelFilter;
 use log4rs::{
     append::file::FileAppender,
     config::{Appender, Root},
@@ -8,8 +8,8 @@ use log4rs::{
 use shrs::prelude::*;
 
 pub struct FileLogger {
-    path: PathBuf,
-    level: LevelFilter,
+    pub path: PathBuf,
+    pub level: LevelFilter,
 }
 
 impl FileLogger {

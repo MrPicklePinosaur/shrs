@@ -6,6 +6,7 @@ use std::{
     time::Instant,
 };
 
+use log::info;
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
@@ -98,6 +99,8 @@ impl ShellConfig {
         // run plugins first
         let plugins = self.plugins.drain(..).collect::<Vec<_>>();
         for plugin in plugins {
+            let plugin_meta = plugin.meta();
+            info!("Initializing plugin '{}'...", plugin_meta.name);
             plugin.init(&mut self);
         }
 

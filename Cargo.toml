@@ -47,6 +47,7 @@ pino_deref = "0.1"
 thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"
+log = "0.4"
 
 shrs_core = { path = "crates/shrs_core", version = "0.0.1-dev" }
 shrs_line = { path = "crates/shrs_line", version = "0.0.1-dev" }

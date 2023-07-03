@@ -6,13 +6,13 @@ use std::{
     time::Instant,
 };
 
-use log::info;
+use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
 use shrs_line::prelude::*;
 
-use crate::plugin::Plugin;
+use crate::prelude::*;
 
 /// Unified shell config struct
 #[derive(Builder)]
@@ -101,7 +101,20 @@ impl ShellConfig {
         for plugin in plugins {
             let plugin_meta = plugin.meta();
             info!("Initializing plugin '{}'...", plugin_meta.name);
-            plugin.init(&mut self);
+
+            if let Err(e) = plugin.init(&mut self) {
+                // Error handling for plugin
+                match plugin.fail_mode() {
+                    FailMode::Warn => warn!(
+                        "Plugin '{}' failed to initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                    FailMode::Abort => panic!(
+                        "Plugin '{}' failed to initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                }
+            }
         }
 
         let mut ctx = Context {

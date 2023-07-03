@@ -69,7 +69,7 @@ impl MuxPlugin {
 }
 
 impl Plugin for MuxPlugin {
-    fn init(&self, shell: &mut ShellConfig) {
+    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // This might be able to be indexed by typeid?
         let langs: Vec<(String, Box<dyn Lang>)> = vec![
             ("bash".into(), Box::new(BashLang::new()) as Box<dyn Lang>),
@@ -86,5 +86,7 @@ impl Plugin for MuxPlugin {
         shell.state.insert(MuxState::new(lang_names).unwrap());
         let langs_map = HashMap::from_iter(langs);
         shell.lang = Box::new(MuxLang::new(langs_map));
+
+        Ok(())
     }
 }

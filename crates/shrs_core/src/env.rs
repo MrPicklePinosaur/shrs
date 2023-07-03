@@ -31,6 +31,7 @@ pub enum EnvError {
 }
 
 /// Set and query environment variables
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Env {
     var_table: HashMap<String, String>,

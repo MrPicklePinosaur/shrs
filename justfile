@@ -14,7 +14,7 @@ fmt:
     cargo +nightly fmt --all
 
 check:
-    cargo check --workspace --examples --tests
+    cargo check --workspace --examples --tests --all-features
 
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo

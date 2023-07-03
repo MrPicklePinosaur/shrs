@@ -32,7 +32,8 @@ members = [
 ]
 
 [features]
-default = []
+default = ["serde"]
+serde = ["dep:serde", "shrs_core/serde"]
 
 [dependencies]
 regex = "1"
@@ -53,6 +54,8 @@ shrs_core = { path = "crates/shrs_core", version = "0.0.1-dev" }
 shrs_line = { path = "crates/shrs_line", version = "0.0.1-dev" }
 shrs_lang = { path = "crates/shrs_lang", version = "0.0.1-dev" }
 shrs_job = { path = "crates/shrs_job", version = "0.0.1-dev" }
+
+serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 rexpect = "0.5"

@@ -28,7 +28,8 @@ members = [
     "plugins/shrs_mux",
     "plugins/shrs_cd_stack",
     "plugins/shrs_lang_options",
-    "plugins/shrs_file_logger"
+    "plugins/shrs_file_logger",
+    "plugins/shrs_autocd"
 ]
 
 [features]

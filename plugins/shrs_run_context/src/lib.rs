@@ -24,9 +24,11 @@ impl RunContextState {
 pub struct RunContextPlugin;
 
 impl Plugin for RunContextPlugin {
-    fn init(&self, shell: &mut shrs::ShellConfig) {
+    fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("save", SaveBuiltin);
         shell.builtins.insert("load", LoadBuiltin);
         shell.state.insert(RunContextState::new());
+
+        Ok(())
     }
 }

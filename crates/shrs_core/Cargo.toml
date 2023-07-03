@@ -7,6 +7,10 @@ authors = ["MrPicklePinosaur"]
 description = "modular library to build your own shell in rust"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
+
 [dependencies]
 regex = "1"
 signal-hook = "0.3"
@@ -27,6 +31,8 @@ log = "0.4"
 thiserror = "1"
 anyhow = "1"
 lazy_static = "1.4"
+
+serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 rexpect = "0.5"

@@ -64,6 +64,7 @@ pub struct Context {
 ///
 /// Contains data that can should be local to each subshell. Data here should also be able to be
 /// cloned.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone)]
 pub struct Runtime {
     /// Current working directory

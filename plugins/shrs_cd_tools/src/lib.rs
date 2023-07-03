@@ -70,11 +70,13 @@ pub fn change_dir_hook(
 }
 
 impl Plugin for DirParsePlugin {
-    fn init(&self, shell: &mut ShellConfig) {
+    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // TODO let user pass in their own modules list
         let modules = HashMap::from_iter([(String::from("rust"), rust::module().unwrap())]);
 
         shell.state.insert(DirParseState::new(modules));
         shell.hooks.register(change_dir_hook);
+
+        Ok(())
     }
 }

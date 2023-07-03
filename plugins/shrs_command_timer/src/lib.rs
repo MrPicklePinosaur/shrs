@@ -45,10 +45,12 @@ impl CommandTimerState {
 pub struct CommandTimerPlugin;
 
 impl Plugin for CommandTimerPlugin {
-    fn init(&self, shell: &mut shrs::ShellConfig) {
+    fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.hooks.register(before_command_hook);
         shell.hooks.register(after_command_hook);
         shell.state.insert(CommandTimerState::new());
+
+        Ok(())
     }
 }
 

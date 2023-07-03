@@ -175,7 +175,7 @@ a rusty POSIX shell | build {}"#,
         .with_readline(readline)
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
-        .with_plugin(RunContextPlugin)
+        .with_plugin(RunContextPlugin::new())
         .with_plugin(MuxPlugin)
         .with_plugin(CdStackPlugin)
         .build()

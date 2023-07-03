@@ -35,14 +35,23 @@ impl RunContextPlugin {
 }
 
 impl Plugin for RunContextPlugin {
+    fn meta(&self) -> PluginMeta {
+        PluginMeta {
+            name: "Run Context".into(),
+            description: String::new(),
+        }
+    }
+
     fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("save", SaveBuiltin);
         shell.builtins.insert("load", LoadBuiltin);
 
         // if context file was provided, read file into context state
         if let Some(context_file) = &self.context_file {
-            let contents = fs::read_to_string(context_file).unwrap();
-            let run_contexts: HashMap<String, Runtime> = ron::from_str(&contents).unwrap();
+            // TODO create file if not exist
+
+            let contents = fs::read_to_string(context_file)?;
+            let run_contexts: HashMap<String, Runtime> = ron::from_str(&contents)?;
 
             shell.state.insert(RunContextState {
                 run_contexts,

@@ -1,3 +1,5 @@
+use std::{fs::OpenOptions, io::Write};
+
 use clap::Parser;
 use shrs::prelude::*;
 
@@ -22,6 +24,24 @@ impl BuiltinCmd for SaveBuiltin {
 
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {
             state.run_contexts.insert(cli.context_name, rt.clone());
+
+            // save to file if given
+            if let Some(context_file) = &state.context_file {
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(false)
+                    .open(context_file)
+                    .unwrap();
+
+                let ron_encoded = ron::ser::to_string_pretty(
+                    &state.run_contexts,
+                    ron::ser::PrettyConfig::default(),
+                )
+                .expect("Error serializing game object");
+
+                file.write_all(ron_encoded.as_bytes()).unwrap();
+            }
         }
 
         Ok(BuiltinStatus::success())

@@ -1,2 +1,11 @@
 {
+    "a": (
+        working_dir: "/home/pinosaur/Repos/shrs/plugins/shrs_run_context",
+        env: (
+            var_table: {},
+        ),
+        name: "shrs",
+        args: [],
+        exit_status: 0,
+    ),
 }

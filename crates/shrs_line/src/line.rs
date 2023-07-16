@@ -16,6 +16,7 @@ use shrs_core::shell::{Context, Runtime, Shell};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
+use trie_rs::TrieBuilder;
 
 use crate::{painter::Painter, prelude::*};
 
@@ -438,7 +439,11 @@ impl Line {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
                     self.accept_completion(ctx, item.1)?;
+                    return Ok(());
                 }
+
+                // TODO make this feature toggable
+                // Automatically accept the common prefix
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Left,

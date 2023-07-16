@@ -14,7 +14,10 @@ use crossterm::{
 };
 use shrs_core::shell::{Context, Runtime, Shell};
 use shrs_lang::{Lexer, Token};
-use shrs_utils::cursor_buffer::{CursorBuffer, Location};
+use shrs_utils::{
+    algo::longest_common_prefix,
+    cursor_buffer::{CursorBuffer, Location},
+};
 use shrs_vi::{Action, Command, Motion, Parser};
 use trie_rs::TrieBuilder;
 
@@ -444,6 +447,25 @@ impl Line {
 
                 // TODO make this feature toggable
                 // Automatically accept the common prefix
+                let completions: Vec<&str> = self
+                    .menu
+                    .items()
+                    .iter()
+                    .map(|(preview, _)| preview.as_str())
+                    .collect();
+                let prefix = longest_common_prefix(completions);
+                self.accept_completion(
+                    ctx,
+                    Completion {
+                        add_space: false,
+                        display: None,
+                        completion: prefix,
+                        replace_method: ReplaceMethod::Append,
+                    },
+                )?;
+
+                // recompute completions with prefix stripped
+                self.menu.activate();
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
@@ -593,14 +615,8 @@ impl Line {
     fn accept_completion(
         &mut self,
         ctx: &mut LineCtx,
-        _completion: Completion,
+        completion: Completion,
     ) -> anyhow::Result<()> {
-        let accepted = if let Some(accepted) = self.menu.accept().cloned() {
-            accepted
-        } else {
-            return Ok(());
-        };
-
         // first remove current word
         // TODO could implement a delete_before
         // TODO make use of ReplaceMethod
@@ -614,7 +630,7 @@ impl Line {
         ctx.current_word.clear();
 
         // then replace with the completion word
-        ctx.cb.insert(Location::Cursor(), &accepted.accept())?;
+        ctx.cb.insert(Location::Cursor(), &completion.accept())?;
 
         Ok(())
     }

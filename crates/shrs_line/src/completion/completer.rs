@@ -150,7 +150,11 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     output
         .iter()
         .map(|x| {
-            let mut filename = x.file_name().unwrap().to_str().unwrap().to_string();
+            let filename = x.file_name().unwrap().to_str().unwrap().to_string();
+
+            let mut filename = sanitize_file_name(filename);
+
+            // escape special characters in filename
 
             // append slash if directory name
             let is_dir = x.is_dir();
@@ -251,6 +255,14 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
 // pub fn path_format(s: String) -> Completion {
 //     Completion { add_space: false, display: Some(path_end(&s)), completion: s }
 // }
+
+fn sanitize_file_name(filename: String) -> String {
+    // lazy_static! {
+    //     static ref ESCAPE_SPACE
+    // }
+
+    filename.replace(" ", "\\ ")
+}
 
 #[cfg(test)]
 mod tests {

@@ -3,6 +3,9 @@
 #[macro_use]
 extern crate derive_builder;
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod alias;
 pub mod builtin;
 pub mod env;

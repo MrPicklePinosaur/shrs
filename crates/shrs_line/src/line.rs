@@ -459,12 +459,24 @@ impl Line {
                     Completion {
                         add_space: false,
                         display: None,
-                        completion: prefix,
+                        completion: prefix.clone(),
                         replace_method: ReplaceMethod::Append,
                     },
                 )?;
 
                 // recompute completions with prefix stripped
+                // TODO this code is horrifying
+                let items = self.menu.items();
+                let new_items = items
+                    .iter()
+                    .map(|(preview, complete)| {
+                        let mut complete = complete.clone();
+                        complete.completion = complete.completion[prefix.len()..].to_string();
+                        (preview.clone(), complete)
+                    })
+                    .collect();
+                self.menu.set_items(new_items);
+
                 self.menu.activate();
             },
             Event::Key(KeyEvent {

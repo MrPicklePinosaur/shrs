@@ -19,6 +19,9 @@ check:
 lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo
 
+spellfix:
+    typos -w crates plugins src shrs_example
+
 flamegraph:
     cargo flamegraph --profile=release
 

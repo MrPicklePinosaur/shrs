@@ -134,8 +134,6 @@ impl HistoryInd {
 /// Context that is passed to [Line]
 pub struct LineCtx<'a> {
     cb: CursorBuffer,
-    // TODO this is temp, find better way to store prefix of current word
-    current_word: String,
     // TODO dumping history index here for now
     history_ind: HistoryInd,
     // line contents that were present before entering history mode
@@ -153,7 +151,6 @@ impl<'a> LineCtx<'a> {
     pub fn new(sh: &'a Shell, ctx: &'a mut Context, rt: &'a mut Runtime) -> Self {
         LineCtx {
             cb: CursorBuffer::new(),
-            current_word: String::new(),
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
             mode: LineMode::Insert,
@@ -282,6 +279,7 @@ impl Line {
             // add currently selected completion to buf
             if self.menu.is_active() {
                 if let Some(selection) = self.menu.current_selection() {
+                    /*
                     let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
                     styled_buf.push(
                         trimmed_selection,
@@ -290,6 +288,7 @@ impl Line {
                             ..Default::default()
                         },
                     );
+                    */
                 }
             }
 
@@ -442,6 +441,7 @@ impl Line {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
                     self.accept_completion(ctx, item.1)?;
+                    self.menu.disactivate();
                     return Ok(());
                 }
 
@@ -604,7 +604,6 @@ impl Line {
     fn populate_completions(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
         // TODO IFS
         let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-        ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
@@ -632,16 +631,23 @@ impl Line {
         // first remove current word
         // TODO could implement a delete_before
         // TODO make use of ReplaceMethod
-        ctx.cb
-            .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
+        match completion.replace_method {
+            ReplaceMethod::Append => {
+                // NO-OP
+            },
+            ReplaceMethod::Replace => {
 
-        let cur_word_len = unicode_width::UnicodeWidthStr::width(ctx.current_word.as_str());
-        ctx.cb
-            .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
+                /*
+                ctx.cb
+                    .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
 
-        ctx.current_word.clear();
+                let cur_word_len = unicode_width::UnicodeWidthStr::width(ctx.current_word.as_str());
+                ctx.cb
+                    .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
+                */
+            },
+        };
 
-        // then replace with the completion word
         ctx.cb.insert(Location::Cursor(), &completion.accept())?;
 
         Ok(())

@@ -442,6 +442,7 @@ impl Line {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
                     self.accept_completion(ctx, item.1)?;
+                    self.menu.disactivate();
                     return Ok(());
                 }
 

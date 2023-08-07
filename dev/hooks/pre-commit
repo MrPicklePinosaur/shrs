@@ -7,3 +7,12 @@ cargo +nightly fmt --all
 git add -u
 # printf "${BOLD}[PRE-COMMIT]${NC} linting...\n"
 # cargo clippy
+
+# Run spellchecker
+if command -v typos &> /dev/null
+then
+    printf "${BOLD}[PRE-COMMIT]${NC} spellchecking..."
+    typos -w crates plugins src shrs_example
+else
+    printf "${BOLD}[PRE-COMMIT]${NC} spell checker not installed."
+fi

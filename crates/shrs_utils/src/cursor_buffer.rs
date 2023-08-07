@@ -212,9 +212,8 @@ impl CursorBuffer {
     }
 
     /// Delete a length of text ending at location
-    // TODO handle panic
-    pub fn delete_before(&mut self, _loc: Location, _len: usize) -> Result<()> {
-        todo!()
+    pub fn delete_before(&mut self, start: Location, end: Location) -> Result<()> {
+        self.delete(end, start)
     }
 
     /// Empties all text and resets cursor
@@ -312,6 +311,21 @@ mod tests {
         cb.delete(Location::Front(), Location::Abs(6))?;
         assert_eq!(cb.slice(..), "world");
         assert_eq!(cb.cursor(), 0);
+
+        cb.delete_before(Location::Back(&cb), Location::Abs(2))?;
+        assert_eq!(cb.slice(..), "wo");
+        assert_eq!(cb.cursor(), 2);
+
+        Ok(())
+    }
+
+    #[test]
+    fn slice() -> Result<()> {
+        let mut cb = CursorBuffer::new();
+
+        cb.insert(Location::Cursor(), "hello world")?;
+        assert_eq!(cb.slice(..2), "he");
+        assert_eq!(cb.slice(..=2), "hel");
 
         Ok(())
     }

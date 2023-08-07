@@ -24,7 +24,7 @@ styled! {
 }
 ```
 
-This macro should be able to take in a variety of differnet types of parameters:
+This macro should be able to take in a variety of different types of parameters:
 - Strings + anything with Display trait
 - StylizedStrings
 - Option (returns empty string if None)
@@ -32,7 +32,7 @@ This macro should be able to take in a variety of differnet types of parameters:
 
 ### How to apply styles?
 
-Have user apply styles themselve, OR, add some special syntax:
+Have user apply styles themself, OR, add some special syntax:
 ```rust
 styled! {
     [blue]vi_mode, " ", [blue,bold]username, "@", [blue,bold]hostname, " ", top_pwd, " >"
@@ -45,5 +45,5 @@ An alternative implementation is more similar to what starship does, where it em
 ```rust
 styled!("[blue]{vi_mode}[reset] [blue]{username}[white]@[blue]{hostname} {top_pwd} >")
 ```
-However this is not as readable, espcially when it's all on one line.
+However this is not as readable, especially when it's all on one line.
 

@@ -58,7 +58,7 @@ impl AliasInfo {
 /// Query and set aliases
 ///
 /// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
-/// but upon substition the error is emitted. This may be changed in the future.
+/// but upon substitution the error is emitted. This may be changed in the future.
 pub struct Alias {
     aliases: MultiMap<String, AliasInfo>,
 }

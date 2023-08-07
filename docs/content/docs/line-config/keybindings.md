@@ -14,7 +14,7 @@ toc = true
 top = false
 +++
 
-Keybindings allow you to run arbritrary commands in respond to arbritrary key
+Keybindings allow you to run arbitrary commands in respond to arbitrary key
 presses in the shell. A common example is the ability to clear the terminal
 when `Control+L` is pressed. How keybindings are represented is a bit more of an
 internal detail and not very fun to write, so a macro is provided to make the

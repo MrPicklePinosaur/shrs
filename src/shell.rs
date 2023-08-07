@@ -57,7 +57,7 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub plugins: Vec<Box<dyn Plugin>>,
 
-    /// Globally accessable state, see [State]
+    /// Globally accessible state, see [State]
     #[builder(default = "State::new()")]
     #[builder(setter(custom))]
     pub state: State,

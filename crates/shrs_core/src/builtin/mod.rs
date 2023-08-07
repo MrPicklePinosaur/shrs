@@ -51,7 +51,7 @@ impl BuiltinStatus {
     }
 }
 
-// TODO could prob just be a map, to support arbritrary (user defined even) number of builtin commands
+// TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 /// Store for all registered builtin commands
 pub struct Builtins {

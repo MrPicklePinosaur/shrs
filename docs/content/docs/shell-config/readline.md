@@ -14,7 +14,7 @@ toc = true
 top = false
 +++
 
-**shrs** comes with it's own readline implemetation that is just as
+**shrs** comes with it's own readline implementation that is just as
 configurable and extensible as the core.
 
 See the section on Line Configuration for details on all the configuration

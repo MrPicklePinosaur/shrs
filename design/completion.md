@@ -148,7 +148,7 @@ comp.completions_from("git status");
 ```
 
 The completion needs to return something like a reference to a
-'half-traveresed' structure of a command, we are pointing to a specific
+'half-traversed' structure of a command, we are pointing to a specific
 location in the tree that defines the command grammar and need figure out where
 we can go next.
 

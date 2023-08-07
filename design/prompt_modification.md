@@ -15,7 +15,7 @@ Add new hook called something like 'before prompt'. It takes in the current prom
 
 ```rust
 // append the string hello to prompt
-fn before_prompt(cur_propmt: String) -> String {
+fn before_prompt(cur_prompt: String) -> String {
     cur_prompt.join(" hello") 
 }
 ```

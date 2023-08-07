@@ -87,7 +87,7 @@ impl Env {
         Ok(())
     }
 
-    /// Obtain an interator of all the environment variables
+    /// Obtain an iterator of all the environment variables
     pub fn iter(&self) -> impl Iterator<Item = (&String, &String)> {
         // env::vars_os()
         self.var_table.iter()

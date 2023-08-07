@@ -52,7 +52,7 @@ pub fn initialize_job_control() -> anyhow::Result<()> {
         signal::signal(Signal::SIGTTOU, SigHandler::SigIgn).unwrap();
     }
 
-    // Put outselves in our own process group
+    // Put ourselves in our own process group
     let shell_pgid = Pid::this();
     unistd::setpgid(shell_pgid, shell_pgid)?;
 

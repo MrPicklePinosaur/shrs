@@ -16,11 +16,11 @@ top = false
 
 History is the ability for the shell to remember previous commands you have
 typed, providing the ability to cycle back to re-run commands. Currently
-**shrs** offers two history implemetations, `DefaultHistory` and
+**shrs** offers two history implementations, `DefaultHistory` and
 `FileBackedHistory`. `DefaultHistory` is a very basic memory based history,
 which means that your history will not persist if you close the shell. On the
 other hand, `FileBackedHistory` uses an actual file on disk, providing
-persistant completions.
+persistent completions.
 
 Here is an example of using `FileBackedHistory`:
 ```rust

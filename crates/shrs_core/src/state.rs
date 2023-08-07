@@ -1,4 +1,4 @@
-//! Globally accessable state store
+//! Globally accessible state store
 
 /// State store that uses types to index
 pub struct State {

@@ -27,9 +27,9 @@ pub struct Assign {
     pub val: String,
 }
 
-/// Seperator character between commands
+/// Separator character between commands
 #[derive(Debug, Clone)]
-pub enum SeperatorOp {
+pub enum SeparatorOp {
     /// Ampersand (&)
     Amp,
     /// Semicolon (;)

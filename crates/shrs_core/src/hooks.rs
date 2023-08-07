@@ -7,7 +7,7 @@
 // - after prompt
 // - before prompt
 // - internal error hook (call whenever there is internal shell error; good for debug)
-// - env hook (when envrionment variable is set/changed)
+// - env hook (when environment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
 use std::{
@@ -37,11 +37,11 @@ impl<C, T: FnMut(&Shell, &mut Context, &mut Runtime, &C) -> anyhow::Result<()>> 
 /// Runs when the shell starts up
 #[derive(Clone)]
 pub struct StartupCtx {
-    /// How long it took the shell to statup
+    /// How long it took the shell to startup
     pub startup_time: Duration,
 }
 
-/// Default impementation for [StartupCtx]
+/// Default implementation for [StartupCtx]
 pub fn startup_hook(
     sh: &Shell,
     sh_ctx: &mut Context,

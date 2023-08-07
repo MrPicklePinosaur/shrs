@@ -12,7 +12,7 @@ use super::{BuiltinCmd, BuiltinStatus};
 use crate::shell::{Context, Runtime, Shell};
 
 lazy_static! {
-    static ref SHBANG_REGEX: Regex = Regex::new(r"#!(?P<interp>.+)").unwrap();
+    static ref SHEBANG_REGEX: Regex = Regex::new(r"#!(?P<interp>.+)").unwrap();
 }
 
 #[derive(Default)]
@@ -34,12 +34,12 @@ impl BuiltinCmd for SourceBuiltin {
         let file_path = PathBuf::from(file_path_str);
         let file_contents = read_to_string(file_path)?;
 
-        // read shbang from first line
+        // read shebang from first line
         let mut it = file_contents.lines();
 
         let interp = it
             .next()
-            .and_then(|first_line| SHBANG_REGEX.captures(first_line))
+            .and_then(|first_line| SHEBANG_REGEX.captures(first_line))
             .and_then(|capture| capture.name("interp"));
 
         match interp {

@@ -92,7 +92,7 @@ fn eval_command(
             // println!("assigns {:?}", assigns);
 
             // file redirections
-            // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of eariler ones
+            // TODO: current behavior, only one read and write operation is allowed, the latter ones will override the behavior of earlier ones
             let mut cur_stdin = stdin;
             let mut cur_stdout = stdout;
             for redirect in redirects {
@@ -262,7 +262,7 @@ fn eval_command(
         },
         ast::Command::Subshell(cmd) => {
             // TODO rn history is being copied too, history (and also alias?) really should be global
-            // maybe seperate out global context and runtime context into two structs?
+            // maybe separate out global context and runtime context into two structs?
             let mut new_rt = rt.clone();
             let cmd_handle = eval_command(
                 sh,
@@ -341,7 +341,7 @@ fn eval_command(
 
             // execute body
             for word in expanded {
-                // TODO should have seperate variable struct instead of env
+                // TODO should have separate variable struct instead of env
                 rt.env.set(name, word); // TODO unset the var after the loop?
                 let mut body_handle =
                     eval_command(sh, ctx, rt, body, Stdio::inherit(), Stdio::piped(), None)?;
@@ -369,7 +369,7 @@ fn eval_command(
             // feature
             /*
             if RESERVED_WORDS.contains(&fname.as_str()) {
-                eprintln!("function nane cannot be a reserved keyword");
+                eprintln!("function name cannot be a reserved keyword");
                 return Ok(dummy_child()); // TODO come up with better return value
             }
 

@@ -33,7 +33,7 @@ impl Pred {
             pred: Box::new(move |ctx: &CompletionCtx| -> bool { (*self.pred)(ctx) && pred(ctx) }),
         }
     }
-    /// Check if predicate is satified
+    /// Check if predicate is satisfied
     pub fn test(&self, ctx: &CompletionCtx) -> bool {
         (self.pred)(ctx)
     }
@@ -233,14 +233,14 @@ pub fn long_flag_pred(ctx: &CompletionCtx) -> bool {
 pub fn path_pred(ctx: &CompletionCtx) -> bool {
     // strip part after slash
     let cur_word = ctx.cur_word().unwrap();
-    // TODO should tehnically be using HOME env variable?
+    // TODO should technically be using HOME env variable?
     let cur_path = to_absolute(&drop_path_end(cur_word), &dirs::home_dir().unwrap());
 
     cur_path.is_dir()
 }
 
 // TODO temp helper to create a list of completions
-/// Consturct a [Completion] with default options
+/// Construct a [Completion] with default options
 pub fn default_format(s: Vec<String>) -> Vec<Completion> {
     s.iter()
         .map(|x| Completion {

@@ -43,7 +43,7 @@ pub struct Job {
     /// Process group id
     pub pgid: Pid,
     /// All of the processes in this job
-    pub proceses: Vec<Pid>,
+    pub processes: Vec<Pid>,
 }
 
 /// Execution context for a process
@@ -151,7 +151,7 @@ impl Job {
     ///
     /// Jobs are completed when all the processes in the job has completed
     pub fn exited(&self, os: &Os) -> bool {
-        self.proceses.iter().all(|pid| {
+        self.processes.iter().all(|pid| {
             let state = os.get_process_state(pid).expect("missing process");
             matches!(state, ProcessState::Exited(_))
         })
@@ -159,7 +159,7 @@ impl Job {
 
     /// Get the state of the last process in the job
     pub fn last_process_state(&self, os: &Os) -> Option<ProcessState> {
-        self.proceses
+        self.processes
             .iter()
             .last()
             .map(|pid| os.get_process_state(pid).expect("missing process").clone())
@@ -235,12 +235,12 @@ impl Os {
     }
 
     // JOB RELATED
-    pub fn create_job(&mut self, pgid: Pid, proceses: Vec<Pid>) -> Result<JobId, std::io::Error> {
+    pub fn create_job(&mut self, pgid: Pid, processes: Vec<Pid>) -> Result<JobId, std::io::Error> {
         let jobid = self.find_free_job_id();
         let new_job = Job {
             jobid: jobid.clone(),
             pgid,
-            proceses,
+            processes,
         };
         self.jobs.insert(jobid.clone(), new_job);
         Ok(jobid)
@@ -258,14 +258,14 @@ impl Os {
     pub fn wait_for_job(&mut self, jobid: JobId) -> Result<ProcessState, std::io::Error> {
         loop {
             // TODO throw proper error here
-            let job = self.jobs.get(&jobid).expect("non existant jobid");
+            let job = self.jobs.get(&jobid).expect("non existent jobid");
             if job.exited(self) {
                 break;
             }
             self.wait_for_any_process()?;
         }
         // remove from tracked job list
-        let job = self.jobs.get(&jobid).expect("non existant jobid");
+        let job = self.jobs.get(&jobid).expect("non existent jobid");
         let process_state = job.last_process_state(self).unwrap();
         match process_state {
             ProcessState::Exited(status) => {

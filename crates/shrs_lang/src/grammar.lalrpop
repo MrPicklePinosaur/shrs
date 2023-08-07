@@ -74,20 +74,20 @@ pub CompleteCommands: ast::Command = {
 }
 
 pub CompleteCommand: ast::Command = {
-    <l:List> <s:SeperatorOp> => {
+    <l:List> <s:SeparatorOp> => {
         match s {
-	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), None),
-	      ast::SeperatorOp::Semi => ast::Command::SeqList(Box::new(l), None),
+	      ast::SeparatorOp::Amp => ast::Command::AsyncList(Box::new(l), None),
+	      ast::SeparatorOp::Semi => ast::Command::SeqList(Box::new(l), None),
 	} 
     },
     <l:List> => l,
 }
 
 pub List: ast::Command = {
-    <l:List> <s:SeperatorOp> <a:AndOr> => {
+    <l:List> <s:SeparatorOp> <a:AndOr> => {
         match s {
-	      ast::SeperatorOp::Amp => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
-	      ast::SeperatorOp::Semi => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
+	      ast::SeparatorOp::Amp => ast::Command::AsyncList(Box::new(l), Some(Box::new(a))),
+	      ast::SeparatorOp::Semi => ast::Command::SeqList(Box::new(l), Some(Box::new(a))),
 	} 
     },
     <a:AndOr> => a,
@@ -151,21 +151,21 @@ pub Subshell: ast::Command = {
 
 pub CompoundList: ast::Command = {
     Linebreak <t:Term> => t,
-    Linebreak <t:Term> <s:Seperator> => {
+    Linebreak <t:Term> <s:Separator> => {
 	match s {
 	      None => t,
-	      Some(ast::SeperatorOp::Amp) => ast::Command::AsyncList(Box::new(t), None),
-	      Some(ast::SeperatorOp::Semi) => ast::Command::SeqList(Box::new(t), None),
+	      Some(ast::SeparatorOp::Amp) => ast::Command::AsyncList(Box::new(t), None),
+	      Some(ast::SeparatorOp::Semi) => ast::Command::SeqList(Box::new(t), None),
 	}
     }
 }
 
 pub Term: ast::Command = {
-    <t:Term> <s:Seperator> <a:AndOr> => {
+    <t:Term> <s:Separator> <a:AndOr> => {
 	match s {
 	      None => t,
-	      Some(ast::SeperatorOp::Amp) => ast::Command::AsyncList(Box::new(t), Some(Box::new(a))),
-	      Some(ast::SeperatorOp::Semi) => ast::Command::SeqList(Box::new(t), Some(Box::new(a))),
+	      Some(ast::SeparatorOp::Amp) => ast::Command::AsyncList(Box::new(t), Some(Box::new(a))),
+	      Some(ast::SeparatorOp::Semi) => ast::Command::SeqList(Box::new(t), Some(Box::new(a))),
 	}
     },
     <a:AndOr> => a,
@@ -264,13 +264,13 @@ pub Assign: ast::Assign = <var:"WORD"> "=" <val:"WORD"> => ast::Assign { var: va
 
 pub Linebreak: () = NewlineList? => ();
 pub NewlineList: () = "\n"+ => ();
-pub Seperator: Option<ast::SeperatorOp> = {
-    <s:SeperatorOp> Linebreak => Some(s),
+pub Separator: Option<ast::SeparatorOp> = {
+    <s:SeparatorOp> Linebreak => Some(s),
     NewlineList => None,
 }
-pub SeperatorOp: ast::SeperatorOp = {
-    "&" => ast::SeperatorOp::Amp,
-    ";" => ast::SeperatorOp::Semi,
+pub SeparatorOp: ast::SeparatorOp = {
+    "&" => ast::SeparatorOp::Amp,
+    ";" => ast::SeparatorOp::Semi,
 }
 pub SequentialSep: () = {
     ";" Linebreak => (),

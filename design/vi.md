@@ -16,7 +16,7 @@ j, k, w, W, e, E, b, B, ge, gE, f<char>, F<char>, t<char>, T<char>
 commands
 c, d, y, p
 C, D, Y, P
-with i and a text objets
+with i and a text objects
 - w, s, p, ", ', {, (
 
 g<motion>u, g<motion>U

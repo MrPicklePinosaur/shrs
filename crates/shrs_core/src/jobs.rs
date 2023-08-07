@@ -72,7 +72,7 @@ impl Jobs {
         });
     }
 
-    /// Increment internally used id and get the next avaliable one
+    /// Increment internally used id and get the next available one
     ///
     /// Careful of overflow!
     fn get_next_id(&mut self) -> JobId {

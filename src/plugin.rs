@@ -40,7 +40,7 @@ pub trait Plugin {
     fn meta(&self) -> PluginMeta {
         // TODO this is currently an optional method to make migrating all the existing plugins a
         // bit easier. Could remove the default implementation in the future
-        warn!("Using default plugin metadata. Please specify this information for your plugin by implmenting Plugin::meta()");
+        warn!("Using default plugin metadata. Please specify this information for your plugin by implementing Plugin::meta()");
         PluginMeta::default()
     }
 

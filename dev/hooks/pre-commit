@@ -12,7 +12,8 @@ git add -u
 if command -v typos &> /dev/null
 then
     printf "${BOLD}[PRE-COMMIT]${NC} spellchecking..."
-    typos -w crates plugins src shrs_example
+    # Only a warning so don't block the commit
+    typos crates plugins src shrs_example || true
 else
     printf "${BOLD}[PRE-COMMIT]${NC} spell checker not installed."
 fi

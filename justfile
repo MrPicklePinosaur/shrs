@@ -20,7 +20,7 @@ lint:
     cargo clippy -- -W clippy::unwrap_used -W clippy::cargo
 
 spellfix:
-    typos -w crates plugins src shrs_example
+    typos -w crates plugins src shrs_example docs/content
 
 flamegraph:
     cargo flamegraph --profile=release

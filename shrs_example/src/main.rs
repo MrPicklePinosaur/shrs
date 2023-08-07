@@ -4,6 +4,7 @@ extern crate shrs;
 use std::{
     fs,
     io::{stdout, BufWriter},
+    path::PathBuf,
     process::Command,
 };
 
@@ -11,6 +12,7 @@ use shrs::{line::_core::shell::set_working_dir, prelude::*};
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
+use shrs_file_logger::{FileLogger, LevelFilter};
 use shrs_mux::{MuxPlugin, MuxState};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
@@ -55,7 +57,12 @@ impl Prompt for MyPrompt {
 }
 
 fn main() {
-    env_logger::init();
+    let logger = FileLogger {
+        path: PathBuf::from("/tmp/shrs_log"),
+        level: LevelFilter::Debug,
+    };
+
+    logger.init().expect("Failed initializing file logger");
 
     let _out = BufWriter::new(stdout());
 

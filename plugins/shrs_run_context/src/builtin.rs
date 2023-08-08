@@ -20,7 +20,7 @@ impl BuiltinCmd for SaveBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let cli = SaveBuiltinCli::parse_from(vec!["save".to_string()].iter().chain(args.iter()));
+        let cli = SaveBuiltinCli::try_parse_from(args)?;
 
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {
             state.run_contexts.insert(cli.context_name, rt.clone());

@@ -3,11 +3,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use clap::Parser;
+
 use super::{BuiltinCmd, BuiltinStatus};
 use crate::{
     hooks::ChangeDirCtx,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
+
+#[derive(Parser)]
+struct Cli {
+    path: Option<String>,
+}
 
 #[derive(Default)]
 pub struct CdBuiltin {}
@@ -20,7 +27,9 @@ impl BuiltinCmd for CdBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let path = if let Some(path) = args.get(0) {
+        let cli = Cli::try_parse_from(args)?;
+
+        let path = if let Some(path) = cli.path {
             // `cd -` moves us back to previous directory
             if path == "-" {
                 if let Ok(old_pwd) = rt.env.get("OLDPWD") {
@@ -30,7 +39,7 @@ impl BuiltinCmd for CdBuiltin {
                     return Ok(BuiltinStatus::error());
                 }
             } else {
-                rt.working_dir.join(Path::new(path))
+                rt.working_dir.join(Path::new(&path))
             }
         } else {
             let home_dir = rt.env.get("HOME").unwrap();

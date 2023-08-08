@@ -201,15 +201,11 @@ fn run_shell(
         };
         sh.hooks.run::<BeforeCommandCtx>(sh, ctx, rt, hook_ctx)?;
 
-        // Attempt to run builtin commands
-        let mut words_it = words.iter().map(|s| s.to_owned().to_string());
-
         // Retrieve command name or return immediately (empty command)
-        let cmd_name = match words_it.next() {
+        let cmd_name = match words.first() {
             Some(cmd_name) => cmd_name,
             None => continue,
         };
-        let args = words_it.collect::<Vec<_>>();
 
         let builtin_cmd = sh
             .builtins
@@ -218,7 +214,7 @@ fn run_shell(
             .map(|(_, builtin_cmd)| builtin_cmd);
 
         if let Some(builtin_cmd) = builtin_cmd {
-            match builtin_cmd.run(sh, ctx, rt, &args) {
+            match builtin_cmd.run(sh, ctx, rt, &words) {
                 Ok(_) => {},
                 Err(e) => eprintln!("{e:?}"),
             }

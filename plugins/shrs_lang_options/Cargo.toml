@@ -12,6 +12,6 @@ readme = "README.md"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
-shrs = { path = "../../", version = "0.0.1" }
+shrs = { path = "../../crates/shrs", version = "0.0.1" }
 shrs_mux = {path = "../shrs_mux/", version = "0.0.1"}
 

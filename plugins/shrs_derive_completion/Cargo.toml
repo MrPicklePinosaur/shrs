@@ -15,7 +15,7 @@ name = "tests"
 path = "tests/test.rs"
 
 [dependencies]
-shrs = { path = "../../", version = "0.0.1" }
+shrs = { path = "../../crates/shrs", version = "0.0.1" }
 
 derive_builder = "0.12"
 

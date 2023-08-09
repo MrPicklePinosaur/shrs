@@ -1,5 +1,5 @@
 use shrs::prelude::*;
-use shrs_cd_tools::{rust::CargoToml, DirParsePlugin, DirParseState};
+use shrs_cd_tools::{node::NodeJs, rust::CargoToml, DirParsePlugin, DirParseState};
 
 struct MyPrompt;
 
@@ -21,8 +21,12 @@ impl Prompt for MyPrompt {
                     )
                 });
 
+            let node_info: Option<String> = dir_parse_state
+                .get_module_metadata::<NodeJs>("node")
+                .map(|node_js| format!(" {}", node_js.version));
+
             styled! {
-                rust_info
+                rust_info, node_info, " "
             }
         } else {
             styled! {

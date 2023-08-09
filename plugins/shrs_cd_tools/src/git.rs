@@ -14,6 +14,8 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+// TODO can technically convert this into a Query Module too
+
 /// Get the top level directory of the git repository
 pub fn root_dir() -> Result<PathBuf> {
     let res = Command::new("git")

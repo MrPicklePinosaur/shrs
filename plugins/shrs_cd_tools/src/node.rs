@@ -1,6 +1,6 @@
 //! Utilities for nodejs based projects
 
-use std::collections::HashMap;
+use std::{collections::HashMap, process::Command};
 
 use serde::Deserialize;
 use shrs::anyhow;
@@ -24,6 +24,16 @@ fn package_json_parser(query_res: &mut QueryResult, content: &String) -> anyhow:
     Ok(())
 }
 
+fn metadata_fn(query_res: &mut QueryResult) -> anyhow::Result<()> {
+    let res = Command::new("node").args(vec!["--version"]).output()?;
+
+    let version = std::str::from_utf8(&res.stdout).unwrap().trim().to_string();
+
+    query_res.add_metadata(NodeJs { version });
+
+    Ok(())
+}
+
 pub fn module() -> Result<Query, QueryBuilderError> {
     let metadata_parser = HashMap::from_iter([(
         String::from("package.json"),
@@ -31,6 +41,7 @@ pub fn module() -> Result<Query, QueryBuilderError> {
     )]);
 
     QueryBuilder::default()
+        .metadata_fn(Box::new(metadata_fn))
         .metadata_parsers(metadata_parser)
         .files(vec![String::from("package.json")])
         .build()

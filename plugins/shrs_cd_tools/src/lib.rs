@@ -6,6 +6,7 @@
 extern crate derive_builder;
 
 pub mod git;
+pub mod node;
 pub mod query;
 pub mod rust;
 
@@ -81,8 +82,11 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
         // TODO this code is horribly inefficient lol
         let mut updated: HashMap<String, QueryResult> = HashMap::new();
         for (mod_name, module) in state.modules.iter() {
-            let query_res = module.scan(&sh_rt.working_dir);
-            updated.insert(mod_name.to_string(), query_res);
+            let mut query_res = module.scan(&sh_rt.working_dir);
+            if query_res.matched {
+                module.metadata_fn(&mut query_res)?;
+                updated.insert(mod_name.to_string(), query_res);
+            }
         }
         state.parsed_modules = updated;
     }
@@ -92,7 +96,10 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
 impl Plugin for DirParsePlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // TODO let user pass in their own modules list
-        let modules = HashMap::from_iter([(String::from("rust"), rust::module().unwrap())]);
+        let modules = HashMap::from_iter([
+            (String::from("rust"), rust::module().unwrap()),
+            (String::from("node"), node::module().unwrap()),
+        ]);
 
         shell.state.insert(DirParseState::new(modules));
         shell.hooks.register(startup_hook);

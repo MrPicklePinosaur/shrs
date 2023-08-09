@@ -6,6 +6,7 @@
 extern crate derive_builder;
 
 pub mod git;
+pub mod node;
 pub mod query;
 pub mod rust;
 
@@ -81,7 +82,8 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
         // TODO this code is horribly inefficient lol
         let mut updated: HashMap<String, QueryResult> = HashMap::new();
         for (mod_name, module) in state.modules.iter() {
-            let query_res = module.scan(&sh_rt.working_dir);
+            let mut query_res = module.scan(&sh_rt.working_dir);
+            module.metadata_fn(&mut query_res)?;
             updated.insert(mod_name.to_string(), query_res);
         }
         state.parsed_modules = updated;

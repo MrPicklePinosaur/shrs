@@ -16,7 +16,7 @@ impl Prompt for MyPrompt {
                 .get_module_metadata::<CargoToml>("rust")
                 .map(|cargo_toml| {
                     format!(
-                        "🦀{} {}",
+                        "🦀 {} {}",
                         cargo_toml.package.edition, cargo_toml.package.name
                     )
                 });

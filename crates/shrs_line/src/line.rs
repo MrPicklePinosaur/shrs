@@ -436,8 +436,14 @@ impl Line {
                 self.populate_completions(ctx)?;
                 self.menu.activate();
 
-                // if completions only has one entry, automatically select it
                 let completion_len = self.menu.items().len();
+
+                // no-op if no completions
+                if completion_len == 0 {
+                    self.menu.disactivate();
+                    return Ok(());
+                }
+                // if completions only has one entry, automatically select it
                 if completion_len == 1 {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();

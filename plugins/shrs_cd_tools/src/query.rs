@@ -28,6 +28,8 @@ pub struct Query {
     #[builder(default = "Vec::new()")]
     dirs: Vec<String>,
 
+    // /// Any other arbritrary predicate
+    // cond:
     /// Should query be performed recursively
     #[builder(default = "true")]
     recursive: bool,

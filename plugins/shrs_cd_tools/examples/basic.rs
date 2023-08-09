@@ -11,21 +11,23 @@ impl Prompt for MyPrompt {
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         // TODO currently very unergonomic
-        let package_name: Option<String> = line_ctx
-            .ctx
-            .state
-            .get::<DirParseState>()
-            .and_then(|state| state.get_module("rust"))
-            .and_then(|rust_mod| rust_mod.get_metadata::<CargoToml>())
-            .map(|cargo_toml| {
-                format!(
-                    "🦀{} {}",
-                    cargo_toml.package.edition, cargo_toml.package.name
-                )
-            });
+        if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
+            let rust_info: Option<String> = dir_parse_state
+                .get_module_metadata::<CargoToml>("rust")
+                .map(|cargo_toml| {
+                    format!(
+                        "🦀{} {}",
+                        cargo_toml.package.edition, cargo_toml.package.name
+                    )
+                });
 
-        styled! {
-            package_name
+            styled! {
+                rust_info
+            }
+        } else {
+            styled! {
+                "none"
+            }
         }
     }
 }

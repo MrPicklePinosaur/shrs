@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cargo install --profile=release --path shrs_example
+add-shell $HOME/.cargo/bin/shrs_example 
+

@@ -5,7 +5,7 @@ example:
     cd shrs_example && cargo run shrs_example
 
 install:
-    cargo install --profile=release --path shrs_example
+    ./dev/scripts/install
 
 devsetup:
     cp dev/hooks/* .git/hooks

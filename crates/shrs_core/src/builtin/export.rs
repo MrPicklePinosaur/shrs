@@ -28,7 +28,7 @@ impl BuiltinCmd for ExportBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let cli = Cli::parse_from(vec!["export".to_string()].iter().chain(args.iter()));
+        let cli = Cli::try_parse_from(args)?;
 
         // remove arg
         if cli.n {

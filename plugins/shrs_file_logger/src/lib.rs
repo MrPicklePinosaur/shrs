@@ -13,7 +13,7 @@ pub struct FileLogger {
 }
 
 impl FileLogger {
-    pub fn init(&self) {
+    pub fn init(&self) -> anyhow::Result<()> {
         let logfile = FileAppender::builder().build(&self.path).unwrap();
 
         let config = log4rs::Config::builder()
@@ -22,5 +22,7 @@ impl FileLogger {
             .unwrap();
 
         let _handle = log4rs::init_config(config).unwrap();
+
+        Ok(())
     }
 }

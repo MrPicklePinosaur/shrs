@@ -34,7 +34,7 @@ outputs all the files in the current working directory.
 
 As an example, let's write completion rules for the popular **ls** command.
 
-Let's begin by initalizing the `DefaultCompleter`. This comes with a couple of
+Let's begin by initializing the `DefaultCompleter`. This comes with a couple of
 sensible rules that most completion engines are expected to have, such as
 autocompleting the command name from PATH:
 ```rust

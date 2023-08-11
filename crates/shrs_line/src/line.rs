@@ -14,8 +14,12 @@ use crossterm::{
 };
 use shrs_core::shell::{Context, Runtime, Shell};
 use shrs_lang::{Lexer, Token};
-use shrs_utils::cursor_buffer::{CursorBuffer, Location};
+use shrs_utils::{
+    algo::longest_common_prefix,
+    cursor_buffer::{CursorBuffer, Location},
+};
 use shrs_vi::{Action, Command, Motion, Parser};
+use trie_rs::TrieBuilder;
 
 use crate::{painter::Painter, prelude::*};
 
@@ -432,13 +436,55 @@ impl Line {
                 self.populate_completions(ctx)?;
                 self.menu.activate();
 
-                // if completions only has one entry, automatically select it
                 let completion_len = self.menu.items().len();
+
+                // no-op if no completions
+                if completion_len == 0 {
+                    self.menu.disactivate();
+                    return Ok(());
+                }
+                // if completions only has one entry, automatically select it
                 if completion_len == 1 {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
                     self.accept_completion(ctx, item.1)?;
+                    self.menu.disactivate();
+                    return Ok(());
                 }
+
+                // TODO make this feature toggable
+                // Automatically accept the common prefix
+                let completions: Vec<&str> = self
+                    .menu
+                    .items()
+                    .iter()
+                    .map(|(preview, _)| preview.as_str())
+                    .collect();
+                let prefix = longest_common_prefix(completions);
+                self.accept_completion(
+                    ctx,
+                    Completion {
+                        add_space: false,
+                        display: None,
+                        completion: prefix.clone(),
+                        replace_method: ReplaceMethod::Append,
+                    },
+                )?;
+
+                // recompute completions with prefix stripped
+                // TODO this code is horrifying
+                let items = self.menu.items();
+                let new_items = items
+                    .iter()
+                    .map(|(preview, complete)| {
+                        let mut complete = complete.clone();
+                        complete.completion = complete.completion[prefix.len()..].to_string();
+                        (preview.clone(), complete)
+                    })
+                    .collect();
+                self.menu.set_items(new_items);
+
+                self.menu.activate();
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
@@ -588,14 +634,8 @@ impl Line {
     fn accept_completion(
         &mut self,
         ctx: &mut LineCtx,
-        _completion: Completion,
+        completion: Completion,
     ) -> anyhow::Result<()> {
-        let accepted = if let Some(accepted) = self.menu.accept().cloned() {
-            accepted
-        } else {
-            return Ok(());
-        };
-
         // first remove current word
         // TODO could implement a delete_before
         // TODO make use of ReplaceMethod
@@ -609,7 +649,7 @@ impl Line {
         ctx.current_word.clear();
 
         // then replace with the completion word
-        ctx.cb.insert(Location::Cursor(), &accepted.accept())?;
+        ctx.cb.insert(Location::Cursor(), &completion.accept())?;
 
         Ok(())
     }

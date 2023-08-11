@@ -75,7 +75,7 @@ Possible sections
 - Time
 - Git info
 - Project info (rust, python)
-- Last command exit statu
+- Last command exit status
 - Time to run last command
 - Custom hooks similar to [starship custom commands](https://starship.rs/config/#custom-commands)
 

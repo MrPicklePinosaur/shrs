@@ -19,8 +19,10 @@ impl Default for LangOptionsPlugin {
 }
 
 impl Plugin for LangOptionsPlugin {
-    fn init(&self, shell: &mut shrs::ShellConfig) {
+    fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.hooks.register(swap_lang_options);
+
+        Ok(())
     }
 }
 fn swap_lang_options(

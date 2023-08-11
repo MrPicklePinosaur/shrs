@@ -18,7 +18,7 @@ use crate::{
     completion::Completion, cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt,
 };
 
-/// Text to be renderered by painter
+/// Text to be rendered by painter
 #[derive(Clone)]
 pub struct StyledBuf {
     content: String,

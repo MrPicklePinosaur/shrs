@@ -28,6 +28,12 @@ pub struct Query {
     #[builder(default = "Vec::new()")]
     dirs: Vec<String>,
 
+    // /// Any other arbritrary predicate that can be used to determine if query is a match
+    // cond: Option<>
+    /// Any additional (non-file parsing) code that can be used to insert more metadata
+    #[builder(default = "None", setter(strip_option))]
+    metadata_fn: Option<MetadataFn>,
+
     /// Should query be performed recursively
     #[builder(default = "true")]
     recursive: bool,
@@ -36,6 +42,9 @@ pub struct Query {
     #[builder(default = "HashMap::new()")]
     metadata_parsers: HashMap<String, MetadataParser>,
 }
+
+/// An additional function that can be used to gather metadata
+pub type MetadataFn = Box<dyn Fn(&mut QueryResult) -> anyhow::Result<()>>;
 
 /// How to match a file
 pub enum FileMatcher {
@@ -111,6 +120,13 @@ impl Query {
 
         query_res.matched = found_files;
         query_res
+    }
+
+    pub fn metadata_fn(&self, query_result: &mut QueryResult) -> anyhow::Result<()> {
+        if let Some(metadata_fn) = &self.metadata_fn {
+            metadata_fn(query_result)?;
+        }
+        Ok(())
     }
 }
 

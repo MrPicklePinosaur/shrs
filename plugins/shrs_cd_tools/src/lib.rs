@@ -6,6 +6,7 @@
 extern crate derive_builder;
 
 pub mod git;
+pub mod node;
 pub mod query;
 pub mod rust;
 
@@ -49,20 +50,43 @@ impl DirParseState {
     pub fn get_module(&self, module: &str) -> Option<&QueryResult> {
         self.parsed_modules.get(module)
     }
+
+    pub fn get_module_metadata<T: 'static>(&self, module: &str) -> Option<&T> {
+        self.get_module(module)
+            .and_then(|module| module.get_metadata::<T>())
+    }
+}
+
+pub fn startup_hook(
+    _sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    _ctx: &StartupCtx,
+) -> anyhow::Result<()> {
+    update_modules(sh_ctx, sh_rt)?;
+    Ok(())
 }
 
 pub fn change_dir_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
-    ctx: &ChangeDirCtx,
+    _ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
+    update_modules(sh_ctx, sh_rt)?;
+    Ok(())
+}
+
+fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<DirParseState>() {
         // TODO this code is horribly inefficient lol
         let mut updated: HashMap<String, QueryResult> = HashMap::new();
         for (mod_name, module) in state.modules.iter() {
-            let query_res = module.scan(&sh_rt.working_dir);
-            updated.insert(mod_name.to_string(), query_res);
+            let mut query_res = module.scan(&sh_rt.working_dir);
+            if query_res.matched {
+                module.metadata_fn(&mut query_res)?;
+                updated.insert(mod_name.to_string(), query_res);
+            }
         }
         state.parsed_modules = updated;
     }
@@ -70,11 +94,17 @@ pub fn change_dir_hook(
 }
 
 impl Plugin for DirParsePlugin {
-    fn init(&self, shell: &mut ShellConfig) {
+    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // TODO let user pass in their own modules list
-        let modules = HashMap::from_iter([(String::from("rust"), rust::module().unwrap())]);
+        let modules = HashMap::from_iter([
+            (String::from("rust"), rust::module().unwrap()),
+            (String::from("node"), node::module().unwrap()),
+        ]);
 
         shell.state.insert(DirParseState::new(modules));
+        shell.hooks.register(startup_hook);
         shell.hooks.register(change_dir_hook);
+
+        Ok(())
     }
 }

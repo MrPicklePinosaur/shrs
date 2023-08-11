@@ -31,6 +31,7 @@ pub enum EnvError {
 }
 
 /// Set and query environment variables
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Env {
     var_table: HashMap<String, String>,
@@ -86,7 +87,7 @@ impl Env {
         Ok(())
     }
 
-    /// Obtain an interator of all the environment variables
+    /// Obtain an iterator of all the environment variables
     pub fn iter(&self) -> impl Iterator<Item = (&String, &String)> {
         // env::vars_os()
         self.var_table.iter()

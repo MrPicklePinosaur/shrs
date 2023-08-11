@@ -26,7 +26,7 @@ impl BuiltinCmd for UnaliasBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let cli = Cli::parse_from(vec!["unalias".to_string()].iter().chain(args.iter()));
+        let cli = Cli::try_parse_from(args)?;
 
         if cli.a {
             ctx.alias.clear();

@@ -34,7 +34,7 @@ impl BuiltinCmd for HistoryBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
         // TODO hack
-        let cli = Cli::parse_from(vec!["history".to_string()].iter().chain(args.iter()));
+        let cli = Cli::try_parse_from(args)?;
 
         match &cli.command {
             None => {

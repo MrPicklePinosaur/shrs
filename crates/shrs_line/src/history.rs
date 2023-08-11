@@ -66,7 +66,7 @@ impl History for DefaultHistory {
     }
 }
 
-/// Store the history persistantly in a file on disk
+/// Store the history persistently in a file on disk
 ///
 /// History file is a very simple file consistaning of each history item on it's own line
 // TODO potential options

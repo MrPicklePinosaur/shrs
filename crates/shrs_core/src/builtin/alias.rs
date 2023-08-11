@@ -27,13 +27,7 @@ impl BuiltinCmd for AliasBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let cli = match Cli::try_parse_from(vec!["alias".to_string()].iter().chain(args.iter())) {
-            Ok(cli) => cli,
-            Err(e) => {
-                eprintln!("{}", e);
-                return Ok(BuiltinStatus::error());
-            },
-        };
+        let cli = Cli::try_parse_from(args)?;
 
         let mut it = cli.alias.splitn(2, "=");
         let alias_name = it.next().unwrap();

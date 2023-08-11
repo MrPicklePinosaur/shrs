@@ -29,7 +29,7 @@ impl BuiltinCmd for DebugBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
-        let cli = Cli::parse_from(vec!["debug".to_string()].iter().chain(args.iter()));
+        let cli = Cli::try_parse_from(args)?;
 
         match &cli.command {
             None => {

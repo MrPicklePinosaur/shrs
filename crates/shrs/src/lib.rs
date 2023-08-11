@@ -24,7 +24,7 @@ extern crate derive_builder;
 pub use shrs_core::*;
 
 pub mod lang {
-    //! Shell command langauge
+    //! Shell command language
 
     pub use shrs_lang::*;
 }

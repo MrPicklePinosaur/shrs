@@ -38,7 +38,7 @@ struct Flag {
 #[derive(thiserror::Error, Debug)]
 enum Error {
     #[error("Could not applied on unnamed field")]
-    UnamedField,
+    UnnamedField,
 }
 
 #[proc_macro_derive(Completion, attributes(flag))]
@@ -63,7 +63,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
     cli.name(struct_name.as_display().to_string().to_ascii_lowercase());
 
     for field in item.fields.iter() {
-        let field_name = field.ident.clone().ok_or(Error::UnamedField)?;
+        let field_name = field.ident.clone().ok_or(Error::UnnamedField)?;
 
         // check if field is marked as flag
         for attr in field.attrs.iter() {

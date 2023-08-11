@@ -6,13 +6,13 @@ use std::{
     time::Instant,
 };
 
-use log::info;
+use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
 use shrs_lang::PosixLang;
 use shrs_line::prelude::*;
 
-use crate::plugin::Plugin;
+use crate::prelude::*;
 
 /// Unified shell config struct
 #[derive(Builder)]
@@ -57,7 +57,7 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub plugins: Vec<Box<dyn Plugin>>,
 
-    /// Globally accessable state, see [State]
+    /// Globally accessible state, see [State]
     #[builder(default = "State::new()")]
     #[builder(setter(custom))]
     pub state: State,
@@ -101,7 +101,20 @@ impl ShellConfig {
         for plugin in plugins {
             let plugin_meta = plugin.meta();
             info!("Initializing plugin '{}'...", plugin_meta.name);
-            plugin.init(&mut self);
+
+            if let Err(e) = plugin.init(&mut self) {
+                // Error handling for plugin
+                match plugin.fail_mode() {
+                    FailMode::Warn => warn!(
+                        "Plugin '{}' failed to initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                    FailMode::Abort => panic!(
+                        "Plugin '{}' failed to initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                }
+            }
         }
 
         let mut ctx = Context {
@@ -188,15 +201,11 @@ fn run_shell(
         };
         sh.hooks.run::<BeforeCommandCtx>(sh, ctx, rt, hook_ctx)?;
 
-        // Attempt to run builtin commands
-        let mut words_it = words.iter().map(|s| s.to_owned().to_string());
-
         // Retrieve command name or return immediately (empty command)
-        let cmd_name = match words_it.next() {
+        let cmd_name = match words.first() {
             Some(cmd_name) => cmd_name,
             None => continue,
         };
-        let args = words_it.collect::<Vec<_>>();
 
         let builtin_cmd = sh
             .builtins
@@ -205,7 +214,7 @@ fn run_shell(
             .map(|(_, builtin_cmd)| builtin_cmd);
 
         if let Some(builtin_cmd) = builtin_cmd {
-            match builtin_cmd.run(sh, ctx, rt, &args) {
+            match builtin_cmd.run(sh, ctx, rt, &words) {
                 Ok(_) => {},
                 Err(e) => eprintln!("{e:?}"),
             }

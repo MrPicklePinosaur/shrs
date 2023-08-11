@@ -9,13 +9,14 @@ repository = "https://github.com/MrPicklePinosaur/sh.rs"
 build = "build.rs"
 
 [dependencies]
-shrs = { path = "../", version = "0.0.1" }
+shrs = { path = "../crates/shrs", version = "0.0.1" }
 shrs_output_capture = { path = "../plugins/shrs_output_capture", version = "0.0.1" }
 shrs_cd_tools = { path = "../plugins/shrs_cd_tools", version = "0.0.1" }
 shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.1" }
 shrs_run_context = { path = "../plugins/shrs_run_context", version = "0.0.1" }
 shrs_mux = { path = "../plugins/shrs_mux", version = "0.0.1" }
 shrs_cd_stack = { path = "../plugins/shrs_cd_stack", version = "0.0.1" }
+shrs_file_logger = { path = "../plugins/shrs_file_logger", version = "0.0.1" }
 
 dirs = "5"
 anyhow = "1"

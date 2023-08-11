@@ -34,7 +34,7 @@ pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<PathBuf>> {
 }
 
 /// Generate list of all executables in PATH
-fn exectuables(_dir: &Path) -> std::io::Result<Vec<String>> {
+fn executables(_dir: &Path) -> std::io::Result<Vec<String>> {
     todo!()
 }
 

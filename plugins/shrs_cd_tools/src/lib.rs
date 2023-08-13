@@ -84,7 +84,8 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
         for (mod_name, module) in state.modules.iter() {
             let mut query_res = module.scan(&sh_rt.working_dir);
             if query_res.matched {
-                module.metadata_fn(&mut query_res)?;
+                // NOTE we ignore errors in metadata fn
+                module.metadata_fn(&mut query_res);
                 updated.insert(mod_name.to_string(), query_res);
             }
         }

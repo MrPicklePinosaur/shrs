@@ -84,7 +84,8 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
         for (mod_name, module) in state.modules.iter() {
             let mut query_res = module.scan(&sh_rt.working_dir);
             if query_res.matched {
-                module.metadata_fn(&mut query_res)?;
+                // NOTE we ignore errors in metadata fn
+                module.metadata_fn(&mut query_res);
                 updated.insert(mod_name.to_string(), query_res);
             }
         }
@@ -99,6 +100,7 @@ impl Plugin for DirParsePlugin {
         let modules = HashMap::from_iter([
             (String::from("rust"), rust::module().unwrap()),
             (String::from("node"), node::module().unwrap()),
+            (String::from("git"), git::module().unwrap()),
         ]);
 
         shell.state.insert(DirParseState::new(modules));
@@ -106,5 +108,26 @@ impl Plugin for DirParsePlugin {
         shell.hooks.register(change_dir_hook);
 
         Ok(())
+    }
+}
+
+/// Default example prompt that displays some information based on language
+pub fn default_prompt(line_ctx: &mut LineCtx) -> StyledBuf {
+    if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
+        let rust_info: Option<String> = dir_parse_state
+            .get_module_metadata::<rust::CargoToml>("rust")
+            .map(|cargo_toml| format!("🦀 {} ", cargo_toml.package.edition));
+
+        let node_info: Option<String> = dir_parse_state
+            .get_module_metadata::<node::NodeJs>("node")
+            .map(|node_js| format!(" {} ", node_js.version));
+
+        styled! {
+            rust_info, node_info,
+        }
+    } else {
+        styled! {
+            ""
+        }
     }
 }

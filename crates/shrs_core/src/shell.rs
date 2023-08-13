@@ -16,6 +16,7 @@ use std::{
 use anyhow::anyhow;
 use crossterm::{style::Print, QueueableCommand};
 use lazy_static::lazy_static;
+use log::error;
 use shrs_job::JobManager;
 use thiserror::Error;
 
@@ -117,9 +118,9 @@ pub fn set_working_dir(
             old_dir: old_path,
             new_dir: path,
         };
-        sh.hooks
-            .run(sh, ctx, rt, hook_ctx)
-            .expect("failed running hook");
+        if let Err(e) = sh.hooks.run(sh, ctx, rt, hook_ctx) {
+            error!("Error running change dir hook {e:?}");
+        }
     }
 
     Ok(())

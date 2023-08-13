@@ -2,7 +2,15 @@
 
 use std::{path::PathBuf, process::Command, str};
 
+use shrs::anyhow;
 use thiserror::Error;
+
+use crate::query::{MetadataParser, Query, QueryBuilder, QueryBuilderError, QueryResult};
+
+#[derive(Debug)]
+pub struct Git {
+    pub branch: String,
+}
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -12,12 +20,8 @@ pub enum Error {
     NotGitRepo,
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
-
-// TODO can technically convert this into a Query Module too
-
 /// Get the top level directory of the git repository
-pub fn root_dir() -> Result<PathBuf> {
+pub fn root_dir() -> anyhow::Result<PathBuf> {
     let res = Command::new("git")
         .args(vec!["rev-parse", "--show-toplevel"])
         .output()
@@ -27,15 +31,27 @@ pub fn root_dir() -> Result<PathBuf> {
 }
 
 /// Get name of current branch
-pub fn branch() -> Result<String> {
+pub fn branch() -> anyhow::Result<String> {
     let res = Command::new("git")
         .args(vec!["branch", "--show-current"])
         .output()
         .map_err(|e| Error::GitError(e.to_string()))?;
 
     if !res.status.success() {
-        return Err(Error::NotGitRepo);
+        return Err(anyhow::anyhow!(Error::NotGitRepo));
     }
 
     Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
+}
+
+fn metadata_fn(query_res: &mut QueryResult) -> anyhow::Result<()> {
+    query_res.add_metadata(Git { branch: branch()? });
+
+    Ok(())
+}
+
+pub fn module() -> Result<Query, QueryBuilderError> {
+    QueryBuilder::default()
+        .metadata_fn(Box::new(metadata_fn))
+        .build()
 }

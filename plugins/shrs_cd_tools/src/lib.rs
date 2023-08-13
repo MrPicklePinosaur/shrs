@@ -115,14 +115,14 @@ pub fn default_prompt(line_ctx: &mut LineCtx) -> StyledBuf {
     if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
         let rust_info: Option<String> = dir_parse_state
             .get_module_metadata::<rust::CargoToml>("rust")
-            .map(|cargo_toml| format!("🦀 {}", cargo_toml.package.edition));
+            .map(|cargo_toml| format!("🦀 {} ", cargo_toml.package.edition));
 
         let node_info: Option<String> = dir_parse_state
             .get_module_metadata::<node::NodeJs>("node")
-            .map(|node_js| format!(" {}", node_js.version));
+            .map(|node_js| format!(" {} ", node_js.version));
 
         styled! {
-            rust_info, node_info
+            rust_info, node_info,
         }
     } else {
         styled! {

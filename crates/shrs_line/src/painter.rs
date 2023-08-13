@@ -85,7 +85,7 @@ impl StyledBuf {
 
 impl Display for StyledBuf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "StyledBuf {}", self.content);
+        write!(f, "{}", self.content);
         Ok(())
     }
 }

@@ -23,6 +23,7 @@ impl Prompt for MyPrompt {
             .map(|git| format!("git:{}", git.branch));
 
         styled! {
+            project_info,
             git_branch
         }
     }

@@ -1,5 +1,7 @@
 use shrs::prelude::*;
-use shrs_cd_tools::{node::NodeJs, rust::CargoToml, DirParsePlugin, DirParseState};
+use shrs_cd_tools::{
+    default_prompt, git::Git, node::NodeJs, rust::CargoToml, DirParsePlugin, DirParseState,
+};
 
 struct MyPrompt;
 
@@ -11,27 +13,17 @@ impl Prompt for MyPrompt {
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         // TODO currently very unergonomic
-        if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
-            let rust_info: Option<String> = dir_parse_state
-                .get_module_metadata::<CargoToml>("rust")
-                .map(|cargo_toml| {
-                    format!(
-                        "🦀 {} {}",
-                        cargo_toml.package.edition, cargo_toml.package.name
-                    )
-                });
+        let project_info = default_prompt(line_ctx);
 
-            let node_info: Option<String> = dir_parse_state
-                .get_module_metadata::<NodeJs>("node")
-                .map(|node_js| format!(" {}", node_js.version));
+        let git_branch = line_ctx
+            .ctx
+            .state
+            .get::<DirParseState>()
+            .and_then(|state| state.get_module_metadata::<Git>("git"))
+            .map(|git| format!("git:{}", git.branch));
 
-            styled! {
-                rust_info, node_info, " "
-            }
-        } else {
-            styled! {
-                "none"
-            }
+        styled! {
+            git_branch
         }
     }
 }

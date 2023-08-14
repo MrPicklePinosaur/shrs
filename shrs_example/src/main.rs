@@ -9,6 +9,7 @@ use std::{
 };
 
 use shrs::{line::_core::shell::set_working_dir, prelude::*};
+use shrs_autocd::AutocdPlugin;
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
@@ -185,6 +186,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(RunContextPlugin::new())
         .with_plugin(MuxPlugin)
         .with_plugin(CdStackPlugin)
+        .with_plugin(AutocdPlugin)
         .build()
         .expect("Could not construct shell");
 

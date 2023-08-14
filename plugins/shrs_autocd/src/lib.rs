@@ -20,6 +20,8 @@ pub fn after_command_hook(
         for path in paths {
             let path = path.unwrap();
             if path.file_type().unwrap().is_dir() && path.file_name() == cmd_name {
+                println!("Switching to {}", path.file_name().to_string_lossy());
+
                 set_working_dir(sh, sh_ctx, sh_rt, &path.path(), true)?;
                 return Ok(());
             }

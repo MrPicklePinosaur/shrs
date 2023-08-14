@@ -127,7 +127,19 @@ impl Lang for BashLang {
     ) -> shrs::anyhow::Result<()> {
         let mut handle = Command::new("bash").args(vec!["-c", &cmd]).spawn()?;
 
-        handle.wait()?;
+        let exit_status = handle.wait()?;
+
+        // TODO make this generic across all languages later
+        let _ = sh.hooks.run(
+            sh,
+            ctx,
+            rt,
+            AfterCommandCtx {
+                command: cmd.clone(),
+                exit_code: exit_status.code().unwrap_or(0), // default to exit code zero
+                cmd_output: String::new(),                  // TODO
+            },
+        );
 
         Ok(())
     }

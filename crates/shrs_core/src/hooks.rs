@@ -75,10 +75,12 @@ pub fn before_command_hook(
 /// Runs after a command is executed
 #[derive(Clone)]
 pub struct AfterCommandCtx {
+    /// The command that was ran
+    pub command: String,
     /// Exit code of previous command
     pub exit_code: i32,
-    /// Amount of time it took to run command
-    pub cmd_time: f32,
+    // /// Amount of time it took to run command
+    // pub cmd_time: f32,
     /// Command output
     pub cmd_output: String,
 }
@@ -128,6 +130,10 @@ pub fn job_exit_hook(
     println!("[exit +{}]", ctx.status.code());
     Ok(())
 }
+
+// /// Hook that runs when a command has a specific exit code
+// #[derive(Clone)]
+// pub struct ExitStatusCtx<const C: i32> { }
 
 /// Collection of all the hooks that are available
 pub struct Hooks {

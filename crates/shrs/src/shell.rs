@@ -3,6 +3,7 @@
 use std::{
     cell::RefCell,
     io::{stdout, BufRead, BufWriter, Write},
+    process::ExitStatus,
     time::Instant,
 };
 
@@ -219,9 +220,27 @@ fn run_shell(
                 Err(e) => eprintln!("{e:?}"),
             }
         } else {
-            match sh.lang.eval(sh, ctx, rt, line) {
-                Ok(_) => {},
-                Err(e) => eprintln!("{e:?}"),
+            let output = sh.lang.eval(sh, ctx, rt, line.clone());
+            match output {
+                Ok(cmd_output) => {
+                    if !cmd_output.stdout.is_empty() {
+                        println!("{}", cmd_output.stdout);
+                    }
+                    if !cmd_output.stderr.is_empty() {
+                        eprintln!("{}", cmd_output.stderr);
+                    }
+
+                    let _ = sh.hooks.run(
+                        sh,
+                        ctx,
+                        rt,
+                        AfterCommandCtx {
+                            command: line,
+                            cmd_output,
+                        },
+                    );
+                },
+                Err(e) => eprintln!("error: {e:?}"),
             }
         }
 

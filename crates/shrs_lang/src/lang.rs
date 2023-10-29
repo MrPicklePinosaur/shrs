@@ -1,8 +1,11 @@
+use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
+
 use shrs_core::{
     lang::Lang,
+    prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
-use shrs_job::initialize_job_control;
+use shrs_job::{initialize_job_control, Output};
 use thiserror::Error;
 
 use crate::{
@@ -43,7 +46,7 @@ impl Lang for PosixLang {
         ctx: &mut Context,
         rt: &mut Runtime,
         line: String,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let parser = Parser::new();
@@ -61,7 +64,11 @@ impl Lang for PosixLang {
 
         run_job(&mut job_manager, procs, pgid, true)?;
 
-        Ok(())
+        Ok(CmdOutput::new(
+            "".to_string(),
+            "".to_string(),
+            ExitStatus::from_raw(0),
+        ))
     }
 
     fn name(&self) -> String {

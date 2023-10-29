@@ -25,7 +25,7 @@ use crate::{
     builtin::Builtins,
     env::Env,
     hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
-    jobs::{ExitStatus, Jobs},
+    jobs::Jobs,
     lang::Lang,
     signal::Signals,
     state::State,

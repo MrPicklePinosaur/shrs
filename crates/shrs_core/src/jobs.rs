@@ -1,25 +1,13 @@
 //! Abstraction layer for processes
 use std::{
     collections::{hash_map::Iter, HashMap},
-    process::Child,
+    process::{Child, ExitStatus},
 };
 
 use anyhow::anyhow;
 use pino_deref::Deref;
 
 pub type JobId = u32;
-
-#[derive(Deref, Clone)]
-pub struct ExitStatus(pub i32);
-
-impl ExitStatus {
-    pub fn success(&self) -> bool {
-        self.0 == 0
-    }
-    pub fn code(&self) -> i32 {
-        self.0
-    }
-}
 
 pub struct JobInfo {
     pub child: Child,
@@ -60,7 +48,7 @@ impl Jobs {
         self.jobs.retain(|k, v| {
             match v.child.try_wait() {
                 Ok(Some(status)) => {
-                    exit_handler(ExitStatus(status.code().unwrap()));
+                    exit_handler(status);
                     false
                 },
                 Ok(None) => true,

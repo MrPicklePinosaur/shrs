@@ -3,17 +3,19 @@
 //!
 mod builtin;
 
+use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
+
 use builtin::AgainBuiltin;
 use shrs::prelude::*;
 
 struct OutputCaptureState {
-    pub last_command: String,
+    pub last_output: CmdOutput,
 }
 
 impl OutputCaptureState {
     pub fn new() -> Self {
         OutputCaptureState {
-            last_command: String::new(),
+            last_output: CmdOutput::new("".to_string(), "".to_string(), ExitStatus::from_raw(0)),
         }
     }
 }
@@ -37,7 +39,7 @@ fn after_command_hook(
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
-        state.last_command = ctx.cmd_output.clone();
+        state.last_output = ctx.cmd_output.clone();
     }
     Ok(())
 }

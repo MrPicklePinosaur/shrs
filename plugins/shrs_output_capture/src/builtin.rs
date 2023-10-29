@@ -20,7 +20,7 @@ impl BuiltinCmd for AgainBuiltin {
         _args: &Vec<String>,
     ) -> anyhow::Result<BuiltinStatus> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
-            print!("{}", state.last_command);
+            print!("{}", state.last_output.out());
         }
 
         Ok(BuiltinStatus::success())

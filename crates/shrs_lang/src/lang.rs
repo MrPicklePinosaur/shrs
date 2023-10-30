@@ -65,8 +65,8 @@ impl Lang for PosixLang {
         run_job(&mut job_manager, procs, pgid, true)?;
 
         Ok(CmdOutput::new(
-            "".to_string(),
-            "".to_string(),
+            String::new(),
+            String::new(),
             ExitStatus::from_raw(0),
         ))
     }

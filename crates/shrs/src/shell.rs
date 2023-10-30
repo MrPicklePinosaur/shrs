@@ -224,10 +224,10 @@ fn run_shell(
             match output {
                 Ok(cmd_output) => {
                     if !cmd_output.stdout.is_empty() {
-                        println!("{}", cmd_output.stdout);
+                        print!("{}", cmd_output.stdout);
                     }
                     if !cmd_output.stderr.is_empty() {
-                        eprintln!("{}", cmd_output.stderr);
+                        eprint!("{}", cmd_output.stderr);
                     }
 
                     let _ = sh.hooks.run(

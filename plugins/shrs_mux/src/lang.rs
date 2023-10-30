@@ -72,7 +72,7 @@ impl Lang for NuLang {
             .spawn()?;
         let output = handle.wait_with_output()?;
 
-        Ok(CmdOutput::from_process_output(output))
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {
@@ -107,7 +107,7 @@ impl Lang for PythonLang {
             .spawn()?;
         let output = handle.wait_with_output()?;
 
-        Ok(CmdOutput::from_process_output(output))
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {
@@ -142,7 +142,7 @@ impl Lang for BashLang {
             .spawn()?;
         let output = handle.wait_with_output()?;
 
-        Ok(CmdOutput::from_process_output(output))
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {

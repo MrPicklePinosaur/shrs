@@ -28,7 +28,7 @@ pub struct StyledBuf {
 impl StyledBuf {
     pub fn empty() -> Self {
         Self {
-            content: "".to_string(),
+            content: String::new(),
             styles: vec![],
         }
     }

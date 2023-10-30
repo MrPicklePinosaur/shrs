@@ -22,15 +22,13 @@ impl CmdOutput {
             status,
         }
     }
-    pub fn from_process_output(o: process::Output) -> Self {
+}
+impl From<process::Output> for CmdOutput {
+    fn from(o: process::Output) -> Self {
         CmdOutput {
             stdout: String::from_utf8_lossy(&o.stdout).to_string(),
             stderr: String::from_utf8_lossy(&o.stderr).to_string(),
             status: o.status,
         }
-    }
-    //if stdout or stderr are empty this will only return one, otherwise err after out
-    pub fn out(&self) -> String {
-        self.stdout.clone() + self.stderr.as_str()
     }
 }

@@ -157,7 +157,7 @@ impl<'a> LineCtx<'a> {
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
             mode: LineMode::Insert,
-            lines: "".to_string(),
+            lines: String::new(),
             sh,
             ctx,
             rt,

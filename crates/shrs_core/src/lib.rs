@@ -8,6 +8,7 @@ extern crate lazy_static;
 
 pub mod alias;
 pub mod builtin;
+pub mod cmd_output;
 pub mod env;
 pub mod hooks;
 pub mod jobs;
@@ -24,9 +25,10 @@ pub mod prelude {
     pub use crate::{
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
         builtin::{BuiltinCmd, BuiltinStatus, Builtins},
+        cmd_output::CmdOutput,
         env::Env,
         hooks::{Hook, HookFn, Hooks, *},
-        jobs::{ExitStatus, JobId, JobInfo, Jobs},
+        jobs::{JobId, JobInfo, Jobs},
         lang::Lang,
         prompt::*,
         shell::{Context, Runtime, Shell},

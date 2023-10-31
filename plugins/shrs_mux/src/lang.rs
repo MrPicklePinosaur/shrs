@@ -1,4 +1,8 @@
-use std::{collections::HashMap, process::Command};
+use std::{
+    collections::HashMap,
+    io::Read,
+    process::{Command, ExitStatus, Stdio},
+};
 
 use shrs::prelude::*;
 
@@ -22,18 +26,18 @@ impl Lang for MuxLang {
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd: String,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<CmdOutput> {
         let lang_name = match ctx.state.get::<MuxState>() {
             Some(state) => &state.lang,
-            None => return Ok(()),
+            None => return Ok(CmdOutput::empty()),
         };
         // TODO maybe return error if we can't find a lang
 
         if let Some(lang) = self.langs.get(lang_name) {
-            lang.eval(sh, ctx, rt, cmd);
+            return lang.eval(sh, ctx, rt, cmd);
         }
 
-        Ok(())
+        Ok(CmdOutput::empty())
     }
 
     fn name(&self) -> String {
@@ -60,12 +64,15 @@ impl Lang for NuLang {
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd: String,
-    ) -> shrs::anyhow::Result<()> {
-        let mut handle = Command::new("nu").args(vec!["-c", &cmd]).spawn()?;
+    ) -> shrs::anyhow::Result<CmdOutput> {
+        let mut handle = Command::new("nu")
+            .args(vec!["-c", &cmd])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        let output = handle.wait_with_output()?;
 
-        handle.wait()?;
-
-        Ok(())
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {
@@ -92,12 +99,15 @@ impl Lang for PythonLang {
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd: String,
-    ) -> shrs::anyhow::Result<()> {
-        let mut handle = Command::new("python").args(vec!["-c", &cmd]).spawn()?;
+    ) -> shrs::anyhow::Result<CmdOutput> {
+        let mut handle = Command::new("python3")
+            .args(vec!["-c", &cmd])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        let output = handle.wait_with_output()?;
 
-        handle.wait()?;
-
-        Ok(())
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {
@@ -124,24 +134,15 @@ impl Lang for BashLang {
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd: String,
-    ) -> shrs::anyhow::Result<()> {
-        let mut handle = Command::new("bash").args(vec!["-c", &cmd]).spawn()?;
+    ) -> shrs::anyhow::Result<CmdOutput> {
+        let mut handle = Command::new("bash")
+            .args(vec!["-c", &cmd])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        let output = handle.wait_with_output()?;
 
-        let exit_status = handle.wait()?;
-
-        // TODO make this generic across all languages later
-        let _ = sh.hooks.run(
-            sh,
-            ctx,
-            rt,
-            AfterCommandCtx {
-                command: cmd.clone(),
-                exit_code: exit_status.code().unwrap_or(0), // default to exit code zero
-                cmd_output: String::new(),                  // TODO
-            },
-        );
-
-        Ok(())
+        Ok(CmdOutput::from(output))
     }
 
     fn name(&self) -> String {

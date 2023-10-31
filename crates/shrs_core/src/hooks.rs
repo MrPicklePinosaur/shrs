@@ -16,13 +16,14 @@ use std::{
     io::BufWriter,
     marker::PhantomData,
     path::PathBuf,
+    process::ExitStatus,
     time::Duration,
 };
 
 use crossterm::{style::Print, QueueableCommand};
 
 use crate::{
-    jobs::ExitStatus,
+    cmd_output::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
 
@@ -77,12 +78,8 @@ pub fn before_command_hook(
 pub struct AfterCommandCtx {
     /// The command that was ran
     pub command: String,
-    /// Exit code of previous command
-    pub exit_code: i32,
-    // /// Amount of time it took to run command
-    // pub cmd_time: f32,
     /// Command output
-    pub cmd_output: String,
+    pub cmd_output: CmdOutput,
 }
 
 /// Default implementation for [AfterCommandCtx]
@@ -127,7 +124,7 @@ pub fn job_exit_hook(
     sh_rt: &mut Runtime,
     ctx: &JobExitCtx,
 ) -> anyhow::Result<()> {
-    println!("[exit +{}]", ctx.status.code());
+    println!("[exit +{:?}]", ctx.status.code());
     Ok(())
 }
 

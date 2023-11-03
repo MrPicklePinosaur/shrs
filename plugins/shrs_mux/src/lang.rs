@@ -1,12 +1,18 @@
 use std::{
+    cell::RefCell,
     collections::HashMap,
-    io::Read,
-    process::{Command, ExitStatus, Stdio},
+    io::{BufRead, BufReader, Read, Write},
+    ops::Add,
+    os::unix::process::ExitStatusExt,
+    process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio},
 };
 
 use shrs::prelude::*;
 
-use crate::MuxState;
+use crate::{
+    interpreter::{read_err, read_out},
+    MuxState,
+};
 
 pub struct MuxLang {
     langs: HashMap<String, Box<dyn Lang>>,
@@ -119,11 +125,22 @@ impl Lang for PythonLang {
     }
 }
 
-pub struct BashLang {}
+pub struct BashLang {
+    pub instance: RefCell<Child>,
+}
 
 impl BashLang {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            instance: RefCell::new(
+                Command::new("bash")
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .expect("Failed to start bash lol"),
+            ),
+        }
     }
 }
 
@@ -135,14 +152,22 @@ impl Lang for BashLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let mut handle = Command::new("bash")
-            .args(vec!["-c", &cmd])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-        let output = handle.wait_with_output()?;
+        let mut instance = self.instance.borrow_mut();
+        let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
 
-        Ok(CmdOutput::from(output))
+        stdin
+            .write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())
+            .expect("Failed to send Ctrl+C to stdin");
+
+        let stdout_reader =
+            BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
+        let (stdout, status) = read_out(stdout_reader)?;
+
+        let stderr_reader =
+            BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
+        let stderr = read_err(stderr_reader)?;
+
+        Ok(CmdOutput::new(stdout, stderr, ExitStatus::from_raw(status)))
     }
 
     fn name(&self) -> String {

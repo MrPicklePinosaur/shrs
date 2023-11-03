@@ -1,4 +1,5 @@
 mod builtin;
+mod interpreter;
 mod lang;
 
 use std::collections::{HashMap, HashSet};

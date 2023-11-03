@@ -3,12 +3,19 @@ use std::{
     collections::HashMap,
     io::{BufRead, BufReader, Read, Write},
     ops::Add,
-    process::{Child, Command, ExitStatus, Stdio},
+    os::unix::process::ExitStatusExt,
+    process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio},
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
 use shrs::prelude::*;
 
-use crate::MuxState;
+use crate::{
+    interpreter::{read_err, read_out},
+    MuxState,
+};
 
 pub struct MuxLang {
     langs: HashMap<String, Box<dyn Lang>>,
@@ -122,20 +129,20 @@ impl Lang for PythonLang {
 }
 
 pub struct BashLang {
-    pub instance: RefCell<Child>,
+    pub instance: Arc<Mutex<Child>>,
 }
 
 impl BashLang {
     pub fn new() -> Self {
         Self {
-            instance: RefCell::new(
+            instance: Arc::new(Mutex::new(
                 Command::new("bash")
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())
                     .spawn()
                     .expect("Failed to start bash lol"),
-            ),
+            )),
         }
     }
 }
@@ -148,55 +155,23 @@ impl Lang for BashLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let mut instance = self.instance.borrow_mut();
-        let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
-        // stdin
-        //     .write_all(cmd.as_bytes())
-        //     .expect("Failed to write to stdin");
+        {
+            let mut guard = self.instance.lock().unwrap();
 
-        //idk how to echo to stdout and stderr
-        stdin
-            .write_all((cmd + ";echo '\x1A'; echo '\x1A' >&2\n").as_bytes())
-            .expect("Failed to send Ctrl+C to stdin");
+            let stdin = guard.stdin.as_mut().expect("Failed to open stdin");
 
-        let mut stdout_reader =
-            BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
-
-        let mut stdout = String::new();
-        loop {
-            let mut line = String::new();
-
-            stdout_reader.read_line(&mut line)?;
-            dbg!(line.clone());
-
-            if line.contains("\x1a") {
-                break;
-            }
-
-            stdout.push_str(line.as_str());
+            stdin.write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())?;
         }
 
-        let mut stderr_reader =
-            BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
+        let err_inst = self.instance.clone();
+        let out_inst = self.instance.clone();
+        let stdout_thread = thread::spawn(move || read_out(out_inst));
+        let stderr_thread = thread::spawn(move || read_err(err_inst));
 
-        let mut stderr = String::new();
-        loop {
-            let mut line = String::new();
+        let stderr = stderr_thread.join().unwrap()?;
+        let (stdout, status) = stdout_thread.join().unwrap()?;
 
-            stderr_reader.read_line(&mut line)?;
-
-            dbg!(line.clone());
-
-            if line.contains("\x1a") {
-                break;
-            }
-
-            stderr.push_str(line.as_str());
-        }
-
-        // println!("{}", stdout.trim_end_matches("\n"));
-
-        Ok(CmdOutput::empty())
+        Ok(CmdOutput::new(stdout, stderr, ExitStatus::from_raw(status)))
     }
 
     fn name(&self) -> String {

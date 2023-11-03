@@ -223,12 +223,12 @@ fn run_shell(
             let output = sh.lang.eval(sh, ctx, rt, line.clone());
             match output {
                 Ok(cmd_output) => {
-                    if !cmd_output.stdout.is_empty() {
-                        print!("{}", cmd_output.stdout);
-                    }
-                    if !cmd_output.stderr.is_empty() {
-                        eprint!("{}", cmd_output.stderr);
-                    }
+                    // if !cmd_output.stdout.is_empty() {
+                    //     print!("{}", cmd_output.stdout);
+                    // }
+                    // if !cmd_output.stderr.is_empty() {
+                    //     eprint!("{}", cmd_output.stderr);
+                    // }
 
                     let _ = sh.hooks.run(
                         sh,

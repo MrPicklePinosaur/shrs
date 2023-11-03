@@ -5,9 +5,6 @@ use std::{
     ops::Add,
     os::unix::process::ExitStatusExt,
     process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio},
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
 };
 
 use shrs::prelude::*;
@@ -129,20 +126,20 @@ impl Lang for PythonLang {
 }
 
 pub struct BashLang {
-    pub instance: Arc<Mutex<Child>>,
+    pub instance: RefCell<Child>,
 }
 
 impl BashLang {
     pub fn new() -> Self {
         Self {
-            instance: Arc::new(Mutex::new(
+            instance: RefCell::new(
                 Command::new("bash")
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .stderr(Stdio::piped())
                     .spawn()
                     .expect("Failed to start bash lol"),
-            )),
+            ),
         }
     }
 }
@@ -155,21 +152,20 @@ impl Lang for BashLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        {
-            let mut guard = self.instance.lock().unwrap();
+        let mut instance = self.instance.borrow_mut();
+        let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
 
-            let stdin = guard.stdin.as_mut().expect("Failed to open stdin");
+        stdin
+            .write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())
+            .expect("Failed to send Ctrl+C to stdin");
 
-            stdin.write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())?;
-        }
+        let stdout_reader =
+            BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
+        let (stdout, status) = read_out(stdout_reader)?;
 
-        let err_inst = self.instance.clone();
-        let out_inst = self.instance.clone();
-        let stdout_thread = thread::spawn(move || read_out(out_inst));
-        let stderr_thread = thread::spawn(move || read_err(err_inst));
-
-        let stderr = stderr_thread.join().unwrap()?;
-        let (stdout, status) = stdout_thread.join().unwrap()?;
+        let stderr_reader =
+            BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
+        let stderr = read_err(stderr_reader)?;
 
         Ok(CmdOutput::new(stdout, stderr, ExitStatus::from_raw(status)))
     }

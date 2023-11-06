@@ -5,9 +5,10 @@ use std::{
 
 use clap::Parser;
 
-use super::{BuiltinCmd, BuiltinStatus};
+use super::BuiltinCmd;
 use crate::{
     hooks::ChangeDirCtx,
+    prelude::CmdOutput,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
 
@@ -26,7 +27,7 @@ impl BuiltinCmd for CdBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         let path = if let Some(path) = cli.path {
@@ -36,7 +37,7 @@ impl BuiltinCmd for CdBuiltin {
                     PathBuf::from(old_pwd)
                 } else {
                     eprintln!("no OLDPWD");
-                    return Ok(BuiltinStatus::error());
+                    return Ok(CmdOutput::stderr("no OLDPWD".to_string(), 1));
                 }
             } else {
                 rt.working_dir.join(Path::new(&path))
@@ -47,10 +48,10 @@ impl BuiltinCmd for CdBuiltin {
         };
 
         if let Err(_) = set_working_dir(sh, ctx, rt, &path, true) {
-            return Ok(BuiltinStatus::error());
+            return Ok(CmdOutput::error());
         }
 
         // return a dummy command
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

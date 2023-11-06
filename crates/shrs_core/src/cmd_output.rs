@@ -13,14 +13,26 @@ pub struct CmdOutput {
 }
 impl CmdOutput {
     pub fn empty() -> CmdOutput {
-        CmdOutput::new(String::new(), String::new(), ExitStatus::from_raw(0))
+        CmdOutput::new(String::new(), String::new(), 0)
     }
-    pub fn new(stdout: String, stderr: String, status: ExitStatus) -> Self {
+    pub fn new(stdout: String, stderr: String, status: i32) -> Self {
         CmdOutput {
             stdout,
             stderr,
-            status,
+            status: ExitStatus::from_raw(status),
         }
+    }
+    pub fn stdout(stdout: String, status: i32) -> Self {
+        CmdOutput::new(stdout, String::new(), status)
+    }
+    pub fn stderr(stderr: String, status: i32) -> Self {
+        CmdOutput::new(String::new(), stderr, status)
+    }
+    pub fn success() -> Self {
+        CmdOutput::new(String::new(), String::new(), 0)
+    }
+    pub fn error() -> Self {
+        CmdOutput::new(String::new(), String::new(), 1)
     }
 }
 impl From<process::Output> for CmdOutput {

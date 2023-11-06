@@ -64,11 +64,7 @@ impl Lang for PosixLang {
 
         run_job(&mut job_manager, procs, pgid, true)?;
 
-        Ok(CmdOutput::new(
-            String::new(),
-            String::new(),
-            ExitStatus::from_raw(0),
-        ))
+        Ok(CmdOutput::new(String::new(), String::new(), 0))
     }
 
     fn name(&self) -> String {

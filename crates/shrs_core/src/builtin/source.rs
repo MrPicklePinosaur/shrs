@@ -9,8 +9,11 @@ use clap::Parser;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use super::{BuiltinCmd, BuiltinStatus};
-use crate::shell::{Context, Runtime, Shell};
+use super::BuiltinCmd;
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 lazy_static! {
     static ref SHEBANG_REGEX: Regex = Regex::new(r"#!(?P<interp>.+)").unwrap();
@@ -31,7 +34,7 @@ impl BuiltinCmd for SourceBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         let file_path = PathBuf::from(&cli.source_file);
@@ -47,7 +50,8 @@ impl BuiltinCmd for SourceBuiltin {
 
         match interp {
             Some(interp) => {
-                println!("using interp {} at {}", interp.as_str(), &cli.source_file);
+                let s = format!("using interp {} at {}\n", interp.as_str(), &cli.source_file);
+                print!("{s}");
                 let mut child = Command::new(interp.as_str())
                     .args(vec![cli.source_file])
                     .spawn()?;
@@ -56,7 +60,7 @@ impl BuiltinCmd for SourceBuiltin {
                 // TODO temp disable this
                 // command_output(sh, ctx, rt, &mut child)?;
 
-                Ok(BuiltinStatus::success())
+                Ok(CmdOutput::stdout(s, 0))
             },
             None => {
                 // otherwise evaluate with self

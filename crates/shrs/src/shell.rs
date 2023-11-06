@@ -214,28 +214,29 @@ fn run_shell(
             .find(|(builtin_name, _)| *builtin_name == &cmd_name)
             .map(|(_, builtin_cmd)| builtin_cmd);
 
+        let mut cmd_output: CmdOutput = CmdOutput::empty();
         if let Some(builtin_cmd) = builtin_cmd {
-            match builtin_cmd.run(sh, ctx, rt, &words) {
-                Ok(_) => {},
-                Err(e) => eprintln!("{e:?}"),
+            let output = builtin_cmd.run(sh, ctx, rt, &words);
+            match output {
+                Ok(o) => cmd_output = o,
+                Err(e) => eprintln!("error: {e:?}"),
             }
         } else {
             let output = sh.lang.eval(sh, ctx, rt, line.clone());
             match output {
-                Ok(cmd_output) => {
-                    let _ = sh.hooks.run(
-                        sh,
-                        ctx,
-                        rt,
-                        AfterCommandCtx {
-                            command: line,
-                            cmd_output,
-                        },
-                    );
-                },
+                Ok(o) => cmd_output = o,
                 Err(e) => eprintln!("error: {e:?}"),
             }
         }
+        let _ = sh.hooks.run(
+            sh,
+            ctx,
+            rt,
+            AfterCommandCtx {
+                command: line,
+                cmd_output,
+            },
+        );
 
         // check up on running jobs
         let mut exit_statuses = vec![];

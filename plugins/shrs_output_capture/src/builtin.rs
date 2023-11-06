@@ -18,12 +18,12 @@ impl BuiltinCmd for AgainBuiltin {
         ctx: &mut Context,
         _rt: &mut Runtime,
         _args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
-            print!("stdout: {}", state.last_output.stdout);
-            print!("stderr: {}", state.last_output.stderr);
+            print!("{}", state.last_output.stdout);
+            print!("{}", state.last_output.stderr);
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

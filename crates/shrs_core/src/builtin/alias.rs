@@ -2,9 +2,10 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, BuiltinStatus};
+use super::BuiltinCmd;
 use crate::{
     alias::AliasInfo,
+    prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
 
@@ -26,7 +27,7 @@ impl BuiltinCmd for AliasBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         let mut it = cli.alias.splitn(2, "=");
@@ -52,6 +53,6 @@ impl BuiltinCmd for AliasBuiltin {
             },
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

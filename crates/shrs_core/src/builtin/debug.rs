@@ -4,8 +4,11 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, BuiltinStatus};
-use crate::shell::{Context, Runtime, Shell};
+use super::BuiltinCmd;
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -28,20 +31,25 @@ impl BuiltinCmd for DebugBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
+        let mut out = String::new();
         let cli = Cli::try_parse_from(args)?;
 
         match &cli.command {
             None => {
-                println!("debug utility");
+                let s = "debug utility\n";
+                print!("{s}");
+                out += s;
             },
             Some(Commands::Env) => {
                 for (var, val) in rt.env.iter() {
-                    println!("{:?} = {:?}", var, val);
+                    let envs = format!("{:?} = {:?}\n", var, val);
+                    print!("{envs}");
+                    out += envs.as_str();
                 }
             },
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::stdout(out, 0))
     }
 }

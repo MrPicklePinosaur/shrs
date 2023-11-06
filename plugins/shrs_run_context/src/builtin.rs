@@ -19,7 +19,7 @@ impl BuiltinCmd for SaveBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = SaveBuiltinCli::try_parse_from(args)?;
 
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {
@@ -44,7 +44,7 @@ impl BuiltinCmd for SaveBuiltin {
             }
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }
 
@@ -62,7 +62,7 @@ impl BuiltinCmd for LoadBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         use std::mem;
 
         let cli = LoadBuiltinCli::parse_from(vec!["load".to_string()].iter().chain(args.iter()));
@@ -79,6 +79,6 @@ impl BuiltinCmd for LoadBuiltin {
             let _ = mem::replace(rt, new_rt);
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

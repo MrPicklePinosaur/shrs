@@ -1,9 +1,9 @@
 
 <div align="center">
 
-# sh.rs
+<img src="media/shrs_banner.png" alt="sh.rs">
 
-The rusty POSIX shell library for hackers
+The rusty shell toolkit for hackers
 
 [![crates.io](https://img.shields.io/crates/v/shrs.svg)](https://crates.io/crates/shrs)
 [![Doc](https://docs.rs/shrs/badge.svg)](https://docs.rs/shrs)

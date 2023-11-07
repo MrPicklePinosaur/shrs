@@ -14,7 +14,9 @@ pub fn after_command_hook(
     if let Some(exit_code) = ctx.cmd_output.status.code() {
         if exit_code == 127 {
             // Check if the command name matches a directory
-            let Some(cmd_name) = ctx.command.split(' ').next() else { return Ok(()) };
+            let Some(cmd_name) = ctx.command.split(' ').next() else {
+                return Ok(());
+            };
 
             let paths = fs::read_dir("./").unwrap();
 

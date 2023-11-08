@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "modular library to build your own shell in rust"
-repository = "https://github.com/MrPicklePinosaur/shrs"
+repository = "https://github.com/shellrs/shrs"
 
 [features]
 default = ["serde"]

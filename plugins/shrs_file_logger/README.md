@@ -10,7 +10,7 @@ generate debug logs for shrs
 
 </div>
 
-This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
+This is a plugin for [shrs](https://github.com/shellrs/shrs).
 
 ## Using this plugin
 

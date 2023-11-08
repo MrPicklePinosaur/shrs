@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "Specify shell completions from derive macro"
-repository = "https://github.com/MrPicklePinosaur/sh.rs"
+repository = "https://github.com/shellrs/shrs"
 
 [lib]
 proc-macro = true

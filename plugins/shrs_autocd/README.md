@@ -10,7 +10,7 @@ implement the autocd shell option
 
 </div>
 
-This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
+This is a plugin for [shrs](https://github.com/shellrs/shrs).
 
 ## Using this plugin
 

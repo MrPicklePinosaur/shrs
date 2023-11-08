@@ -14,7 +14,7 @@ toc = true
 top = false
 +++
 
-Plugins are a way to add addition functionality that may be opinionated or heavy to **shrs** in a modular fashion. **shrs** comes with a couple officially maintained plugins, which you can see in the [plugins directory](https://github.com/MrPicklePinosaur/shrs/tree/master/plugins).
+Plugins are a way to add addition functionality that may be opinionated or heavy to **shrs** in a modular fashion. **shrs** comes with a couple officially maintained plugins, which you can see in the [plugins directory](https://github.com/shellrs/shrs/tree/master/plugins).
 
 Some examples of official plugins are:
 - `shrs_output_capture`: add a builtin called `again` that will output the result of the previous command

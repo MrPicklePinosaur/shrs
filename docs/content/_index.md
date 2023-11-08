@@ -9,7 +9,7 @@ url = "/docs/getting-started/introduction/"
 url_button = "Get started"
 repo_version = "GitHub v0.1.0"
 repo_license = "MIT/Apache"
-repo_url = "https://github.com/MrPicklePinosaur/shrs"
+repo_url = "https://github.com/shellrs/shrs"
 
 # Menu items
 [[extra.menu.main]]

@@ -33,7 +33,7 @@ Here are what makes **shrs** special:
 
 To get a taste of what **shrs** is capable of, without any configuration, you can run the example **shrs_example** shell that is bundled by running:
 ```sh
-git clone https://github.com/MrPicklePinosaur/shrs.git
+git clone https://github.com/shellrs/shrs.git
 cd ./shrs/shrs_example
 cargo run
 ```
@@ -55,7 +55,7 @@ See the [developer documentation](https://mrpicklepinosaur.github.io/shrs/docs/g
 
 ## CONTRIBUTING
 
-If you encounter and bugs are have any feature requests, please don't hesitate to [leave an issue](https://github.com/MrPicklePinosaur/shrs/issues)! Also take a look at the section for contributors in the [documentation](https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/).
+If you encounter and bugs are have any feature requests, please don't hesitate to [leave an issue](https://github.com/shellrs/shrs/issues)! Also take a look at the section for contributors in the [documentation](https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/).
 
 ## COMMUNITY PLUGINS
 

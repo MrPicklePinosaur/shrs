@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "utilities for managing jobs and processes"
-repository = "https://github.com/MrPicklePinosaur/shrs"
+repository = "https://github.com/shellrs/shrs"
 
 [dependencies]
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}

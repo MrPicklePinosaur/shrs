@@ -10,7 +10,7 @@ keep track of directories we have switched to in a stack fashion
 
 </div>
 
-This is a plugin for [shrs](https://github.com/shellrs/shrs).
+This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 ## Using this plugin
 

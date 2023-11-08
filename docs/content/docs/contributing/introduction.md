@@ -35,7 +35,7 @@ all the features it offers.
 
 Clone the repository and enter the project directory:
 ```sh
-git clone https://github.com/shellrs/shrs.git
+git clone https://github.com/MrPicklePinosaur/shrs.git
 cd shrs
 ```
 
@@ -65,7 +65,7 @@ creating your own shell, take a look at the [Quick Start](../getting-started/qui
 
 Once you are decently familiar with the **shrs** API, you can try to tackle an
 actual issue and open your first PR! See the open issues, especially those
-marked [good first issue](https://github.com/shellrs/shrs/labels/good%20first%20issue).
+marked [good first issue](https://github.com/MrPicklePinosaur/shrs/labels/good%20first%20issue).
 If you have any questions, don't be afraid to reach out for help!
 
 

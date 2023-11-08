@@ -10,7 +10,7 @@ shrs plugin to time runtime of commands
 
 </div>
 
-This is a plugin for [shrs](https://github.com/shellrs/shrs).
+This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 ## Using this plugin
 

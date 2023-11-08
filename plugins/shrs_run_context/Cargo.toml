@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "Save and load run context"
-repository = "https://github.com/shellrs/shrs"
+repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
 shrs = { path = "../../crates/shrs", version = "0.0.1", features = ["serde"] }

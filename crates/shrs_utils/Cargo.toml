@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
 description = "common utilities for shrs"
-repository = "https://github.com/shellrs/shrs"
+repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
 crossterm = "0.26"

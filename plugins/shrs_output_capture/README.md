@@ -10,7 +10,7 @@ shrs plugin to capture command output
 
 </div>
 
-This is a plugin for [shrs](https://github.com/shellrs/shrs).
+This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 ## Using this plugin
 

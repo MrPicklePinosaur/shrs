@@ -1,7 +1,7 @@
 # The URL the site will be built for
 base_url = "https://mrpicklepinosaur.github.io/shrs/"
 title = "shrs"
-description = ""
+description = "The rusty shell toolkit for hackers"
 
 theme = "adidoks"
 default_language = "en"
@@ -24,7 +24,7 @@ highlight_code = true
 
 [extra]
 author = ""
-github = ""
+github = "https://github.com/MrPicklePinosaur/shrs"
 twitter = ""
 email = ""
 
@@ -50,7 +50,7 @@ library = "katex"  # options: "katex", "mathjax". default is "katex".
 [extra.open]
 enable = true
 # this image will be used as fallback if a page has no image of its own
-image = "doks.png"
+image = "banner.png"
 twitter_site = ""
 twitter_creator = ""
 facebook_author = ""
@@ -60,10 +60,10 @@ og_locale = "en_US"
 ## JSON-LD
 [extra.schema]
 type = "Organization"
-logo = "logo-doks.png"
+logo = "banner.png"
 twitter = ""
 linked_in = ""
-github = ""
+github = "https://github.com/MrPicklePinosaur/shrs"
 section = "blog" # see config.extra.main~url
 ## Sitelinks Search Box
 site_links_search_box = false

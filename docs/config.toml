@@ -23,8 +23,8 @@ include_content = true
 highlight_code = true
 
 [extra]
-author = ""
-github = ""
+author = "MrPicklePinosaur"
+github = "https://github.com/MrPicklePinosaur/shrs"
 twitter = ""
 email = ""
 
@@ -50,7 +50,7 @@ library = "katex"  # options: "katex", "mathjax". default is "katex".
 [extra.open]
 enable = true
 # this image will be used as fallback if a page has no image of its own
-image = "doks.png"
+image = "shrs_banner.png"
 twitter_site = ""
 twitter_creator = ""
 facebook_author = ""
@@ -60,10 +60,10 @@ og_locale = "en_US"
 ## JSON-LD
 [extra.schema]
 type = "Organization"
-logo = "logo-doks.png"
+logo = "shrs_logo.png"
 twitter = ""
 linked_in = ""
-github = ""
+github = "https://github.com/MrPicklePinosaur/shrs"
 section = "blog" # see config.extra.main~url
 ## Sitelinks Search Box
 site_links_search_box = false

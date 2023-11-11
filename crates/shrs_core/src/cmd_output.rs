@@ -1,8 +1,11 @@
 use std::{
+    default,
+    io::{self, stdout, BufWriter, Write},
     os::unix::process::ExitStatusExt,
     process::{self, ExitStatus, Output},
 };
 
+use crossterm::{style::Print, QueueableCommand};
 use pino_deref::Deref;
 
 #[derive(Clone, Debug)]
@@ -32,3 +35,4 @@ impl From<process::Output> for CmdOutput {
         }
     }
 }
+

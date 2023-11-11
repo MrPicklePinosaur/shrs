@@ -1,6 +1,6 @@
 [package]
 name = "shrs_utils"
-version = "0.0.1-dev"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]

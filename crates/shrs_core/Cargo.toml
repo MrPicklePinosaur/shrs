@@ -1,6 +1,6 @@
 [package]
 name = "shrs_core"
-version = "0.0.1-dev"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -22,8 +22,8 @@ dirs = "5"
 anymap = "1.0.0-beta.2"
 multimap = "0.9"
 
-shrs_job = { path = "../shrs_job", version = "0.0.1-dev" }
-shrs_utils = { path = "../shrs_utils", version = "0.0.1-dev" }
+shrs_job = { path = "../shrs_job", version = "0.0.1" }
+shrs_utils = { path = "../shrs_utils", version = "0.0.1" }
 
 pino_deref = "0.1"
 

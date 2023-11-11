@@ -30,10 +30,10 @@ anyhow = "1"
 lazy_static = "1.4"
 log = "0.4"
 
-shrs_core = { path = "../shrs_core", version = "0.0.1-dev" }
-shrs_line = { path = "../shrs_line", version = "0.0.1-dev" }
-shrs_lang = { path = "../shrs_lang", version = "0.0.1-dev" }
-shrs_job = { path = "../shrs_job", version = "0.0.1-dev" }
+shrs_core = { path = "../shrs_core", version = "0.0.1" }
+shrs_line = { path = "../shrs_line", version = "0.0.1" }
+shrs_lang = { path = "../shrs_lang", version = "0.0.1" }
+shrs_job = { path = "../shrs_job", version = "0.0.1" }
 
 serde = { version = "1", features = ["derive"], optional = true }
 

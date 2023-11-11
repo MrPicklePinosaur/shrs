@@ -1,12 +1,14 @@
 mod builtin;
 mod interpreter;
 mod lang;
+mod lang_options;
 
 use std::collections::{HashMap, HashSet};
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
 use lang::{BashLang, MuxLang, NuLang, PythonLang};
+use lang_options::{swap_lang_options, LangOptions};
 use shrs::prelude::*;
 
 pub struct MuxState {
@@ -61,11 +63,15 @@ pub struct ChangeLangCtx {
     new_lang: String,
 }
 
-pub struct MuxPlugin;
+pub struct MuxPlugin {
+    lang_options: LangOptions,
+}
 
 impl MuxPlugin {
     pub fn new() -> Self {
-        MuxPlugin
+        MuxPlugin {
+            lang_options: LangOptions::default(),
+        }
     }
 }
 
@@ -87,6 +93,7 @@ impl Plugin for MuxPlugin {
         shell.state.insert(MuxState::new(lang_names).unwrap());
         let langs_map = HashMap::from_iter(langs);
         shell.lang = Box::new(MuxLang::new(langs_map));
+        shell.hooks.register(swap_lang_options);
 
         Ok(())
     }

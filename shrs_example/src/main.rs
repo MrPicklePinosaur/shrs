@@ -183,7 +183,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin::new())
-        .with_plugin(MuxPlugin)
+        .with_plugin(MuxPlugin::new())
         .with_plugin(CdStackPlugin)
         .build()
         .expect("Could not construct shell");

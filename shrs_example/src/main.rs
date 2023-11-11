@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate shrs;
-
 use std::{
     fs,
     io::{stdout, BufWriter},

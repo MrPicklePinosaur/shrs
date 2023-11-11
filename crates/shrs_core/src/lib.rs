@@ -13,6 +13,7 @@ pub mod env;
 pub mod hooks;
 pub mod jobs;
 pub mod lang;
+pub mod output_writer;
 pub mod prompt;
 pub mod shell;
 pub mod signal;
@@ -30,6 +31,7 @@ pub mod prelude {
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         lang::Lang,
+        output_writer::OutputWriter,
         prompt::*,
         shell::{Context, Runtime, Shell},
         signal::Signals,

@@ -1,11 +1,15 @@
 [package]
 name = "shrs_derive_completion"
-version = "0.0.1"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
+version = "0.0.2"
 description = "Specify shell completions from derive macro"
-repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 proc-macro = true
@@ -15,7 +19,7 @@ name = "tests"
 path = "tests/test.rs"
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "0.0.1" }
+shrs = { path = "../../crates/shrs", version = "0.0.2" }
 
 derive_builder = "0.12"
 

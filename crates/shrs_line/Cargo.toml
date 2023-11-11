@@ -1,11 +1,15 @@
 [package]
 name = "shrs_line"
-version = "0.0.1-dev"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
+version = "0.0.2"
 description = "readline implementation"
-repository = "https://github.com/MrPicklePinosaur/sh.rs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 crossterm = {version = "0.26", features = ["bracketed-paste"]}
@@ -17,8 +21,8 @@ arboard = "3.2.0"
 
 anyhow = "1"
 thiserror = "1"
-shrs_core = { path = "../shrs_core", version = "0.0.1-dev" }
-shrs_vi = { path = "../shrs_vi", version = "0.0.1-dev" }
-shrs_utils = { path = "../shrs_utils", version = "0.0.1-dev" }
-shrs_lang = {path = "../shrs_lang", version = "0.0.1-dev" }
+shrs_core = { path = "../shrs_core", version = "0.0.2" }
+shrs_vi = { path = "../shrs_vi", version = "0.0.2" }
+shrs_utils = { path = "../shrs_utils", version = "0.0.2" }
+shrs_lang = {path = "../shrs_lang", version = "0.0.2" }
 # shrs_core = { path = "../shrs_utils" }

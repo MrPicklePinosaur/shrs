@@ -1,6 +1,6 @@
 [package]
 name = "shrs_lang"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -9,8 +9,8 @@ repository = "https://github.com/MrPicklePinosaur/shrs"
 build = "build.rs"
 
 [dependencies]
-shrs_core = { path = "../shrs_core", version = "0.0.1" }
-shrs_job = { path = "../shrs_job", version = "0.0.1" }
+shrs_core = { path = "../shrs_core", version = "0.0.2" }
+shrs_job = { path = "../shrs_job", version = "0.0.2" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}

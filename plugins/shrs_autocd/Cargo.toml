@@ -1,6 +1,6 @@
 [package]
 name = "shrs_autocd"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -12,4 +12,4 @@ readme = "README.md"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "0.0.1" }
+shrs = { path = "../../crates/shrs", version = "0.0.2" }

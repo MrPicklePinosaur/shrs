@@ -1,11 +1,15 @@
 [package]
 name = "shrs_line"
 version = "0.0.2"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
 description = "readline implementation"
-repository = "https://github.com/MrPicklePinosaur/shrs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 crossterm = {version = "0.26", features = ["bracketed-paste"]}

@@ -1,11 +1,15 @@
 [package]
 name = "shrs_run_context"
 version = "0.0.2"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
 description = "Save and load run context"
-repository = "https://github.com/MrPicklePinosaur/shrs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 shrs = { path = "../../crates/shrs", version = "0.0.2", features = ["serde"] }

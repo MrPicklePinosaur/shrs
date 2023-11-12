@@ -9,7 +9,7 @@ repository = "https://github.com/MrPicklePinosaur/shrs"
 build = "build.rs"
 
 [dependencies]
-shrs = { path = "../crates/shrs", version = "0.0.2" }
+shrs = { path = "../crates/shrs", version = "^0.0.2" }
 shrs_output_capture = { path = "../plugins/shrs_output_capture", version = "0.0.2" }
 shrs_cd_tools = { path = "../plugins/shrs_cd_tools", version = "0.0.2" }
 shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.2" }

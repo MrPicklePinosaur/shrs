@@ -13,7 +13,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "0.0.2" }
+shrs = { path = "../../crates/shrs", version = "^0.0.2" }
 
 log4rs = { version = "1.2" }
 log = { version = "0.4" }

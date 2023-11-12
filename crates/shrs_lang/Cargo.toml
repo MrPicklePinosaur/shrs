@@ -13,8 +13,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs_core = { path = "../shrs_core", version = "0.0.2" }
-shrs_job = { path = "../shrs_job", version = "0.0.2" }
+shrs_core = { path = "../shrs_core", version = "^0.0.2" }
+shrs_job = { path = "../shrs_job", version = "^0.0.2" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}

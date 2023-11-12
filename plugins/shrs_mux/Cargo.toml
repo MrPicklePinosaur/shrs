@@ -13,5 +13,5 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "0.0.2" }
+shrs = { path = "../../crates/shrs", version = "^0.0.2" }
 clap = { version = "4.1", features = ["derive"] }

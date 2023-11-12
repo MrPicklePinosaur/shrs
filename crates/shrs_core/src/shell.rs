@@ -104,10 +104,8 @@ pub fn set_working_dir(
         .set("OLDPWD", old_path_str)
         .expect("failed setting env var");
 
-    let path_str = path.to_str().expect("failed converting to str");
-    rt.env
-        .set("PATH", path_str)
-        .expect("failed setting env var");
+    let pwd = path.to_str().expect("failed converting to str");
+    rt.env.set("PWD", pwd).expect("failed setting env var");
     rt.working_dir = path.clone();
 
     // Set process working directory too

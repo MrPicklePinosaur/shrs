@@ -1,7 +1,6 @@
 use std::io::{stdout, BufWriter, Write};
 
-use crossterm::style::Print;
-use crossterm::QueueableCommand;
+use crossterm::{style::Print, QueueableCommand};
 
 pub struct OutputWriter {
     out: BufWriter<std::io::Stdout>,

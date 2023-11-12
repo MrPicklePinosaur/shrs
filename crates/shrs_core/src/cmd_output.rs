@@ -35,4 +35,3 @@ impl From<process::Output> for CmdOutput {
         }
     }
 }
-

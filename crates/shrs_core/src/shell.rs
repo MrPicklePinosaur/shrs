@@ -27,6 +27,7 @@ use crate::{
     hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::Jobs,
     lang::Lang,
+    output_writer::OutputWriter,
     signal::Signals,
     state::State,
     theme::Theme,
@@ -54,7 +55,7 @@ pub struct Shell {
 // TODO can technically unify shell and context
 pub struct Context {
     /// Output stream
-    pub out: BufWriter<std::io::Stdout>,
+    pub out: OutputWriter,
     pub state: State,
     pub jobs: Jobs,
     pub startup_time: Instant,

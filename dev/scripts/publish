@@ -1,13 +1,13 @@
 #!/bin/bash
 
+#    shrs_core
+#    shrs_job
+#    shrs_lang
+#    shrs_line
+#    shrs_utils
+#    shrs_vi
+#    shrs
 crates=(
-    shrs_core
-    shrs_job
-    shrs_lang
-    shrs_line
-    shrs_utils
-    shrs_vi
-    shrs
 )
 plugins=(
     shrs_autocd
@@ -26,4 +26,4 @@ plugins=(
 #    cargo publish -p $crate
 #done
 
-cargo smart-release --no-changelog --no-tag --execute "${crates[@]}" "${plugins[@]}"
+cargo smart-release -d keep --update-crates-index --no-changelog --no-tag "${crates[@]}" "${plugins[@]}"

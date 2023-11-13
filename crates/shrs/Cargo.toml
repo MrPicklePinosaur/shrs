@@ -8,7 +8,7 @@ description = "modular library to build your own shell in rust"
 homepage = "https://mrpicklepinosaur.github.io/shrs/"
 categories = ["command-line-interface", "command-line-utilities", "development-tools"]
 keywords = ["shrs", "shell", "posix", "unix"]
-readme = "README.md"
+readme = "../../README.md"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [features]

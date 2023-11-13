@@ -165,7 +165,7 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
                 add_space: !is_dir,
                 display: Some(filename.to_owned()),
                 completion: drop_end.to_owned() + &filename,
-                replace_method: ReplaceMethod::Append,
+                replace_method: ReplaceMethod::Replace,
             }
         })
         .collect::<Vec<_>>()

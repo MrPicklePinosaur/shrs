@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::HashMap,
+    fmt::format,
     io::{BufRead, BufReader, Read, Write},
     ops::Add,
     os::unix::process::ExitStatusExt,
@@ -155,9 +156,21 @@ impl Lang for BashLang {
         let mut instance = self.instance.borrow_mut();
         let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
 
+        let cd_statement = format!("cd {}\n", rt.working_dir.to_string_lossy());
+
+        stdin
+            .write_all(cd_statement.as_bytes())
+            .expect("unable to set var");
+
+        for (k, v) in rt.env.iter() {
+            let export_statement = format!("export {}={:?}\n", k, v);
+            stdin
+                .write_all(export_statement.as_bytes())
+                .expect("unable to set var");
+        }
         stdin
             .write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())
-            .expect("Failed to send Ctrl+C to stdin");
+            .expect("Bash command failed");
 
         let stdout_reader =
             BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));

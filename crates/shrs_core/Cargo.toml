@@ -1,11 +1,15 @@
 [package]
 name = "shrs_core"
-version = "0.0.1-dev"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
+version = "0.0.2"
 description = "modular library to build your own shell in rust"
-repository = "https://github.com/MrPicklePinosaur/shrs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [features]
 default = ["serde"]
@@ -22,8 +26,8 @@ dirs = "5"
 anymap = "1.0.0-beta.2"
 multimap = "0.9"
 
-shrs_job = { path = "../shrs_job", version = "0.0.1-dev" }
-shrs_utils = { path = "../shrs_utils", version = "0.0.1-dev" }
+shrs_job = { path = "../shrs_job", version = "^0.0.2" }
+shrs_utils = { path = "../shrs_utils", version = "^0.0.2" }
 
 pino_deref = "0.1"
 

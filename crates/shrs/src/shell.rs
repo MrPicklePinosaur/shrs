@@ -120,7 +120,7 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: BufWriter::new(stdout()),
+            out: OutputWriter::default(),
             state: self.state,
             jobs: Jobs::new(),
             startup_time: Instant::now(),

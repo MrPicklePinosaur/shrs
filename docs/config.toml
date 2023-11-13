@@ -23,7 +23,7 @@ include_content = true
 highlight_code = true
 
 [extra]
-author = ""
+author = "MrPicklePinosaur"
 github = "https://github.com/MrPicklePinosaur/shrs"
 twitter = ""
 email = ""
@@ -50,7 +50,7 @@ library = "katex"  # options: "katex", "mathjax". default is "katex".
 [extra.open]
 enable = true
 # this image will be used as fallback if a page has no image of its own
-image = "banner.png"
+image = "shrs_banner.png"
 twitter_site = ""
 twitter_creator = ""
 facebook_author = ""
@@ -60,7 +60,7 @@ og_locale = "en_US"
 ## JSON-LD
 [extra.schema]
 type = "Organization"
-logo = "banner.png"
+logo = "shrs_logo.png"
 twitter = ""
 linked_in = ""
 github = "https://github.com/MrPicklePinosaur/shrs"

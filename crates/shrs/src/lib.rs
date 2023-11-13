@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/shrs/0.0.1")]
+#![doc(html_root_url = "https://docs.rs/shrs/0.0.2")]
 
 //! **shrs** is a framework for building and configuring your own shell in rust.
 //!

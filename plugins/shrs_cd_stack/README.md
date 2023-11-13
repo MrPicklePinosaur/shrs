@@ -16,7 +16,7 @@ This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 First add this plugin to your dependencies
 ```toml
-shrs_cd_stack = { version = "0.0.1" }
+shrs_cd_stack = { version = "0.0.2" }
 ```
 
 Then include this plugin when initializing shrs

@@ -21,16 +21,13 @@ impl BuiltinCmd for HelpBuiltin {
         args: &Vec<String>,
     ) -> anyhow::Result<CmdOutput> {
         let cmds = sh.builtins.builtins.keys();
-        let mut out = String::new();
 
-        out += "Builtin Commands:\n";
+        ctx.out.println("Builtin Commands")?;
 
         for cmd in cmds {
-            out += cmd;
-            out += "\n";
+            ctx.out.println(cmd)?;
         }
-        println!("{}", out);
 
-        Ok(CmdOutput::stdout(out, 0))
+        Ok(CmdOutput::success())
     }
 }

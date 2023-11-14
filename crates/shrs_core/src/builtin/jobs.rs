@@ -21,12 +21,10 @@ impl BuiltinCmd for JobsBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<CmdOutput> {
-        let mut s = String::new();
         for (job_id, _) in ctx.jobs.iter() {
-            s += format!("{s}\n").as_str();
+            ctx.out.println(job_id.to_string().as_str());
         }
-        print!("{s}");
 
-        Ok(CmdOutput::stdout(s, 0))
+        Ok(CmdOutput::success())
     }
 }

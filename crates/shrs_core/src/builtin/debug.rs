@@ -32,24 +32,20 @@ impl BuiltinCmd for DebugBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<CmdOutput> {
-        let mut out = String::new();
         let cli = Cli::try_parse_from(args)?;
 
         match &cli.command {
             None => {
-                let s = "debug utility\n";
-                print!("{s}");
-                out += s;
+                ctx.out.println("debug utility")?;
             },
             Some(Commands::Env) => {
                 for (var, val) in rt.env.iter() {
-                    let envs = format!("{:?} = {:?}\n", var, val);
-                    print!("{envs}");
-                    out += envs.as_str();
+                    let envs = format!("{:?} = {:?}", var, val);
+                    ctx.out.println(envs)?;
                 }
             },
         }
 
-        Ok(CmdOutput::stdout(out, 0))
+        Ok(CmdOutput::success())
     }
 }

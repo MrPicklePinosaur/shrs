@@ -50,8 +50,8 @@ impl BuiltinCmd for SourceBuiltin {
 
         match interp {
             Some(interp) => {
-                let s = format!("using interp {} at {}\n", interp.as_str(), &cli.source_file);
-                print!("{s}");
+                let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
+                ctx.out.println(s)?;
                 let mut child = Command::new(interp.as_str())
                     .args(vec![cli.source_file])
                     .spawn()?;
@@ -60,7 +60,7 @@ impl BuiltinCmd for SourceBuiltin {
                 // TODO temp disable this
                 // command_output(sh, ctx, rt, &mut child)?;
 
-                Ok(CmdOutput::stdout(s, 0))
+                Ok(CmdOutput::success())
             },
             None => {
                 // otherwise evaluate with self

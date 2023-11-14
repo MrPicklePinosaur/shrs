@@ -214,7 +214,8 @@ fn run_shell(
             .find(|(builtin_name, _)| *builtin_name == &cmd_name)
             .map(|(_, builtin_cmd)| builtin_cmd);
 
-        let mut cmd_output: CmdOutput = CmdOutput::empty();
+        let mut cmd_output: CmdOutput = CmdOutput::error();
+        ctx.out.begin_collecting();
         if let Some(builtin_cmd) = builtin_cmd {
             let output = builtin_cmd.run(sh, ctx, rt, &words);
             match output {
@@ -228,6 +229,8 @@ fn run_shell(
                 Err(e) => eprintln!("error: {e:?}"),
             }
         }
+        let (out, err) = ctx.out.end_collecting();
+        cmd_output.set_output(out, err);
         let _ = sh.hooks.run(
             sh,
             ctx,

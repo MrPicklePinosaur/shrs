@@ -36,20 +36,18 @@ impl BuiltinCmd for ExportBuiltin {
         // remove arg
         if cli.n {
             for var in cli.vars {
-                rt.env.remove(&var);
+                rt.env.remove(&var)?;
             }
             return Ok(CmdOutput::success());
         }
 
         // print all env vars
         if cli.p {
-            let mut out = String::new();
             for (var, val) in rt.env.iter() {
-                let s = format!("export {:?}={:?}\n", var, val);
-                print!("{}", s);
-                out += s.as_str();
+                let s = format!("export {:?}={:?}", var, val);
+                ctx.out.println(s)?;
             }
-            return Ok(CmdOutput::stdout(out, 0));
+            return Ok(CmdOutput::success());
         }
 
         for var in cli.vars {
@@ -57,7 +55,7 @@ impl BuiltinCmd for ExportBuiltin {
             let var = it.next().unwrap();
             let val = it.next().unwrap_or_default();
 
-            rt.env.set(var, val);
+            rt.env.set(var, val)?;
         }
 
         Ok(CmdOutput::success())

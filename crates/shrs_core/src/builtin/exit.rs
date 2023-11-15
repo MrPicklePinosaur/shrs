@@ -1,5 +1,8 @@
-use super::{BuiltinCmd, BuiltinStatus};
-use crate::shell::{Context, Runtime, Shell};
+use super::BuiltinCmd;
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 #[derive(Default)]
 pub struct ExitBuiltin {}
@@ -11,7 +14,7 @@ impl BuiltinCmd for ExitBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         std::process::exit(0)
     }
 }

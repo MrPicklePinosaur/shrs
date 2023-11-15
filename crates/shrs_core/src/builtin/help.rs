@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::{BuiltinCmd, BuiltinStatus, Builtins};
+use super::{BuiltinCmd, Builtins};
 use crate::{
     hooks::ChangeDirCtx,
+    prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
 
@@ -18,15 +19,15 @@ impl BuiltinCmd for HelpBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cmds = sh.builtins.builtins.keys();
 
-        println!("Builtin Commands:");
+        ctx.out.println("Builtin Commands")?;
 
         for cmd in cmds {
-            println!("{}", cmd);
+            ctx.out.println(cmd)?;
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

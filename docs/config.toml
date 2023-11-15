@@ -1,7 +1,7 @@
 # The URL the site will be built for
 base_url = "https://mrpicklepinosaur.github.io/shrs/"
 title = "shrs"
-description = ""
+description = "The rusty shell toolkit for hackers"
 
 theme = "adidoks"
 default_language = "en"

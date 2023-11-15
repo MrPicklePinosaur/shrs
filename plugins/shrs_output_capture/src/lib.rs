@@ -15,7 +15,7 @@ struct OutputCaptureState {
 impl OutputCaptureState {
     pub fn new() -> Self {
         OutputCaptureState {
-            last_output: CmdOutput::new(String::new(), String::new(), ExitStatus::from_raw(0)),
+            last_output: CmdOutput::success(),
         }
     }
 }

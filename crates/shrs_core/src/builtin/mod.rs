@@ -23,7 +23,10 @@ use self::{
     export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
     source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
-use crate::shell::{Context, Runtime, Shell};
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 macro_rules! hashmap (
     { $($key:expr => $value:expr),+ } => {
@@ -36,20 +39,6 @@ macro_rules! hashmap (
 	}
     };
 );
-
-/// Output status for builtin command
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct BuiltinStatus(pub isize);
-
-impl BuiltinStatus {
-    pub fn success() -> BuiltinStatus {
-        BuiltinStatus(0)
-    }
-
-    pub fn error() -> BuiltinStatus {
-        BuiltinStatus(1)
-    }
-}
 
 // TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
@@ -138,5 +127,5 @@ pub trait BuiltinCmd {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus>;
+    ) -> anyhow::Result<CmdOutput>;
 }

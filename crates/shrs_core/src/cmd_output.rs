@@ -15,23 +15,21 @@ pub struct CmdOutput {
     pub status: ExitStatus,
 }
 impl CmdOutput {
-    pub fn empty() -> CmdOutput {
-        CmdOutput::new(String::new(), String::new(), ExitStatus::from_raw(0))
-    }
-    pub fn new(stdout: String, stderr: String, status: ExitStatus) -> Self {
+    pub fn new(status: i32) -> Self {
         CmdOutput {
-            stdout,
-            stderr,
-            status,
+            stdout: String::new(),
+            stderr: String::new(),
+            status: ExitStatus::from_raw(status),
         }
     }
-}
-impl From<process::Output> for CmdOutput {
-    fn from(o: process::Output) -> Self {
-        CmdOutput {
-            stdout: String::from_utf8_lossy(&o.stdout).to_string(),
-            stderr: String::from_utf8_lossy(&o.stderr).to_string(),
-            status: o.status,
-        }
+    pub fn success() -> Self {
+        CmdOutput::new(0)
+    }
+    pub fn error() -> Self {
+        CmdOutput::new(1)
+    }
+    pub fn set_output(&mut self, out: String, err: String) {
+        self.stdout = out;
+        self.stderr = err;
     }
 }

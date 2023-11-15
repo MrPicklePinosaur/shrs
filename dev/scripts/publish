@@ -26,4 +26,9 @@ plugins=(
 #    cargo publish -p $crate
 #done
 
-cargo smart-release -d keep --update-crates-index --no-changelog --no-tag "${crates[@]}" "${plugins[@]}"
+for plugin in "${plugins[@]}"; do
+    echo "Publishing $plugin"
+    cargo publish -p $plugin
+done
+
+#cargo smart-release -d keep --update-crates-index --no-changelog --no-tag "${crates[@]}" "${plugins[@]}"

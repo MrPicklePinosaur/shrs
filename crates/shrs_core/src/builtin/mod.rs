@@ -58,6 +58,7 @@ pub struct Builtins {
     builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
 }
 
+// TODO a lot of this api is silly, perhaps just expose the entire hashmap
 impl Builtins {
     pub fn new() -> Self {
         Builtins {
@@ -75,6 +76,11 @@ impl Builtins {
     /// Get iterator of all registered builtin commands
     pub fn iter(&self) -> Iter<'_, &str, Box<dyn BuiltinCmd>> {
         self.builtins.iter()
+    }
+
+    /// Find a builtin by name
+    pub fn get(&self, name: &'static str) -> Option<&Box<dyn BuiltinCmd>> {
+        self.builtins.get(name)
     }
 }
 

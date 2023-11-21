@@ -553,6 +553,22 @@ impl Line {
             },
 
             Event::Key(KeyEvent {
+                code: KeyCode::Char('a'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                ctx.cb.move_cursor(Location::Front())?;
+            },
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                ctx.cb.move_cursor(Location::Back(&ctx.cb))?;
+            },
+
+            Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {

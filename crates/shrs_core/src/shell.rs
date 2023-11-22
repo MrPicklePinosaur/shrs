@@ -92,10 +92,14 @@ pub fn set_working_dir(
     run_hook: bool,
 ) -> anyhow::Result<()> {
     // Check working directory validity
-    let path = PathBuf::from(wd);
-    if !path.is_dir() {
+    let path = if let Ok(path) = PathBuf::from(wd).canonicalize() {
+        if !path.is_dir() {
+            return Err(anyhow!("Invalid path"));
+        }
+        path
+    } else {
         return Err(anyhow!("Invalid path"));
-    }
+    };
 
     // Save old working directory
     let old_path = get_working_dir(rt).to_path_buf();

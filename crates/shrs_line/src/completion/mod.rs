@@ -25,6 +25,8 @@ pub struct Completion {
     pub(crate) completion: String,
     /// Replace method
     pub(crate) replace_method: ReplaceMethod,
+    /// Additional helpful information about the completion
+    pub(crate) comment: Option<String>
 }
 
 impl Completion {

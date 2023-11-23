@@ -55,6 +55,8 @@ pub struct DefaultMenu {
     active: bool,
     max_rows: usize,
     column_padding: usize,
+    /// Max number of characters the comment message is allowed to be
+    comment_max_length: usize,
     /// Max number of entries to show when rendering the menu
     limit: usize,
     /// Function to use to sort the entries
@@ -70,6 +72,7 @@ impl DefaultMenu {
             cursor: 0,
             active: false,
             max_rows: 5,
+            comment_max_length: 20,
             column_padding: 2,
             limit: 20,
             // by default sort alphabetical by display name

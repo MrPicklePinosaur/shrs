@@ -82,7 +82,7 @@ impl Env {
             return Err(EnvError::InvalidValue(val.into()));
         }
 
-        // env::set_var(var.to_ascii_uppercase(), val);
+        env::set_var(var, val);
         self.var_table.insert(var.into(), val.into());
         Ok(())
     }
@@ -100,7 +100,7 @@ impl Env {
         if key_sanitation(var) {
             return Err(EnvError::InvalidKey(var.into()));
         }
-        // env::remove_var(var);
+        env::remove_var(var);
         self.var_table.remove(var);
         Ok(())
     }

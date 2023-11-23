@@ -67,7 +67,7 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
-            comment_max_length: 20,
+            comment_max_length: 30,
             column_padding: 2,
             limit: 20,
             // by default sort alphabetical by display name
@@ -104,12 +104,12 @@ impl DefaultMenu {
         // first determine how many columns are needed to list all completions
         let mut max_width = 0;
         for menu_item in self.items() {
-            // extra +2 is for formatting characters around the comment
+            // extra +4 is for formatting characters around the comment
             let comment_len = menu_item
                 .1
                 .comment
                 .as_ref()
-                .map(|comment| comment.len().min(self.comment_max_length) + 2)
+                .map(|comment| comment.len().min(self.comment_max_length) + 4)
                 .unwrap_or(0);
             let menu_item_len = menu_item.0.len() + comment_len;
 
@@ -118,7 +118,6 @@ impl DefaultMenu {
 
         max_width
     }
-
 }
 
 impl Menu for DefaultMenu {
@@ -203,11 +202,13 @@ impl Menu for DefaultMenu {
                 if let Some(comment) = &menu_item.1.comment {
                     let comment_len = comment.len().min(self.comment_max_length);
                     out.queue(MoveToColumn(
-                        (column_start + max_width - comment_len) as u16,
+                        (column_start + max_width - comment_len - 2) as u16, // -2 for parentheses
                     ))?;
+                    out.queue(Print("("))?;
                     self.comment_style(out)?;
-                    out.queue(Print(comment.get(..comment_len).unwrap()))?;
+                    out.queue(Print(truncate(comment, comment_len)))?;
                     self.unselected_style(out)?;
+                    out.queue(Print(")"))?;
                 }
 
                 i += 1;
@@ -236,6 +237,18 @@ impl Menu for DefaultMenu {
         // ceil division
         let rows_needed = (self.items().len() + columns_needed - 1) / columns_needed;
 
-        rows_needed+1
+        rows_needed + 1
+    }
+}
+
+/// Utility to truncate string and insert ellipses at end
+fn truncate(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        None => s.to_string(),
+        Some((idx, _)) => {
+            let mut truncated = s[..idx.saturating_sub(3)].to_string();
+            truncated.push_str("...");
+            truncated
+        },
     }
 }

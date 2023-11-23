@@ -1,9 +1,10 @@
 //! Internal renderer
 
 use std::{
+    cell::RefCell,
     collections::HashMap,
     fmt::Display,
-    io::{stdout, BufWriter, Stdout, Write}, cell::RefCell,
+    io::{stdout, BufWriter, Stdout, Write},
 };
 
 use crossterm::{
@@ -154,11 +155,13 @@ impl Painter {
 
         // scroll up if we need more lines
         if menu.is_active() {
-            let required_lines = menu.required_lines() as u16;
+            let required_lines = menu.required_lines(&self) as u16;
             let remaining_lines = self.term_size.1.saturating_sub(self.prompt_line);
             if required_lines > remaining_lines {
                 let extra_lines = required_lines.saturating_sub(remaining_lines);
-                self.out.borrow_mut().queue(ScrollUp(extra_lines.try_into().unwrap()))?;
+                self.out
+                    .borrow_mut()
+                    .queue(ScrollUp(extra_lines.try_into().unwrap()))?;
                 self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
             }
         }
@@ -184,7 +187,8 @@ impl Painter {
         }
 
         // clean up current line first
-        self.out.borrow_mut()
+        self.out
+            .borrow_mut()
             .queue(cursor::MoveTo(
                 0,
                 self.prompt_line.saturating_sub(self.num_newlines),
@@ -222,7 +226,8 @@ impl Painter {
                 prompt_right_rendered = true;
                 self.out.borrow_mut().queue(Print("\r"))?;
             }
-            self.out.borrow_mut()
+            self.out
+                .borrow_mut()
                 .queue(Print(StyledContent::new(*span.style(), content)))?;
         }
         if !prompt_right_rendered {
@@ -235,7 +240,9 @@ impl Painter {
         }
 
         // self.out.queue(cursor::RestorePosition)?;
-        self.out.borrow_mut().queue(cursor::MoveToColumn(left_space as u16))?;
+        self.out
+            .borrow_mut()
+            .queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.borrow_mut().queue(cursor::Show)?;
 
         // set cursor style

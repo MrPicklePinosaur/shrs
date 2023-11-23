@@ -119,6 +119,15 @@ impl Default for DefaultCompleter {
             Box::new(git_flag_action),
         ));
         comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
+        comp.register(Rule::new(
+            Pred::new(ls_pred).and(short_flag_pred),
+            Box::new(ls_short_flag_action),
+        ));
+        comp.register(Rule::new(
+            Pred::new(ls_pred).and(long_flag_pred),
+            Box::new(ls_long_flag_action),
+        ));
+        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
@@ -262,6 +271,78 @@ fn sanitize_file_name(filename: String) -> String {
     // }
 
     filename.replace(" ", "\\ ")
+}
+
+// completions for ls command
+pub fn ls_pred(ctx: &CompletionCtx) -> bool {
+    cmdname_eq_pred("ls".into())(ctx)
+}
+
+pub fn ls_short_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(
+        vec![
+            "-a", "-A", "-b", "-B", "-c", "-C", "-d", "-D", "-f", "-F", "-g", "-G", "-h", "-H",
+            "-i", "-I", "-k", "-l", "-L", "-m", "-n", "-N", "-o", "-p", "-q", "-Q", "-r", "-R",
+            "-s", "-S", "-t", "-T", "-u", "-U", "-v", "-w", "-x", "-X", "-Z", "-1",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>(),
+    )
+}
+
+pub fn ls_long_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
+    default_format(
+        vec![
+            "--all",
+            "--almost-all",
+            "--author",
+            "--escape",
+            "--block-size",
+            "--ignore-backups",
+            "--color",
+            "--directory",
+            "--dired",
+            "--classify",
+            "--file-type",
+            "--format",
+            "--full-time",
+            "--group-directories-first",
+            "--no-group",
+            "--human-readable",
+            "--si",
+            "--dereference-command-line",
+            "--dereference-command-line-symlink-to-dir",
+            "--hide",
+            "--hyperlink",
+            "--indicator-style",
+            "--inode",
+            "--ignore",
+            "--kibibytes",
+            "--dereference",
+            "--numeric-uid-gid",
+            "--literal",
+            "--indicator-style",
+            "--hide-control-chars",
+            "--show-control-chars",
+            "--quote-name",
+            "--quoting-style",
+            "--reverse",
+            "--recursive",
+            "--size",
+            "--sort",
+            "--time",
+            "--time-style",
+            "--tabsize",
+            "--width",
+            "--context",
+            "--help",
+            "--version",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>(),
+    )
 }
 
 #[cfg(test)]

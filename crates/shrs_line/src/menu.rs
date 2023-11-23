@@ -10,6 +10,7 @@ use crossterm::{
 };
 
 use crate::completion::Completion;
+use crate::painter::Painter;
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 
@@ -41,7 +42,7 @@ pub trait Menu {
     fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
     fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
 
-    fn render(&self, out: &mut Out) -> anyhow::Result<()>;
+    fn render(&self, out: &mut Out, painter: &Painter) -> anyhow::Result<()>;
     fn required_lines(&self) -> usize;
 }
 
@@ -53,9 +54,8 @@ pub struct DefaultMenu {
     /// Currently selected item
     cursor: u32,
     active: bool,
-    max_rows: usize,
     column_padding: usize,
-    /// Max number of characters the comment message is allowed to be
+    /// Max length in characters that the comment message is allowed to take up
     comment_max_length: usize,
     /// Max number of entries to show when rendering the menu
     limit: usize,
@@ -71,7 +71,6 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
-            max_rows: 5,
             comment_max_length: 20,
             column_padding: 2,
             limit: 20,
@@ -149,17 +148,33 @@ impl Menu for DefaultMenu {
         Ok(())
     }
 
-    fn render(&self, out: &mut Out) -> anyhow::Result<()> {
+    fn render(&self, out: &mut Out, painter: &Painter) -> anyhow::Result<()> {
         let mut i = 0;
         let mut column_start: usize = 0;
+
+        // first determine how many columns are needed to list all completions
+        let mut max_width = 0;
+        for menu_item in self.items() {
+            // extra +2 is for formatting characters around the comment
+            let comment_len = menu_item.1.comment.as_ref().map(|comment| comment.len() + 2).unwrap_or(0);
+            let menu_item_len = menu_item.0.len() + comment_len;
+
+            max_width = max_width.max(menu_item_len); 
+        }
+
+        let mut columns_needed = painter.get_term_size().0 as usize / max_width;
+
+        // terminal is not wide enough to render even one line
+        if columns_needed == 0 {
+            columns_needed = 1;
+        }
+
+        let rows_needed = self.items().len() / columns_needed;
 
         self.unselected_style(out)?;
         for column in self
             .items()
-            .iter()
-            .take(self.limit)
-            .collect::<Vec<_>>()
-            .chunks(self.max_rows)
+            .chunks(rows_needed)
         {
             // length of the longest word in column
             let mut longest_word = 0;
@@ -187,6 +202,6 @@ impl Menu for DefaultMenu {
     }
 
     fn required_lines(&self) -> usize {
-        self.items().len().min(self.max_rows) + 1
+        self.items().len().min(10) + 1 // hardcoded lines for now
     }
 }

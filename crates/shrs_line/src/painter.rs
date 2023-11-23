@@ -3,7 +3,7 @@
 use std::{
     collections::HashMap,
     fmt::Display,
-    io::{stdout, BufWriter, Stdout, Write},
+    io::{stdout, BufWriter, Stdout, Write}, cell::RefCell,
 };
 
 use crossterm::{
@@ -102,7 +102,7 @@ impl FromIterator<StyledContent<String>> for StyledBuf {
 
 pub struct Painter {
     /// The output buffer
-    out: BufWriter<std::io::Stdout>,
+    out: RefCell<BufWriter<std::io::Stdout>>,
     /// Dimensions of current terminal window
     term_size: (u16, u16),
     /// Current line the prompt is on
@@ -113,7 +113,7 @@ pub struct Painter {
 impl Painter {
     pub fn new() -> Self {
         Painter {
-            out: BufWriter::new(stdout()),
+            out: RefCell::new(BufWriter::new(stdout())),
             term_size: (0, 0),
             prompt_line: 0,
             num_newlines: 0,
@@ -133,8 +133,13 @@ impl Painter {
 
         Ok(())
     }
+
     pub fn set_term_size(&mut self, w: u16, h: u16) {
         self.term_size = (w, h);
+    }
+
+    pub fn get_term_size(&self) -> (u16, u16) {
+        self.term_size
     }
 
     pub fn paint<T: Prompt + ?Sized>(
@@ -145,7 +150,7 @@ impl Painter {
         styled_buf: &StyledBuf,
         cursor_ind: usize,
     ) -> anyhow::Result<()> {
-        self.out.queue(cursor::Hide)?;
+        self.out.borrow_mut().queue(cursor::Hide)?;
 
         // scroll up if we need more lines
         if menu.is_active() {
@@ -153,7 +158,7 @@ impl Painter {
             let remaining_lines = self.term_size.1.saturating_sub(self.prompt_line);
             if required_lines > remaining_lines {
                 let extra_lines = required_lines.saturating_sub(remaining_lines);
-                self.out.queue(ScrollUp(extra_lines.try_into().unwrap()))?;
+                self.out.borrow_mut().queue(ScrollUp(extra_lines.try_into().unwrap()))?;
                 self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
             }
         }
@@ -179,7 +184,7 @@ impl Painter {
         }
 
         // clean up current line first
-        self.out
+        self.out.borrow_mut()
             .queue(cursor::MoveTo(
                 0,
                 self.prompt_line.saturating_sub(self.num_newlines),
@@ -190,7 +195,7 @@ impl Painter {
         let mut left_space = 0; // cursor position from left side of terminal
 
         for span in prompt_left.spans() {
-            self.out.queue(PrintStyledContent(span))?;
+            self.out.borrow_mut().queue(PrintStyledContent(span))?;
         }
         //prompt space doesnt matter if there is going to be a carriage return
         if total_newlines == 0 {
@@ -212,40 +217,40 @@ impl Painter {
             let content = span.content();
             if span.content() == "\n" {
                 if !prompt_right_rendered {
-                    render_prompt_right(&mut self.out)?;
+                    render_prompt_right(&mut self.out.borrow_mut())?;
                 }
                 prompt_right_rendered = true;
-                self.out.queue(Print("\r"))?;
+                self.out.borrow_mut().queue(Print("\r"))?;
             }
-            self.out
+            self.out.borrow_mut()
                 .queue(Print(StyledContent::new(*span.style(), content)))?;
         }
         if !prompt_right_rendered {
-            render_prompt_right(&mut self.out)?;
+            render_prompt_right(&mut self.out.borrow_mut())?;
         }
 
         // render menu
         if menu.is_active() {
-            menu.render(&mut self.out)?;
+            menu.render(&mut self.out.borrow_mut(), &self)?;
         }
 
         // self.out.queue(cursor::RestorePosition)?;
-        self.out.queue(cursor::MoveToColumn(left_space as u16))?;
-        self.out.queue(cursor::Show)?;
+        self.out.borrow_mut().queue(cursor::MoveToColumn(left_space as u16))?;
+        self.out.borrow_mut().queue(cursor::Show)?;
 
         // set cursor style
         let cursor_style = line_ctx.ctx.state.get_or_default::<CursorStyle>();
-        self.out.queue(cursor_style.style)?;
+        self.out.borrow_mut().queue(cursor_style.style)?;
 
-        self.out.flush()?;
+        self.out.borrow_mut().flush()?;
 
         Ok(())
     }
 
     pub fn newline(&mut self) -> crossterm::Result<()> {
         self.num_newlines = 0;
-        self.out.queue(Print("\r\n"))?;
-        self.out.flush()?;
+        self.out.borrow_mut().queue(Print("\r\n"))?;
+        self.out.borrow_mut().flush()?;
         Ok(())
     }
 }

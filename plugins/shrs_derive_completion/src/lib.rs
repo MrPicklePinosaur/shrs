@@ -59,7 +59,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
     let mut flags: Vec<Flag> = vec![];
 
     let struct_name = &item.ident;
-    cli.name(struct_name.as_display().to_string().to_ascii_lowercase());
+    cli.name(struct_name.to_string().to_ascii_lowercase());
 
     for field in item.fields.iter() {
         let field_name = field.ident.clone().ok_or(Error::UnnamedField)?;

@@ -1,6 +1,6 @@
 //! General purpose selection menu for shell
 
-use std::{fmt::Display, io::Write};
+use std::{cmp::Ordering, fmt::Display, io::Write};
 
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
@@ -45,15 +45,22 @@ pub trait Menu {
     fn required_lines(&self) -> usize;
 }
 
+pub type SortFn = fn(&(String, Completion), &(String, Completion)) -> Ordering;
+
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
     selections: Vec<(String, Completion)>,
     /// Currently selected item
     cursor: u32,
     active: bool,
-    max_columns: usize,
     max_rows: usize,
     column_padding: usize,
+    /// Max number of entries to show when rendering the menu
+    limit: usize,
+    /// Function to use to sort the entries
+    // TODO can we make this vary depending on which completions are used? does sorting belong more
+    // to completion?
+    sort: SortFn,
 }
 
 impl DefaultMenu {
@@ -62,10 +69,17 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
-            max_columns: 2,
             max_rows: 5,
             column_padding: 2,
+            limit: 20,
+            // by default sort alphabetical by display name
+            sort: |a, b| -> Ordering { a.0.to_lowercase().cmp(&b.0.to_lowercase()) },
         }
+    }
+    pub fn new_with_limit(limit: usize) -> Self {
+        let mut menu = Self::new();
+        menu.limit = limit;
+        menu
     }
 }
 
@@ -113,6 +127,7 @@ impl Menu for DefaultMenu {
     }
     fn set_items(&mut self, mut items: Vec<(Self::PreviewItem, Self::MenuItem)>) {
         self.selections.clear();
+        items.sort_by(self.sort);
         self.selections.append(&mut items);
         self.cursor = 0;
     }
@@ -136,7 +151,13 @@ impl Menu for DefaultMenu {
         let mut column_start: usize = 0;
 
         self.unselected_style(out)?;
-        for column in self.items().chunks(self.max_rows) {
+        for column in self
+            .items()
+            .iter()
+            .take(self.limit)
+            .collect::<Vec<_>>()
+            .chunks(self.max_rows)
+        {
             // length of the longest word in column
             let mut longest_word = 0;
 

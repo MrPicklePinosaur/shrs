@@ -9,7 +9,6 @@ extern crate proc_macro;
 
 use quote::quote;
 use syn::{parse_macro_input, Item, ItemStruct, LitStr};
-use thiserror::__private::DisplayAsDisplay;
 
 /// Information on the CLI itself
 #[derive(Builder)]

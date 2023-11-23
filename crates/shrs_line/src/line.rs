@@ -635,10 +635,7 @@ impl Line {
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
         let completions = self.completer.complete(&comp_ctx);
-        let completions = completions
-            .iter()
-            .take(10) // TODO make this config
-            .collect::<Vec<_>>();
+        let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions
             .iter()

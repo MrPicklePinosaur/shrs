@@ -51,9 +51,10 @@ pub struct DefaultMenu {
     /// Currently selected item
     cursor: u32,
     active: bool,
-    max_columns: usize,
     max_rows: usize,
     column_padding: usize,
+    /// Max number of entries to show when rendering the menu
+    limit: usize,
 }
 
 impl DefaultMenu {
@@ -62,10 +63,15 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
-            max_columns: 2,
             max_rows: 5,
             column_padding: 2,
+            limit: 20,
         }
+    }
+    pub fn new_with_limit(limit: usize) -> Self {
+        let mut menu = Self::new();
+        menu.limit = limit;
+        menu
     }
 }
 
@@ -136,7 +142,13 @@ impl Menu for DefaultMenu {
         let mut column_start: usize = 0;
 
         self.unselected_style(out)?;
-        for column in self.items().chunks(self.max_rows) {
+        for column in self
+            .items()
+            .iter()
+            .take(self.limit)
+            .collect::<Vec<_>>()
+            .chunks(self.max_rows)
+        {
             // length of the longest word in column
             let mut longest_word = 0;
 

@@ -32,9 +32,14 @@ cargo init <project-name>
 cd <project-name>
 ```
 
-Next, add shrs as a dependency in your `Cargo.toml`
+Next, add shrs as a dependency in your `Cargo.toml`. shrs is still currently in pre-release, so there will be (hopefully) frequent updates. You can use the most recently published version with:
 ```toml
-shrs = { version = "0.1" }
+shrs = { version = "0" }
+```
+
+Otherwise, if you wish to be on the bleeding edge, you can depend directly on the master branch (beware that there may be unexpected bugs and breaking API changes on master):
+```toml
+shrs = { git = "https://github.com/MrPicklePinosaur/shrs" }
 ```
 
 ### Building the Shell

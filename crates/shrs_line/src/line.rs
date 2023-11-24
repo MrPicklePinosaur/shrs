@@ -453,7 +453,9 @@ impl Line {
                 }
 
                 // TODO make this feature toggable
+                // TODO this is broken
                 // Automatically accept the common prefix
+                /*
                 let completions: Vec<&str> = self
                     .menu
                     .items()
@@ -483,6 +485,7 @@ impl Line {
                     })
                     .collect();
                 self.menu.set_items(new_items);
+                */
 
                 self.menu.activate();
             },
@@ -547,6 +550,22 @@ impl Line {
                     let start = ctx.cb.motion_to_loc(Motion::BackWord)?;
                     ctx.cb.delete(start, Location::Cursor())?;
                 }
+            },
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('a'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                ctx.cb.move_cursor(Location::Front())?;
+            },
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                ctx.cb.move_cursor(Location::Back(&ctx.cb))?;
             },
 
             Event::Key(KeyEvent {
@@ -639,14 +658,19 @@ impl Line {
         // first remove current word
         // TODO could implement a delete_before
         // TODO make use of ReplaceMethod
-        ctx.cb
-            .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
-
-        let cur_word_len = unicode_width::UnicodeWidthStr::width(ctx.current_word.as_str());
-        ctx.cb
-            .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
-
-        ctx.current_word.clear();
+        match completion.replace_method {
+            ReplaceMethod::Append => {
+                // no-op
+            },
+            ReplaceMethod::Replace => {
+                ctx.cb
+                    .move_cursor(Location::Rel(-(ctx.current_word.len() as isize)))?;
+                let cur_word_len = unicode_width::UnicodeWidthStr::width(ctx.current_word.as_str());
+                ctx.cb
+                    .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
+                ctx.current_word.clear();
+            },
+        }
 
         // then replace with the completion word
         ctx.cb.insert(Location::Cursor(), &completion.accept())?;

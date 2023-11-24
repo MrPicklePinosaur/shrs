@@ -27,6 +27,7 @@ use crate::{
     hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::Jobs,
     lang::Lang,
+    output_writer::OutputWriter,
     signal::Signals,
     state::State,
     theme::Theme,
@@ -54,7 +55,7 @@ pub struct Shell {
 // TODO can technically unify shell and context
 pub struct Context {
     /// Output stream
-    pub out: BufWriter<std::io::Stdout>,
+    pub out: OutputWriter,
     pub state: State,
     pub jobs: Jobs,
     pub startup_time: Instant,
@@ -91,10 +92,14 @@ pub fn set_working_dir(
     run_hook: bool,
 ) -> anyhow::Result<()> {
     // Check working directory validity
-    let path = PathBuf::from(wd);
-    if !path.is_dir() {
+    let path = if let Ok(path) = PathBuf::from(wd).canonicalize() {
+        if !path.is_dir() {
+            return Err(anyhow!("Invalid path"));
+        }
+        path
+    } else {
         return Err(anyhow!("Invalid path"));
-    }
+    };
 
     // Save old working directory
     let old_path = get_working_dir(rt).to_path_buf();
@@ -103,10 +108,8 @@ pub fn set_working_dir(
         .set("OLDPWD", old_path_str)
         .expect("failed setting env var");
 
-    let path_str = path.to_str().expect("failed converting to str");
-    rt.env
-        .set("PATH", path_str)
-        .expect("failed setting env var");
+    let pwd = path.to_str().expect("failed converting to str");
+    rt.env.set("PWD", pwd).expect("failed setting env var");
     rt.working_dir = path.clone();
 
     // Set process working directory too

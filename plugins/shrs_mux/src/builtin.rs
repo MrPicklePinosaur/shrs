@@ -29,7 +29,7 @@ impl BuiltinCmd for MuxBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         if cli.list {
@@ -58,6 +58,6 @@ impl BuiltinCmd for MuxBuiltin {
             };
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

@@ -13,6 +13,7 @@ pub mod env;
 pub mod hooks;
 pub mod jobs;
 pub mod lang;
+pub mod output_writer;
 pub mod prompt;
 pub mod shell;
 pub mod signal;
@@ -24,12 +25,13 @@ pub mod prelude {
 
     pub use crate::{
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
-        builtin::{BuiltinCmd, BuiltinStatus, Builtins},
+        builtin::{BuiltinCmd, Builtins},
         cmd_output::CmdOutput,
         env::Env,
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         lang::Lang,
+        output_writer::OutputWriter,
         prompt::*,
         shell::{Context, Runtime, Shell},
         signal::Signals,

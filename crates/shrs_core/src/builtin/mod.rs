@@ -23,7 +23,10 @@ use self::{
     export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
     source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
-use crate::shell::{Context, Runtime, Shell};
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 macro_rules! hashmap (
     { $($key:expr => $value:expr),+ } => {
@@ -37,20 +40,6 @@ macro_rules! hashmap (
     };
 );
 
-/// Output status for builtin command
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct BuiltinStatus(pub isize);
-
-impl BuiltinStatus {
-    pub fn success() -> BuiltinStatus {
-        BuiltinStatus(0)
-    }
-
-    pub fn error() -> BuiltinStatus {
-        BuiltinStatus(1)
-    }
-}
-
 // TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 /// Store for all registered builtin commands
@@ -58,6 +47,7 @@ pub struct Builtins {
     builtins: HashMap<&'static str, Box<dyn BuiltinCmd>>,
 }
 
+// TODO a lot of this api is silly, perhaps just expose the entire hashmap
 impl Builtins {
     pub fn new() -> Self {
         Builtins {
@@ -75,6 +65,11 @@ impl Builtins {
     /// Get iterator of all registered builtin commands
     pub fn iter(&self) -> Iter<'_, &str, Box<dyn BuiltinCmd>> {
         self.builtins.iter()
+    }
+
+    /// Find a builtin by name
+    pub fn get(&self, name: &'static str) -> Option<&Box<dyn BuiltinCmd>> {
+        self.builtins.get(name)
     }
 }
 
@@ -132,5 +127,5 @@ pub trait BuiltinCmd {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus>;
+    ) -> anyhow::Result<CmdOutput>;
 }

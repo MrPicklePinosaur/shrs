@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::HashMap,
+    fmt::format,
     io::{BufRead, BufReader, Read, Write},
     ops::Add,
     os::unix::process::ExitStatusExt,
@@ -35,7 +36,7 @@ impl Lang for MuxLang {
     ) -> anyhow::Result<CmdOutput> {
         let lang_name = match ctx.state.get::<MuxState>() {
             Some(state) => &state.lang,
-            None => return Ok(CmdOutput::empty()),
+            None => return Ok(CmdOutput::error()),
         };
         // TODO maybe return error if we can't find a lang
 
@@ -43,7 +44,7 @@ impl Lang for MuxLang {
             return lang.eval(sh, ctx, rt, cmd);
         }
 
-        Ok(CmdOutput::empty())
+        Ok(CmdOutput::error())
     }
 
     fn name(&self) -> String {
@@ -77,8 +78,9 @@ impl Lang for NuLang {
             .stderr(Stdio::piped())
             .spawn()?;
         let output = handle.wait_with_output()?;
+        // ctx.out.print(output.stdout);
 
-        Ok(CmdOutput::from(output))
+        Ok(CmdOutput::success())
     }
 
     fn name(&self) -> String {
@@ -113,7 +115,7 @@ impl Lang for PythonLang {
             .spawn()?;
         let output = handle.wait_with_output()?;
 
-        Ok(CmdOutput::from(output))
+        Ok(CmdOutput::success())
     }
 
     fn name(&self) -> String {
@@ -155,19 +157,31 @@ impl Lang for BashLang {
         let mut instance = self.instance.borrow_mut();
         let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
 
+        let cd_statement = format!("cd {}\n", rt.working_dir.to_string_lossy());
+
+        stdin
+            .write_all(cd_statement.as_bytes())
+            .expect("unable to set var");
+
+        for (k, v) in rt.env.iter() {
+            let export_statement = format!("export {}={:?}\n", k, v);
+            stdin
+                .write_all(export_statement.as_bytes())
+                .expect("unable to set var");
+        }
         stdin
             .write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())
-            .expect("Failed to send Ctrl+C to stdin");
+            .expect("Bash command failed");
 
         let stdout_reader =
             BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
-        let (stdout, status) = read_out(stdout_reader)?;
+        let status = read_out(ctx, stdout_reader)?;
 
         let stderr_reader =
             BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
-        let stderr = read_err(stderr_reader)?;
+        read_err(ctx, stderr_reader)?;
 
-        Ok(CmdOutput::new(stdout, stderr, ExitStatus::from_raw(status)))
+        Ok(CmdOutput::new(status))
     }
 
     fn name(&self) -> String {

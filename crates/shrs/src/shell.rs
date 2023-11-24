@@ -120,7 +120,7 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: BufWriter::new(stdout()),
+            out: OutputWriter::default(),
             state: self.state,
             jobs: Jobs::new(),
             startup_time: Instant::now(),
@@ -214,28 +214,32 @@ fn run_shell(
             .find(|(builtin_name, _)| *builtin_name == &cmd_name)
             .map(|(_, builtin_cmd)| builtin_cmd);
 
+        let mut cmd_output: CmdOutput = CmdOutput::error();
+        ctx.out.begin_collecting();
         if let Some(builtin_cmd) = builtin_cmd {
-            match builtin_cmd.run(sh, ctx, rt, &words) {
-                Ok(_) => {},
-                Err(e) => eprintln!("{e:?}"),
+            let output = builtin_cmd.run(sh, ctx, rt, &words);
+            match output {
+                Ok(o) => cmd_output = o,
+                Err(e) => eprintln!("error: {e:?}"),
             }
         } else {
             let output = sh.lang.eval(sh, ctx, rt, line.clone());
             match output {
-                Ok(cmd_output) => {
-                    let _ = sh.hooks.run(
-                        sh,
-                        ctx,
-                        rt,
-                        AfterCommandCtx {
-                            command: line,
-                            cmd_output,
-                        },
-                    );
-                },
+                Ok(o) => cmd_output = o,
                 Err(e) => eprintln!("error: {e:?}"),
             }
         }
+        let (out, err) = ctx.out.end_collecting();
+        cmd_output.set_output(out, err);
+        let _ = sh.hooks.run(
+            sh,
+            ctx,
+            rt,
+            AfterCommandCtx {
+                command: line,
+                cmd_output,
+            },
+        );
 
         // check up on running jobs
         let mut exit_statuses = vec![];

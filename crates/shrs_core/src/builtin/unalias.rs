@@ -2,8 +2,11 @@ use std::io::{stdout, Write};
 
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, BuiltinStatus};
-use crate::shell::{Context, Runtime, Shell};
+use super::BuiltinCmd;
+use crate::{
+    prelude::CmdOutput,
+    shell::{Context, Runtime, Shell},
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -25,18 +28,18 @@ impl BuiltinCmd for UnaliasBuiltin {
         ctx: &mut Context,
         rt: &mut Runtime,
         args: &Vec<String>,
-    ) -> anyhow::Result<BuiltinStatus> {
+    ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         if cli.a {
             ctx.alias.clear();
-            return Ok(BuiltinStatus::success());
+            return Ok(CmdOutput::success());
         }
 
         for alias in cli.aliases.iter() {
             ctx.alias.unset(alias);
         }
 
-        Ok(BuiltinStatus::success())
+        Ok(CmdOutput::success())
     }
 }

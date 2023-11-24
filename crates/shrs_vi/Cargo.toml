@@ -1,12 +1,16 @@
 [package]
 name = "shrs_vi"
-version = "0.0.1-dev"
-edition = "2021"
-license = "MIT OR Apache-2.0"
-authors = ["MrPicklePinosaur"]
+version = "0.0.2"
 description = "parser for vi like commands"
-repository = "https://github.com/MrPicklePinosaur/shrs"
 build = "build.rs"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }

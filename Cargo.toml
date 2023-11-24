@@ -4,3 +4,13 @@ members = [
     "crates/*",
     "plugins/*",
 ]
+resolver = "2"
+
+[workspace.package]
+authors = ["MrPicklePinosaur", "nithinmuthukumar"]
+categories = ["command-line-interface", "command-line-utilities", "development-tools"]
+edition = "2021"
+homepage = "https://mrpicklepinosaur.github.io/shrs/"
+keywords = ["shrs", "shell", "posix", "unix"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/MrPicklePinosaur/shrs"

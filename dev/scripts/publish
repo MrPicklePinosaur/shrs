@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#    shrs_core
+#    shrs_job
+#    shrs_lang
+#    shrs_line
+#    shrs_utils
+#    shrs_vi
+#    shrs
+crates=(
+)
+plugins=(
+    shrs_autocd
+    shrs_cd_stack
+    shrs_cd_tools
+    shrs_command_timer
+    shrs_derive_completion
+    shrs_file_logger
+    shrs_mux
+    shrs_output_capture
+    shrs_run_context
+)
+
+#for crate in "${crates[@]}"; do
+#    echo "Publishing $crate"
+#    cargo publish -p $crate
+#done
+
+for plugin in "${plugins[@]}"; do
+    echo "Publishing $plugin"
+    cargo publish -p $plugin
+done
+
+#cargo smart-release -d keep --update-crates-index --no-changelog --no-tag "${crates[@]}" "${plugins[@]}"

@@ -3,8 +3,12 @@ use std::{
     process::{ChildStderr, ChildStdout},
 };
 
-pub fn read_out(mut reader: BufReader<&mut ChildStdout>) -> shrs::anyhow::Result<(String, i32)> {
-    let mut output = String::new();
+use shrs::prelude::{Context, OutputWriter};
+
+pub fn read_out(
+    ctx: &mut Context,
+    mut reader: BufReader<&mut ChildStdout>,
+) -> shrs::anyhow::Result<i32> {
     loop {
         let mut line = String::new();
 
@@ -13,16 +17,16 @@ pub fn read_out(mut reader: BufReader<&mut ChildStdout>) -> shrs::anyhow::Result
         if line.contains("\x1a") {
             let exit_status: String = line.chars().filter(|c| c.is_numeric()).collect();
 
-            return Ok((output, exit_status.parse::<i32>()?));
+            return Ok(exit_status.parse::<i32>()?);
         }
-        print!("{}", line);
-
-        output.push_str(line.as_str());
+        ctx.out.print(line)?;
     }
 }
 
-pub fn read_err(mut reader: BufReader<&mut ChildStderr>) -> shrs::anyhow::Result<String> {
-    let mut output = String::new();
+pub fn read_err(
+    ctx: &mut Context,
+    mut reader: BufReader<&mut ChildStderr>,
+) -> shrs::anyhow::Result<()> {
     loop {
         let mut line = String::new();
 
@@ -31,9 +35,7 @@ pub fn read_err(mut reader: BufReader<&mut ChildStderr>) -> shrs::anyhow::Result
         if line.contains("\x1a") {
             break;
         }
-        eprint!("{}", line);
-
-        output.push_str(line.as_str());
+        ctx.out.eprint(line)?;
     }
-    Ok(output)
+    Ok(())
 }

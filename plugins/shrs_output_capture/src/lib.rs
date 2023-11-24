@@ -8,7 +8,7 @@ use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
 use builtin::AgainBuiltin;
 use shrs::prelude::*;
 
-struct OutputCaptureState {
+pub struct OutputCaptureState {
     pub last_output: CmdOutput,
 }
 

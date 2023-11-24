@@ -12,4 +12,4 @@ readme = "README.md"
 repository = "https://github.com/MrPicklePinosaur/shrs"
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "0.0.1" }
+shrs = { path = "../../crates/shrs", version = "0.0.2" }

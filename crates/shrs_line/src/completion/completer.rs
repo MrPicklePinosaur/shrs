@@ -128,7 +128,6 @@ impl Default for DefaultCompleter {
             Box::new(ls_long_flag_action),
         ));
         comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
-        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
 }

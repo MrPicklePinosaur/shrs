@@ -6,6 +6,8 @@ pub use completer::*;
 mod utils;
 pub use utils::*;
 
+mod data;
+
 /// How should the completion be substituted
 #[derive(Clone)]
 pub enum ReplaceMethod {

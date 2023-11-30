@@ -9,12 +9,14 @@ use builtin::AgainBuiltin;
 use shrs::prelude::*;
 
 pub struct OutputCaptureState {
+    pub last_command: String,
     pub last_output: CmdOutput,
 }
 
 impl OutputCaptureState {
     pub fn new() -> Self {
         OutputCaptureState {
+            last_command: String::new(),
             last_output: CmdOutput::success(),
         }
     }
@@ -39,6 +41,7 @@ fn after_command_hook(
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
+        state.last_command = ctx.command.clone();
         state.last_output = ctx.cmd_output.clone();
     }
     Ok(())

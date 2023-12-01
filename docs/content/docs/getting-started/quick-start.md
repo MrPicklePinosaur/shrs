@@ -27,17 +27,20 @@ book](https://doc.rust-lang.org/stable/book/).
 ### Create Cargo project
 
 Create your own shell project using cargo:
+
 ```sh
-cargo init <project-name>
+cargo new <project-name>
 cd <project-name>
 ```
 
-Next, add shrs as a dependency in your `Cargo.toml`. shrs is still currently in pre-release, so there will be (hopefully) frequent updates. You can use the most recently published version with:
+Next, add shrs as a dependency in your `Cargo.toml`. shrs is still currently in pre-release, so there will be frequent updates. You can use the most recently published version with:
+
 ```toml
-shrs = { version = "0" }
+shrs = { version = "0.0.2" }
 ```
 
 Otherwise, if you wish to be on the bleeding edge, you can depend directly on the master branch (beware that there may be unexpected bugs and breaking API changes on master):
+
 ```toml
 shrs = { git = "https://github.com/MrPicklePinosaur/shrs" }
 ```
@@ -45,6 +48,7 @@ shrs = { git = "https://github.com/MrPicklePinosaur/shrs" }
 ### Building the Shell
 
 Next, you can create a basic shell using all of the **shrs** provided defaults with the following:
+
 ```rust
 use shrs::prelude::*;
 
@@ -58,6 +62,7 @@ fn main() {
 ```
 
 Now to run the shell
+
 ```sh
 cargo run
 ```

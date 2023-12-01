@@ -15,9 +15,11 @@ top = false
 +++
 
 ## NOTE: This page is outdated
+
 ### Will be updated when prompt API is more stable
 
 First define your own prompt and implement the `Prompt` trait.
+
 ```rust
 use shrs::{Prompt, prompt::top_pwd};
 
@@ -31,6 +33,7 @@ impl Prompt for MyPrompt {
 ```
 
 Then add it when building the shell:
+
 ```shrs
 let prompt = MyPrompt;
 
@@ -39,7 +42,8 @@ myshell.with_prompt(prompt);
 
 ### Utility Functions
 
-The `prompt` module comes with a variety of helpful functions for building the prompt. We can build a something that looks like the bash prompt with:
+The `prompt` module comes with a variety of helpful functions for building the prompt. We can build something that looks like the bash prompt with:
+
 ```rust
 struct BashPrompt;
 

@@ -4,4 +4,5 @@
 
 use shrs::line::completion::*;
 
+mod completions;
 mod helpers;

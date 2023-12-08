@@ -1,19 +1,13 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use ssh2_config::{ParseRule, SshConfig};
+use ssh2_config::{Host, ParseRule, SshConfig};
 
 /// Get known hosts from ssh config file
-pub fn known_hosts(config_path: &Path) -> anyhow::Result<()> {
+pub fn known_hosts(config_path: &Path) -> anyhow::Result<Vec<Host>> {
     let config_file = File::open(config_path)?;
     let mut reader = BufReader::new(config_file);
     let conf = SshConfig::default().parse(&mut reader, ParseRule::ALLOW_UNKNOWN_FIELDS)?;
-    for host in conf.get_hosts() {
-        for pat in &host.pattern {
-            println!("{}", pat.pattern);
-        }
-    }
-
-    Ok(())
+    Ok(conf.get_hosts().to_vec())
 }
 
 #[cfg(test)]

@@ -2,7 +2,5 @@
 //!
 //!
 
-use shrs::line::completion::*;
-
-mod completions;
+pub mod completions;
 mod helpers;

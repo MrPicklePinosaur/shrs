@@ -1,3 +1,5 @@
 //! Completion scripts organized by the executable
 
-pub mod ssh;
+mod ssh;
+
+pub use ssh::ssh_completion;

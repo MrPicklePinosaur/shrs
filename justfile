@@ -4,6 +4,9 @@ default: example
 example:
     cd shrs_example && cargo run shrs_example
 
+build:
+    cargo build --release --target x86_64-unknown-linux-gnu
+
 install:
     ./dev/scripts/install
 

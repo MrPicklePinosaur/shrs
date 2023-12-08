@@ -20,15 +20,15 @@ pub enum ReplaceMethod {
 #[derive(Clone)]
 pub struct Completion {
     /// If space should be added after completion
-    pub(crate) add_space: bool,
+    pub add_space: bool,
     /// Vanity value that can be used by menu or others to display friendly version of completion
-    pub(crate) display: Option<String>,
+    pub display: Option<String>,
     /// Actual value to perform completion with
-    pub(crate) completion: String,
+    pub completion: String,
     /// Replace method
-    pub(crate) replace_method: ReplaceMethod,
+    pub replace_method: ReplaceMethod,
     /// Additional helpful information about the completion
-    pub(crate) comment: Option<String>,
+    pub comment: Option<String>,
 }
 
 impl Completion {

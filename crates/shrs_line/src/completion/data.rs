@@ -1,9 +1,8 @@
 //! Collection of useful predicates and actions
 
 use super::{
-    drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
-    default_format, cmdname_eq_pred, default_format_with_comment,
-    ReplaceMethod,
+    cmdname_eq_pred, default_format, default_format_with_comment, drop_path_end, filepaths,
+    find_executables_in_path, Completer, Completion, CompletionCtx, ReplaceMethod,
 };
 
 // completions for git
@@ -14,7 +13,6 @@ pub fn git_action(_ctx: &CompletionCtx) -> Vec<Completion> {
 pub fn git_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }
-
 
 // completions for ls command
 pub fn ls_pred(ctx: &CompletionCtx) -> bool {
@@ -84,4 +82,3 @@ pub fn ls_long_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
         ]
     )
 }
-

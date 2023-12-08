@@ -5,11 +5,9 @@ use std::path::{Path, PathBuf};
 use shrs_core::builtin::Builtins;
 
 use super::{
-    drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
-    ReplaceMethod,
-    data::*,
+    data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,
+    CompletionCtx, ReplaceMethod,
 };
-
 
 // TODO make this FnMut?
 /// Actions return a list of possible completions

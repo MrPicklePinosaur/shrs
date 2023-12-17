@@ -1,6 +1,6 @@
 //! Core readline configuration
 
-use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
+use std::{borrow::BorrowMut, io::Write, iter::repeat, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -232,11 +232,15 @@ impl Line {
         self.painter.init().unwrap();
         //Adding extralines to account for space needed in painter
         //This is kinda sus and it calls prompt_left twice which is not preferable
-        for _ in 0..(self.prompt.prompt_left(line_ctx).count_newlines()) {
-            self.painter.newline()?;
-        }
 
         let mut styled_buf = StyledBuf::empty();
+        let total_newlines = (self.prompt.prompt_right(line_ctx).lines().len() - 1).max(
+            styled_buf.lines().len() - 1 + self.prompt.prompt_left(line_ctx).lines().len() - 1,
+        );
+
+        for _ in 0..total_newlines {
+            self.painter.newline()?;
+        }
 
         self.painter.paint(
             line_ctx,

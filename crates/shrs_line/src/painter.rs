@@ -191,8 +191,8 @@ impl Painter {
         let styled_buf_lines = styled_buf.lines();
 
         //need to also take into account extra lines needed for prompt_right
-        total_newlines += styled_buf_lines.len() - 1;
-        total_newlines += prompt_left_lines.len() - 1;
+        total_newlines += (prompt_right_lines.len() - 1)
+            .max(styled_buf_lines.len() - 1 + prompt_left_lines.len() - 1);
 
         //make sure num_newlines never gets smaller, and prompt never moves down
         if self.num_newlines < total_newlines as u16 {
@@ -257,6 +257,11 @@ impl Painter {
                 break;
             }
             self.out.borrow_mut().queue(MoveToNextLine(1))?;
+        }
+        if ri > bi {
+            self.out
+                .borrow_mut()
+                .queue(MoveToPreviousLine((ri - bi) as u16))?;
         }
 
         //calculate left space

@@ -1,14 +1,17 @@
 //! Internal renderer
 
 use std::{
+    borrow::BorrowMut,
     cell::RefCell,
     collections::HashMap,
     fmt::Display,
-    io::{stdout, BufWriter, Stdout, Write},
+    fs::{File, OpenOptions},
+    io::{stdout, BufRead, BufWriter, Stdout, Write},
+    iter,
 };
 
 use crossterm::{
-    cursor::{self, MoveToColumn},
+    cursor::{self, MoveToColumn, MoveToNextLine, MoveToPreviousLine},
     style::{ContentStyle, Print, PrintStyledContent, StyledContent},
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
@@ -18,7 +21,6 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     completion::Completion, cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt,
 };
-
 /// Text to be rendered by painter
 #[derive(Clone)]
 pub struct StyledBuf {
@@ -34,18 +36,20 @@ impl StyledBuf {
         }
     }
     pub fn new(content: &str, style: ContentStyle) -> Self {
-        Self {
-            content: content.to_string(),
-            styles: vec![style; content.chars().count()],
-        }
+        let mut s = Self::empty();
+        s.push(content, style);
+        s
     }
 
     pub fn push(&mut self, content: &str, style: ContentStyle) {
-        self.content += content;
+        let mut content_with_r = String::new();
 
-        for _ in content.chars() {
+        for c in content.chars() {
+            content_with_r.push(c);
+
             self.styles.push(style);
         }
+        self.content += content_with_r.as_str();
     }
 
     fn spans(&self) -> Vec<StyledContent<String>> {
@@ -55,8 +59,22 @@ impl StyledBuf {
         }
         x
     }
+    pub fn lines(&self) -> Vec<Vec<StyledContent<String>>> {
+        let mut lines: Vec<Vec<StyledContent<String>>> = vec![];
+        let mut i = 0;
+        for line in self.content.split("\n") {
+            let mut x: Vec<StyledContent<String>> = vec![];
 
-    fn count_newlines(&self) -> u16 {
+            for c in line.chars() {
+                x.push(StyledContent::new(self.styles[i], c.to_string()));
+                i += 1;
+            }
+            i += 1;
+            lines.push(x);
+        }
+        lines
+    }
+    pub fn count_newlines(&self) -> u16 {
         self.content
             .chars()
             .into_iter()
@@ -70,9 +88,9 @@ impl StyledBuf {
     ///
     /// The length returned is the 'visual' length of the character, in other words, how many
     /// terminal columns it takes up
-    pub fn content_len(&self) -> usize {
+    pub fn content_len(&self) -> u16 {
         use unicode_width::UnicodeWidthStr;
-        UnicodeWidthStr::width(self.content.as_str())
+        UnicodeWidthStr::width(self.content.as_str()) as u16
     }
 
     pub fn change_style(&mut self, c_style: HashMap<usize, ContentStyle>, offset: usize) {
@@ -82,6 +100,13 @@ impl StyledBuf {
             }
         }
     }
+}
+pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
+    let c = line
+        .iter()
+        .map(|x| x.content().as_str())
+        .collect::<String>();
+    UnicodeWidthStr::width(c.as_str()) as u16
 }
 
 impl Display for StyledBuf {
@@ -168,22 +193,26 @@ impl Painter {
         let mut total_newlines = 0;
         let prompt_left = prompt.as_ref().prompt_left(line_ctx);
         let prompt_right = prompt.as_ref().prompt_right(line_ctx);
-        let mut prompt_right_rendered = false;
-        let render_prompt_right = |out: &mut BufWriter<Stdout>| -> anyhow::Result<()> {
-            let mut right_space = self.term_size.0;
-            right_space -= prompt_right.content_len() as u16;
-            out.queue(MoveToColumn(right_space))?;
-            for span in prompt_right.spans() {
-                out.queue(PrintStyledContent(span))?;
-            }
-            Ok(())
-        };
+        let prompt_left_lines = prompt_left.lines();
+        let prompt_right_lines = prompt_right.lines();
+        let styled_buf_lines = styled_buf.lines();
+
+        let render_prompt_right =
+            |out: &mut BufWriter<Stdout>, line: Vec<StyledContent<String>>| -> anyhow::Result<()> {
+                let mut right_space = self.term_size.0;
+                right_space -= line_content_len(line) as u16;
+                out.queue(MoveToColumn(right_space))?;
+                for span in prompt_right.spans() {
+                    out.queue(PrintStyledContent(span))?;
+                }
+                Ok(())
+            };
 
         total_newlines += styled_buf.count_newlines();
         total_newlines += prompt_left.count_newlines();
 
-        if self.num_newlines < total_newlines {
-            self.num_newlines = total_newlines;
+        if self.num_newlines < total_newlines as u16 {
+            self.num_newlines = total_newlines as u16;
         }
 
         // clean up current line first
@@ -197,19 +226,59 @@ impl Painter {
 
         // render left prompt
         let mut left_space = 0; // cursor position from left side of terminal
+        let mut ri = 0;
+        let mut li = 0;
+        let mut bi = 0;
 
-        for span in prompt_left.spans() {
-            self.out.borrow_mut().queue(PrintStyledContent(span))?;
+        loop {
+            if li < prompt_left_lines.len() {
+                for span in prompt_left_lines[li].iter() {
+                    self.out
+                        .borrow_mut()
+                        .queue(PrintStyledContent(span.clone()))?;
+                }
+
+                li += 1;
+            }
+            if bi < styled_buf_lines.len() && li >= prompt_left_lines.len() {
+                for span in styled_buf_lines[bi].iter() {
+                    self.out
+                        .borrow_mut()
+                        .queue(PrintStyledContent(span.clone()))?;
+                }
+                bi += 1;
+            }
+
+            if ri < prompt_right_lines.len() {
+                render_prompt_right(&mut self.out.borrow_mut(), prompt_right_lines[ri].clone())?;
+
+                ri += 1;
+            }
+            if li >= prompt_left_lines.len()
+                && bi >= styled_buf_lines.len()
+                && ri >= prompt_right_lines.len()
+            {
+                break;
+            }
         }
+
         //prompt space doesnt matter if there is going to be a carriage return
-        if total_newlines == 0 {
-            left_space += prompt_left.content_len();
+        if styled_buf_lines.len().saturating_sub(1) == 0 {
+            left_space += UnicodeWidthStr::width(
+                prompt_left
+                    .content
+                    .split('\n')
+                    .last()
+                    .unwrap()
+                    .chars()
+                    .collect::<String>()
+                    .as_str(),
+            );
         }
 
         //take last line of buf and get length for cursor
         let chars = styled_buf
             .content
-            .as_str()
             .split('\n')
             .last()
             .unwrap()
@@ -217,22 +286,6 @@ impl Painter {
             .take(cursor_ind)
             .collect::<String>();
         left_space += UnicodeWidthStr::width(chars.as_str());
-        for span in styled_buf.spans() {
-            let content = span.content();
-            if span.content() == "\n" {
-                if !prompt_right_rendered {
-                    render_prompt_right(&mut self.out.borrow_mut())?;
-                }
-                prompt_right_rendered = true;
-                self.out.borrow_mut().queue(Print("\r"))?;
-            }
-            self.out
-                .borrow_mut()
-                .queue(Print(StyledContent::new(*span.style(), content)))?;
-        }
-        if !prompt_right_rendered {
-            render_prompt_right(&mut self.out.borrow_mut())?;
-        }
 
         // render menu
         if menu.is_active() {
@@ -255,7 +308,6 @@ impl Painter {
     }
 
     pub fn newline(&mut self) -> crossterm::Result<()> {
-        self.num_newlines = 0;
         self.out.borrow_mut().queue(Print("\r\n"))?;
         self.out.borrow_mut().flush()?;
         Ok(())

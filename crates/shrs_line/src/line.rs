@@ -230,6 +230,11 @@ impl Line {
         execute!(std::io::stdout(), EnableBracketedPaste)?;
 
         self.painter.init().unwrap();
+        //Adding extralines to account for space needed in painter
+        //This is kinda sus and it calls prompt_left twice which is not preferable
+        for _ in 0..(self.prompt.prompt_left(line_ctx).count_newlines()) {
+            self.painter.newline()?;
+        }
 
         let mut styled_buf = StyledBuf::empty();
 

@@ -25,4 +25,5 @@ shrs_core = { path = "../shrs_core", version = "^0.0.2" }
 shrs_vi = { path = "../shrs_vi", version = "^0.0.2" }
 shrs_utils = { path = "../shrs_utils", version = "^0.0.2" }
 shrs_lang = {path = "../shrs_lang", version = "^0.0.2" }
+itertools = "0.12.0"
 # shrs_core = { path = "../shrs_utils" }

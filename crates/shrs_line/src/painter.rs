@@ -1,13 +1,10 @@
 //! Internal renderer
 
 use std::{
-    borrow::BorrowMut,
     cell::RefCell,
     collections::HashMap,
     fmt::Display,
-    fs::{File, OpenOptions},
-    io::{stdout, BufRead, BufWriter, Stdout, Write},
-    iter,
+    io::{stdout, BufWriter, Write},
 };
 
 use crossterm::{
@@ -81,7 +78,6 @@ impl StyledBuf {
     /// The length returned is the 'visual' length of the character, in other words, how many
     /// terminal columns it takes up
     pub fn content_len(&self) -> u16 {
-        use unicode_width::UnicodeWidthStr;
         UnicodeWidthStr::width(self.content.as_str()) as u16
     }
 
@@ -103,7 +99,7 @@ pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
 
 impl Display for StyledBuf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.content);
+        write!(f, "{}", self.content)?;
         Ok(())
     }
 }
@@ -125,7 +121,7 @@ pub struct Painter {
     term_size: (u16, u16),
     /// Current line the prompt is on
     prompt_line: u16,
-    num_newlines: u16,
+    num_newlines: usize,
 }
 
 impl Painter {
@@ -141,6 +137,7 @@ impl Painter {
     /// Clear screen and move prompt to the top
     pub fn init(&mut self) -> crossterm::Result<()> {
         self.prompt_line = 0;
+        self.num_newlines = 0;
         self.term_size = terminal::size()?;
 
         // advance to next row if cursor in middle of line
@@ -194,9 +191,13 @@ impl Painter {
         total_newlines += (prompt_right_lines.len() - 1)
             .max(styled_buf_lines.len() - 1 + prompt_left_lines.len() - 1);
 
-        //make sure num_newlines never gets smaller, and prompt never moves down
-        if self.num_newlines < total_newlines as u16 {
-            self.num_newlines = total_newlines as u16;
+        //make sure num_newlines never gets smaller, and adds newlines to adjust for prompt
+        if self.num_newlines < total_newlines {
+            for _ in self.num_newlines..total_newlines {
+                self.newline()?;
+            }
+
+            self.num_newlines = total_newlines;
         }
 
         // clean up current line first
@@ -204,7 +205,7 @@ impl Painter {
             .borrow_mut()
             .queue(cursor::MoveTo(
                 0,
-                self.prompt_line.saturating_sub(self.num_newlines),
+                self.prompt_line.saturating_sub(self.num_newlines as u16),
             ))?
             .queue(Clear(terminal::ClearType::FromCursorDown))?;
 
@@ -260,7 +261,7 @@ impl Painter {
         }
         //account for right prompt being longest and set position for cursor
         //-1 to account for inline
-        if ri > bi + li - 1 {
+        if ri > bi + li.saturating_sub(1) {
             self.out
                 .borrow_mut()
                 .queue(MoveToPreviousLine((ri - (bi + li - 1)) as u16))?;
@@ -316,23 +317,6 @@ impl Painter {
     pub fn newline(&mut self) -> crossterm::Result<()> {
         self.out.borrow_mut().queue(Print("\r\n"))?;
         self.out.borrow_mut().flush()?;
-        Ok(())
-    }
-
-    pub fn insert_prompt_space<T: Prompt + ?Sized>(
-        &mut self,
-        line_ctx: &mut LineCtx<'_>,
-        prompt: impl AsRef<T>,
-
-        styled_buf: &StyledBuf,
-    ) -> anyhow::Result<()> {
-        let total_newlines = (prompt.as_ref().prompt_right(line_ctx).lines().len() - 1).max(
-            styled_buf.lines().len() - 1 + prompt.as_ref().prompt_left(line_ctx).lines().len() - 1,
-        );
-
-        for _ in 0..total_newlines {
-            self.newline()?;
-        }
         Ok(())
     }
 }

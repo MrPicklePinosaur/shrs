@@ -233,9 +233,6 @@ impl Line {
 
         let mut styled_buf = StyledBuf::empty();
 
-        self.painter
-            .insert_prompt_space(line_ctx, &self.prompt, &styled_buf)?;
-
         self.painter.paint(
             line_ctx,
             &self.prompt,

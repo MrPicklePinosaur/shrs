@@ -1,6 +1,6 @@
 //! Core readline configuration
 
-use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
+use std::{borrow::BorrowMut, io::Write, iter::repeat, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,

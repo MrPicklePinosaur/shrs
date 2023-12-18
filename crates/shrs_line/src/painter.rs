@@ -180,7 +180,6 @@ impl Painter {
             }
         }
         //newlines to account for when clearing and printing prompt
-        let mut total_newlines = 0;
         let prompt_left = prompt.as_ref().prompt_left(line_ctx);
         let prompt_right = prompt.as_ref().prompt_right(line_ctx);
         let prompt_left_lines = prompt_left.lines();
@@ -188,14 +187,14 @@ impl Painter {
         let styled_buf_lines = styled_buf.lines();
 
         //need to also take into account extra lines needed for prompt_right
-        total_newlines += (prompt_right_lines.len() - 1)
+        let total_newlines = (prompt_right_lines.len() - 1)
             .max(styled_buf_lines.len() - 1 + prompt_left_lines.len() - 1);
 
         //make sure num_newlines never gets smaller, and adds newlines to adjust for prompt
         if self.num_newlines < total_newlines {
-            for _ in self.num_newlines..total_newlines {
-                self.newline()?;
-            }
+            self.out
+                .borrow_mut()
+                .queue(ScrollUp((total_newlines - self.num_newlines) as u16))?;
 
             self.num_newlines = total_newlines;
         }

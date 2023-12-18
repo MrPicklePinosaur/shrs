@@ -234,13 +234,9 @@ impl Line {
         //This is kinda sus and it calls prompt_left twice which is not preferable
 
         let mut styled_buf = StyledBuf::empty();
-        let total_newlines = (self.prompt.prompt_right(line_ctx).lines().len() - 1).max(
-            styled_buf.lines().len() - 1 + self.prompt.prompt_left(line_ctx).lines().len() - 1,
-        );
 
-        for _ in 0..total_newlines {
-            self.painter.newline()?;
-        }
+        self.painter
+            .insert_prompt_space(line_ctx, &self.prompt, &styled_buf)?;
 
         self.painter.paint(
             line_ctx,

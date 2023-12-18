@@ -250,18 +250,20 @@ impl Painter {
                 ri += 1;
             }
             //no lines left in any of the styledbufs
-            if li >= prompt_left_lines.len()
-                && bi >= styled_buf_lines.len()
-                && ri >= prompt_right_lines.len()
+            if li == prompt_left_lines.len()
+                && bi == styled_buf_lines.len()
+                && ri == prompt_right_lines.len()
             {
                 break;
             }
             self.out.borrow_mut().queue(MoveToNextLine(1))?;
         }
-        if ri > bi {
+        //account for right prompt being longest and set position for cursor
+        //-1 to account for inline
+        if ri > bi + li - 1 {
             self.out
                 .borrow_mut()
-                .queue(MoveToPreviousLine((ri - bi) as u16))?;
+                .queue(MoveToPreviousLine((ri - (bi + li - 1)) as u16))?;
         }
 
         //calculate left space
@@ -314,6 +316,23 @@ impl Painter {
     pub fn newline(&mut self) -> crossterm::Result<()> {
         self.out.borrow_mut().queue(Print("\r\n"))?;
         self.out.borrow_mut().flush()?;
+        Ok(())
+    }
+
+    pub fn insert_prompt_space<T: Prompt + ?Sized>(
+        &mut self,
+        line_ctx: &mut LineCtx<'_>,
+        prompt: impl AsRef<T>,
+
+        styled_buf: &StyledBuf,
+    ) -> anyhow::Result<()> {
+        let total_newlines = (prompt.as_ref().prompt_right(line_ctx).lines().len() - 1).max(
+            styled_buf.lines().len() - 1 + prompt.as_ref().prompt_left(line_ctx).lines().len() - 1,
+        );
+
+        for _ in 0..total_newlines {
+            self.newline()?;
+        }
         Ok(())
     }
 }

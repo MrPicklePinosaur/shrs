@@ -703,10 +703,7 @@ impl Line {
             },
             // fill prompt with history element
             HistoryInd::Line(i) => {
-                let history_item = self
-                    .history
-                    .get(i)
-                    .expect(&format!("i: {i} limit: {}", self.history.len()));
+                let history_item = self.history.get(i).unwrap();
                 ctx.cb.clear();
                 ctx.cb.insert(Location::Cursor(), history_item)?;
             },

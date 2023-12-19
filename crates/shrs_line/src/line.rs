@@ -93,7 +93,7 @@ impl Default for Line {
 }
 
 /// State for where the prompt is in history browse mode
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HistoryInd {
     /// Brand new prompt
     Prompt,
@@ -112,7 +112,7 @@ impl HistoryInd {
                     HistoryInd::Line(0)
                 }
             },
-            HistoryInd::Line(i) => HistoryInd::Line((i + 1).min(limit)),
+            HistoryInd::Line(i) => HistoryInd::Line((i + 1).min(limit - 1)),
         }
     }
 

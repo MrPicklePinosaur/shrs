@@ -18,7 +18,7 @@ top = false
 
 ### Will be updated when prompt API is more stable
 
-First define your own prompt and implement the `Prompt` trait.
+First define your own prompt and implement the `Prompt` trait:
 
 ```rust
 use shrs::{Prompt, prompt::top_pwd};

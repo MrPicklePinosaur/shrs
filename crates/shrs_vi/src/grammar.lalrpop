@@ -21,7 +21,10 @@ pub Motion: Motion = {
     "$" => Motion::End,
     "^" => Motion::Start,
     "0" => Motion::Start, // currently implementing 0 as same as ^
-    "f" <c:r"[a-zA-Z]"> => Motion::Find(c.chars().next().unwrap()),
+    "f" <c:r"[a-zA-Z]"> => Motion::Find { ch: c.chars().next().unwrap(), back: false, to: false },
+    "F" <c:r"[a-zA-Z]"> => Motion::Find { ch: c.chars().next().unwrap(), back: true, to: false },
+    "t" <c:r"[a-zA-Z]"> => Motion::Find { ch: c.chars().next().unwrap(), back: false, to: true},
+    "T" <c:r"[a-zA-Z]"> => Motion::Find { ch: c.chars().next().unwrap(), back: true, to: true },
 };
 
 pub Action: Action = {

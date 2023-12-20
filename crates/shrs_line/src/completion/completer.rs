@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use shrs_core::builtin::Builtins;
 
 use super::{
-    drop_path_end, filepaths, find_executables_in_path, Completer, Completion, CompletionCtx,
-    ReplaceMethod,
+    data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,
+    CompletionCtx, ReplaceMethod,
 };
 
 // TODO make this FnMut?
@@ -119,6 +119,14 @@ impl Default for DefaultCompleter {
             Box::new(git_flag_action),
         ));
         comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
+        comp.register(Rule::new(
+            Pred::new(ls_pred).and(short_flag_pred),
+            Box::new(ls_short_flag_action),
+        ));
+        comp.register(Rule::new(
+            Pred::new(ls_pred).and(long_flag_pred),
+            Box::new(ls_long_flag_action),
+        ));
         comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
@@ -166,6 +174,7 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
                 display: Some(filename.to_owned()),
                 completion: drop_end.to_owned() + &filename,
                 replace_method: ReplaceMethod::Replace,
+                comment: None,
             }
         })
         .collect::<Vec<_>>()
@@ -188,14 +197,6 @@ fn to_absolute(path_str: &str, home_dir: &Path) -> PathBuf {
     };
 
     absolute
-}
-
-pub fn git_action(_ctx: &CompletionCtx) -> Vec<Completion> {
-    default_format(vec!["status".into(), "add".into(), "commit".into()])
-}
-
-pub fn git_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
-    default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }
 
 /// Check if we are completing the command name
@@ -248,6 +249,19 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
             display: None,
             completion: x.to_owned(),
             replace_method: ReplaceMethod::Replace,
+            comment: None,
+        })
+        .collect::<Vec<_>>()
+}
+
+pub fn default_format_with_comment(s: Vec<(&'static str, &'static str)>) -> Vec<Completion> {
+    s.iter()
+        .map(|x| Completion {
+            add_space: true,
+            display: None,
+            completion: x.0.to_string(),
+            replace_method: ReplaceMethod::Replace,
+            comment: Some(x.1.to_string()),
         })
         .collect::<Vec<_>>()
 }

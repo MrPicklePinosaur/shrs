@@ -1,6 +1,6 @@
 //! General purpose selection menu for shell
 
-use std::{fmt::Display, io::Write};
+use std::{cmp::Ordering, fmt::Display, io::Write};
 
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
@@ -9,7 +9,7 @@ use crossterm::{
     QueueableCommand,
 };
 
-use crate::completion::Completion;
+use crate::{completion::Completion, painter::Painter};
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 
@@ -38,12 +38,11 @@ pub trait Menu {
     fn items(&self) -> Vec<&(Self::PreviewItem, Self::MenuItem)>;
     fn set_items(&mut self, items: Vec<(Self::PreviewItem, Self::MenuItem)>);
 
-    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()>;
-    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()>;
-
-    fn render(&self, out: &mut Out) -> anyhow::Result<()>;
-    fn required_lines(&self) -> usize;
+    fn render(&self, out: &mut Out, painter: &Painter) -> anyhow::Result<()>;
+    fn required_lines(&self, painter: &Painter) -> usize;
 }
+
+pub type SortFn = fn(&(String, Completion), &(String, Completion)) -> Ordering;
 
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
@@ -51,9 +50,15 @@ pub struct DefaultMenu {
     /// Currently selected item
     cursor: u32,
     active: bool,
-    max_columns: usize,
-    max_rows: usize,
     column_padding: usize,
+    /// Max length in characters that the comment message is allowed to take up
+    comment_max_length: usize,
+    /// Max number of entries to show when rendering the menu
+    limit: usize,
+    /// Function to use to sort the entries
+    // TODO can we make this vary depending on which completions are used? does sorting belong more
+    // to completion?
+    sort: SortFn,
 }
 
 impl DefaultMenu {
@@ -62,10 +67,56 @@ impl DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
-            max_columns: 2,
-            max_rows: 5,
+            comment_max_length: 30,
             column_padding: 2,
+            limit: 20,
+            // by default sort alphabetical by display name
+            sort: |a, b| -> Ordering { a.0.to_lowercase().cmp(&b.0.to_lowercase()) },
         }
+    }
+    pub fn new_with_limit(limit: usize) -> Self {
+        let mut menu = Self::new();
+        menu.limit = limit;
+        menu
+    }
+
+    // TODO make these configurable?
+    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(
+            out,
+            SetBackgroundColor(Color::White),
+            SetForegroundColor(Color::Black),
+        )?;
+        Ok(())
+    }
+
+    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(out, ResetColor)?;
+        Ok(())
+    }
+
+    fn comment_style(&self, out: &mut Out) -> crossterm::Result<()> {
+        execute!(out, SetForegroundColor(Color::Yellow),)?;
+        Ok(())
+    }
+
+    fn max_width(&self) -> usize {
+        // first determine how many columns are needed to list all completions
+        let mut max_width = 0;
+        for menu_item in self.items() {
+            // extra +4 is for formatting characters around the comment
+            let comment_len = menu_item
+                .1
+                .comment
+                .as_ref()
+                .map(|comment| comment.len().min(self.comment_max_length) + 4)
+                .unwrap_or(0);
+            let menu_item_len = menu_item.0.len() + comment_len;
+
+            max_width = max_width.max(menu_item_len);
+        }
+
+        max_width
     }
 }
 
@@ -113,30 +164,28 @@ impl Menu for DefaultMenu {
     }
     fn set_items(&mut self, mut items: Vec<(Self::PreviewItem, Self::MenuItem)>) {
         self.selections.clear();
+        items.sort_by(self.sort);
         self.selections.append(&mut items);
         self.cursor = 0;
     }
 
-    fn selected_style(&self, out: &mut Out) -> crossterm::Result<()> {
-        execute!(
-            out,
-            SetBackgroundColor(Color::White),
-            SetForegroundColor(Color::Black),
-        )?;
-        Ok(())
-    }
-
-    fn unselected_style(&self, out: &mut Out) -> crossterm::Result<()> {
-        execute!(out, ResetColor)?;
-        Ok(())
-    }
-
-    fn render(&self, out: &mut Out) -> anyhow::Result<()> {
+    fn render(&self, out: &mut Out, painter: &Painter) -> anyhow::Result<()> {
         let mut i = 0;
         let mut column_start: usize = 0;
 
+        let max_width = self.max_width();
+        let mut columns_needed = painter.get_term_size().0 as usize / max_width;
+
+        // terminal is not wide enough to render even one line
+        if columns_needed == 0 {
+            columns_needed = 1;
+        }
+
+        // ceil division
+        let rows_needed = (self.items().len() + columns_needed - 1) / columns_needed;
+
         self.unselected_style(out)?;
-        for column in self.items().chunks(self.max_rows) {
+        for column in self.items().chunks(rows_needed) {
             // length of the longest word in column
             let mut longest_word = 0;
 
@@ -147,13 +196,24 @@ impl Menu for DefaultMenu {
                 if self.cursor() as usize == i {
                     self.selected_style(out)?;
                 }
-
                 out.queue(Print(&menu_item.0))?;
                 self.unselected_style(out)?;
 
+                if let Some(comment) = &menu_item.1.comment {
+                    let comment_len = comment.len().min(self.comment_max_length);
+                    out.queue(MoveToColumn(
+                        (column_start + max_width - comment_len - 2) as u16, // -2 for parentheses
+                    ))?;
+                    out.queue(Print("("))?;
+                    self.comment_style(out)?;
+                    out.queue(Print(truncate(comment, comment_len)))?;
+                    self.unselected_style(out)?;
+                    out.queue(Print(")"))?;
+                }
+
                 i += 1;
             }
-            column_start += longest_word + self.column_padding;
+            column_start += max_width + self.column_padding;
 
             // move back up
             out.queue(MoveUp(column.len() as u16))?;
@@ -162,7 +222,33 @@ impl Menu for DefaultMenu {
         Ok(())
     }
 
-    fn required_lines(&self) -> usize {
-        self.items().len().min(self.max_rows) + 1
+    fn required_lines(&self, painter: &Painter) -> usize {
+        // TODO a bit of duplicated code
+
+        let max_width = self.max_width();
+
+        let mut columns_needed = painter.get_term_size().0 as usize / max_width;
+
+        // terminal is not wide enough to render even one line
+        if columns_needed == 0 {
+            columns_needed = 1;
+        }
+
+        // ceil division
+        let rows_needed = (self.items().len() + columns_needed - 1) / columns_needed;
+
+        rows_needed + 1
+    }
+}
+
+/// Utility to truncate string and insert ellipses at end
+fn truncate(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        None => s.to_string(),
+        Some((idx, _)) => {
+            let mut truncated = s[..idx.saturating_sub(3)].to_string();
+            truncated.push_str("...");
+            truncated
+        },
     }
 }

@@ -1,6 +1,6 @@
 //! Core readline configuration
 
-use std::{borrow::BorrowMut, io::Write, time::Duration, vec};
+use std::{borrow::BorrowMut, io::Write, iter::repeat, time::Duration, vec};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -93,7 +93,7 @@ impl Default for Line {
 }
 
 /// State for where the prompt is in history browse mode
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HistoryInd {
     /// Brand new prompt
     Prompt,
@@ -112,7 +112,7 @@ impl HistoryInd {
                     HistoryInd::Line(0)
                 }
             },
-            HistoryInd::Line(i) => HistoryInd::Line((i + 1).min(limit)),
+            HistoryInd::Line(i) => HistoryInd::Line((i + 1).min(limit - 1)),
         }
     }
 
@@ -635,10 +635,7 @@ impl Line {
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
         let completions = self.completer.complete(&comp_ctx);
-        let completions = completions
-            .iter()
-            .take(10) // TODO make this config
-            .collect::<Vec<_>>();
+        let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions
             .iter()

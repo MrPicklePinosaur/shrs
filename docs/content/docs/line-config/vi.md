@@ -14,5 +14,5 @@ toc = true
 top = false
 +++
 
-Vi Mode is currently not configurable. In the future, hopefully custom commands
+Prompt editing in vi mode is supported in shrs, however it is currently not configurable. In the future, hopefully custom commands
 and keybindings will be supported.

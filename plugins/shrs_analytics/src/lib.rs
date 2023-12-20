@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
+use builtin::AnalyticsBuiltin;
 use shrs::{anyhow::Result, prelude::*};
 
-pub struct AnalyticsPlugin;
+mod builtin;
 
 //TODO
 //Builtin to retrieve analytics
@@ -15,37 +18,56 @@ pub struct AnalyticsPlugin;
 
 //Hooks to collect analytics
 
+pub struct AnalyticsState {
+    commands: HashMap<String, u32>,
+}
+
+impl AnalyticsState {
+    pub fn new() -> Self {
+        AnalyticsState {
+            commands: HashMap::new(),
+        }
+    }
+}
+
+pub struct AnalyticsPlugin;
+
 impl Plugin for AnalyticsPlugin {
     fn init(&self, shell: &mut ShellConfig) -> Result<()> {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
         shell.hooks.register(record_dir_change);
-        shell.state.insert(AnalyticsState {});
+        shell.hooks.register(most_common_commands);
+        shell.state.insert(AnalyticsState::new());
 
         Ok(())
     }
 }
 
-pub struct AnalyticsBuiltin;
-impl BuiltinCmd for AnalyticsBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
-    ) -> anyhow::Result<CmdOutput> {
-        //Args, timeframe; This session or all time
-        //which metric
-        ctx.out.println("Analytics for ")?;
-        Ok(CmdOutput::success())
-    }
-}
-pub struct AnalyticsState {}
 fn record_dir_change(
     sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,
     cd_ctx: &ChangeDirCtx,
 ) -> Result<()> {
+    Ok(())
+}
+
+fn most_common_commands(
+    sh: &Shell,
+    ctx: &mut Context,
+    rt: &mut Runtime,
+    cmd_ctx: &BeforeCommandCtx,
+) -> anyhow::Result<()> {
+    // TODO maybe read commands from history too?
+    ctx.state.get_mut::<AnalyticsState>().map(|state| {
+        // TODO IFS
+        let cmd_name = cmd_ctx.command.split(' ').next().unwrap().to_string();
+
+        if let Some(count) = state.commands.get(&cmd_name) {
+            state.commands.insert(cmd_name, count + 1);
+        } else {
+            state.commands.insert(cmd_name, 1);
+        }
+    });
     Ok(())
 }

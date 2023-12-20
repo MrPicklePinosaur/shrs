@@ -199,6 +199,7 @@ fn run_shell(
         let hook_ctx = BeforeCommandCtx {
             raw_command: line.clone(),
             command: line.clone(),
+            run_ctx: rt.clone(),
         };
         sh.hooks.run::<BeforeCommandCtx>(sh, ctx, rt, hook_ctx)?;
 

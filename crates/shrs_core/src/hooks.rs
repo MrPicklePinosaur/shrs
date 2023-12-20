@@ -60,7 +60,10 @@ pub struct BeforeCommandCtx {
     pub raw_command: String,
     /// Command to be executed, after performing all substitutions
     pub command: String,
+    // execution context
+    pub run_ctx: Runtime, // TODO a bit heavy to copy the entire run context?
 }
+
 /// Default implementation for [BeforeCommandCtx]
 pub fn before_command_hook(
     sh: &Shell,

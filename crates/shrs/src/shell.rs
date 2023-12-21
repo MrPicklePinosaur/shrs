@@ -115,6 +115,9 @@ impl ShellConfig {
                         plugin_meta.name, e
                     ),
                 }
+            } else {
+                // success
+                self.state.insert(plugin);
             }
         }
 

@@ -18,28 +18,26 @@ mod builtin;
 
 // Hooks to collect analytics
 
-pub struct AnalyticsState {
+pub struct AnalyticsPlugin {
     commands: HashMap<String, u32>,
     dirs: HashMap<PathBuf, u32>,
 }
 
-impl AnalyticsState {
+impl AnalyticsPlugin {
     pub fn new() -> Self {
-        AnalyticsState {
+        AnalyticsPlugin {
             commands: HashMap::new(),
             dirs: HashMap::new(),
         }
     }
 }
 
-pub struct AnalyticsPlugin;
-
 impl Plugin for AnalyticsPlugin {
     fn init(&self, shell: &mut ShellConfig) -> Result<()> {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
         shell.hooks.register(record_dir_change);
         shell.hooks.register(most_common_commands);
-        shell.state.insert(AnalyticsState::new());
+        shell.state.insert(AnalyticsPlugin::new());
 
         Ok(())
     }
@@ -61,7 +59,7 @@ fn most_common_commands(
     cmd_ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     // TODO maybe read commands from history too?
-    ctx.state.get_mut::<AnalyticsState>().map(|state| {
+    ctx.state.get_mut::<AnalyticsPlugin>().map(|state| {
         // add to most used commands
 
         // TODO IFS

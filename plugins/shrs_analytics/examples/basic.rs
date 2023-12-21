@@ -3,7 +3,7 @@ use shrs_analytics::AnalyticsPlugin;
 
 fn main() {
     let myshell = ShellBuilder::default()
-        .with_plugin(AnalyticsPlugin)
+        .with_plugin(AnalyticsPlugin::new())
         .build()
         .unwrap();
 

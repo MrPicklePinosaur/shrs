@@ -3,12 +3,26 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use clap::{Parser, Subcommand};
+
 use super::{BuiltinCmd, Builtins};
 use crate::{
     hooks::ChangeDirCtx,
     prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
+
+#[derive(Parser)]
+#[clap(disable_help_flag = true, disable_help_subcommand = true)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Builtin,
+}
 
 #[derive(Default)]
 pub struct HelpBuiltin {}
@@ -20,12 +34,18 @@ impl BuiltinCmd for HelpBuiltin {
         rt: &mut Runtime,
         args: &Vec<String>,
     ) -> anyhow::Result<CmdOutput> {
-        let cmds = sh.builtins.builtins.keys();
+        let cli = Cli::try_parse_from(args)?;
 
-        ctx.out.println("Builtin Commands")?;
+        match &cli.command {
+            Commands::Builtin => {
+                let cmds = sh.builtins.builtins.keys();
 
-        for cmd in cmds {
-            ctx.out.println(cmd)?;
+                ctx.out.println("Builtin Commands")?;
+
+                for cmd in cmds {
+                    ctx.out.println(cmd)?;
+                }
+            },
         }
 
         Ok(CmdOutput::success())

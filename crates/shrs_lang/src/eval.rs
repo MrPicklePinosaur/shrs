@@ -49,7 +49,7 @@ fn dummy_child() -> ExitStatus {
     ExitStatus::Exited(0)
 }
 
-fn eval_command(
+pub fn eval_command(
     sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,

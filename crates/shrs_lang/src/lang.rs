@@ -1,15 +1,18 @@
-use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
+use std::{
+    os::unix::process::ExitStatusExt,
+    process::{ExitStatus, Stdio},
+};
 
 use shrs_core::{
     lang::Lang,
-    prelude::CmdOutput,
+    prelude::{BeforeCommandCtx, CmdOutput},
     shell::{Context, Runtime, Shell},
 };
 use shrs_job::{initialize_job_control, Output};
 use thiserror::Error;
 
 use crate::{
-    eval2::{self, run_job},
+    eval::{command_output, eval_command},
     parser, Lexer, Parser, Token,
 };
 
@@ -49,7 +52,7 @@ impl Lang for PosixLang {
     ) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let parser = Parser::new();
+        let mut parser = Parser::new();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {
@@ -58,14 +61,48 @@ impl Lang for PosixLang {
                 return Err(e.into());
             },
         };
+        let mut cmd_handle =
+            match eval_command(sh, ctx, rt, &cmd, Stdio::inherit(), Stdio::inherit(), None) {
+                Ok(cmd_handle) => cmd_handle,
+                Err(e) => {
+                    eprintln!("{e}");
+                    return Err(e);
+                },
+            };
+        // command_output(sh, ctx, rt, &mut cmd_handle)?;
 
-        let mut job_manager = sh.job_manager.borrow_mut();
-        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
-
-        run_job(&mut job_manager, procs, pgid, true)?;
-
+        // TODO make this accurate
         Ok(CmdOutput::success())
     }
+
+    /* eval2 impl
+        fn eval(
+            &self,
+            sh: &Shell,
+            ctx: &mut Context,
+            rt: &mut Runtime,
+            line: String,
+        ) -> anyhow::Result<CmdOutput> {
+            // TODO rewrite the error handling here better
+            let lexer = Lexer::new(&line);
+            let parser = Parser::new();
+            let cmd = match parser.parse(lexer) {
+                Ok(cmd) => cmd,
+                Err(e) => {
+                    // TODO detailed parse errors
+                    eprintln!("{e}");
+                    return Err(e.into());
+                },
+            };
+
+            let mut job_manager = sh.job_manager.borrow_mut();
+            let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
+
+            run_job(&mut job_manager, procs, pgid, true)?;
+
+            Ok(CmdOutput::success())
+        }
+    */
 
     fn name(&self) -> String {
         "posix".to_string()

@@ -14,7 +14,9 @@ mod lexer;
 pub use lexer::{Lexer, Token, RESERVED_WORDS};
 
 pub mod ast;
+pub mod process;
 
+pub mod eval;
 pub mod eval2;
 
 // pub mod process;

@@ -24,6 +24,7 @@ use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
+    history::History,
     hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::Jobs,
     lang::Lang,
@@ -60,6 +61,7 @@ pub struct Context {
     pub jobs: Jobs,
     pub startup_time: Instant,
     pub alias: Alias,
+    pub history: Box<dyn History<HistoryItem = String>>,
 }
 
 /// Runtime context for the shell

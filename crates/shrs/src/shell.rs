@@ -13,7 +13,10 @@ use shrs_job::JobManager;
 use shrs_lang::PosixLang;
 use shrs_line::prelude::*;
 
-use crate::prelude::*;
+use crate::{
+    history::{DefaultHistory, History},
+    prelude::*,
+};
 
 /// Unified shell config struct
 #[derive(Builder)]
@@ -62,6 +65,11 @@ pub struct ShellConfig {
     #[builder(default = "State::new()")]
     #[builder(setter(custom))]
     pub state: State,
+
+    /// History, see [History]
+    #[builder(default = "Box::new(DefaultHistory::new())")]
+    #[builder(setter(custom))]
+    history: Box<dyn History<HistoryItem = String>>,
 }
 
 impl ShellBuilder {
@@ -83,6 +91,10 @@ impl ShellBuilder {
     }
     pub fn with_readline(mut self, line: impl Readline + 'static) -> Self {
         self.readline = Some(Box::new(line));
+        self
+    }
+    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
+        self.history = Some(Box::new(history));
         self
     }
 }
@@ -127,6 +139,7 @@ impl ShellConfig {
             state: self.state,
             jobs: Jobs::new(),
             startup_time: Instant::now(),
+            history: self.history,
         };
         let mut rt = Runtime {
             env: self.env,

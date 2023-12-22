@@ -51,11 +51,6 @@ pub struct Line {
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 
-    /// History, see [History]
-    #[builder(default = "Box::new(DefaultHistory::new())")]
-    #[builder(setter(custom))]
-    history: Box<dyn History<HistoryItem = String>>,
-
     #[builder(default = "Box::new(DefaultBufferHistory::new())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
@@ -188,10 +183,6 @@ impl LineBuilder {
         self.completer = Some(Box::new(completer));
         self
     }
-    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
-        self.history = Some(Box::new(history));
-        self
-    }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
         self.highlighter = Some(Box::new(highlighter));
         self
@@ -304,7 +295,7 @@ impl Line {
 
         let res = line_ctx.get_full_command();
         if !res.is_empty() {
-            self.history.add(res.clone());
+            line_ctx.ctx.history.add(res.clone());
         }
         Ok(res)
     }
@@ -681,7 +672,7 @@ impl Line {
             ctx.saved_line = ctx.cb.slice(..).to_string();
         }
 
-        ctx.history_ind = ctx.history_ind.up(self.history.len());
+        ctx.history_ind = ctx.history_ind.up(ctx.ctx.history.len());
         self.update_history(ctx)?;
 
         Ok(())
@@ -703,7 +694,7 @@ impl Line {
             },
             // fill prompt with history element
             HistoryInd::Line(i) => {
-                let history_item = self.history.get(i).unwrap();
+                let history_item = ctx.ctx.history.get(i).unwrap();
                 ctx.cb.clear();
                 ctx.cb.insert(Location::Cursor(), history_item)?;
             },

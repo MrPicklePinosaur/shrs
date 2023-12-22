@@ -21,7 +21,6 @@ pub mod buffer_history;
 pub mod completion;
 pub mod cursor;
 pub mod highlight;
-pub mod history;
 pub mod hooks;
 pub mod keybinding;
 pub mod line;
@@ -41,7 +40,6 @@ pub mod prelude {
         completion::*,
         cursor::CursorStyle,
         highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme},
-        history::{DefaultHistory, FileBackedHistory, History},
         hooks::*,
         keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode, Readline},

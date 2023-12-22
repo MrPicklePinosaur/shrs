@@ -5,7 +5,7 @@ use std::{
     process::Command,
 };
 
-use shrs::{line::_core::shell::set_working_dir, prelude::*};
+use shrs::{history::FileBackedHistory, line::_core::shell::set_working_dir, prelude::*};
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
@@ -129,7 +129,6 @@ fn main() {
     let readline = LineBuilder::default()
         .with_completer(completer)
         .with_menu(menu)
-        .with_history(history)
         .with_keybinding(keybinding)
         .with_prompt(prompt)
         .build()
@@ -177,6 +176,7 @@ a rusty POSIX shell | build {}"#,
         .with_env(env)
         .with_alias(alias)
         .with_readline(readline)
+        .with_history(history)
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin::new())

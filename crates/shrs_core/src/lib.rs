@@ -10,6 +10,7 @@ pub mod alias;
 pub mod builtin;
 pub mod cmd_output;
 pub mod env;
+pub mod history;
 pub mod hooks;
 pub mod jobs;
 pub mod lang;

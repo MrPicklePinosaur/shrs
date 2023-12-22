@@ -28,5 +28,5 @@ Here is an example of using `FileBackedHistory`:
 let history_file = PathBuf::from(" ... ");
 let history = FileBackedHistory::new(history_file).unwrap();
 
-myline.with_history(history)
+myshell.with_history(history)
 ```

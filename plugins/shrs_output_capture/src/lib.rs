@@ -25,6 +25,12 @@ impl OutputCaptureState {
 pub struct OutputCapturePlugin;
 
 impl Plugin for OutputCapturePlugin {
+    fn meta(&self) -> PluginMeta {
+        PluginMeta {
+            name: "OutputCapturePlugin".into(),
+            description: String::new(),
+        }
+    }
     fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.hooks.register(after_command_hook);
         shell.builtins.insert("again", AgainBuiltin::new());

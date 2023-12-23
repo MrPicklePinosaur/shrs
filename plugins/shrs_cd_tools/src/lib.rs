@@ -95,6 +95,12 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
 }
 
 impl Plugin for DirParsePlugin {
+    fn meta(&self) -> PluginMeta {
+        PluginMeta {
+            name: "DirParsePlugin".into(),
+            description: String::new(),
+        }
+    }
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // TODO let user pass in their own modules list
         let modules = HashMap::from_iter([

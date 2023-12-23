@@ -4,6 +4,7 @@ use std::{
     cell::RefCell,
     io::{stdout, BufRead, BufWriter, Write},
     process::ExitStatus,
+    rc::Rc,
     time::Instant,
 };
 
@@ -57,9 +58,9 @@ pub struct ShellConfig {
     pub lang: Box<dyn Lang>,
 
     /// Plugins, see [Plugins]
-    #[builder(default = "anymap::Map::<dyn std::any::Any>::new()")]
+    #[builder(default = "Vec::new()")]
     #[builder(setter(custom))]
-    pub plugins: anymap::AnyMap,
+    pub plugins: Vec<Rc<dyn Plugin>>,
 
     /// Globally accessible state, see [State]
     #[builder(default = "State::new()")]
@@ -79,14 +80,19 @@ pub struct ShellConfig {
 
 impl ShellBuilder {
     pub fn with_plugin<P: std::any::Any + Plugin>(mut self, plugin: P) -> Self {
-        let mut cur_plugins = self
-            .plugins
-            .unwrap_or(anymap::Map::<dyn std::any::Any>::new());
-        cur_plugins.insert(plugin);
+        let mut cur_state = self.state.unwrap_or(State::new());
+        let plugin_rc = Rc::new(plugin);
+        cur_state.insert(plugin_rc.clone());
+        self.state = Some(cur_state);
+
+        let mut cur_plugins = self.plugins.unwrap_or(vec![]);
+        cur_plugins.push(plugin_rc);
         self.plugins = Some(cur_plugins);
+
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
+        // TODO maybe get rid of this setter, otherwise it can override with_plugin if called after
         let mut cur_state = self.state.unwrap_or(State::new());
         cur_state.insert(state);
         self.state = Some(cur_state);
@@ -121,7 +127,6 @@ impl ShellConfig {
         // up implementing Default for Context and Runtime
 
         // run plugins first
-        /*
         let plugins = self.plugins.drain(..).collect::<Vec<_>>();
         for plugin in plugins {
             let plugin_meta = plugin.meta();
@@ -144,7 +149,6 @@ impl ShellConfig {
                 self.state.insert(plugin);
             }
         }
-        */
 
         let mut ctx = Context {
             alias: self.alias,

@@ -33,12 +33,6 @@ impl AnalyticsPlugin {
 }
 
 impl Plugin for AnalyticsPlugin {
-    fn meta(&self) -> PluginMeta {
-        PluginMeta {
-            name: "AnalyticsPlugin".into(),
-            description: String::new(),
-        }
-    }
     fn init(&self, shell: &mut ShellConfig) -> Result<()> {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
         shell.hooks.register(record_dir_change);

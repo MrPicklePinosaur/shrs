@@ -76,13 +76,6 @@ impl MuxPlugin {
 }
 
 impl Plugin for MuxPlugin {
-    fn meta(&self) -> PluginMeta {
-        PluginMeta {
-            name: "MuxPlugin".into(),
-            description: String::new(),
-        }
-    }
-
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // This might be able to be indexed by typeid?
         let langs: Vec<(String, Box<dyn Lang>)> = vec![

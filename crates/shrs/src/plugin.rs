@@ -6,7 +6,7 @@ use crate::ShellConfig;
 
 #[derive(Debug)]
 pub struct PluginMeta {
-    pub name: String,   // should be unique
+    pub name: String,
     pub description: String,
 }
 
@@ -19,6 +19,15 @@ pub enum FailMode {
     Abort,
 }
 
+impl Default for PluginMeta {
+    fn default() -> Self {
+        Self {
+            name: String::from("unnamed plugin"),
+            description: String::from("a plugin for shrs"),
+        }
+    }
+}
+
 /// Implement this trait to build your own plugins
 pub trait Plugin {
     /// Plugin entry point
@@ -28,7 +37,12 @@ pub trait Plugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()>;
 
     /// Return metadata related to the plugin
-    fn meta(&self) -> PluginMeta;
+    fn meta(&self) -> PluginMeta {
+        // TODO this is currently an optional method to make migrating all the existing plugins a
+        // bit easier. Could remove the default implementation in the future
+        warn!("Using default plugin metadata. Please specify this information for your plugin by implementing Plugin::meta()");
+        PluginMeta::default()
+    }
 
     /// Get the fail mode for this plugin
     ///

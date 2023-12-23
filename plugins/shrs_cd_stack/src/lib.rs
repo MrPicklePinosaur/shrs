@@ -61,12 +61,6 @@ fn change_dir_hook(
 pub struct CdStackPlugin;
 
 impl Plugin for CdStackPlugin {
-    fn meta(&self) -> PluginMeta {
-        PluginMeta {
-            name: "CdStackPlugin".into(),
-            description: String::new(),
-        }
-    }
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         let mut cd_stack_state = CdStackState::new();
         // TODO hopefully would be better to get current dir from shell, but shell isn't

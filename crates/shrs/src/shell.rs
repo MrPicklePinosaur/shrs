@@ -75,11 +75,7 @@ pub struct ShellConfig {
 impl ShellBuilder {
     pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
         let mut cur_plugin = self.plugins.unwrap_or(vec![]);
-        if cur_plugin.iter().any(|p| p.meta().name == plugin.meta().name) {
-            panic!("Duplicate plugin name: {}",plugin.meta().name);
-        } else {
-            cur_plugin.push(Box::new(plugin));
-        }
+        cur_plugin.push(Box::new(plugin));
         self.plugins = Some(cur_plugin);
         self
     }

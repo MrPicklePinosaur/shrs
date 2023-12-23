@@ -45,12 +45,6 @@ impl CommandTimerState {
 pub struct CommandTimerPlugin;
 
 impl Plugin for CommandTimerPlugin {
-    fn meta(&self) -> PluginMeta {
-        PluginMeta {
-            name: "CommandTimerPlugin".into(),
-            description: String::new(),
-        }
-    }
     fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
         shell.hooks.register(before_command_hook);
         shell.hooks.register(after_command_hook);

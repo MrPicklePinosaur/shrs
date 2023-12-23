@@ -35,7 +35,6 @@ pub mod prelude {
     //! Imports the commonly used structs and types
 
     // Macros
-    pub use crate::styled;
     pub use crate::{
         buffer_history::{BufferHistory, DefaultBufferHistory},
         completion::*,
@@ -46,6 +45,7 @@ pub mod prelude {
         menu::{DefaultMenu, Menu},
         painter::StyledBuf,
         prompt::{DefaultPrompt, Prompt, *},
+        styled,
         vi::*,
     };
 }

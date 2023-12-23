@@ -57,9 +57,9 @@ pub struct ShellConfig {
     pub lang: Box<dyn Lang>,
 
     /// Plugins, see [Plugins]
-    #[builder(default = "Vec::new()")]
+    #[builder(default = "anymap::Map::<dyn std::any::Any>::new()")]
     #[builder(setter(custom))]
-    pub plugins: Vec<Box<dyn Plugin>>,
+    pub plugins: anymap::AnyMap,
 
     /// Globally accessible state, see [State]
     #[builder(default = "State::new()")]
@@ -78,10 +78,12 @@ pub struct ShellConfig {
 }
 
 impl ShellBuilder {
-    pub fn with_plugin(mut self, plugin: impl Plugin + 'static) -> Self {
-        let mut cur_plugin = self.plugins.unwrap_or(vec![]);
-        cur_plugin.push(Box::new(plugin));
-        self.plugins = Some(cur_plugin);
+    pub fn with_plugin<P: std::any::Any + Plugin>(mut self, plugin: P) -> Self {
+        let mut cur_plugins = self
+            .plugins
+            .unwrap_or(anymap::Map::<dyn std::any::Any>::new());
+        cur_plugins.insert(plugin);
+        self.plugins = Some(cur_plugins);
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
@@ -119,6 +121,7 @@ impl ShellConfig {
         // up implementing Default for Context and Runtime
 
         // run plugins first
+        /*
         let plugins = self.plugins.drain(..).collect::<Vec<_>>();
         for plugin in plugins {
             let plugin_meta = plugin.meta();
@@ -141,6 +144,7 @@ impl ShellConfig {
                 self.state.insert(plugin);
             }
         }
+        */
 
         let mut ctx = Context {
             alias: self.alias,

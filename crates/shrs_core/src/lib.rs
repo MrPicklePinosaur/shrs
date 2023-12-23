@@ -13,6 +13,7 @@ pub mod env;
 pub mod history;
 pub mod hooks;
 pub mod jobs;
+pub mod keybinding;
 pub mod lang;
 pub mod output_writer;
 pub mod prompt;
@@ -31,6 +32,7 @@ pub mod prelude {
         env::Env,
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
+        keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         lang::Lang,
         output_writer::OutputWriter,
         prompt::*,

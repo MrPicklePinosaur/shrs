@@ -24,7 +24,7 @@ ley keybinding = keybindings! {
     "C-l" => Command::new("clear").spawn(),
 };
 
-myline.with_keybinding(keybinding);
+myshell.with_keybinding(keybinding);
 ```
 
 The macro allows us to represent key combinations in terms of strings. You can

@@ -69,7 +69,12 @@ pub struct ShellConfig {
     /// History, see [History]
     #[builder(default = "Box::new(DefaultHistory::new())")]
     #[builder(setter(custom))]
-    history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History<HistoryItem = String>>,
+
+    /// Keybindings, see [Keybinding]
+    #[builder(default = "Box::new(DefaultKeybinding::new())")]
+    #[builder(setter(custom))]
+    pub keybinding: Box<dyn Keybinding>,
 }
 
 impl ShellBuilder {
@@ -95,6 +100,10 @@ impl ShellBuilder {
     }
     pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
         self.history = Some(Box::new(history));
+        self
+    }
+    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
+        self.keybinding = Some(Box::new(keybinding));
         self
     }
 }
@@ -158,6 +167,7 @@ impl ShellConfig {
             lang: self.lang,
             hooks: self.hooks,
             signals: Signals::new().unwrap(),
+            keybinding: self.keybinding,
         };
         let mut readline = self.readline;
 

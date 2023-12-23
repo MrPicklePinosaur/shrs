@@ -27,6 +27,7 @@ use crate::{
     history::History,
     hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
     jobs::Jobs,
+    keybinding::Keybinding,
     lang::Lang,
     output_writer::OutputWriter,
     signal::Signals,
@@ -48,6 +49,7 @@ pub struct Shell {
     pub lang: Box<dyn Lang>,
     /// Signals to be handled
     pub signals: Signals,
+    pub keybinding: Box<dyn Keybinding>,
 }
 
 /// Shared global shell context

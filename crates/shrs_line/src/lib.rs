@@ -22,7 +22,6 @@ pub mod completion;
 pub mod cursor;
 pub mod highlight;
 pub mod hooks;
-pub mod keybinding;
 pub mod line;
 pub mod menu;
 pub mod painter;
@@ -35,21 +34,20 @@ pub use shrs_core as _core;
 pub mod prelude {
     //! Imports the commonly used structs and types
 
+    // Macros
     pub use crate::{
         buffer_history::{BufferHistory, DefaultBufferHistory},
         completion::*,
         cursor::CursorStyle,
         highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme},
         hooks::*,
-        keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode, Readline},
         menu::{DefaultMenu, Menu},
         painter::StyledBuf,
         prompt::{DefaultPrompt, Prompt, *},
+        styled,
         vi::*,
     };
-    // Macros
-    pub use crate::{keybindings, styled};
 }
 
 #[cfg(test)]

@@ -79,8 +79,8 @@ impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // This might be able to be indexed by typeid?
         let langs: Vec<(String, Box<dyn Lang>)> = vec![
-            ("bash".into(), Box::new(BashLang::new()) as Box<dyn Lang>),
             ("shrs".into(), Box::new(PosixLang::new()) as Box<dyn Lang>),
+            ("bash".into(), Box::new(BashLang::new()) as Box<dyn Lang>),
             ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
             ("py".into(), Box::new(PythonLang::new()) as Box<dyn Lang>),
         ];

@@ -9,11 +9,11 @@ use lazy_static::lazy_static;
 use nix::unistd::Pid;
 use shrs_core::{
     hooks::{AfterCommandCtx, BeforeCommandCtx, JobExitCtx},
-    Context, Lang, Runtime, Shell,
+    prelude::{Context, Lang, Runtime, Shell},
 };
 use thiserror::Error;
 
-use crate::{ast, parser, process::ExitStatus, Lexer, Parser};
+use crate::{ast, parser, process::ExitStatus, Lexer, Parser, PosixError};
 
 // TODO function signature is very ugly
 // TODO maybe make this a method of Command
@@ -49,7 +49,7 @@ fn dummy_child() -> ExitStatus {
     ExitStatus::Exited(0)
 }
 
-fn eval_command(
+pub fn eval_command(
     sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,
@@ -409,8 +409,8 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
         let var = &cap["env"];
         // TODO stupid code
         let val = match rt.env.get(var) {
-            Some(val) => val.clone(),
-            None => String::new(),
+            Ok(val) => val.clone(),
+            Err(_) => String::new(),
         };
         let fmt_env = format!("${var}"); // format $VAR
         subst = subst.as_str().replace(&fmt_env, &val);
@@ -420,8 +420,8 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
     for cap in R_1.captures_iter(arg) {
         let var = &cap["env"];
         let val = match rt.env.get(var) {
-            Some(val) => val.clone(),
-            None => String::new(),
+            Ok(val) => val.clone(),
+            Err(_) => String::new(),
         };
         let fmt_env = format!("${{{var}}}"); // format ${VAR}
         subst = subst.as_str().replace(&fmt_env, &val);
@@ -429,8 +429,8 @@ fn envsubst(rt: &mut Runtime, arg: &str) -> String {
 
     // tilde substitution
     let home = match rt.env.get("HOME") {
-        Some(home) => home.as_str(),
-        None => "",
+        Ok(home) => home.as_str(),
+        Err(_) => "",
     };
     let subst = R_2.replace_all(&subst, home).to_string();
 
@@ -465,12 +465,15 @@ pub fn command_output(
     rt.exit_status = exit_status;
 
     // Call hook
+    // TODO update this hook
+    /*
     let hook_ctx = AfterCommandCtx {
         exit_code: exit_status,
         cmd_time: 0.0,
         cmd_output: output,
     };
     sh.hooks.run::<AfterCommandCtx>(sh, ctx, rt, hook_ctx)?;
+    */
 
     Ok(ExitStatus::Exited(exit_status))
 }

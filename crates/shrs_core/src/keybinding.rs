@@ -3,16 +3,17 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use shrs_core::shell::{Context, Runtime, Shell};
 use thiserror::Error;
 
-pub type BindingFn = dyn FnMut(&Shell, &mut Context, &mut Runtime);
+use crate::shell::{Context, Runtime, Shell};
+
+pub type BindingFn = dyn Fn(&Shell, &mut Context, &mut Runtime);
 
 /// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
     fn handle_key_event(
-        &mut self,
+        &self,
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
@@ -28,7 +29,7 @@ macro_rules! keybindings {
     // TODO temp hacky macro
     (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => $func:block),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
-        use $crate::_core::prelude::{Shell, Context, Runtime};
+        use $crate::prelude::{Shell, Context, Runtime};
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),
@@ -122,14 +123,14 @@ impl DefaultKeybinding {
 
 impl Keybinding for DefaultKeybinding {
     fn handle_key_event(
-        &mut self,
+        &self,
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         key_event: KeyEvent,
     ) -> bool {
         let mut event_handled = false;
-        for (binding, binding_fn) in self.bindings.iter_mut() {
+        for (binding, binding_fn) in self.bindings.iter() {
             if (key_event.code, key_event.modifiers) == *binding {
                 binding_fn(sh, ctx, rt);
                 event_handled = true;

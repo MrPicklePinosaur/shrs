@@ -60,11 +60,6 @@ pub struct Line {
     #[builder(setter(custom))]
     highlighter: Box<dyn Highlighter>,
 
-    /// Keybindings, see [Keybinding]
-    #[builder(default = "Box::new(DefaultKeybinding::new())")]
-    #[builder(setter(custom))]
-    keybinding: Box<dyn Keybinding>,
-
     /// Custom prompt, see [Prompt]
     #[builder(default = "Box::new(DefaultPrompt::new())")]
     #[builder(setter(custom))]
@@ -187,10 +182,6 @@ impl LineBuilder {
         self.highlighter = Some(Box::new(highlighter));
         self
     }
-    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
-        self.keybinding = Some(Box::new(keybinding));
-        self
-    }
     pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
         self.prompt = Some(Box::new(prompt));
         self
@@ -236,7 +227,7 @@ impl Line {
             let event = read()?;
 
             if let Event::Key(key_event) = event {
-                if self.keybinding.handle_key_event(
+                if line_ctx.sh.keybinding.handle_key_event(
                     line_ctx.sh,
                     line_ctx.ctx,
                     line_ctx.rt,

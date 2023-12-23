@@ -35,6 +35,13 @@ pub fn after_command_hook(
 }
 
 impl Plugin for AutocdPlugin {
+    fn meta(&self) -> PluginMeta {
+        PluginMeta {
+            name: "AutocdPlugin".into(),
+            description: String::new(),
+        }
+    }
+    
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.hooks.register(after_command_hook);
 

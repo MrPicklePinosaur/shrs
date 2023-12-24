@@ -60,7 +60,7 @@ pub struct ShellConfig {
     /// Plugins, see [Plugins]
     #[builder(default = "Vec::new()")]
     #[builder(setter(custom))]
-    pub plugins: Vec<Rc<dyn Plugin>>,
+    pub plugins: Vec<Box<dyn Plugin>>, // TODO could also maybe use anymap to get the concrete type
 
     /// Globally accessible state, see [State]
     #[builder(default = "State::new()")]
@@ -80,19 +80,13 @@ pub struct ShellConfig {
 
 impl ShellBuilder {
     pub fn with_plugin<P: std::any::Any + Plugin>(mut self, plugin: P) -> Self {
-        let mut cur_state = self.state.unwrap_or(State::new());
-        let plugin_rc = Rc::new(plugin);
-        cur_state.insert(plugin_rc.clone());
-        self.state = Some(cur_state);
-
         let mut cur_plugins = self.plugins.unwrap_or(vec![]);
-        cur_plugins.push(plugin_rc);
+        cur_plugins.push(Box::new(plugin));
         self.plugins = Some(cur_plugins);
 
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
-        // TODO maybe get rid of this setter, otherwise it can override with_plugin if called after
         let mut cur_state = self.state.unwrap_or(State::new());
         cur_state.insert(state);
         self.state = Some(cur_state);
@@ -144,9 +138,6 @@ impl ShellConfig {
                         plugin_meta.name, e
                     ),
                 }
-            } else {
-                // success
-                self.state.insert(plugin);
             }
         }
 

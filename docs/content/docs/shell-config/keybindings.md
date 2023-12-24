@@ -20,7 +20,7 @@ when `Control+L` is pressed. How keybindings are represented is a bit more of an
 internal detail and not very fun to write, so a macro is provided to make the
 experience a bit better.
 ```rust
-ley keybinding = keybindings! {
+let keybinding = keybindings! {
     "C-l" => Command::new("clear").spawn(),
 };
 

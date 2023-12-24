@@ -1,6 +1,6 @@
 use shrs::{anyhow::Result, prelude::*};
 
-use crate::AnalyticsPlugin;
+use crate::AnalyticsState;
 
 pub struct AnalyticsBuiltin;
 
@@ -16,7 +16,7 @@ impl BuiltinCmd for AnalyticsBuiltin {
         //which metric
         const LIMIT: usize = 5;
 
-        ctx.state.get::<AnalyticsPlugin>().map(|state| {
+        ctx.state.get::<AnalyticsState>().map(|state| {
             ctx.out.println("most used commands ====").unwrap();
             let mut commands = state.commands.iter().collect::<Vec<_>>();
             commands.sort_by(|a, b| b.cmp(a));

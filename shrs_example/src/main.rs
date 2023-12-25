@@ -6,7 +6,10 @@ use std::{
 };
 
 use shrs::{
-    history::FileBackedHistory, keybindings, line::_core::shell::set_working_dir, prelude::*,
+    history::FileBackedHistory,
+    keybindings,
+    line::_core::shell::set_working_dir,
+    prelude::{styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;

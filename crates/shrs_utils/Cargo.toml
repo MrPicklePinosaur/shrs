@@ -15,6 +15,7 @@ repository.workspace = true
 crossterm = "0.26"
 derive_builder = "0.12"
 ropey = "1.6"
+unicode-width = "0.1"
 
 anyhow = "1"
 thiserror = "1"

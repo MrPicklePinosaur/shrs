@@ -1,4 +1,4 @@
-use shrs::prelude::*;
+use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 
 struct MyPrompt;

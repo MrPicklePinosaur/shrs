@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 use anymap::AnyMap;
 use query::{Query, QueryResult};
-use shrs::prelude::*;
+use shrs::prelude::{styled_buf::StyledBuf, *};
 
 pub struct DirParsePlugin {
     // pub modules: Option<Vec<Query>>,

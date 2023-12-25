@@ -43,9 +43,3 @@ impl Default for Theme {
         }
     }
 }
-struct SyntaxTheme {
-    pub command: Color,
-    pub args: Color,
-    pub path: Color,
-    pub env_var: Color,
-}

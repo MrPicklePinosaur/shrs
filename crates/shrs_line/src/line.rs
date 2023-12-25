@@ -17,6 +17,7 @@ use shrs_lang::{Lexer, Token};
 use shrs_utils::{
     algo::longest_common_prefix,
     cursor_buffer::{CursorBuffer, Location},
+    styled_buf::StyledBuf,
 };
 use shrs_vi::{Action, Command, Motion, Parser};
 use trie_rs::TrieBuilder;

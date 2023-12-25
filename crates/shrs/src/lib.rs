@@ -60,6 +60,7 @@ pub mod prelude {
     pub use shrs_core::prelude::*;
     pub use shrs_lang::PosixLang;
     pub use shrs_line::prelude::*;
+    pub use shrs_utils::*;
 
     pub use crate::{anyhow, crossterm, crossterm::*, plugin::*, shell::*};
 }

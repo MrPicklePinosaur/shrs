@@ -4,8 +4,7 @@ use std::{collections::HashMap, default, usize};
 
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
-
-use crate::painter::StyledBuf;
+use shrs_utils::styled_buf::StyledBuf;
 
 pub trait Highlighter {
     fn highlight(&self, buf: &str, begin: usize) -> StyledBuf;

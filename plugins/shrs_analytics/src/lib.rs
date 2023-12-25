@@ -43,8 +43,8 @@ impl AnalyticsPlugin {
 impl Plugin for AnalyticsPlugin {
     fn init(&self, shell: &mut ShellConfig) -> Result<()> {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
-        shell.hooks.register(record_dir_change);
-        shell.hooks.register(most_common_commands);
+        shell.hooks.insert(record_dir_change);
+        shell.hooks.insert(most_common_commands);
         shell.state.insert(AnalyticsState::new());
 
         Ok(())

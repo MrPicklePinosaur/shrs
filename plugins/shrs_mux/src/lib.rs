@@ -93,7 +93,7 @@ impl Plugin for MuxPlugin {
         shell.state.insert(MuxState::new(lang_names).unwrap());
         let langs_map = HashMap::from_iter(langs);
         shell.lang = Box::new(MuxLang::new(langs_map));
-        shell.hooks.register(swap_lang_options);
+        shell.hooks.insert(swap_lang_options);
 
         Ok(())
     }

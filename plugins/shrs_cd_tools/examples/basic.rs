@@ -1,4 +1,4 @@
-use shrs::prelude::*;
+use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_cd_tools::{
     default_prompt, git::Git, node::NodeJs, rust::CargoToml, DirParsePlugin, DirParseState,
 };

@@ -104,8 +104,8 @@ impl Plugin for DirParsePlugin {
         ]);
 
         shell.state.insert(DirParseState::new(modules));
-        shell.hooks.register(startup_hook);
-        shell.hooks.register(change_dir_hook);
+        shell.hooks.insert(startup_hook);
+        shell.hooks.insert(change_dir_hook);
 
         Ok(())
     }

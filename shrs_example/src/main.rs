@@ -171,7 +171,7 @@ a rusty POSIX shell | build {}"#,
         Ok(())
     };
     let mut hooks = Hooks::new();
-    hooks.register(startup_msg);
+    hooks.insert(startup_msg);
 
     // =-=-= Shell =-=-=
     // Construct the final shell

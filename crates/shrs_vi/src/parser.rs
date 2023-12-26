@@ -13,13 +13,15 @@ pub struct Parser {
     parser: CommandParser,
 }
 
-impl Parser {
-    pub fn new() -> Self {
+impl Default for Parser {
+    fn default() -> Self {
         Parser {
             parser: CommandParser::new(),
         }
     }
+}
 
+impl Parser {
     pub fn parse(&mut self, input: &str) -> Result<ast::Command, Error> {
         self.parser
             .parse(input)

@@ -38,7 +38,7 @@ impl AliasInfo {
     pub fn always<S: ToString>(subst: S) -> Self {
         Self {
             subst: subst.to_string(),
-            rule: AliasRule(Box::new(|ctx| -> bool { true })),
+            rule: AliasRule(Box::new(|_| -> bool { true })),
         }
     }
 
@@ -59,18 +59,12 @@ impl AliasInfo {
 ///
 /// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
 /// but upon substitution the error is emitted. This may be changed in the future.
+#[derive(Default)]
 pub struct Alias {
     aliases: MultiMap<String, AliasInfo>,
 }
 
 impl Alias {
-    /// Construct a new instance of [Alias]
-    pub fn new() -> Self {
-        Alias {
-            aliases: MultiMap::new(),
-        }
-    }
-
     /// Fetch all possible aliases
     pub fn get(&self, alias_ctx: &AliasRuleCtx) -> Vec<&String> {
         let alias_list = match self.aliases.get_vec(alias_ctx.alias_name) {
@@ -80,7 +74,7 @@ impl Alias {
 
         alias_list
             .iter()
-            .filter(|alias_info| (alias_info.rule.0)(&alias_ctx))
+            .filter(|alias_info| (alias_info.rule.0)(alias_ctx))
             .map(|alias_info| &alias_info.subst)
             .collect::<Vec<_>>()
     }

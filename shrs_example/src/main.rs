@@ -77,7 +77,7 @@ fn main() {
 
     // =-=-= Environment variables =-=-=
     // Load environment variables from calling shell
-    let mut env = Env::new();
+    let mut env = Env::default();
     env.load();
     env.set("SHELL_NAME", "shrs_example");
 
@@ -97,7 +97,7 @@ fn main() {
     ));
 
     // =-=-= Menu =-=-=-=
-    let menu = DefaultMenu::new();
+    let menu = DefaultMenu::default();
 
     // =-=-= History =-=-=
     // Use history that writes to file on disk
@@ -184,7 +184,7 @@ a rusty POSIX shell | build {}"#,
         .with_keybinding(keybinding)
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
-        .with_plugin(RunContextPlugin::new())
+        .with_plugin(RunContextPlugin::default())
         .with_plugin(MuxPlugin::new())
         .with_plugin(CdStackPlugin)
         .build()

@@ -63,27 +63,27 @@ struct BuiltinProcess {
     stdout: Option<Stdin>,
 }
 
-impl BuiltinProcess {
-    pub fn new<S1, S2>(
-        program: S1,
-        args: &[S2],
-        status_code: ExitStatus,
-        stdout: Option<Stdin>,
-    ) -> Self
-    where
-        S1: AsRef<str>,
-        S2: AsRef<str>,
-    {
-        Self {
-            argv: iter::once(program)
-                .map(|p| p.as_ref().to_string())
-                .chain(args.iter().map(|arg| arg.as_ref().to_string()))
-                .collect(),
-            status_code,
-            stdout,
-        }
-    }
-}
+// impl BuiltinProcess {
+//     pub fn new<S1, S2>(
+//         program: S1,
+//         args: &[S2],
+//         status_code: ExitStatus,
+//         stdout: Option<Stdin>,
+//     ) -> Self
+//     where
+//         S1: AsRef<str>,
+//         S2: AsRef<str>,
+//     {
+//         Self {
+//             argv: iter::once(program)
+//                 .map(|p| p.as_ref().to_string())
+//                 .chain(args.iter().map(|arg| arg.as_ref().to_string()))
+//                 .collect(),
+//             status_code,
+//             stdout,
+//         }
+//     }
+// }
 
 impl Process for BuiltinProcess {
     fn id(&self) -> Option<ProcessId> {

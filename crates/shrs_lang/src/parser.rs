@@ -11,13 +11,10 @@ pub enum Error {
     UnsuccessfulParse,
 }
 
+#[derive(Default)]
 pub struct Parser {}
 
 impl Parser {
-    pub fn new() -> Self {
-        Parser {}
-    }
-
     pub fn parse(&self, lexer: Lexer) -> Result<ast::Command, Error> {
         grammar::ProgramParser::new()
             .parse(lexer.input(), lexer)

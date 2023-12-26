@@ -108,17 +108,10 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 }
 
 /// Default implementation of [Keybinding]
+#[derive(Default)]
 pub struct DefaultKeybinding {
     // TODO this can't take closure right now
     pub bindings: HashMap<Binding, Box<BindingFn>>,
-}
-
-impl DefaultKeybinding {
-    pub fn new() -> Self {
-        Self {
-            bindings: HashMap::new(),
-        }
-    }
 }
 
 impl Keybinding for DefaultKeybinding {
@@ -150,8 +143,6 @@ impl FromIterator<(Binding, Box<BindingFn>)> for DefaultKeybinding {
 
 #[cfg(test)]
 mod tests {
-    use std::process::Command;
-
     use crossterm::event::{KeyCode, KeyModifiers};
 
     use super::parse_keybinding;

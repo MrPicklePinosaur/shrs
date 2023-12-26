@@ -1,18 +1,12 @@
 //! Globally accessible state store
 
 /// State store that uses types to index
+#[derive(Default)]
 pub struct State {
     store: anymap::Map,
 }
 
 impl State {
-    /// Initialize the state store
-    pub fn new() -> State {
-        State {
-            store: anymap::Map::new(),
-        }
-    }
-
     pub fn insert<T: 'static>(&mut self, data: T) {
         self.store.insert::<T>(data);
     }

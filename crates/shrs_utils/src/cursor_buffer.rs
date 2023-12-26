@@ -119,6 +119,7 @@ impl Add for Location {
 }
 
 /// Friendly wrapper around Rope data structure
+#[derive(Default)]
 pub struct CursorBuffer {
     data: Rope,
     /// Cursor is an absolute index into the data buffer
@@ -132,16 +133,8 @@ pub struct CursorBuffer {
 }
 
 impl CursorBuffer {
-    /// Construct an empty CursorBuffer
-    pub fn new() -> Self {
-        CursorBuffer {
-            data: Rope::new(),
-            cursor: 0,
-        }
-    }
-
-    /// Create new `CursorBuffer` from string an sets cursor location to beginning
-    pub fn from_str(text: &str) -> Self {
+    /// Create new `CursorBuffer` from string and sets cursor location to beginning
+    pub fn from_text(text: &str) -> Self {
         CursorBuffer {
             data: Rope::from_str(text),
             cursor: 0,
@@ -246,6 +239,11 @@ impl CursorBuffer {
         self.data.len_chars()
     }
 
+    /// Check whether the buffer is empty
+    pub fn is_empty(&self) -> bool {
+        self.data.len_chars() == 0
+    }
+
     /// Get char at position
     pub fn char_at(&self, loc: Location) -> Option<char> {
         self.to_absolute(loc)
@@ -290,7 +288,7 @@ impl CursorBuffer {
     }
 
     /// Get borrowed contents of CursorBuffer as a string
-    pub fn as_str<'a>(&'a self) -> Cow<'a, str> {
+    pub fn as_str(&self) -> Cow<str> {
         self.data.slice(..).into()
     }
 }
@@ -302,7 +300,7 @@ mod tests {
     #[test]
     /// Basic insert and delete test
     fn basic_insert_delete() -> Result<()> {
-        let mut cb = CursorBuffer::new();
+        let mut cb = CursorBuffer::default();
 
         cb.insert(Location::Cursor(), "hello world")?;
         assert_eq!(cb.slice(..), "hello world");
@@ -321,7 +319,7 @@ mod tests {
 
     #[test]
     fn slice() -> Result<()> {
-        let mut cb = CursorBuffer::new();
+        let mut cb = CursorBuffer::default();
 
         cb.insert(Location::Cursor(), "hello world")?;
         assert_eq!(cb.slice(..2), "he");
@@ -334,7 +332,7 @@ mod tests {
     #[test]
     /// Test overdeleting buffer
     fn over_delete() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello");
+        let mut cb = CursorBuffer::from_text("hello");
 
         assert_eq!(
             cb.delete(Location::Cursor(), Location::Abs(200)),
@@ -346,7 +344,7 @@ mod tests {
 
     #[test]
     fn find_char() -> Result<()> {
-        let cb = CursorBuffer::from_str("hello");
+        let cb = CursorBuffer::from_text("hello");
 
         assert_eq!(
             Location::FindChar(&cb, Location::Cursor(), 'l'),
@@ -358,7 +356,7 @@ mod tests {
 
     #[test]
     fn find_char_back() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello");
+        let mut cb = CursorBuffer::from_text("hello");
         cb.move_cursor(Location::Back(&cb))?;
 
         assert_eq!(
@@ -371,7 +369,7 @@ mod tests {
 
     #[test]
     fn utf8_basic() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("こんにちは");
+        let mut cb = CursorBuffer::from_text("こんにちは");
         cb.move_cursor(Location::After())?;
 
         assert_eq!(cb.cursor(), 1);

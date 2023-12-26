@@ -34,7 +34,7 @@ impl StyledBuf {
     pub fn lines(&self) -> Vec<Vec<StyledContent<String>>> {
         let mut lines: Vec<Vec<StyledContent<String>>> = vec![];
         let mut i = 0;
-        for line in self.content.split("\n") {
+        for line in self.content.split('\n') {
             let mut x: Vec<StyledContent<String>> = vec![];
 
             for c in line.chars() {
@@ -58,7 +58,6 @@ impl StyledBuf {
     pub fn count_newlines(&self) -> u16 {
         self.content
             .chars()
-            .into_iter()
             .filter(|c| *c == '\n')
             .count()
             .try_into()

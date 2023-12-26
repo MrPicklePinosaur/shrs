@@ -22,7 +22,7 @@ pub fn run_external_command(
     ctx: &mut Context,
     rt: &mut Runtime,
     cmd: &str,
-    args: &Vec<String>,
+    args: &[String],
     stdin: Stdio,
     stdout: Stdio,
     pgid: Option<i32>,

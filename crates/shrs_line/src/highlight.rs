@@ -1,6 +1,6 @@
 //! Syntax highlighting
 
-use std::{collections::HashMap, default, usize};
+use std::{collections::HashMap, usize};
 
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
@@ -104,61 +104,59 @@ pub fn shrs_rule(buf: &str) -> HashMap<usize, ContentStyle> {
 
     let mut c_style: HashMap<usize, ContentStyle> = HashMap::new();
     let mut range_insert = |start: usize, end: usize, style: ContentStyle| {
-        (start..end).into_iter().for_each(|u| {
+        (start..end).for_each(|u| {
             c_style.insert(u, style);
         })
     };
 
     let lexer = Lexer::new(buf);
     let mut is_cmd = true;
-    for t in lexer {
-        if let Ok(token) = t {
-            match token.1.clone() {
-                Token::WORD(_) => {
-                    if is_cmd {
-                        range_insert(token.0, token.2, cmd_style);
-                        is_cmd = false;
-                    }
-                },
-                //Tokens that make next word command
-                Token::IF
-                | Token::THEN
-                | Token::ELSE
-                | Token::ELIF
-                | Token::DO
-                | Token::CASE
-                | Token::AND_IF
-                | Token::OR_IF
-                | Token::SEMI
-                | Token::DSEMI
-                | Token::AMP
-                | Token::PIPE => {
-                    is_cmd = true;
-                },
-                _ => (),
-            }
-            match token.1 {
-                Token::IF
-                | Token::ELSE
-                | Token::FI
-                | Token::THEN
-                | Token::ELIF
-                | Token::DO
-                | Token::DONE
-                | Token::CASE
-                | Token::ESAC
-                | Token::WHILE
-                | Token::UNTIL
-                | Token::FOR
-                | Token::IN => {
-                    range_insert(token.0, token.2, reserved_style);
-                },
-                _ => (),
-            }
-            if let Token::WORD(w) = token.1 {
-                if w.starts_with('\'') || w.starts_with('\"') {
-                    range_insert(token.0, token.2, string_style);
+    for token in lexer.flatten() {
+        match token.1.clone() {
+            Token::WORD(_) => {
+                if is_cmd {
+                    range_insert(token.0, token.2, cmd_style);
+                    is_cmd = false;
                 }
+            },
+            //Tokens that make next word command
+            Token::IF
+            | Token::THEN
+            | Token::ELSE
+            | Token::ELIF
+            | Token::DO
+            | Token::CASE
+            | Token::AND_IF
+            | Token::OR_IF
+            | Token::SEMI
+            | Token::DSEMI
+            | Token::AMP
+            | Token::PIPE => {
+                is_cmd = true;
+            },
+            _ => (),
+        }
+        match token.1 {
+            Token::IF
+            | Token::ELSE
+            | Token::FI
+            | Token::THEN
+            | Token::ELIF
+            | Token::DO
+            | Token::DONE
+            | Token::CASE
+            | Token::ESAC
+            | Token::WHILE
+            | Token::UNTIL
+            | Token::FOR
+            | Token::IN => {
+                range_insert(token.0, token.2, reserved_style);
+            },
+            _ => (),
+        }
+        if let Token::WORD(w) = token.1 {
+            if w.starts_with('\'') || w.starts_with('\"') {
+                range_insert(token.0, token.2, string_style);
             }
         }
     }

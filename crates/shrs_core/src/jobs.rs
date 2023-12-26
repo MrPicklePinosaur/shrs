@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::anyhow;
-use pino_deref::Deref;
 
 pub type JobId = u32;
 
@@ -15,6 +14,7 @@ pub struct JobInfo {
 }
 
 /// Keeps track of all the current running jobs
+#[derive(Default)]
 pub struct Jobs {
     foreground: Option<Child>,
     next_id: JobId,
@@ -22,14 +22,6 @@ pub struct Jobs {
 }
 
 impl Jobs {
-    pub fn new() -> Self {
-        Jobs {
-            next_id: 0,
-            jobs: HashMap::new(),
-            foreground: None,
-        }
-    }
-
     /// Add new job to be tracked
     pub fn push(&mut self, child: Child, cmd: String) {
         let next_id = self.get_next_id();
@@ -45,14 +37,14 @@ impl Jobs {
     where
         F: FnMut(ExitStatus),
     {
-        self.jobs.retain(|k, v| {
+        self.jobs.retain(|_, v| {
             match v.child.try_wait() {
                 Ok(Some(status)) => {
                     exit_handler(status);
                     false
                 },
                 Ok(None) => true,
-                Err(e) => {
+                Err(_) => {
                     // TODO should throw error that there was issue waiting for job to finish
                     false
                 },

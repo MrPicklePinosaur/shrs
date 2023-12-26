@@ -24,17 +24,17 @@ pub trait History {
     fn len(&self) -> usize;
     /// Get a history entry by index
     fn get(&self, i: usize) -> Option<&Self::HistoryItem>;
+
+    /// Check if the history is empty
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 /// Default implementation of [History] that saves history in process memory
+#[derive(Default)]
 pub struct DefaultHistory {
     hist: Vec<String>,
-}
-
-impl DefaultHistory {
-    pub fn new() -> Self {
-        DefaultHistory { hist: vec![] }
-    }
 }
 
 impl History for DefaultHistory {
@@ -161,9 +161,6 @@ fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHisto
         .map_err(FileBackedHistoryError::OpeningHistFile)?;
     let reader = BufReader::new(handle);
     // TODO should error/terminate when a line cannot be read?
-    let hist = reader
-        .lines()
-        .filter_map(|line| line.ok())
-        .collect::<Vec<_>>();
+    let hist = reader.lines().map_while(Result::ok).collect::<Vec<_>>();
     Ok(hist)
 }

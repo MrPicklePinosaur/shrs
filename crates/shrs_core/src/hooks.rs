@@ -10,24 +10,14 @@
 // - env hook (when environment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-    io::BufWriter,
-    marker::PhantomData,
-    path::PathBuf,
-    process::ExitStatus,
-    time::Duration,
-};
-
-use crossterm::{style::Print, QueueableCommand};
+use std::{path::PathBuf, process::ExitStatus, time::Duration};
 
 use crate::{
     cmd_output::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
 
-pub type HookFn<C: Clone> =
+pub type HookFn<C> =
     fn(sh: &Shell, sh_ctx: &mut Context, sh_rt: &mut Runtime, ctx: &C) -> anyhow::Result<()>;
 
 // TODO this is some pretty sus implementation
@@ -44,9 +34,9 @@ pub struct StartupCtx {
 
 /// Default implementation for [StartupCtx]
 pub fn startup_hook(
-    sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
+    _sh: &Shell,
+    _sh_ctx: &mut Context,
+    _sh_rt: &mut Runtime,
     _ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
     println!("welcome to shrs!");
@@ -66,10 +56,10 @@ pub struct BeforeCommandCtx {
 
 /// Default implementation for [BeforeCommandCtx]
 pub fn before_command_hook(
-    sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
-    ctx: &BeforeCommandCtx,
+    _sh: &Shell,
+    _sh_ctx: &mut Context,
+    _sh_rt: &mut Runtime,
+    _ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     // let expanded_cmd = format!("[evaluating] {}\n", ctx.command);
     // out.queue(Print(expanded_cmd))?;
@@ -87,10 +77,10 @@ pub struct AfterCommandCtx {
 
 /// Default implementation for [AfterCommandCtx]
 pub fn after_command_hook(
-    sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
-    ctx: &AfterCommandCtx,
+    _sh: &Shell,
+    _sh_ctx: &mut Context,
+    _sh_rt: &mut Runtime,
+    _ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // let exit_code_str = format!("[exit +{}]\n", ctx.exit_code);
     // out.queue(Print(exit_code_str))?;
@@ -106,10 +96,10 @@ pub struct ChangeDirCtx {
 
 /// Default implementation for [ChangeDirCtx]
 pub fn change_dir_hook(
-    sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
-    ctx: &ChangeDirCtx,
+    _sh: &Shell,
+    _sh_ctx: &mut Context,
+    _sh_rt: &mut Runtime,
+    _ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
     Ok(())
 }
@@ -122,9 +112,9 @@ pub struct JobExitCtx {
 
 /// Default implementation for [JobExitCtx]
 pub fn job_exit_hook(
-    sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
+    _sh: &Shell,
+    _sh_ctx: &mut Context,
+    _sh_rt: &mut Runtime,
     ctx: &JobExitCtx,
 ) -> anyhow::Result<()> {
     println!("[exit +{:?}]", ctx.status.code());

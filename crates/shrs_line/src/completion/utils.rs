@@ -33,15 +33,15 @@ pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<PathBuf>> {
     filepaths_p(dir, |_| true)
 }
 
-/// Generate list of all executables in PATH
-fn executables(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
-}
+// /// Generate list of all executables in PATH
+// fn executables(_dir: &Path) -> std::io::Result<Vec<String>> {
+//     todo!()
+// }
 
-/// Generate list of all ssh hosts
-fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
-    todo!()
-}
+// /// Generate list of all ssh hosts
+// fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
+//     todo!()
+// }
 
 /// Looks through each directory in path and finds executables
 pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
@@ -53,12 +53,10 @@ pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
             Ok(dir) => dir,
             Err(_) => continue,
         };
-        for file in dir {
-            if let Ok(dir_entry) = file {
-                // check if file is executable
-                if dir_entry.metadata().unwrap().permissions().mode() & 0o111 != 0 {
-                    execs.push(dir_entry.file_name().to_str().unwrap().into());
-                }
+        for dir_entry in dir.flatten() {
+            // check if file is executable
+            if dir_entry.metadata().unwrap().permissions().mode() & 0o111 != 0 {
+                execs.push(dir_entry.file_name().to_str().unwrap().into());
             }
         }
     }
@@ -75,14 +73,14 @@ pub(crate) fn drop_path_end(path: &str) -> String {
     drop_end.chars().rev().collect::<String>()
 }
 
-pub(crate) fn path_end(path: &str) -> String {
-    let end = path
-        .chars()
-        .rev()
-        .take_while(|c| *c != '/')
-        .collect::<String>();
-    end.chars().rev().collect::<String>()
-}
+// pub(crate) fn path_end(path: &str) -> String {
+//     let end = path
+//         .chars()
+//         .rev()
+//         .take_while(|c| *c != '/')
+//         .collect::<String>();
+//     end.chars().rev().collect::<String>()
+// }
 
 #[cfg(test)]
 mod tests {

@@ -1,13 +1,7 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
-
 use clap::{Parser, Subcommand};
 
-use super::{BuiltinCmd, Builtins};
+use super::BuiltinCmd;
 use crate::{
-    hooks::ChangeDirCtx,
     prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
@@ -31,8 +25,8 @@ impl BuiltinCmd for HelpBuiltin {
         &self,
         sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _rt: &mut Runtime,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 

@@ -1,14 +1,9 @@
-use std::{
-    os::unix::process::ExitStatusExt,
-    process::{ExitStatus, Stdio},
-};
-
 use shrs_core::{
     lang::Lang,
-    prelude::{BeforeCommandCtx, CmdOutput},
+    prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
-use shrs_job::{initialize_job_control, Output};
+use shrs_job::initialize_job_control;
 use thiserror::Error;
 
 // use crate::eval::{command_output, eval_command},
@@ -33,8 +28,8 @@ pub enum PosixError {
 /// Posix implementation of shell command language
 pub struct PosixLang {}
 
-impl PosixLang {
-    pub fn new() -> Self {
+impl Default for PosixLang {
+    fn default() -> Self {
         initialize_job_control().unwrap();
         Self {}
     }
@@ -82,13 +77,13 @@ impl Lang for PosixLang {
     fn eval(
         &self,
         sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         line: String,
     ) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let parser = Parser::new();
+        let parser = Parser::default();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {
@@ -122,57 +117,55 @@ impl Lang for PosixLang {
 
         let lexer = Lexer::new(command.as_str());
 
-        for t in lexer {
-            if let Ok(token) = t {
-                match token.1 {
-                    Token::LBRACE => brackets.push(token.1),
-                    Token::LPAREN => brackets.push(token.1),
-                    Token::RPAREN => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LPAREN {
-                                brackets.pop();
+        for token in lexer.flatten() {
+            match token.1 {
+                Token::LBRACE => brackets.push(token.1),
+                Token::LPAREN => brackets.push(token.1),
+                Token::RPAREN => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LPAREN {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::RBRACE => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LBRACE {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::WORD(w) => {
+                    if let Some(c) = w.chars().next() {
+                        if c == '\'' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+                            if let Some(e) = w.chars().last() {
+                                return e != '\'';
                             } else {
-                                return false;
+                                return true;
                             }
                         }
-                    },
-                    Token::RBRACE => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LBRACE {
-                                brackets.pop();
+                        if c == '\"' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+
+                            if let Some(e) = w.chars().last() {
+                                return e != '\"';
                             } else {
-                                return false;
+                                return true;
                             }
                         }
-                    },
-                    Token::WORD(w) => {
-                        if let Some(c) = w.chars().next() {
-                            if c == '\'' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\'';
-                                } else {
-                                    return true;
-                                }
-                            }
-                            if c == '\"' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
+                    }
+                },
 
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\"';
-                                } else {
-                                    return true;
-                                }
-                            }
-                        }
-                    },
-
-                    _ => (),
-                }
+                _ => (),
             }
         }
 

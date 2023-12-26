@@ -2,30 +2,21 @@
 
 use std::{
     cell::RefCell,
-    collections::HashMap,
     env,
-    fs::File,
-    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
-    os::unix::process::CommandExt,
     path::{Path, PathBuf},
-    process::{Child, Output, Stdio},
-    rc::Rc,
     time::Instant,
 };
 
 use anyhow::anyhow;
-use crossterm::{style::Print, QueueableCommand};
-use lazy_static::lazy_static;
 use log::error;
 use shrs_job::JobManager;
-use thiserror::Error;
 
 use crate::{
     alias::Alias,
     builtin::Builtins,
     env::Env,
     history::History,
-    hooks::{AfterCommandCtx, BeforeCommandCtx, ChangeDirCtx, Hooks, JobExitCtx, StartupCtx},
+    hooks::{ChangeDirCtx, Hooks},
     jobs::Jobs,
     keybinding::Keybinding,
     lang::Lang,

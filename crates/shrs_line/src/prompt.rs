@@ -12,13 +12,8 @@ pub trait Prompt {
 }
 
 /// Default implementation for [Prompt]
+#[derive(Default)]
 pub struct DefaultPrompt {}
-
-impl DefaultPrompt {
-    pub fn new() -> Self {
-        DefaultPrompt {}
-    }
-}
 
 impl Prompt for DefaultPrompt {
     // TODO i still don't like passing all this context down

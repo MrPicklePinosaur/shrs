@@ -28,7 +28,7 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     // TODO temp hacky macro
-    (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => ($func:block, $desc:expr)),* $(,)*) => {{
+    (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
         use $crate::prelude::{Shell, Context, Runtime};
         DefaultKeybinding::from_iter([

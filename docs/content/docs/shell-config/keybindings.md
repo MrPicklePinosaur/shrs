@@ -21,14 +21,16 @@ internal detail and not very fun to write, so a macro is provided to make the
 experience a bit better.
 ```rust
 let keybinding = keybindings! {
-    "C-l" => Command::new("clear").spawn(),
+    |sh, ctx, rt|
+    "C-l" => ("Clear the screen", { Command::new("clear").spawn() }),
 };
 
 myshell.with_keybinding(keybinding);
 ```
 
-The macro allows us to represent key combinations in terms of strings. You can
-also include modifier keys (such as control and shift). Here are the supported modifiers:
+`sh`, `ctx`, and `rt` are shell, context, and runtime variables respectively. Each keybinding is matched with a tuple. The first item in the tuple is a description of what the keybinding performs. The second item in the tuple is the function that will be executed once that key combination is pressed.
+
+The macro allows us to represent key combinations in terms of strings. You can also include modifier keys (such as control and shift). Here are the supported modifiers:
 
 | Modifier | Usage |
 | ---|--- |

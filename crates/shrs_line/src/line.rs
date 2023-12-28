@@ -1,26 +1,22 @@
 //! Core readline configuration
 
-use std::{borrow::BorrowMut, io::Write, iter::repeat, time::Duration, vec};
+use std::borrow::BorrowMut;
 
 use crossterm::{
     cursor::SetCursorStyle,
     event::{
-        poll, read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent,
-        KeyModifiers,
+        read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent, KeyModifiers,
     },
     execute,
-    style::{Color, ContentStyle, StyledContent},
+    style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_core::shell::{Context, Runtime, Shell};
-use shrs_lang::{Lexer, Token};
 use shrs_utils::{
-    algo::longest_common_prefix,
     cursor_buffer::{CursorBuffer, Location},
     styled_buf::StyledBuf,
 };
 use shrs_vi::{Action, Command, Motion, Parser};
-use trie_rs::TrieBuilder;
 
 use crate::{painter::Painter, prelude::*};
 
@@ -43,7 +39,7 @@ pub enum LineMode {
 #[builder(setter(prefix = "with"))]
 pub struct Line {
     /// Completion menu, see [Menu]
-    #[builder(default = "Box::new(DefaultMenu::new())")]
+    #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
 
@@ -52,7 +48,7 @@ pub struct Line {
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 
-    #[builder(default = "Box::new(DefaultBufferHistory::new())")]
+    #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
 
@@ -62,12 +58,12 @@ pub struct Line {
     highlighter: Box<dyn Highlighter>,
 
     /// Custom prompt, see [Prompt]
-    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(default = "Box::new(DefaultPrompt::default())")]
     #[builder(setter(custom))]
     prompt: Box<dyn Prompt>,
 
     // ignored fields
-    #[builder(default = "Painter::new()")]
+    #[builder(default = "Painter::default()")]
     #[builder(setter(skip))]
     painter: Painter,
 
@@ -143,7 +139,7 @@ pub struct LineCtx<'a> {
 impl<'a> LineCtx<'a> {
     pub fn new(sh: &'a Shell, ctx: &'a mut Context, rt: &'a mut Runtime) -> Self {
         LineCtx {
-            cb: CursorBuffer::new(),
+            cb: CursorBuffer::default(),
             current_word: String::new(),
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
@@ -391,7 +387,7 @@ impl Line {
                 ..
             }) => {
                 // if current input is empty exit the shell, otherwise treat it as enter
-                if ctx.cb.len() == 0 {
+                if ctx.cb.is_empty() {
                     // TODO maybe unify exiting the shell
                     disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
                                         // handling cleanup code
@@ -520,7 +516,7 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                if !ctx.cb.is_empty() && ctx.cb.cursor() != 0 {
                     ctx.cb.delete(Location::Before(), Location::Cursor())?;
                 }
             },
@@ -529,7 +525,7 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                if !ctx.cb.is_empty() && ctx.cb.cursor() != 0 {
                     let start = ctx.cb.motion_to_loc(Motion::BackWord)?;
                     ctx.cb.delete(start, Location::Cursor())?;
                 }
@@ -576,7 +572,7 @@ impl Line {
             }) => {
                 self.normal_keys.push(c);
 
-                if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
+                if let Ok(Command { repeat, action }) = Parser::default().parse(&self.normal_keys) {
                     for _ in 0..repeat {
                         // special cases (possibly consulidate with execute_vi somehow)
 
@@ -694,12 +690,11 @@ impl Line {
         Ok(())
     }
 
-    fn to_normal_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
-        line_ctx
-            .ctx
-            .state
-            .get_mut::<CursorStyle>()
-            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBlock);
+    fn to_normal_mode(&self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        if let Some(cursor_style) = line_ctx.ctx.state.get_mut::<CursorStyle>() {
+            cursor_style.style = SetCursorStyle::BlinkingBlock;
+        }
+
         line_ctx.mode = LineMode::Normal;
 
         let hook_ctx = LineModeSwitchCtx {
@@ -714,12 +709,11 @@ impl Line {
         Ok(())
     }
 
-    fn to_insert_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
-        line_ctx
-            .ctx
-            .state
-            .get_mut::<CursorStyle>()
-            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBar);
+    fn to_insert_mode(&self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        if let Some(cursor_style) = line_ctx.ctx.state.get_mut::<CursorStyle>() {
+            cursor_style.style = SetCursorStyle::BlinkingBar;
+        }
+
         line_ctx.mode = LineMode::Insert;
 
         let hook_ctx = LineModeSwitchCtx {

@@ -10,7 +10,7 @@ impl BuiltinCmd for AnalyticsBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         //Args, timeframe; This session or all time
         //which metric

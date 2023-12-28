@@ -7,9 +7,9 @@ use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, 
 use crate::ast;
 
 pub struct Os {
-    job_manager: JobManager,
+    _job_manager: JobManager,
     /// Exit status of last command executed.
-    last_exit_status: ExitStatus,
+    _last_exit_status: ExitStatus,
 }
 
 pub fn run_job(

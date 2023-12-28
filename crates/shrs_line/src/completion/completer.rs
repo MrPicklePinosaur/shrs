@@ -154,7 +154,7 @@ pub fn filename_action(ctx: &CompletionCtx) -> Vec<Completion> {
     let drop_end = drop_path_end(cur_word);
     let cur_path = to_absolute(&drop_end, &dirs::home_dir().unwrap());
 
-    let output = filepaths(&cur_path).unwrap_or(vec![]);
+    let output = filepaths(&cur_path).unwrap_or_default();
     output
         .iter()
         .map(|x| {
@@ -275,7 +275,7 @@ fn sanitize_file_name(filename: String) -> String {
     //     static ref ESCAPE_SPACE
     // }
 
-    filename.replace(" ", "\\ ")
+    filename.replace(' ', "\\ ")
 }
 
 #[cfg(test)]

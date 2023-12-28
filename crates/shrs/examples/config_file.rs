@@ -18,7 +18,7 @@ fn main() {
     let myconfig: Config = ron::from_str(&config_file).unwrap();
 
     let alias = Alias::from_iter(myconfig.aliases);
-    let mut env = Env::new();
+    let mut env = Env::default();
     env.load();
     for (ref k, ref v) in myconfig.envs {
         env.set(k, v);

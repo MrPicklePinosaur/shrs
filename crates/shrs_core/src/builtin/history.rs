@@ -2,8 +2,6 @@
 
 // debatable if crate::history should be moved to crate::builtin::history
 
-use std::io::{stdout, Write};
-
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
@@ -31,10 +29,10 @@ pub struct HistoryBuiltin {}
 impl BuiltinCmd for HistoryBuiltin {
     fn run(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         // TODO hack
         let cli = Cli::try_parse_from(args)?;
@@ -50,10 +48,10 @@ impl BuiltinCmd for HistoryBuiltin {
             Some(Commands::Clear) => {
                 // ctx.history.clear();
             },
-            Some(Commands::Run { index }) => {
+            Some(Commands::Run { .. }) => {
                 todo!()
             },
-            Some(Commands::Search { query }) => {
+            Some(Commands::Search { .. }) => {
                 todo!()
             },
         }

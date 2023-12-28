@@ -1,5 +1,3 @@
-use std::io::{stdout, Write};
-
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
@@ -23,14 +21,14 @@ pub struct AliasBuiltin {}
 impl BuiltinCmd for AliasBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _rt: &mut Runtime,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
-        let mut it = cli.alias.splitn(2, "=");
+        let mut it = cli.alias.splitn(2, '=');
         let alias_name = it.next().unwrap();
         match it.next() {
             Some(alias_def) => {

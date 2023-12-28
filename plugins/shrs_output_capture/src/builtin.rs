@@ -17,7 +17,7 @@ impl BuiltinCmd for AgainBuiltin {
         _sh: &Shell,
         ctx: &mut Context,
         _rt: &mut Runtime,
-        _args: &Vec<String>,
+        _args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         if let Some(state) = ctx.state.get::<OutputCaptureState>() {
             print!("{}", state.last_output.stdout);

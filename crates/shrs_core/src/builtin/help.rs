@@ -16,6 +16,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Builtin,
+    Bindings,
 }
 
 #[derive(Default)]
@@ -38,6 +39,15 @@ impl BuiltinCmd for HelpBuiltin {
 
                 for cmd in cmds {
                     ctx.out.println(cmd)?;
+                }
+            },
+            Commands::Bindings => {
+                let info = sh.keybinding.get_info();
+
+                ctx.out.println("Key Bindings")?;
+
+                for (binding, desc) in info {
+                    ctx.out.println(format!("{}: {}", binding, desc))?;
                 }
             },
         }

@@ -7,9 +7,6 @@ example:
 build:
     cargo build --release --target x86_64-unknown-linux-gnu
 
-build:
-    cargo build --release --target x86_64-unknown-linux-gnu
-
 install:
     ./dev/scripts/install
 

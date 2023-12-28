@@ -119,7 +119,6 @@ impl Add for Location {
 }
 
 /// Friendly wrapper around Rope data structure
-#[derive(Default)]
 pub struct CursorBuffer {
     data: Rope,
     /// Cursor is an absolute index into the data buffer
@@ -130,6 +129,15 @@ pub struct CursorBuffer {
     ///
     /// Invariant: cursor is always valid (never need to perform bounds checking on `cursor` itself)
     cursor: usize,
+}
+
+impl Default for CursorBuffer {
+    fn default() -> Self {
+        CursorBuffer {
+            data: Rope::new(),
+            cursor: 0,
+        }
+    }
 }
 
 impl CursorBuffer {

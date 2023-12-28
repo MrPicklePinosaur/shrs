@@ -14,11 +14,20 @@ pub struct JobInfo {
 }
 
 /// Keeps track of all the current running jobs
-#[derive(Default)]
 pub struct Jobs {
     foreground: Option<Child>,
     next_id: JobId,
     jobs: HashMap<JobId, JobInfo>,
+}
+
+impl Default for Jobs {
+    fn default() -> Self {
+        Jobs {
+            next_id: 0,
+            jobs: HashMap::new(),
+            foreground: None,
+        }
+    }
 }
 
 impl Jobs {

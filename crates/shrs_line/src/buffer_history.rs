@@ -15,10 +15,18 @@ pub trait BufferHistory {
 #[derive(Default)]
 struct HistItem(String, usize);
 
-#[derive(Default)]
 pub struct DefaultBufferHistory {
     index: usize,
     hist: Vec<HistItem>,
+}
+
+impl Default for DefaultBufferHistory {
+    fn default() -> Self {
+        DefaultBufferHistory {
+            hist: vec![HistItem(String::new(), 0)],
+            index: 0,
+        }
+    }
 }
 
 impl DefaultBufferHistory {

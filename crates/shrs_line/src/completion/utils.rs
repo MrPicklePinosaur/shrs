@@ -33,16 +33,6 @@ pub(crate) fn filepaths(dir: &Path) -> std::io::Result<Vec<PathBuf>> {
     filepaths_p(dir, |_| true)
 }
 
-// /// Generate list of all executables in PATH
-// fn executables(_dir: &Path) -> std::io::Result<Vec<String>> {
-//     todo!()
-// }
-
-// /// Generate list of all ssh hosts
-// fn ssh_hosts(_dir: &Path) -> std::io::Result<Vec<String>> {
-//     todo!()
-// }
-
 /// Looks through each directory in path and finds executables
 pub(crate) fn find_executables_in_path(path_str: &str) -> Vec<String> {
     use std::{fs, os::unix::fs::PermissionsExt};

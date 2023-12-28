@@ -127,7 +127,6 @@ impl DefaultKeybinding {
     }
 }
 
-
 impl Keybinding for DefaultKeybinding {
     fn handle_key_event(
         &self,

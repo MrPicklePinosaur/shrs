@@ -36,7 +36,7 @@ pub fn after_command_hook(
 
 impl Plugin for AutocdPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        shell.hooks.register(after_command_hook);
+        shell.hooks.insert(after_command_hook);
 
         Ok(())
     }

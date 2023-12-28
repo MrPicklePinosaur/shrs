@@ -43,9 +43,7 @@ pub mod prelude {
         hooks::*,
         line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode, Readline},
         menu::{DefaultMenu, Menu},
-        painter::StyledBuf,
         prompt::{DefaultPrompt, Prompt, *},
-        styled,
         vi::*,
     };
 }

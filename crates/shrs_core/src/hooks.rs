@@ -146,11 +146,11 @@ impl Default for Hooks {
     fn default() -> Self {
         let mut hooks = Hooks::new();
 
-        hooks.register(startup_hook);
-        hooks.register(before_command_hook);
-        hooks.register(after_command_hook);
-        hooks.register(change_dir_hook);
-        hooks.register(job_exit_hook);
+        hooks.insert(startup_hook);
+        hooks.insert(before_command_hook);
+        hooks.insert(after_command_hook);
+        hooks.insert(change_dir_hook);
+        hooks.insert(job_exit_hook);
 
         hooks
     }
@@ -164,7 +164,7 @@ impl Hooks {
     }
 
     /// Registers a new hook
-    pub fn register<C: Clone + 'static>(&mut self, hook: HookFn<C>) {
+    pub fn insert<C: Clone + 'static>(&mut self, hook: HookFn<C>) {
         match self.hooks.get_mut::<Vec<HookFn<C>>>() {
             Some(hook_list) => {
                 hook_list.push(hook);

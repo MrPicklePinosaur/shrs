@@ -6,7 +6,10 @@ use std::{
 };
 
 use shrs::{
-    history::FileBackedHistory, keybindings, line::_core::shell::set_working_dir, prelude::*,
+    history::FileBackedHistory,
+    keybindings,
+    line::_core::shell::set_working_dir,
+    prelude::{styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -105,21 +108,21 @@ fn main() {
     // Add basic keybindings
     let keybinding = keybindings! {
         |sh, ctx, rt|
-        "C-l" => { Command::new("clear").spawn() },
-        "C-p" => {
+        "C-l" => ("Clear the screen", { Command::new("clear").spawn()}),
+        "C-p" => ("Move up one in the command history", {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.down() {
                     set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }
-        },
-        "C-n" => {
+        }),
+        "C-n" => ("Move down one in the command history", {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.up() {
                     set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }
-        },
+        }),
     };
 
     // =-=-= Prompt =-=-=
@@ -168,7 +171,7 @@ a rusty POSIX shell | build {}"#,
         Ok(())
     };
     let mut hooks = Hooks::new();
-    hooks.register(startup_msg);
+    hooks.insert(startup_msg);
 
     // =-=-= Shell =-=-=
     // Construct the final shell

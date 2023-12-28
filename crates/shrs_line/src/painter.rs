@@ -13,107 +13,12 @@ use crossterm::{
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
+use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
     completion::Completion, cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt,
 };
-/// Text to be rendered by painter
-#[derive(Clone)]
-pub struct StyledBuf {
-    content: String,
-    styles: Vec<ContentStyle>,
-}
-
-impl StyledBuf {
-    pub fn empty() -> Self {
-        Self {
-            content: String::new(),
-            styles: vec![],
-        }
-    }
-    pub fn new(content: &str, style: ContentStyle) -> Self {
-        let mut s = Self::empty();
-        s.push(content, style);
-        s
-    }
-
-    pub fn push(&mut self, content: &str, style: ContentStyle) {
-        self.content += content;
-
-        for _ in content.chars() {
-            self.styles.push(style);
-        }
-    }
-
-    pub fn lines(&self) -> Vec<Vec<StyledContent<String>>> {
-        let mut lines: Vec<Vec<StyledContent<String>>> = vec![];
-        let mut i = 0;
-        for line in self.content.split("\n") {
-            let mut x: Vec<StyledContent<String>> = vec![];
-
-            for c in line.chars() {
-                x.push(StyledContent::new(self.styles[i], c.to_string()));
-                i += 1;
-            }
-            i += 1;
-            lines.push(x);
-        }
-        lines
-    }
-    //can be simply changed to just the len(lines())-1
-    //kept for now
-    pub fn count_newlines(&self) -> u16 {
-        self.content
-            .chars()
-            .into_iter()
-            .filter(|c| *c == '\n')
-            .count()
-            .try_into()
-            .unwrap()
-    }
-
-    /// Length of content in characters
-    ///
-    /// The length returned is the 'visual' length of the character, in other words, how many
-    /// terminal columns it takes up
-    pub fn content_len(&self) -> u16 {
-        UnicodeWidthStr::width(self.content.as_str()) as u16
-    }
-
-    pub fn change_style(&mut self, c_style: HashMap<usize, ContentStyle>, offset: usize) {
-        for (u, s) in c_style.into_iter() {
-            if offset <= u {
-                self.styles[u - offset] = s;
-            }
-        }
-    }
-}
-pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
-    let c = line
-        .iter()
-        .map(|x| x.content().as_str())
-        .collect::<String>();
-    UnicodeWidthStr::width(c.as_str()) as u16
-}
-
-impl Display for StyledBuf {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.content)?;
-        Ok(())
-    }
-}
-
-impl FromIterator<StyledContent<String>> for StyledBuf {
-    fn from_iter<T: IntoIterator<Item = StyledContent<String>>>(iter: T) -> Self {
-        let mut buf = Self::empty();
-        for i in iter {
-            buf.push(i.content(), i.style().to_owned());
-        }
-        buf
-    }
-}
-
 pub struct Painter {
     /// The output buffer
     out: RefCell<BufWriter<std::io::Stdout>>,

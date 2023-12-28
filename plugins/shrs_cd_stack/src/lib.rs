@@ -67,7 +67,7 @@ impl Plugin for CdStackPlugin {
         // constructed yet
         cd_stack_state.push(&current_dir().unwrap());
         shell.state.insert(cd_stack_state);
-        shell.hooks.register(change_dir_hook);
+        shell.hooks.insert(change_dir_hook);
 
         Ok(())
     }

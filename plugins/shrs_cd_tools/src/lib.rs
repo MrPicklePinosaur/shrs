@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 use anymap::AnyMap;
 use query::{Query, QueryResult};
-use shrs::prelude::*;
+use shrs::prelude::{styled_buf::StyledBuf, *};
 
 pub struct DirParsePlugin {
     // pub modules: Option<Vec<Query>>,
@@ -104,8 +104,8 @@ impl Plugin for DirParsePlugin {
         ]);
 
         shell.state.insert(DirParseState::new(modules));
-        shell.hooks.register(startup_hook);
-        shell.hooks.register(change_dir_hook);
+        shell.hooks.insert(startup_hook);
+        shell.hooks.insert(change_dir_hook);
 
         Ok(())
     }

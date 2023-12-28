@@ -3,7 +3,11 @@ use std::{
     io::{stderr, stdout, BufWriter, Write},
 };
 
-use crossterm::{style::Print, QueueableCommand};
+use crossterm::{
+    style::{Print, PrintStyledContent},
+    QueueableCommand,
+};
+use shrs_utils::styled_buf::StyledBuf;
 
 pub struct OutputWriter {
     stdout: BufWriter<std::io::Stdout>,
@@ -58,5 +62,19 @@ impl OutputWriter {
     pub fn end_collecting(&mut self) -> (String, String) {
         self.collecting = false;
         (self.out.drain(..).collect(), self.err.drain(..).collect())
+    }
+    pub fn print_buf(&mut self, buf: StyledBuf) -> anyhow::Result<()> {
+        let lines = buf.lines();
+
+        for (i, line) in lines.iter().enumerate() {
+            if i > 0 {
+                self.print("\r\n")?;
+            }
+            for span in line {
+                self.stdout.queue(PrintStyledContent(span.clone()))?;
+            }
+        }
+
+        Ok(())
     }
 }

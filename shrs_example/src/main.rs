@@ -108,21 +108,21 @@ fn main() {
     // Add basic keybindings
     let keybinding = keybindings! {
         |sh, ctx, rt|
-        "C-l" => { Command::new("clear").spawn() },
-        "C-p" => {
+        "C-l" => ("Clear the screen", { Command::new("clear").spawn()}),
+        "C-p" => ("Move up one in the command history", {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.down() {
                     set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }
-        },
-        "C-n" => {
+        }),
+        "C-n" => ("Move down one in the command history", {
             if let Some(state) = ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.up() {
                     set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
                 }
             }
-        },
+        }),
     };
 
     // =-=-= Prompt =-=-=

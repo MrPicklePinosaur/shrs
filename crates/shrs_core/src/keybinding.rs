@@ -19,6 +19,7 @@ pub trait Keybinding {
         rt: &mut Runtime,
         key_event: KeyEvent,
     ) -> bool;
+    fn get_info(&self) -> &HashMap<String, String>;
 }
 
 pub type Binding = (KeyCode, KeyModifiers);
@@ -27,7 +28,7 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     // TODO temp hacky macro
-    (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => $func:block),* $(,)*) => {{
+    (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
         use $crate::prelude::{Shell, Context, Runtime};
         DefaultKeybinding::from_iter([
@@ -35,7 +36,9 @@ macro_rules! keybindings {
                 parse_keybinding($binding).unwrap(),
                 Box::new(|$sh: &Shell, $ctx: &mut Context, $rt: &mut Runtime| {
                     $func;
-                }) as Box<BindingFn>
+                }) as Box<BindingFn>,
+                $binding.to_string(),
+                $desc.to_string(),
             )),*
         ])
     }};
@@ -111,8 +114,19 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 #[derive(Default)]
 pub struct DefaultKeybinding {
     // TODO this can't take closure right now
-    pub bindings: HashMap<Binding, Box<BindingFn>>,
+    pub bindings: HashMap<Binding, (Box<BindingFn>)>,
+    pub info: HashMap<String, String>,
 }
+
+impl DefaultKeybinding {
+    pub fn new() -> Self {
+        Self {
+            bindings: HashMap::new(),
+            info: HashMap::new(),
+        }
+    }
+}
+
 
 impl Keybinding for DefaultKeybinding {
     fn handle_key_event(
@@ -131,13 +145,25 @@ impl Keybinding for DefaultKeybinding {
         }
         event_handled
     }
+
+    fn get_info(&self) -> &HashMap<String, String> {
+        &self.info
+    }
 }
 
-impl FromIterator<(Binding, Box<BindingFn>)> for DefaultKeybinding {
-    fn from_iter<T: IntoIterator<Item = (Binding, Box<BindingFn>)>>(iter: T) -> Self {
-        DefaultKeybinding {
-            bindings: HashMap::from_iter(iter),
+impl FromIterator<(Binding, Box<BindingFn>, String, String)> for DefaultKeybinding {
+    fn from_iter<T: IntoIterator<Item = (Binding, Box<BindingFn>, String, String)>>(
+        iter: T,
+    ) -> Self {
+        let mut default_keybinding = DefaultKeybinding {
+            bindings: HashMap::new(),
+            info: HashMap::new(),
+        };
+        for item in iter {
+            default_keybinding.bindings.insert(item.0, item.1);
+            default_keybinding.info.insert(item.2, item.3);
         }
+        default_keybinding
     }
 }
 

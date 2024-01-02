@@ -1,6 +1,6 @@
 [package]
 name = "shrs_run_context"
-version = "0.0.2"
+version = "0.0.3"
 description = "Save and load run context"
 
 authors.workspace = true
@@ -12,7 +12,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.2", features = ["serde"] }
+shrs = { path = "../../crates/shrs", version = "^0.0.3", features = ["serde"] }
 clap = { version = "4.1", features = ["derive"] }
 
 ron = { version = "0.8" }

@@ -1,6 +1,6 @@
 [package]
 name = "shrs_mux"
-version = "0.0.2"
+version = "0.0.3"
 description = ""
 readme = "README.md"
 
@@ -13,5 +13,5 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.2" }
+shrs = { path = "../../crates/shrs", version = "^0.0.3" }
 clap = { version = "4.1", features = ["derive"] }

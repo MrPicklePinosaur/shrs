@@ -36,7 +36,7 @@ cd <project-name>
 Next, add shrs as a dependency in your `Cargo.toml`. shrs is still currently in pre-release, so there will be frequent updates. You can use the most recently published version with:
 
 ```toml
-shrs = { version = "0.0.2" }
+shrs = { version = "0.0.3" }
 ```
 
 Otherwise, if you wish to be on the bleeding edge, you can depend directly on the master branch (beware that there may be unexpected bugs and breaking API changes on master):

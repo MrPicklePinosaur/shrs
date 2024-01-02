@@ -1,6 +1,6 @@
 [package]
 name = "shrs_line"
-version = "0.0.2"
+version = "0.0.3"
 description = "readline implementation"
 
 authors.workspace = true
@@ -21,8 +21,8 @@ arboard = "3.2.0"
 
 anyhow = "1"
 thiserror = "1"
-shrs_core = { path = "../shrs_core", version = "^0.0.2" }
-shrs_vi = { path = "../shrs_vi", version = "^0.0.2" }
-shrs_utils = { path = "../shrs_utils", version = "^0.0.2" }
-shrs_lang = {path = "../shrs_lang", version = "^0.0.2" }
+shrs_core = { path = "../shrs_core", version = "^0.0.3" }
+shrs_vi = { path = "../shrs_vi", version = "^0.0.3" }
+shrs_utils = { path = "../shrs_utils", version = "^0.0.3" }
+shrs_lang = {path = "../shrs_lang", version = "^0.0.3" }
 # shrs_core = { path = "../shrs_utils" }

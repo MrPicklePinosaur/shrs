@@ -53,11 +53,7 @@ pub fn commits_behind_remote() -> anyhow::Result<u32> {
         ])
         .output()
         .map_err(|e| Error::GitError(e.to_string()))?;
-    Ok(str::from_utf8(&res.stdout)
-        .unwrap()
-        .trim()
-        .parse::<u32>()
-        .unwrap())
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
 }
 pub fn commits_ahead_remote() -> anyhow::Result<u32> {
     let res = Command::new("git")
@@ -69,11 +65,7 @@ pub fn commits_ahead_remote() -> anyhow::Result<u32> {
         ])
         .output()
         .map_err(|e| Error::GitError(e.to_string()))?;
-    Ok(str::from_utf8(&res.stdout)
-        .unwrap()
-        .trim()
-        .parse::<u32>()
-        .unwrap())
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
 }
 
 pub fn latest_commit_summary() -> anyhow::Result<String> {

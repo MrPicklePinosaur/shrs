@@ -1,4 +1,5 @@
 mod builtin;
+mod rhai;
 
 use shrs::prelude::*;
 

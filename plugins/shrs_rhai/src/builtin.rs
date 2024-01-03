@@ -21,7 +21,7 @@ impl BuiltinCmd for RhaiBuiltin {
         let engine = Engine::new();
 
         for file in args.iter().skip(1) {
-            engine.run_file(file.into()).unwrap();
+            let _ = engine.run_file(file.into()).map_err(|e| eprintln!("{}", e));
         }
 
         Ok(CmdOutput::success())

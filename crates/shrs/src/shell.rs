@@ -175,6 +175,8 @@ fn run_shell(
     rt: &mut Runtime,
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
+    // run post init for plugins
+
     // init stuff
     let res = sh.hooks.run::<StartupCtx>(
         sh,

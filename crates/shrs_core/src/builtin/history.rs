@@ -39,14 +39,12 @@ impl BuiltinCmd for HistoryBuiltin {
 
         match &cli.command {
             None => {
-                // let history = ctx.history.all();
-                // for (i, h) in history.iter().enumerate() {
-                //     print!("{} {}", i, h);
-                // }
-                // stdout().flush()?;
+                for i in (0.._ctx.history.len()).rev() {   
+                    _ctx.out.print(format!("{}: {}\n", i, _ctx.history.get(i).unwrap()))?;
+                }
             },
             Some(Commands::Clear) => {
-                // ctx.history.clear();
+                _ctx.history.clear();
             },
             Some(Commands::Run { .. }) => {
                 todo!()

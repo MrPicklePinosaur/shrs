@@ -1,0 +1,17 @@
+[package]
+name = "shrs_rhai"
+version = "0.0.3"
+description = "run rhai scripts with shrs context"
+readme = "README.md"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+shrs = { path = "../../crates/shrs", version = "^0.0.3" }
+rhai = { version = "1.16" }

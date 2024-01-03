@@ -1,7 +1,7 @@
 [package]
 name = "shrs_mux"
 version = "0.0.3"
-description = ""
+description = "shell language multiplexer"
 readme = "README.md"
 
 authors.workspace = true

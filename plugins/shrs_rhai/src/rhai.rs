@@ -8,11 +8,17 @@ pub fn create_engine(sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> Engine 
     let mut engine = Engine::new();
     let rt = Rc::new(RefCell::new(rt.clone())); // TODO copying so changes will not persist
 
-    // engine.register_fn("export", |name: ImmutableString, value: ImmutableString| {
-    //     rt.env.set(&name, &value);
-    // });
-    engine.register_fn("env", move |name: ImmutableString| -> String {
-        rt.borrow().env.get(&name).cloned().unwrap_or(String::new())
-    });
+    {
+        let rt = rt.clone();
+        engine.register_fn("export_env", move |name: &str, value: &str| {
+            let _ = rt.borrow_mut().env.set(name, value);
+        });
+    }
+    {
+        let rt = rt.clone();
+        engine.register_fn("env", move |name: &str| -> String {
+            rt.borrow().env.get(&name).cloned().unwrap_or(String::new())
+        });
+    }
     engine
 }

@@ -5,8 +5,8 @@ use rhai::{Dynamic, Engine, ImmutableString, Scope};
 use shrs::prelude::*;
 
 pub struct RhaiState<'a> {
-    engine: Engine,
-    scope: Scope<'a>,
+    pub engine: Engine,
+    pub scope: Scope<'a>,
 }
 
 impl<'a> RhaiState<'a> {

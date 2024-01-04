@@ -1,6 +1,8 @@
 use rhai::{Engine, EvalAltResult};
 use shrs::prelude::*;
 
+use crate::rhai::RhaiState;
+
 // Run functions defined in rhai script
 pub fn after_command_hook(
     sh: &Shell,
@@ -39,14 +41,17 @@ impl BuiltinCmd for RhaiBuiltin {
         rt: &mut Runtime,
         args: &[String],
     ) -> anyhow::Result<CmdOutput> {
-        /*
-        let engine = create_engine(sh, ctx, rt);
+        let Some(state) = ctx.state.get_mut::<RhaiState>() else {
+            return Ok(CmdOutput::error());
+        };
 
         for file in args.iter().skip(1) {
-            let _ = engine.run_file(file.into()).map_err(|e| eprintln!("{}", e));
+            let _ = state
+                .engine
+                .run_file(file.into())
+                .map_err(|e| eprintln!("{}", e));
         }
 
-        */
         Ok(CmdOutput::success())
     }
 }

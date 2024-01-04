@@ -9,8 +9,12 @@ pub struct RhaiPlugin;
 impl Plugin for RhaiPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("source", builtin::RhaiBuiltin::new());
-        // shell.state.insert(RhaiState::new()); // TODO need post-init function that passes shell,
-        // rt, and ctx?
+        Ok(())
+    }
+
+    fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        let state = RhaiState::new(sh, ctx, rt);
+        ctx.state.insert(state);
         Ok(())
     }
 }

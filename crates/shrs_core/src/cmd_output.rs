@@ -20,6 +20,9 @@ impl CmdOutput {
     pub fn error() -> Self {
         CmdOutput::new(1)
     }
+    pub fn error_with_status(status: i32) -> Self {
+        CmdOutput::new(status)
+    }
     pub fn set_output(&mut self, out: String, err: String) {
         self.stdout = out;
         self.stderr = err;

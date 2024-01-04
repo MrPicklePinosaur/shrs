@@ -4,7 +4,7 @@ use std::process::ExitStatus;
 
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 
-use crate::ast;
+use crate::{ast, PosixError};
 
 pub struct Os {
     _job_manager: JobManager,
@@ -17,7 +17,7 @@ pub fn run_job(
     procs: Vec<Box<dyn Process>>,
     pgid: Option<u32>,
     foreground: bool,
-) -> anyhow::Result<()> {
+) -> Result<(), PosixError> {
     let proc_group = ProcessGroup {
         id: pgid,
         processes: procs,
@@ -28,9 +28,13 @@ pub fn run_job(
     let job_id = job_manager.create_job("", proc_group);
 
     if is_foreground {
-        job_manager.put_job_in_foreground(Some(job_id), false)?;
+        job_manager
+            .put_job_in_foreground(Some(job_id), false)
+            .map_err(|e| PosixError::Job(e))?;
     } else {
-        job_manager.put_job_in_background(Some(job_id), false)?;
+        job_manager
+            .put_job_in_background(Some(job_id), false)
+            .map_err(|e| PosixError::Job(e))?;
     }
     Ok(())
 }
@@ -41,7 +45,7 @@ pub fn eval_command(
     cmd: &ast::Command,
     stdin: Option<Stdin>,
     stdout: Option<Output>,
-) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
+) -> Result<(Vec<Box<dyn Process>>, Option<u32>), PosixError> {
     match cmd {
         ast::Command::Simple {
             assigns: _,
@@ -55,14 +59,22 @@ pub fn eval_command(
             let proc_stdin = stdin.unwrap_or(Stdin::Inherit);
             let proc_stdout = stdout.unwrap_or(Output::Inherit);
 
-            let (proc, pgid) = run_external_command(
+            let (proc, pgid) = match run_external_command(
                 program,
                 &args,
                 proc_stdin,
                 proc_stdout,
                 Output::Inherit,
                 None,
-            )?;
+            ) {
+                Ok((proc, pgid)) => (proc, pgid),
+                Err(e) => match e.kind() {
+                    std::io::ErrorKind::NotFound => {
+                        return Err(PosixError::CommandNotFound(program.clone()))
+                    },
+                    _ => return Err(PosixError::Eval(e.into())),
+                },
+            };
             Ok((vec![proc], pgid))
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {

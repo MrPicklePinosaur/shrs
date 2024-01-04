@@ -1,6 +1,7 @@
 //! Plugin System
 
 use log::warn;
+use shrs_core::shell::{Context, Runtime, Shell};
 
 use crate::ShellConfig;
 
@@ -30,11 +31,19 @@ impl Default for PluginMeta {
 
 /// Implement this trait to build your own plugins
 pub trait Plugin {
-    /// Plugin entry point
+    /// Plugin initialization
     ///
     /// Hook onto the initialization of the shell and add any hooks, functions, state variables
     /// that you would like
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()>;
+
+    /// Plugin post initialization
+    ///
+    /// Gets called once after the shell has completed initialization process, giving access to
+    /// shell, context, and runtime state
+    fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        Ok(())
+    }
 
     /// Return metadata related to the plugin
     fn meta(&self) -> PluginMeta {

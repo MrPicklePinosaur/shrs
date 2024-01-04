@@ -4,7 +4,7 @@ use shrs::prelude::*;
 use crate::rhai::RhaiState;
 
 // Run functions defined in rhai script
-pub fn after_command_hook(
+pub fn command_not_found_hook(
     sh: &Shell,
     sh_ctx: &mut Context,
     sh_rt: &mut Runtime,
@@ -16,24 +16,19 @@ pub fn after_command_hook(
     // TODO also using invalid command exit status is a bit hacky way of adding extra commands to
     // shell
 
-    // Bash exit code for invalid command
-    if let Some(exit_code) = ctx.cmd_output.status.code() {
-        if exit_code == 127 {
-            let Some(state) = sh_ctx.state.get_mut::<RhaiState>() else {
-                eprintln!("rhai state not found");
-                return Ok(());
-            };
+    let Some(state) = sh_ctx.state.get_mut::<RhaiState>() else {
+        eprintln!("rhai state not found");
+        return Ok(());
+    };
 
-            let mut cmd_parts = ctx.command.split(' ');
-            let cmd_name = cmd_parts.next().unwrap();
+    let mut cmd_parts = ctx.command.split(' ');
+    let cmd_name = cmd_parts.next().unwrap();
 
-            // search all sourced scripts for function we wish to run
-            for ast in state.ast.values() {
-                state
-                    .engine
-                    .call_fn::<()>(&mut state.scope, ast, cmd_name, ());
-            }
-        }
+    // search all sourced scripts for function we wish to run
+    for ast in state.ast.values() {
+        state
+            .engine
+            .call_fn::<()>(&mut state.scope, ast, cmd_name, ());
     }
 
     Ok(())

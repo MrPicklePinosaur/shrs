@@ -1,7 +1,7 @@
 mod builtin;
 mod rhai;
 
-use builtin::after_command_hook;
+use builtin::command_not_found_hook;
 use rhai::RhaiState;
 use shrs::prelude::*;
 
@@ -10,7 +10,7 @@ pub struct RhaiPlugin;
 impl Plugin for RhaiPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("source", builtin::RhaiBuiltin::new());
-        shell.hooks.insert(after_command_hook);
+        shell.hooks.insert(command_not_found_hook);
         Ok(())
     }
 

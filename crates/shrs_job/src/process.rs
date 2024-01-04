@@ -195,7 +195,7 @@ pub fn run_external_command<S1, S2>(
     stdout: Output,
     stderr: Output,
     pgid: Option<u32>,
-) -> anyhow::Result<(Box<dyn Process>, Option<u32>)>
+) -> std::io::Result<(Box<dyn Process>, Option<u32>)>
 where
     S1: AsRef<str>,
     S2: AsRef<str>,
@@ -311,7 +311,6 @@ where
                 // error
                 unistd::tcsetpgrp(util::get_terminal(), unistd::getpgrp()).unwrap();
             }
-
             return Err(e.into());
         },
     };

@@ -18,7 +18,17 @@ pub fn after_command_hook(
 
     // Bash exit code for invalid command
     if let Some(exit_code) = ctx.cmd_output.status.code() {
-        if exit_code == 127 {}
+        if exit_code == 127 {
+            let Some(state) = sh_ctx.state.get_mut::<RhaiState>() else {
+                eprintln!("rhai state not found");
+                return Ok(());
+            };
+
+            let mut cmd_parts = ctx.command.split(' ');
+            let cmd_name = cmd_parts.next().unwrap();
+
+            // state.engine.call_fn(&mut state.scope, ast, cmd_name, ());
+        }
     }
 
     Ok(())
@@ -42,14 +52,27 @@ impl BuiltinCmd for RhaiBuiltin {
         args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let Some(state) = ctx.state.get_mut::<RhaiState>() else {
+            eprintln!("Couldnt't get rhai state");
             return Ok(CmdOutput::error());
         };
 
         for file in args.iter().skip(1) {
-            let _ = state
+            let compiled = state
                 .engine
-                .run_file(file.into())
-                .map_err(|e| eprintln!("{}", e));
+                .compile_file_with_scope(&mut state.scope, file.into());
+
+            let ast = match compiled {
+                Ok(ast) => ast,
+                Err(e) => {
+                    eprintln!("Rhai script compile error {}", e);
+                    return Ok(CmdOutput::error());
+                },
+            };
+
+            // Always insert in case script file was modified during runtime of shell
+            state.ast.insert(file.to_string(), ast.clone());
+
+            state.engine.run_ast_with_scope(&mut state.scope, &ast);
         }
 
         Ok(CmdOutput::success())

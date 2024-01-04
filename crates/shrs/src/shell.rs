@@ -115,8 +115,10 @@ impl ShellConfig {
         // up implementing Default for Context and Runtime
 
         // run plugins first
+        // TODO ownership issue here since other plugins can technically add plugins during init
+        // process
         let plugins = self.plugins.drain(..).collect::<Vec<_>>();
-        for plugin in plugins {
+        for plugin in plugins.iter() {
             let plugin_meta = plugin.meta();
             info!("Initializing plugin '{}'...", plugin_meta.name);
 
@@ -162,8 +164,28 @@ impl ShellConfig {
             signals: Signals::new().unwrap(),
             keybinding: self.keybinding,
         };
-        let mut readline = self.readline;
 
+        // run post init for plugins
+        for plugin in plugins.iter() {
+            if let Err(e) = plugin.post_init(&sh, &mut ctx, &mut rt) {
+                let plugin_meta = plugin.meta();
+                info!("Post-initializing plugin '{}'...", plugin_meta.name);
+
+                // Error handling for plugin
+                match plugin.fail_mode() {
+                    FailMode::Warn => warn!(
+                        "Plugin '{}' failed to post-initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                    FailMode::Abort => panic!(
+                        "Plugin '{}' failed to post-initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                }
+            }
+        }
+
+        let mut readline = self.readline;
         run_shell(&sh, &mut ctx, &mut rt, &mut readline)
     }
 }
@@ -175,8 +197,6 @@ fn run_shell(
     rt: &mut Runtime,
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
-    // run post init for plugins
-
     // init stuff
     let res = sh.hooks.run::<StartupCtx>(
         sh,

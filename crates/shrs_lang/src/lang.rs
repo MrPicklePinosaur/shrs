@@ -23,6 +23,12 @@ pub enum PosixError {
     /// Issue evaluating command
     #[error("Failed evaluating command: {0}")]
     Eval(anyhow::Error),
+    /// Command not found
+    #[error("Command not found: {0}")]
+    CommandNotFound(String),
+    /// Job manager specific error
+    #[error("Job manager error: {0}")]
+    Job(anyhow::Error),
 }
 
 /// Posix implementation of shell command language
@@ -88,7 +94,7 @@ impl Lang for PosixLang {
             Ok(cmd) => cmd,
             Err(e) => {
                 // TODO detailed parse errors
-                eprintln!("{e}");
+                eprintln!("parse error: {e}");
                 return Err(e.into());
             },
         };

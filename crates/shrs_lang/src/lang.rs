@@ -1,6 +1,6 @@
 use shrs_core::{
     lang::Lang,
-    prelude::CmdOutput,
+    prelude::{CmdOutput, CommandNotFoundCtx},
     shell::{Context, Runtime, Shell},
 };
 use shrs_job::initialize_job_control;
@@ -83,8 +83,8 @@ impl Lang for PosixLang {
     fn eval(
         &self,
         sh: &Shell,
-        _ctx: &mut Context,
-        _rt: &mut Runtime,
+        ctx: &mut Context,
+        rt: &mut Runtime,
         line: String,
     ) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
@@ -102,7 +102,10 @@ impl Lang for PosixLang {
         let mut job_manager = sh.job_manager.borrow_mut();
         let (procs, pgid) = match eval2::eval_command(&mut job_manager, &cmd, None, None) {
             Ok((procs, pgid)) => (procs, pgid),
-            Err(PosixError::CommandNotFound(_)) => return Ok(CmdOutput::error_with_status(127)),
+            Err(PosixError::CommandNotFound(_)) => {
+                sh.hooks.run(sh, ctx, rt, CommandNotFoundCtx {});
+                return Ok(CmdOutput::error_with_status(127));
+            },
             _ => return Ok(CmdOutput::error()),
         };
 

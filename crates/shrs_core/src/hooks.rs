@@ -87,6 +87,10 @@ pub fn after_command_hook(
     Ok(())
 }
 
+/// Runs when a command not found error is received
+#[derive(Clone)]
+pub struct CommandNotFoundCtx {}
+
 /// Runs when the current working directory is modified
 #[derive(Clone)]
 pub struct ChangeDirCtx {

@@ -100,7 +100,11 @@ impl Lang for PosixLang {
         };
 
         let mut job_manager = sh.job_manager.borrow_mut();
-        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
+        let (procs, pgid) = match eval2::eval_command(&mut job_manager, &cmd, None, None) {
+            Ok((procs, pgid)) => (procs, pgid),
+            Err(PosixError::CommandNotFound(_)) => return Ok(CmdOutput::error_with_status(127)),
+            _ => return Ok(CmdOutput::error()),
+        };
 
         eval2::run_job(&mut job_manager, procs, pgid, true)?;
 

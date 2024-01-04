@@ -27,7 +27,12 @@ pub fn after_command_hook(
             let mut cmd_parts = ctx.command.split(' ');
             let cmd_name = cmd_parts.next().unwrap();
 
-            // state.engine.call_fn(&mut state.scope, ast, cmd_name, ());
+            // search all sourced scripts for function we wish to run
+            for ast in state.ast.values() {
+                state
+                    .engine
+                    .call_fn::<()>(&mut state.scope, ast, cmd_name, ());
+            }
         }
     }
 

@@ -120,7 +120,7 @@ impl HistoryInd {
 
 /// Context that is passed to [Line]
 pub struct LineCtx<'a> {
-    cb: CursorBuffer,
+    pub cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
     // TODO dumping history index here for now

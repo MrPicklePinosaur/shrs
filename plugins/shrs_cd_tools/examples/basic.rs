@@ -6,12 +6,12 @@ use shrs_cd_tools::{
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, _line_ctx: &LineCtx) -> StyledBuf {
         styled! {
             " > "
         }
     }
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         // TODO currently very unergonomic
         let project_info = default_prompt(line_ctx);
 

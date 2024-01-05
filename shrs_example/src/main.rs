@@ -9,7 +9,7 @@ use shrs::{
     history::FileBackedHistory,
     keybindings,
     line::_core::shell::set_working_dir,
-    prelude::{styled_buf::StyledBuf, *},
+    prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -24,7 +24,7 @@ use shrs_run_context::RunContextPlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
         let indicator = match line_ctx.mode() {
             LineMode::Insert => String::from(">").cyan(),
             LineMode::Normal => String::from(":").yellow(),
@@ -35,7 +35,7 @@ impl Prompt for MyPrompt {
 
         styled! {" ", @(blue)username(), " ", @(white,bold)top_pwd(), " ", indicator, " "}
     }
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
             .ctx
             .state

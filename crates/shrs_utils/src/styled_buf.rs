@@ -79,6 +79,11 @@ impl StyledBuf {
             }
         }
     }
+
+    fn push_buf(&mut self, buf: StyledBuf) {
+        self.content += buf.content.as_str();
+        self.styles.extend(buf.styles);
+    }
 }
 pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
     let c = line
@@ -94,72 +99,40 @@ impl Display for StyledBuf {
         Ok(())
     }
 }
-
-impl FromIterator<StyledContent<String>> for StyledBuf {
-    fn from_iter<T: IntoIterator<Item = StyledContent<String>>>(iter: T) -> Self {
+impl FromIterator<StyledBuf> for StyledBuf {
+    fn from_iter<T: IntoIterator<Item = StyledBuf>>(iter: T) -> Self {
         let mut buf = Self::empty();
         for i in iter {
-            buf.push(i.content(), i.style().to_owned());
+            buf.push_buf(i);
         }
         buf
     }
 }
-fn default_styled_content(s: String) -> StyledContent<String> {
-    StyledContent::new(ContentStyle::default(), s)
-}
-
-/// Valid types that can be passed to the styled macro
-// cool since anyone can implement this trait to add something else that can be passed to this
-// macro
-pub trait StyledDisplay {
-    fn render(&self) -> StyledContent<String>;
-}
-impl<T: ToString> StyledDisplay for Option<T> {
-    fn render(&self) -> StyledContent<String> {
-        let styled = self
-            .as_ref()
-            .to_owned()
-            .map(|x| x.to_string())
-            .unwrap_or_default();
-        default_styled_content(styled)
+impl From<String> for StyledBuf {
+    fn from(value: String) -> Self {
+        StyledBuf::new(value.as_str(), ContentStyle::default())
     }
 }
-impl<T: ToString, E> StyledDisplay for Result<T, E> {
-    fn render(&self) -> StyledContent<String> {
-        let styled = self
-            .as_ref()
-            .to_owned()
-            .map(|x| x.to_string())
-            .unwrap_or_default();
-        default_styled_content(styled)
+impl From<&str> for StyledBuf {
+    fn from(value: &str) -> Self {
+        StyledBuf::new(value, ContentStyle::default())
     }
 }
-impl StyledDisplay for &str {
-    fn render(&self) -> StyledContent<String> {
-        default_styled_content(ToString::to_string(&self))
+impl<T: Display> From<StyledContent<T>> for StyledBuf {
+    fn from(value: StyledContent<T>) -> Self {
+        StyledBuf::new(value.content().to_string().as_str(), value.style().clone())
     }
 }
-impl StyledDisplay for String {
-    fn render(&self) -> StyledContent<String> {
-        default_styled_content(ToString::to_string(&self))
+impl<T: ToString> From<Option<T>> for StyledBuf {
+    fn from(value: Option<T>) -> Self {
+        let s = value.map(|x| x.to_string()).unwrap_or_default();
+        s.into()
     }
 }
-// TODO this currently has incorrect offset
-impl StyledDisplay for StyledBuf {
-    fn render(&self) -> StyledContent<String> {
-        default_styled_content(ToString::to_string(&self))
-    }
-}
-impl StyledDisplay for StyledContent<String> {
-    fn render(&self) -> StyledContent<String> {
-        self.clone()
-    }
-}
-impl StyledDisplay for StyledContent<&str> {
-    fn render(&self) -> StyledContent<String> {
-        StyledBuf::empty();
-
-        default_styled_content(ToString::to_string(self.content()))
+impl<T: ToString, E> From<Result<T, E>> for StyledBuf {
+    fn from(value: Result<T, E>) -> Self {
+        let s = value.map(|x| x.to_string()).unwrap_or_default();
+        s.into()
     }
 }
 
@@ -171,17 +144,14 @@ impl StyledDisplay for StyledContent<&str> {
 /// Note need crossterm::style::Stylize
 #[macro_export]
 macro_rules! styled {
-    ($($(@($($style:ident),*))? $part:expr),* $(,)*) => {{
+    ($($part:expr),* $(,)*) => {{
 
-        use $crate::{styled_buf::StyledBuf,styled_buf::StyledDisplay };
+        use $crate::{styled_buf::StyledBuf };
 
         StyledBuf::from_iter(vec![
-            $({
-                // TODO this will probably return a pretty vague compiler error, if possible try to find
-                // way to panic with decent message when the cast doesn't work
-                let part: &dyn StyledDisplay = &$part;
-                part.render()$($(.$style())*)?
-            }),*
+            $(
+                $part.into()
+            ),*
         ])
     }};
 }
@@ -195,7 +165,8 @@ mod tests {
         println!("test {}", "lol".blue().reset());
 
         let styled_buf = styled! {
-            @(red,bold) Some("lol"),
+            styled!{"lol".blue()},
+            Some("lol"),
             "lol",
             String::from("lol"),
             "lol".blue(),

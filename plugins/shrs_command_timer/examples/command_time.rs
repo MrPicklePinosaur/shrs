@@ -5,7 +5,7 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
-        StyledBuf::from_iter(vec!["> ".to_string().reset()])
+        styled!("> ")
     }
     fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
         let time_str = line_ctx
@@ -15,8 +15,7 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{x:?}"))
             .unwrap_or(String::new());
-
-        StyledBuf::from_iter(vec![time_str.reset()])
+        styled!(time_str.reset())
     }
 }
 

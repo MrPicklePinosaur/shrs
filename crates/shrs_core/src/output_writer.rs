@@ -4,7 +4,7 @@ use std::{
 };
 
 use crossterm::{
-    style::{Print, PrintStyledContent},
+    style::{Color, Print, PrintStyledContent, Stylize},
     QueueableCommand,
 };
 use shrs_utils::styled_buf::StyledBuf;
@@ -15,6 +15,8 @@ pub struct OutputWriter {
     collecting: bool,
     out: String,
     err: String,
+    out_color: Color,
+    err_color: Color,
 }
 impl Default for OutputWriter {
     fn default() -> Self {
@@ -24,10 +26,19 @@ impl Default for OutputWriter {
             collecting: false,
             out: String::new(),
             err: String::new(),
+            out_color: Color::White,
+            err_color: Color::Red,
         }
     }
 }
 impl OutputWriter {
+    pub fn new(out_color: Color, err_color: Color) -> Self {
+        Self {
+            out_color,
+            err_color,
+            ..Default::default()
+        }
+    }
     pub fn begin_collecting(&mut self) {
         self.collecting = true;
     }
@@ -36,7 +47,8 @@ impl OutputWriter {
             self.err.push_str(s.to_string().as_str());
         }
 
-        self.stderr.queue(Print(s))?;
+        self.stderr
+            .queue(PrintStyledContent(s.to_string().with(self.err_color)))?;
         self.stderr.flush()?;
         Ok(())
     }
@@ -50,7 +62,8 @@ impl OutputWriter {
         if self.collecting {
             self.out.push_str(s.to_string().as_str());
         }
-        self.stdout.queue(Print(s))?;
+        self.stdout
+            .queue(PrintStyledContent(s.to_string().with(self.out_color)))?;
         self.stdout.flush()?;
         Ok(())
     }

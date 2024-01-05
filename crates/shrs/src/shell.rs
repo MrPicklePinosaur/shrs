@@ -1,7 +1,8 @@
 //! Shell configuration options
 
-use std::{cell::RefCell, process::ExitStatus, time::Instant};
+use std::{cell::RefCell, default, process::ExitStatus, time::Instant};
 
+use ::crossterm::style::Color;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
@@ -34,6 +35,14 @@ pub struct ShellConfig {
     /// Aliases, see [Alias]
     #[builder(default = "Alias::default()")]
     pub alias: Alias,
+
+    /// [OutputWriter] stdout color
+    #[builder(default = "Color::White")]
+    pub out_color: Color,
+
+    /// [OutputWriter] stderr color
+    #[builder(default = "Color::Red")]
+    pub err_color: Color,
 
     /// Environment variables, see [Env]
     #[builder(default = "Env::default()")]
@@ -139,7 +148,8 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::default(),
+            out: OutputWriter::new(self.out_color, self.err_color),
+
             state: self.state,
             jobs: Jobs::default(),
             startup_time: Instant::now(),

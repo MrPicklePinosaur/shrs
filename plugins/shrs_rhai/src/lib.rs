@@ -16,7 +16,22 @@ impl Plugin for RhaiPlugin {
 
     fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
         let state = RhaiState::new(sh, ctx, rt);
+
         ctx.state.insert(state);
+
+        // TODO path currently not configurable
+        // source `init.rhai` if exists
+        if let Some(mut home_dir) = dirs::home_dir() {
+            home_dir.push(".config/shrs/init.rhai");
+            // TODO maybe warn if not sourced?
+            let _ = sh.builtins.get("source").unwrap().run(
+                sh,
+                ctx,
+                rt,
+                &vec!["source".to_string(), home_dir.to_str().unwrap().to_string()],
+            );
+        }
+
         Ok(())
     }
 }

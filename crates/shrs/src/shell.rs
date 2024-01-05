@@ -36,14 +36,6 @@ pub struct ShellConfig {
     #[builder(default = "Alias::default()")]
     pub alias: Alias,
 
-    /// [OutputWriter] stdout color
-    #[builder(default = "Color::White")]
-    pub out_color: Color,
-
-    /// [OutputWriter] stderr color
-    #[builder(default = "Color::Red")]
-    pub err_color: Color,
-
     /// Environment variables, see [Env]
     #[builder(default = "Env::default()")]
     pub env: Env,
@@ -148,7 +140,7 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::new(self.out_color, self.err_color),
+            out: OutputWriter::new(self.theme.out_color, self.theme.err_color),
 
             state: self.state,
             jobs: Jobs::default(),

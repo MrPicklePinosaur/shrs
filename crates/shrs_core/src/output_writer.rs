@@ -74,6 +74,7 @@ impl OutputWriter {
                 self.stdout.queue(PrintStyledContent(span.clone()))?;
             }
         }
+        self.stdout.flush()?;
 
         Ok(())
     }

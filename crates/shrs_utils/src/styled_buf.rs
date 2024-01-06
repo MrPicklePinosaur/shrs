@@ -123,16 +123,42 @@ impl<T: Display> From<StyledContent<T>> for StyledBuf {
         StyledBuf::new(value.content().to_string().as_str(), value.style().clone())
     }
 }
-impl<T: ToString> From<Option<T>> for StyledBuf {
-    fn from(value: Option<T>) -> Self {
-        let s = value.map(|x| x.to_string()).unwrap_or_default();
-        s.into()
+impl<T: Display> From<Option<StyledContent<T>>> for StyledBuf {
+    fn from(value: Option<StyledContent<T>>) -> Self {
+        if let Some(v) = value {
+            v.into()
+        } else {
+            StyledBuf::empty()
+        }
     }
 }
-impl<T: ToString, E> From<Result<T, E>> for StyledBuf {
-    fn from(value: Result<T, E>) -> Self {
-        let s = value.map(|x| x.to_string()).unwrap_or_default();
-        s.into()
+impl<T: Display, E> From<Result<StyledContent<T>, E>> for StyledBuf {
+    fn from(value: Result<StyledContent<T>, E>) -> Self {
+        if let Ok(v) = value {
+            v.into()
+        } else {
+            StyledBuf::empty()
+        }
+    }
+}
+impl From<Option<&str>> for StyledBuf {
+    fn from(value: Option<&str>) -> Self {
+        value.unwrap_or_default().into()
+    }
+}
+impl<E> From<Result<&str, E>> for StyledBuf {
+    fn from(value: Result<&str, E>) -> Self {
+        value.unwrap_or_default().into()
+    }
+}
+impl From<Option<String>> for StyledBuf {
+    fn from(value: Option<String>) -> Self {
+        value.unwrap_or_default().into()
+    }
+}
+impl<E> From<Result<String, E>> for StyledBuf {
+    fn from(value: Result<String, E>) -> Self {
+        value.unwrap_or_default().into()
     }
 }
 

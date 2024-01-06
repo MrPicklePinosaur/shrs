@@ -1,7 +1,7 @@
-use std::ops::{Index, Range};
-use std::{collections::HashMap, fmt::Display};
+use std::fmt::Display;
+use std::ops::Range;
 
-use crossterm::style::{ContentStyle, StyledContent};
+use crossterm::style::{Attribute, Color, ContentStyle, StyledContent, Stylize};
 use unicode_width::UnicodeWidthStr;
 
 /// Text to be rendered by painter
@@ -93,9 +93,21 @@ impl StyledBuf {
         }
     }
 
-    fn push_buf(&mut self, buf: StyledBuf) {
+    pub fn push_buf(&mut self, buf: StyledBuf) {
         self.content += buf.content.as_str();
         self.styles.extend(buf.styles);
+    }
+    pub fn with(mut self, color: Color) -> StyledBuf {
+        self.styles.iter_mut().for_each(|x| *x = x.with(color));
+        self
+    }
+    pub fn on(mut self, color: Color) -> StyledBuf {
+        self.styles.iter_mut().for_each(|x| *x = x.on(color));
+        self
+    }
+    pub fn attribute(mut self, attr: Attribute) -> StyledBuf {
+        self.styles.iter_mut().for_each(|x| *x = x.attribute(attr));
+        self
     }
 }
 pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
@@ -173,9 +185,6 @@ impl<E> From<Result<String, E>> for StyledBuf {
         value.unwrap_or_default().into()
     }
 }
-
-// would technically like to make macro accept ToString but we want special behavior for option
-// type
 
 /// Macro to easily compose [StyledBuf] for use in prompt implementation
 ///

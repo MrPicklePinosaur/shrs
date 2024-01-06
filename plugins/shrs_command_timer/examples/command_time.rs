@@ -4,10 +4,10 @@ use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, _line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, _line_ctx: &LineCtx) -> StyledBuf {
         styled!("> ")
     }
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
             .ctx
             .state

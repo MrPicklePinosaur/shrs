@@ -1,3 +1,4 @@
+use std::ops::{Index, Range};
 use std::{collections::HashMap, fmt::Display};
 
 use crossterm::style::{ContentStyle, StyledContent};
@@ -72,11 +73,23 @@ impl StyledBuf {
         UnicodeWidthStr::width(self.content.as_str()) as u16
     }
 
-    pub fn change_style(&mut self, c_style: HashMap<usize, ContentStyle>, offset: usize) {
-        for (u, s) in c_style.into_iter() {
-            if offset <= u {
-                self.styles[u - offset] = s;
-            }
+    pub fn change_style(&mut self, index: usize, style: ContentStyle) {
+        self.styles[index] = style;
+    }
+    pub fn change_styles(&mut self, range: Range<usize>, style: ContentStyle) {
+        range.for_each(|u| self.change_style(u, style));
+    }
+    pub fn slice_from(&self, start: usize) -> StyledBuf {
+        if start >= self.content.len() {
+            return StyledBuf::empty();
+        }
+
+        let sliced_content = &self.content[start..];
+        let sliced_styles = self.styles[start..].to_vec();
+
+        StyledBuf {
+            content: sliced_content.to_string(),
+            styles: sliced_styles,
         }
     }
 
@@ -92,7 +105,6 @@ pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
         .collect::<String>();
     UnicodeWidthStr::width(c.as_str()) as u16
 }
-
 impl Display for StyledBuf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.content)?;

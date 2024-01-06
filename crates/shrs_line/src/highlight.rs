@@ -32,6 +32,8 @@ impl Highlighter for DefaultHighlighter {
     }
 }
 
+//trait that works specifically with SyntaxHighlighter to allow users to use various highlighters
+//to highlight the text
 pub trait SyntaxTheme {
     fn apply(&self, buf: &mut StyledBuf);
 }
@@ -73,6 +75,8 @@ impl Highlighter for SyntaxHighlighter {
         styled_buf
     }
 }
+//Implementation of a highlighter for the shrs language.
+//Utilizes the shrs parser to parse and highlight various tokens based on their type
 pub struct ShrsSyntaxTheme {
     cmd_style: ContentStyle,
     string_style: ContentStyle,

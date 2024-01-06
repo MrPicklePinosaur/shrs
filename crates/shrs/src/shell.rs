@@ -1,7 +1,8 @@
 //! Shell configuration options
 
-use std::{cell::RefCell, process::ExitStatus, time::Instant};
+use std::{cell::RefCell, default, process::ExitStatus, time::Instant};
 
+use ::crossterm::style::Color;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
@@ -139,7 +140,8 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::default(),
+            out: OutputWriter::new(self.theme.out_color, self.theme.err_color),
+
             state: self.state,
             jobs: Jobs::default(),
             startup_time: Instant::now(),

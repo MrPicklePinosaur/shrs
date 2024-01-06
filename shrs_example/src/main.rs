@@ -5,6 +5,7 @@ use std::{
     process::Command,
 };
 
+use ::crossterm::style::{Attribute, Color};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
@@ -33,7 +34,7 @@ impl Prompt for MyPrompt {
             return styled! {" ", indicator, " "};
         }
 
-        styled! {" ", @(blue)username(), " ", @(white,bold)top_pwd(), " ", indicator, " "}
+        styled! {" ", username().map(|u|u.with(Color::Blue)), " ", top_pwd().with(Color::White).attribute(Attribute::Bold), " ", indicator, " "}
     }
     fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
@@ -49,12 +50,23 @@ impl Prompt for MyPrompt {
             .get::<MuxState>()
             .map(|state| state.get_lang());
 
-        let git_branch = git::branch().map(|s| format!("git:{s}"));
+        let git_branch = git::branch().map(|s| {
+            format!("git:{s}")
+                .with(line_ctx.sh.theme.blue)
+                .attribute(Attribute::Bold)
+        });
         if !line_ctx.lines.is_empty() {
             return styled! {""};
         }
+        styled! {git_branch,
+            " ",
+            time_str,
+            " ",
+            lang,
+            " "
+        }
 
-        styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
+        // styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
     }
 }
 

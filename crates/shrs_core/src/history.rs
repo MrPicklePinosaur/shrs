@@ -125,9 +125,11 @@ impl History for FileBackedHistory {
     type HistoryItem = String;
 
     fn add(&mut self, item: Self::HistoryItem) {
-        self.hist.insert(0, item);
-        // TODO consider how often we want to flush
-        self.flush().unwrap();
+        if !item.starts_with("history run") {
+            self.hist.insert(0, item);
+            // TODO consider how often we want to flush
+            self.flush().unwrap();
+        }
     }
 
     fn clear(&mut self) {

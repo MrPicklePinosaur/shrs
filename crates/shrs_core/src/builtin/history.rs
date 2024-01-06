@@ -42,12 +42,15 @@ impl BuiltinCmd for HistoryBuiltin {
                 for i in (0.._ctx.history.len()).rev() {   
                     _ctx.out.print(format!("{}: {}\n", i, _ctx.history.get(i).unwrap()))?;
                 }
-            },
+            },  
             Some(Commands::Clear) => {
                 _ctx.history.clear();
             },
-            Some(Commands::Run { .. }) => {
-                todo!()
+            Some(Commands::Run { index }) => {
+                let index = *index as usize;
+                if (0.._ctx.history.len()).contains(&index) {
+                    //Run _ctx.history.get(index).unwrap()
+                }
             },
             Some(Commands::Search { .. }) => {
                 todo!()

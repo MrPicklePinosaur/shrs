@@ -39,7 +39,7 @@ pub mod prelude {
         buffer_history::{BufferHistory, DefaultBufferHistory},
         completion::*,
         cursor::CursorStyle,
-        highlight::{DefaultHighlighter, Highlighter, RuleFn, SyntaxHighlighter, SyntaxTheme},
+        highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme},
         hooks::*,
         line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode, Readline},
         menu::{DefaultMenu, Menu},

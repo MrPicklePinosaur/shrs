@@ -1,5 +1,4 @@
-use std::fmt::Display;
-use std::ops::Range;
+use std::{fmt::Display, ops::Range};
 
 use crossterm::style::{Attribute, Color, ContentStyle, StyledContent, Stylize};
 use unicode_width::UnicodeWidthStr;

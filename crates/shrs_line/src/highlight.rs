@@ -122,7 +122,7 @@ impl SyntaxTheme for ShrsSyntaxTheme {
             match token.1.clone() {
                 Token::WORD(_) => {
                     if is_cmd {
-                        buf.change_styles(token.0..token.2, self.cmd_style);
+                        buf.apply_styles_in_range(token.0..token.2, self.cmd_style);
                         is_cmd = false;
                     }
                 },
@@ -157,13 +157,13 @@ impl SyntaxTheme for ShrsSyntaxTheme {
                 | Token::UNTIL
                 | Token::FOR
                 | Token::IN => {
-                    buf.change_styles(token.0..token.2, self.reserved_style);
+                    buf.apply_styles_in_range(token.0..token.2, self.reserved_style);
                 },
                 _ => (),
             }
             if let Token::WORD(w) = token.1 {
                 if w.starts_with('\'') || w.starts_with('\"') {
-                    buf.change_styles(token.0..token.2, self.string_style);
+                    buf.apply_styles_in_range(token.0..token.2, self.string_style);
                 }
             }
         }

@@ -16,6 +16,7 @@ use super::{
 };
 use crate::log_if_err;
 
+#[allow(non_camel_case_types)]
 pub type pid_t = i32;
 
 #[derive(Error, Debug)]

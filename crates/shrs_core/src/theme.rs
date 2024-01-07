@@ -3,6 +3,9 @@
 use crossterm::style::Color;
 
 pub struct Theme {
+    pub out_color: Color,
+    pub err_color: Color,
+    pub selection_color: Color,
     pub black: Color,
     pub dark_grey: Color,
     pub red: Color,
@@ -24,6 +27,9 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Self {
+            out_color: Color::White,
+            err_color: Color::Red,
+            selection_color: Color::White,
             black: Color::Black,
             dark_grey: Color::DarkGrey,
             red: Color::Red,

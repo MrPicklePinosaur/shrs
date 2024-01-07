@@ -1,13 +1,13 @@
 //! Syntax highlighting
 
-use std::{collections::HashMap, default, usize};
+use std::{collections::HashMap, usize};
 
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
 
 pub trait Highlighter {
-    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf;
+    fn highlight(&self, buf: &str) -> StyledBuf;
 }
 
 /// Simple highlighter that colors the entire line one color
@@ -17,11 +17,11 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf {
+    fn highlight(&self, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
-            &buf[begin..],
+            &buf,
             ContentStyle {
                 foreground_color: Some(Color::Green),
                 ..Default::default()
@@ -32,91 +32,97 @@ impl Highlighter for DefaultHighlighter {
     }
 }
 
-/// Syntax highlighter that highlights base on a set of rules
-pub type RuleFn = fn(&str) -> HashMap<usize, ContentStyle>;
-
-pub struct SyntaxTheme {
-    pub auto: ContentStyle, // path: ContentStyle
-    // RuleFn returns iterator of charindex and style
-    pub style_rules: Vec<RuleFn>,
-}
-
-impl SyntaxTheme {
-    pub fn new(auto: ContentStyle, rules: Vec<RuleFn>) -> Self {
-        Self {
-            auto,
-            style_rules: rules,
-        }
-    }
-    pub fn push_rule(&mut self, rule: RuleFn) {
-        self.style_rules.push(rule);
-    }
-}
-
-impl Default for SyntaxTheme {
-    fn default() -> Self {
-        Self {
-            auto: ContentStyle::default(),
-            style_rules: vec![shrs_rule],
-        }
-    }
+//trait that works specifically with SyntaxHighlighter to allow users to use various highlighters
+//to highlight the text
+pub trait SyntaxTheme {
+    fn apply(&self, buf: &mut StyledBuf);
 }
 
 pub struct SyntaxHighlighter {
-    theme: SyntaxTheme,
+    auto: ContentStyle,
+    pub syntax_themes: Vec<Box<dyn SyntaxTheme>>,
 }
 impl Default for SyntaxHighlighter {
     fn default() -> Self {
-        SyntaxHighlighter::new(SyntaxTheme::default())
+        Self {
+            auto: ContentStyle::default(),
+            syntax_themes: vec![Box::new(ShrsSyntaxTheme::default())],
+        }
     }
 }
 
 impl SyntaxHighlighter {
-    pub fn new(theme: SyntaxTheme) -> Self {
-        SyntaxHighlighter { theme }
+    pub fn push_rule(&mut self, syntax_theme: Box<dyn SyntaxTheme>) {
+        self.syntax_themes.push(syntax_theme);
+    }
+
+    pub fn new(auto: ContentStyle, themes: Vec<Box<dyn SyntaxTheme>>) -> Self {
+        SyntaxHighlighter {
+            auto,
+            syntax_themes: themes,
+        }
     }
 }
 
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, buf: &str, begin: usize) -> StyledBuf {
-        let mut styled_buf = StyledBuf::new(&buf[begin..], self.theme.auto);
+    fn highlight(&self, buf: &str) -> StyledBuf {
+        let mut styled_buf = StyledBuf::new(&buf, self.auto);
 
-        for style_rule in self.theme.style_rules.iter() {
-            styled_buf.change_style(style_rule(buf), begin);
+        for syntax_theme in self.syntax_themes.iter() {
+            syntax_theme.apply(&mut styled_buf);
         }
 
         styled_buf
     }
 }
-pub fn shrs_rule(buf: &str) -> HashMap<usize, ContentStyle> {
-    let cmd_style = ContentStyle {
-        foreground_color: Some(Color::Blue),
-        ..Default::default()
-    };
-    let string_style = ContentStyle {
-        foreground_color: Some(Color::Green),
-        ..Default::default()
-    };
-    let reserved_style = ContentStyle {
-        foreground_color: Some(Color::Yellow),
-        ..Default::default()
-    };
-
-    let mut c_style: HashMap<usize, ContentStyle> = HashMap::new();
-    let mut range_insert = |start: usize, end: usize, style: ContentStyle| {
-        (start..end).into_iter().for_each(|u| {
-            c_style.insert(u, style);
-        })
-    };
-
-    let lexer = Lexer::new(buf);
-    let mut is_cmd = true;
-    for t in lexer {
-        if let Ok(token) = t {
+//Implementation of a highlighter for the shrs language.
+//Utilizes the shrs parser to parse and highlight various tokens based on their type
+pub struct ShrsSyntaxTheme {
+    cmd_style: ContentStyle,
+    string_style: ContentStyle,
+    reserved_style: ContentStyle,
+}
+impl Default for ShrsSyntaxTheme {
+    fn default() -> Self {
+        ShrsSyntaxTheme::new(
+            ContentStyle {
+                foreground_color: Some(Color::Blue),
+                ..Default::default()
+            },
+            ContentStyle {
+                foreground_color: Some(Color::Green),
+                ..Default::default()
+            },
+            ContentStyle {
+                foreground_color: Some(Color::Yellow),
+                ..Default::default()
+            },
+        )
+    }
+}
+impl ShrsSyntaxTheme {
+    fn new(
+        cmd_style: ContentStyle,
+        string_style: ContentStyle,
+        reserved_style: ContentStyle,
+    ) -> Self {
+        ShrsSyntaxTheme {
+            cmd_style,
+            string_style,
+            reserved_style,
+        }
+    }
+}
+impl SyntaxTheme for ShrsSyntaxTheme {
+    fn apply(&self, buf: &mut StyledBuf) {
+        let content = buf.content.clone();
+        let lexer = Lexer::new(content.as_str());
+        let mut is_cmd = true;
+        for token in lexer.flatten() {
             match token.1.clone() {
                 Token::WORD(_) => {
                     if is_cmd {
-                        range_insert(token.0, token.2, cmd_style);
+                        buf.apply_styles_in_range(token.0..token.2, self.cmd_style);
                         is_cmd = false;
                     }
                 },
@@ -151,16 +157,15 @@ pub fn shrs_rule(buf: &str) -> HashMap<usize, ContentStyle> {
                 | Token::UNTIL
                 | Token::FOR
                 | Token::IN => {
-                    range_insert(token.0, token.2, reserved_style);
+                    buf.apply_styles_in_range(token.0..token.2, self.reserved_style);
                 },
                 _ => (),
             }
             if let Token::WORD(w) = token.1 {
                 if w.starts_with('\'') || w.starts_with('\"') {
-                    range_insert(token.0, token.2, string_style);
+                    buf.apply_styles_in_range(token.0..token.2, self.string_style);
                 }
             }
         }
     }
-    c_style
 }

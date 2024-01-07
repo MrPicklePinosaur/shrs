@@ -1,13 +1,8 @@
 //! Shell configuration options
 
-use std::{
-    cell::RefCell,
-    io::{stdout, BufRead, BufWriter, Write},
-    process::ExitStatus,
-    rc::Rc,
-    time::Instant,
-};
+use std::{cell::RefCell, default, process::ExitStatus, time::Instant};
 
+use ::crossterm::style::Color;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
@@ -38,11 +33,11 @@ pub struct ShellConfig {
     pub readline: Box<dyn Readline>,
 
     /// Aliases, see [Alias]
-    #[builder(default = "Alias::new()")]
+    #[builder(default = "Alias::default()")]
     pub alias: Alias,
 
     /// Environment variables, see [Env]
-    #[builder(default = "Env::new()")]
+    #[builder(default = "Env::default()")]
     pub env: Env,
 
     // /// List of defined functions
@@ -53,7 +48,7 @@ pub struct ShellConfig {
     pub theme: Theme,
 
     /// Command language
-    #[builder(default = "Box::new(PosixLang::new())")]
+    #[builder(default = "Box::new(PosixLang::default())")]
     #[builder(setter(custom))]
     pub lang: Box<dyn Lang>,
 
@@ -63,31 +58,31 @@ pub struct ShellConfig {
     pub plugins: Vec<Box<dyn Plugin>>, // TODO could also maybe use anymap to get the concrete type
 
     /// Globally accessible state, see [State]
-    #[builder(default = "State::new()")]
+    #[builder(default = "State::default()")]
     #[builder(setter(custom))]
     pub state: State,
 
     /// History, see [History]
-    #[builder(default = "Box::new(DefaultHistory::new())")]
+    #[builder(default = "Box::new(DefaultHistory::default())")]
     #[builder(setter(custom))]
     pub history: Box<dyn History<HistoryItem = String>>,
 
     /// Keybindings, see [Keybinding]
-    #[builder(default = "Box::new(DefaultKeybinding::new())")]
+    #[builder(default = "Box::new(DefaultKeybinding::default())")]
     #[builder(setter(custom))]
     pub keybinding: Box<dyn Keybinding>,
 }
 
 impl ShellBuilder {
     pub fn with_plugin<P: std::any::Any + Plugin>(mut self, plugin: P) -> Self {
-        let mut cur_plugins = self.plugins.unwrap_or(vec![]);
+        let mut cur_plugins = self.plugins.unwrap_or_default();
         cur_plugins.push(Box::new(plugin));
         self.plugins = Some(cur_plugins);
 
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
-        let mut cur_state = self.state.unwrap_or(State::new());
+        let mut cur_state = self.state.unwrap_or_default();
         cur_state.insert(state);
         self.state = Some(cur_state);
         self
@@ -121,8 +116,10 @@ impl ShellConfig {
         // up implementing Default for Context and Runtime
 
         // run plugins first
+        // TODO ownership issue here since other plugins can technically add plugins during init
+        // process
         let plugins = self.plugins.drain(..).collect::<Vec<_>>();
-        for plugin in plugins {
+        for plugin in plugins.iter() {
             let plugin_meta = plugin.meta();
             info!("Initializing plugin '{}'...", plugin_meta.name);
 
@@ -143,9 +140,10 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::default(),
+            out: OutputWriter::new(self.theme.out_color, self.theme.err_color),
+
             state: self.state,
-            jobs: Jobs::new(),
+            jobs: Jobs::default(),
             startup_time: Instant::now(),
             history: self.history,
         };
@@ -168,8 +166,28 @@ impl ShellConfig {
             signals: Signals::new().unwrap(),
             keybinding: self.keybinding,
         };
-        let mut readline = self.readline;
 
+        // run post init for plugins
+        for plugin in plugins.iter() {
+            if let Err(e) = plugin.post_init(&sh, &mut ctx, &mut rt) {
+                let plugin_meta = plugin.meta();
+                info!("Post-initializing plugin '{}'...", plugin_meta.name);
+
+                // Error handling for plugin
+                match plugin.fail_mode() {
+                    FailMode::Warn => warn!(
+                        "Plugin '{}' failed to post-initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                    FailMode::Abort => panic!(
+                        "Plugin '{}' failed to post-initialize with {}",
+                        plugin_meta.name, e
+                    ),
+                }
+            }
+        }
+
+        let mut readline = self.readline;
         run_shell(&sh, &mut ctx, &mut rt, &mut readline)
     }
 }
@@ -237,7 +255,7 @@ fn run_shell(
         let builtin_cmd = sh
             .builtins
             .iter()
-            .find(|(builtin_name, _)| *builtin_name == &cmd_name)
+            .find(|(builtin_name, _)| *builtin_name == cmd_name)
             .map(|(_, builtin_cmd)| builtin_cmd);
 
         let mut cmd_output: CmdOutput = CmdOutput::error();

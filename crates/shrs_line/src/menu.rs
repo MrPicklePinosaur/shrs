@@ -1,6 +1,6 @@
 //! General purpose selection menu for shell
 
-use std::{cmp::Ordering, fmt::Display, io::Write};
+use std::{cmp::Ordering, fmt::Display};
 
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
@@ -54,30 +54,34 @@ pub struct DefaultMenu {
     /// Max length in characters that the comment message is allowed to take up
     comment_max_length: usize,
     /// Max number of entries to show when rendering the menu
-    limit: usize,
+    _limit: usize,
     /// Function to use to sort the entries
     // TODO can we make this vary depending on which completions are used? does sorting belong more
     // to completion?
     sort: SortFn,
 }
 
-impl DefaultMenu {
-    pub fn new() -> Self {
+impl Default for DefaultMenu {
+    fn default() -> Self {
         DefaultMenu {
             selections: vec![],
             cursor: 0,
             active: false,
             comment_max_length: 30,
             column_padding: 2,
-            limit: 20,
+            _limit: 20,
             // by default sort alphabetical by display name
             sort: |a, b| -> Ordering { a.0.to_lowercase().cmp(&b.0.to_lowercase()) },
         }
     }
-    pub fn new_with_limit(limit: usize) -> Self {
-        let mut menu = Self::new();
-        menu.limit = limit;
-        menu
+}
+
+impl DefaultMenu {
+    pub fn new_with_limit(_limit: usize) -> Self {
+        Self {
+            _limit,
+            ..Default::default()
+        }
     }
 
     // TODO make these configurable?

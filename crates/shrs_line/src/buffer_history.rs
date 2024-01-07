@@ -12,6 +12,7 @@ pub trait BufferHistory {
 }
 
 // Stores Buffer data and cursor index
+#[derive(Default)]
 struct HistItem(String, usize);
 
 pub struct DefaultBufferHistory {
@@ -19,13 +20,16 @@ pub struct DefaultBufferHistory {
     hist: Vec<HistItem>,
 }
 
-impl DefaultBufferHistory {
-    pub fn new() -> Self {
+impl Default for DefaultBufferHistory {
+    fn default() -> Self {
         DefaultBufferHistory {
             hist: vec![HistItem(String::new(), 0)],
             index: 0,
         }
     }
+}
+
+impl DefaultBufferHistory {
     fn update_buffer(&mut self, cb: &mut CursorBuffer) -> cursor_buffer::Result<()> {
         let new_buf = &self.hist.get(self.index).unwrap().0;
         cb.clear();

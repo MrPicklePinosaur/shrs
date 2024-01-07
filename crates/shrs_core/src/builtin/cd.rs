@@ -1,13 +1,9 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
 use super::BuiltinCmd;
 use crate::{
-    hooks::ChangeDirCtx,
     prelude::CmdOutput,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
@@ -26,7 +22,7 @@ impl BuiltinCmd for CdBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 

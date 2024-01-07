@@ -1,6 +1,6 @@
 [package]
 name = "shrs_utils"
-version = "0.0.2"
+version = "0.0.3"
 description = "utilities for shrs"
 
 authors.workspace = true

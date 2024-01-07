@@ -5,11 +5,12 @@ use std::{
     process::Command,
 };
 
+use ::crossterm::style::{Attribute, Color};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
     line::_core::shell::set_working_dir,
-    prelude::{styled_buf::StyledBuf, *},
+    prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -24,7 +25,7 @@ use shrs_run_context::RunContextPlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
         let indicator = match line_ctx.mode() {
             LineMode::Insert => String::from(">").cyan(),
             LineMode::Normal => String::from(":").yellow(),
@@ -33,9 +34,9 @@ impl Prompt for MyPrompt {
             return styled! {" ", indicator, " "};
         }
 
-        styled! {" ", @(blue)username(), " ", @(white,bold)top_pwd(), " ", indicator, " "}
+        styled! {" ", username().map(|u|u.with(Color::Blue)), " ", top_pwd().with(Color::White).attribute(Attribute::Bold), " ", indicator, " "}
     }
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
             .ctx
             .state
@@ -49,12 +50,23 @@ impl Prompt for MyPrompt {
             .get::<MuxState>()
             .map(|state| state.get_lang());
 
-        let git_branch = git::branch().map(|s| format!("git:{s}"));
+        let git_branch = git::branch().map(|s| {
+            format!("git:{s}")
+                .with(line_ctx.sh.theme.blue)
+                .attribute(Attribute::Bold)
+        });
         if !line_ctx.lines.is_empty() {
             return styled! {""};
         }
+        styled! {git_branch,
+            " ",
+            time_str,
+            " ",
+            lang,
+            " "
+        }
 
-        styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
+        // styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
     }
 }
 
@@ -77,7 +89,7 @@ fn main() {
 
     // =-=-= Environment variables =-=-=
     // Load environment variables from calling shell
-    let mut env = Env::new();
+    let mut env = Env::default();
     env.load();
     env.set("SHELL_NAME", "shrs_example");
 
@@ -97,7 +109,7 @@ fn main() {
     ));
 
     // =-=-= Menu =-=-=-=
-    let menu = DefaultMenu::new();
+    let menu = DefaultMenu::default();
 
     // =-=-= History =-=-=
     // Use history that writes to file on disk
@@ -184,7 +196,7 @@ a rusty POSIX shell | build {}"#,
         .with_keybinding(keybinding)
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
-        .with_plugin(RunContextPlugin::new())
+        .with_plugin(RunContextPlugin::default())
         .with_plugin(MuxPlugin::new())
         .with_plugin(CdStackPlugin)
         .build()

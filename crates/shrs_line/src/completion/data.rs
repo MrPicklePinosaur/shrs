@@ -1,8 +1,7 @@
 //! Collection of useful predicates and actions
 
 use super::{
-    cmdname_eq_pred, default_format, default_format_with_comment, drop_path_end, filepaths,
-    find_executables_in_path, Completer, Completion, CompletionCtx, ReplaceMethod,
+    cmdname_eq_pred, default_format, default_format_with_comment, Completion, CompletionCtx,
 };
 
 // completions for git

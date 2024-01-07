@@ -6,7 +6,7 @@ mod builtin;
 
 use std::{
     collections::HashMap,
-    fs::{self, OpenOptions},
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -18,15 +18,12 @@ pub struct RunContextState {
     pub(crate) context_file: Option<PathBuf>,
 }
 
+#[derive(Default)]
 pub struct RunContextPlugin {
     context_file: Option<PathBuf>,
 }
 
 impl RunContextPlugin {
-    pub fn new() -> Self {
-        RunContextPlugin { context_file: None }
-    }
-
     pub fn with_file(path: &Path) -> Self {
         RunContextPlugin {
             context_file: Some(path.to_owned()),

@@ -1,7 +1,5 @@
 //! Builtin command that has access to shell env for debug and prototyping
 
-use std::io::{stdout, Write};
-
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
@@ -27,10 +25,10 @@ pub struct DebugBuiltin {}
 impl BuiltinCmd for DebugBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 

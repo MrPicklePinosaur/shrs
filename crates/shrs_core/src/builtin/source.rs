@@ -1,9 +1,4 @@
-use std::{
-    env,
-    fs::read_to_string,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{fs::read_to_string, path::PathBuf, process::Command};
 
 use clap::Parser;
 use lazy_static::lazy_static;
@@ -30,10 +25,10 @@ pub struct SourceBuiltin {}
 impl BuiltinCmd for SourceBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _rt: &mut Runtime,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
@@ -52,7 +47,7 @@ impl BuiltinCmd for SourceBuiltin {
             Some(interp) => {
                 let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
                 ctx.out.println(s)?;
-                let mut child = Command::new(interp.as_str())
+                let mut _child = Command::new(interp.as_str())
                     .args(vec![cli.source_file])
                     .spawn()?;
 

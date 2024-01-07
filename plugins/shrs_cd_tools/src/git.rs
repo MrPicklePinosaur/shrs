@@ -43,6 +43,38 @@ pub fn branch() -> anyhow::Result<String> {
 
     Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
 }
+pub fn commits_behind_remote() -> anyhow::Result<u32> {
+    let res = Command::new("git")
+        .args(vec![
+            "rev-list",
+            "--right-only",
+            "--count",
+            "HEAD...@{upstream}",
+        ])
+        .output()
+        .map_err(|e| Error::GitError(e.to_string()))?;
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
+}
+pub fn commits_ahead_remote() -> anyhow::Result<u32> {
+    let res = Command::new("git")
+        .args(vec![
+            "rev-list",
+            "--left-only",
+            "--count",
+            "HEAD...@{upstream}",
+        ])
+        .output()
+        .map_err(|e| Error::GitError(e.to_string()))?;
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
+}
+
+pub fn latest_commit_summary() -> anyhow::Result<String> {
+    let res = Command::new("git")
+        .args(vec!["show", "--pretty=%s", "--no-patch", "HEAD"])
+        .output()
+        .map_err(|e| Error::GitError(e.to_string()))?;
+    Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
+}
 
 fn metadata_fn(query_res: &mut QueryResult) -> anyhow::Result<()> {
     query_res.add_metadata(Git { branch: branch()? });

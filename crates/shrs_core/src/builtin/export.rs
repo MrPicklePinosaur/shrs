@@ -1,5 +1,3 @@
-use std::io::{stdout, Write};
-
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
@@ -26,10 +24,10 @@ pub struct ExportBuiltin {}
 impl BuiltinCmd for ExportBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
@@ -51,7 +49,7 @@ impl BuiltinCmd for ExportBuiltin {
         }
 
         for var in cli.vars {
-            let mut it = var.splitn(2, "=");
+            let mut it = var.splitn(2, '=');
             let var = it.next().unwrap();
             let val = it.next().unwrap_or_default();
 

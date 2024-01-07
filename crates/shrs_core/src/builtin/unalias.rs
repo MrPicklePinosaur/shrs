@@ -1,5 +1,3 @@
-use std::io::{stdout, Write};
-
 use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
@@ -24,10 +22,10 @@ pub struct UnaliasBuiltin {}
 impl BuiltinCmd for UnaliasBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &Vec<String>,
+        _rt: &mut Runtime,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 

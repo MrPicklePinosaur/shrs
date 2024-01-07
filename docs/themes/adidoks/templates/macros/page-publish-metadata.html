@@ -1,7 +1,0 @@
-{% macro page_publish_metadata(page) %}
-<p><small>Posted {{ page.date | date(format=config.extra.timeformat | default(value="%Y-%m-%d %H:%M:%S"), timezone=config.extra.timezone | default(value="America/New_York")) }}</small><p>
-{% endmacro %}
-
-{% macro page_list_authors(page) %}
-<p><small>{% if page.extra.authors %} by {% for author in page.extra.authors %}{% if author_flag %} and {% endif %} {% if author.href %} <a class="stretched-link position-relative" href="{{ author.href }}">{{ author.name }}</a>{% else %} {{ author.name }} {% endif %}{% set_global author_flag = true %}{% endfor %}{% endif %}</small></p>
-{% endmacro %}

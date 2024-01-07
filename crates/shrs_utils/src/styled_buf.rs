@@ -5,6 +5,7 @@ use crossterm::style::{Attribute, Color, ContentStyle, StyledContent, Stylize};
 use unicode_width::UnicodeWidthStr;
 
 /// Text to be rendered by painter
+/// styles has a style for each character in content
 #[derive(Clone)]
 pub struct StyledBuf {
     pub content: String,
@@ -73,11 +74,11 @@ impl StyledBuf {
         UnicodeWidthStr::width(self.content.as_str()) as u16
     }
 
-    pub fn change_style(&mut self, index: usize, style: ContentStyle) {
+    pub fn apply_style_at(&mut self, index: usize, style: ContentStyle) {
         self.styles[index] = style;
     }
-    pub fn change_styles(&mut self, range: Range<usize>, style: ContentStyle) {
-        range.for_each(|u| self.change_style(u, style));
+    pub fn apply_styles_in_range(&mut self, range: Range<usize>, style: ContentStyle) {
+        range.for_each(|u| self.apply_style_at(u, style));
     }
     pub fn slice_from(&self, start: usize) -> StyledBuf {
         if start >= self.content.len() {
@@ -107,6 +108,10 @@ impl StyledBuf {
     }
     pub fn attribute(mut self, attr: Attribute) -> StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = x.attribute(attr));
+        self
+    }
+    pub fn apply_styles(mut self, style: ContentStyle) -> StyledBuf {
+        self.styles.iter_mut().for_each(|x| *x = style);
         self
     }
 }

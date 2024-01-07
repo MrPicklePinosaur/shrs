@@ -3,8 +3,8 @@ title: "Introducing shrs"
 url: "/blog/doks-1/"
 description: "Introducing shrs, the hackable shell built using Rust."
 summary: "Introducing shrs, the hackable shell built using Rust."
-date: 2023-12-27T20:20:15+02:00
-lastmod: 2023-12-27T20:20:15+02:00
+date: 2024-01-07
+lastmod: 2024-01-07
 draft: false
 weight: 50
 categories: []

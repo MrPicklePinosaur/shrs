@@ -18,6 +18,12 @@ section = "docs"
 url = "/docs/getting-started/introduction/"
 weight = 10
 
+[[extra.menu.main]]
+name = "blog"
+section = "blog"
+url = "/blog"
+weight = 5
+
 [[extra.list]]
 title = "🛠️ Hackable"
 content = "Fully configurable and extensible in Rust"

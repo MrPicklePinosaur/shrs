@@ -10,6 +10,9 @@ use crate::{
     shell::{Context, Runtime, Shell},
 };
 
+use skim::prelude::*;
+use std::io::Cursor;
+
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -49,11 +52,33 @@ impl BuiltinCmd for HistoryBuiltin {
             Some(Commands::Run { index }) => {
                 let index = *index as usize;
                 if (0.._ctx.history.len()).contains(&index) {
-                    //Run _ctx.history.get(index).unwrap()
+                    // Run the command _ctx.history.get(index).unwrap()
                 }
             },
-            Some(Commands::Search { .. }) => {
-                todo!()
+            Some(Commands::Search { query }) => {
+                let options = SkimOptionsBuilder::default()
+                .height(Some("100%"))
+                .nosort(true)
+                .query(Some(query))
+                .build()
+                .unwrap();
+
+                let mut input = String::new();
+                for i in 0.._ctx.history.len() {
+                    input = format!("{}{}\n", input, _ctx.history.get(i).unwrap());
+                }
+                let item_reader = SkimItemReader::default();
+                let items = item_reader.of_bufread(Cursor::new(input));
+
+                let selected_items = Skim::run_with(&options, Some(items))
+                    .map(|out| out.selected_items)
+                    .unwrap_or_else(|| Vec::new());
+            
+                for item in selected_items.iter() {
+                    // There should be only one item
+                    // Run the command item.output()
+                    break;
+                }
             },
         }
 

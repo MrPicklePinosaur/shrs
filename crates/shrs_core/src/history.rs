@@ -41,7 +41,9 @@ impl History for DefaultHistory {
     type HistoryItem = String;
 
     fn add(&mut self, item: Self::HistoryItem) {
-        self.hist.insert(0, item);
+        if !item.starts_with("history run") {
+            self.hist.insert(0, item);
+        }
     }
 
     fn clear(&mut self) {

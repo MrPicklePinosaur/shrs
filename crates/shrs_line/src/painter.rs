@@ -96,7 +96,9 @@ impl Painter {
             .max(styled_buf_lines.len() - 1 + prompt_left_lines.len() - 1);
 
         //make sure num_newlines never gets smaller, and adds newlines to adjust for prompt
-        if self.num_newlines < total_newlines {
+        if self.num_newlines < total_newlines
+            && cursor::position()?.1 + self.num_newlines as u16 == self.term_size.1 - 1
+        {
             self.out
                 .borrow_mut()
                 .queue(ScrollUp((total_newlines - self.num_newlines) as u16))?;

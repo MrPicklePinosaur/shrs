@@ -256,7 +256,10 @@ impl Line {
             let res = line_ctx.get_full_command();
 
             // syntax highlight
-            styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
+            styled_buf = self
+                .highlighter
+                .highlight(&res)
+                .slice_from(line_ctx.lines.len());
 
             // add currently selected completion to buf
             if self.menu.is_active() {

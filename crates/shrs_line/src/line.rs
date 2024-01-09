@@ -1,6 +1,9 @@
 //! Core readline configuration
 
-use std::borrow::BorrowMut;
+use std::{
+    borrow::BorrowMut,
+    io::{Read, Seek, Write},
+};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -593,6 +596,42 @@ impl Line {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {},
+                            },
+                            Action::Editor => {
+                                // TODO should this just use the env var? or should shrs have
+                                // dedicated config?
+
+                                let editor = std::env::var("EDITOR")?;
+
+                                let mut tempbuf = tempfile::NamedTempFile::new().unwrap();
+
+                                // write contexts of line to file
+                                tempbuf.write_all(ctx.cb.as_str().as_bytes()).unwrap();
+
+                                // TODO should use shrs_job for this?
+                                // TODO configure the command used
+                                let mut child = std::process::Command::new(editor)
+                                    .arg(tempbuf.path())
+                                    .spawn()
+                                    .unwrap();
+
+                                child.wait().unwrap();
+
+                                // read update file contexts back to line
+                                let mut new_contents = String::new();
+                                tempbuf.rewind().unwrap();
+                                tempbuf.read_to_string(&mut new_contents).unwrap();
+
+                                // strip last newline
+                                // TODO this is very platform and editor dependent
+                                let trimmed = new_contents.trim_end_matches("\n");
+
+                                ctx.cb.clear();
+                                ctx.cb.insert(Location::Cursor(), trimmed).unwrap();
+
+                                // TODO should auto run the command?
+
+                                tempbuf.close().unwrap();
                             },
                             _ => {
                                 self.buffer_history.add(&ctx.cb);

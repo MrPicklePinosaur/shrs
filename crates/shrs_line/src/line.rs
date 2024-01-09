@@ -598,6 +598,11 @@ impl Line {
                                 _ => {},
                             },
                             Action::Editor => {
+                                // TODO should this just use the env var? or should shrs have
+                                // dedicated config?
+
+                                let editor = std::env::var("EDITOR")?;
+
                                 let mut tempbuf = tempfile::NamedTempFile::new().unwrap();
 
                                 // write contexts of line to file
@@ -605,7 +610,7 @@ impl Line {
 
                                 // TODO should use shrs_job for this?
                                 // TODO configure the command used
-                                let mut child = std::process::Command::new("vim")
+                                let mut child = std::process::Command::new(editor)
                                     .arg(tempbuf.path())
                                     .spawn()
                                     .unwrap();

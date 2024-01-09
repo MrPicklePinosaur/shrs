@@ -34,13 +34,15 @@ impl BuiltinCmd for CdBuiltin {
                     ctx.out.eprintln("no OLDPWD")?;
                     return Ok(CmdOutput::error());
                 }
-            } else if path == "~" {
+            } else if let Some(remaining) = path.strip_prefix("~") {
                 match dirs::home_dir() {
-                    Some(path) => PathBuf::from(path),
+                    Some(home) => {
+                        PathBuf::from(format!("{}{}", home.to_string_lossy(), remaining))
+                    },
                     None => {
                         ctx.out.eprintln("No Home Directory")?;
                         return Ok(CmdOutput::error());
-                    },
+                    }
                 }
             } else {
                 rt.working_dir.join(Path::new(&path))

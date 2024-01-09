@@ -594,6 +594,7 @@ impl Line {
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {},
                             },
+                            Action::Editor => {},
                             _ => {
                                 self.buffer_history.add(&ctx.cb);
                             },

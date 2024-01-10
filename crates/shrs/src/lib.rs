@@ -44,7 +44,7 @@ pub mod crossterm {
     //! Re-export of crossterm types
 
     pub use crossterm::{
-        style::{Print, Stylize},
+        style::{Attribute, Color, Print, Stylize},
         QueueableCommand,
     };
 }

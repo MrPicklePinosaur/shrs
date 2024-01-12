@@ -122,11 +122,11 @@ pub fn default_prompt(line_ctx: &LineCtx) -> StyledBuf {
             .get_module_metadata::<node::NodeJs>("node")
             .map(|node_js| format!(" {} ", node_js.version));
 
-        styled! {
+        styled_buf! {
             rust_info, node_info,
         }
     } else {
-        styled! {
+        styled_buf! {
             ""
         }
     }

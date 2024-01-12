@@ -1,7 +1,7 @@
 //! Shell prompt
 
 use crossterm::style::{ContentStyle, StyledContent};
-use shrs_utils::{styled, styled_buf::StyledBuf};
+use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
 use crate::line::LineCtx;
 
@@ -18,10 +18,10 @@ pub struct DefaultPrompt {}
 impl Prompt for DefaultPrompt {
     // TODO i still don't like passing all this context down
     fn prompt_left(&self, _line_ctx: &LineCtx) -> StyledBuf {
-        styled!("> ")
+        styled_buf!("> ")
     }
 
     fn prompt_right(&self, _line_ctx: &LineCtx) -> StyledBuf {
-        styled!()
+        styled_buf!()
     }
 }

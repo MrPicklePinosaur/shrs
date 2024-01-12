@@ -7,7 +7,7 @@ struct MyPrompt;
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self, _line_ctx: &LineCtx) -> StyledBuf {
-        styled! {
+        styled_buf! {
             " > "
         }
     }
@@ -22,7 +22,7 @@ impl Prompt for MyPrompt {
             .and_then(|state| state.get_module_metadata::<Git>("git"))
             .map(|git| format!("git:{}", git.branch));
 
-        styled! {
+        styled_buf! {
             project_info,
             git_branch
         }

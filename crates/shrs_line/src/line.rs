@@ -268,13 +268,7 @@ impl Line {
             if self.menu.is_active() {
                 if let Some(selection) = self.menu.current_selection() {
                     let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                    styled_buf.push(
-                        trimmed_selection,
-                        ContentStyle {
-                            foreground_color: Some(Color::Red),
-                            ..Default::default()
-                        },
-                    );
+                    styled_buf.push(trimmed_selection, line_ctx.sh.theme.completion_style);
                 }
             }
 

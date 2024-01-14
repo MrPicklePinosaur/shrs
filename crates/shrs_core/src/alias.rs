@@ -85,6 +85,13 @@ impl Alias {
             .collect::<Vec<_>>()
     }
 
+    pub fn get_subst(&self, alias_name: &String) -> Option<&String> {
+        match self.aliases.get(alias_name) {
+            Some(alias_info) => Some(&alias_info.subst),
+            None => None,
+        }
+    }
+
     /// Set an alias
     pub fn set(&mut self, alias_name: &str, alias_info: AliasInfo) {
         self.aliases.insert(alias_name.into(), alias_info);

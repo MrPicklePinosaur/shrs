@@ -5,6 +5,7 @@ use clap::Parser;
 use super::BuiltinCmd;
 use crate::{
     prelude::CmdOutput,
+    prompt_content_queue::PromptContent,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
 
@@ -24,6 +25,9 @@ impl BuiltinCmd for CdBuiltin {
         rt: &mut Runtime,
         args: &[String],
     ) -> anyhow::Result<CmdOutput> {
+        ctx.next_prompt_content
+            .push(PromptContent::new("ls".to_string(), true));
+
         let cli = Cli::try_parse_from(args)?;
         let path = if let Some(path) = cli.path {
             // `cd -` moves us back to previous directory

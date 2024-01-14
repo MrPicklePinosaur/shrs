@@ -1,6 +1,6 @@
 //! Shell configuration options
 
-use std::{cell::RefCell, default, process::ExitStatus, time::Instant};
+use std::{cell::RefCell, collections::VecDeque, default, process::ExitStatus, time::Instant};
 
 use ::crossterm::style::Color;
 use log::{info, warn};
@@ -146,6 +146,7 @@ impl ShellConfig {
             jobs: Jobs::default(),
             startup_time: Instant::now(),
             history: self.history,
+            next_prompt_content: PromptContentQueue::new(),
         };
         let mut rt = Runtime {
             env: self.env,

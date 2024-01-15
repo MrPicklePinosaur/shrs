@@ -211,19 +211,49 @@ impl Line {
         enable_raw_mode()?;
         execute!(std::io::stdout(), EnableBracketedPaste)?;
 
+        let mut auto_run = false;
         self.painter.init().unwrap();
-
-        let mut styled_buf = StyledBuf::empty();
-
-        self.painter.paint(
-            line_ctx,
-            &self.prompt,
-            &self.menu,
-            &styled_buf,
-            line_ctx.cb.cursor(),
-        )?;
+        if let Some(c) = line_ctx.ctx.prompt_content_queue.pop() {
+            auto_run = c.auto_run;
+            line_ctx.cb.insert(Location::Cursor(), c.content.as_str())?;
+        }
 
         loop {
+            let res = line_ctx.get_full_command();
+
+            // syntax highlight
+            let mut styled_buf = self
+                .highlighter
+                .highlight(&res)
+                .slice_from(line_ctx.lines.len());
+
+            // add currently selected completion to buf
+            if self.menu.is_active() {
+                if let Some(selection) = self.menu.current_selection() {
+                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
+                    styled_buf.push(
+                        trimmed_selection,
+                        ContentStyle {
+                            foreground_color: Some(Color::Red),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+
+            self.painter.paint(
+                line_ctx,
+                &self.prompt,
+                &self.menu,
+                &styled_buf,
+                line_ctx.cb.cursor(),
+            )?;
+            if auto_run {
+                self.buffer_history.clear();
+                self.painter.newline()?;
+                break;
+            }
+
             let event = read()?;
 
             if let Event::Key(key_event) = event {
@@ -255,30 +285,6 @@ impl Line {
                     },
                 }
             }
-
-            let res = line_ctx.get_full_command();
-
-            // syntax highlight
-            styled_buf = self
-                .highlighter
-                .highlight(&res)
-                .slice_from(line_ctx.lines.len());
-
-            // add currently selected completion to buf
-            if self.menu.is_active() {
-                if let Some(selection) = self.menu.current_selection() {
-                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                    styled_buf.push(trimmed_selection, line_ctx.sh.theme.completion_style);
-                }
-            }
-
-            self.painter.paint(
-                line_ctx,
-                &self.prompt,
-                &self.menu,
-                &styled_buf,
-                line_ctx.cb.cursor(),
-            )?;
         }
 
         let res = line_ctx.get_full_command();

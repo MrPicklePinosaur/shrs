@@ -18,6 +18,7 @@ derive_builder = "0.12"
 dirs = "5"
 unicode-width = "0.1"
 arboard = "3.2.0"
+tempfile = "3.9"
 
 anyhow = "1"
 thiserror = "1"

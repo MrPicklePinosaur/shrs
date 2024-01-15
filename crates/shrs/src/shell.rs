@@ -1,6 +1,6 @@
 //! Shell configuration options
 
-use std::{cell::RefCell, default, process::ExitStatus, time::Instant};
+use std::{cell::RefCell, collections::VecDeque, default, process::ExitStatus, time::Instant};
 
 use ::crossterm::style::Color;
 use log::{info, warn};
@@ -140,12 +140,13 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::new(self.theme.out_color, self.theme.err_color),
+            out: OutputWriter::new(self.theme.out_style, self.theme.err_style),
 
             state: self.state,
             jobs: Jobs::default(),
             startup_time: Instant::now(),
             history: self.history,
+            prompt_content_queue: PromptContentQueue::new(),
         };
         let mut rt = Runtime {
             env: self.env,

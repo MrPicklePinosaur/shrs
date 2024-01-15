@@ -2,6 +2,7 @@
 
 use std::{
     cell::RefCell,
+    collections::VecDeque,
     env,
     path::{Path, PathBuf},
     time::Instant,
@@ -21,6 +22,7 @@ use crate::{
     keybinding::Keybinding,
     lang::Lang,
     output_writer::OutputWriter,
+    prompt_content_queue::PromptContentQueue,
     signal::Signals,
     state::State,
     theme::Theme,
@@ -55,6 +57,7 @@ pub struct Context {
     pub startup_time: Instant,
     pub alias: Alias,
     pub history: Box<dyn History<HistoryItem = String>>,
+    pub prompt_content_queue: PromptContentQueue,
 }
 
 /// Runtime context for the shell

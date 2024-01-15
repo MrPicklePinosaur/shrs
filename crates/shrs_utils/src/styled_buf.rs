@@ -10,6 +10,26 @@ pub struct StyledBuf {
     pub content: String,
     styles: Vec<ContentStyle>,
 }
+macro_rules! stylize_buf_method {
+    ($method_name:ident Attribute::$attribute:ident) => {
+        pub fn $method_name(self) -> StyledBuf {
+            self.attribute(Attribute::$attribute)
+        }
+    };
+    ($method_name_fg:ident, $method_name_bg:ident, $method_name_ul:ident Color::$color:ident) => {
+        pub fn $method_name_fg(self) -> StyledBuf {
+            self.with(Color::$color)
+        }
+
+        pub fn $method_name_bg(self) -> StyledBuf {
+            self.on(Color::$color)
+        }
+
+        pub fn $method_name_ul(self) -> StyledBuf {
+            self.underline(Color::$color)
+        }
+    };
+}
 
 impl StyledBuf {
     pub fn empty() -> Self {
@@ -76,7 +96,7 @@ impl StyledBuf {
     pub fn apply_style_at(&mut self, index: usize, style: ContentStyle) {
         self.styles[index] = style;
     }
-    pub fn apply_styles_in_range(&mut self, range: Range<usize>, style: ContentStyle) {
+    pub fn apply_style_in_range(&mut self, range: Range<usize>, style: ContentStyle) {
         range.for_each(|u| self.apply_style_at(u, style));
     }
     pub fn slice_from(&self, start: usize) -> StyledBuf {
@@ -97,6 +117,7 @@ impl StyledBuf {
         self.content += buf.content.as_str();
         self.styles.extend(buf.styles);
     }
+    //These methods emulate stylize behaviour
     pub fn with(mut self, color: Color) -> StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = x.with(color));
         self
@@ -105,15 +126,48 @@ impl StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = x.on(color));
         self
     }
+    pub fn underline(mut self, color: Color) -> StyledBuf {
+        self.styles.iter_mut().for_each(|x| *x = x.underline(color));
+        self
+    }
     pub fn attribute(mut self, attr: Attribute) -> StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = x.attribute(attr));
         self
     }
-    pub fn apply_styles(mut self, style: ContentStyle) -> StyledBuf {
+    pub fn apply_style(mut self, style: ContentStyle) -> StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = style);
         self
     }
+    stylize_buf_method!(reset Attribute::Reset);
+    stylize_buf_method!(bold Attribute::Bold);
+    stylize_buf_method!(underlined Attribute::Underlined);
+    stylize_buf_method!(reverse Attribute::Reverse);
+    stylize_buf_method!(dim Attribute::Dim);
+    stylize_buf_method!(italic Attribute::Italic);
+    stylize_buf_method!(negative Attribute::Reverse);
+    stylize_buf_method!(slow_blink Attribute::SlowBlink);
+    stylize_buf_method!(rapid_blink Attribute::RapidBlink);
+    stylize_buf_method!(hidden Attribute::Hidden);
+    stylize_buf_method!(crossed_out Attribute::CrossedOut);
+
+    stylize_buf_method!(black, on_black, underline_black Color::Black);
+    stylize_buf_method!(dark_grey, on_dark_grey, underline_dark_grey Color::DarkGrey);
+    stylize_buf_method!(red, on_red, underline_red Color::Red);
+    stylize_buf_method!(dark_red, on_dark_red, underline_dark_red Color::DarkRed);
+    stylize_buf_method!(green, on_green, underline_green Color::Green);
+    stylize_buf_method!(dark_green, on_dark_green, underline_dark_green Color::DarkGreen);
+    stylize_buf_method!(yellow, on_yellow, underline_yellow Color::Yellow);
+    stylize_buf_method!(dark_yellow, on_dark_yellow, underline_dark_yellow Color::DarkYellow);
+    stylize_buf_method!(blue, on_blue, underline_blue Color::Blue);
+    stylize_buf_method!(dark_blue, on_dark_blue, underline_dark_blue Color::DarkBlue);
+    stylize_buf_method!(magenta, on_magenta, underline_magenta Color::Magenta);
+    stylize_buf_method!(dark_magenta, on_dark_magenta, underline_dark_magenta Color::DarkMagenta);
+    stylize_buf_method!(cyan, on_cyan, underline_cyan Color::Cyan);
+    stylize_buf_method!(dark_cyan, on_dark_cyan, underline_dark_cyan Color::DarkCyan);
+    stylize_buf_method!(white, on_white, underline_white Color::White);
+    stylize_buf_method!(grey, on_grey, underline_grey Color::Grey);
 }
+
 pub fn line_content_len(line: Vec<StyledContent<String>>) -> u16 {
     let c = line
         .iter()
@@ -194,7 +248,7 @@ impl<E> From<Result<String, E>> for StyledBuf {
 ///
 /// Note need crossterm::style::Stylize
 #[macro_export]
-macro_rules! styled {
+macro_rules! styled_buf {
     ($($part:expr),* $(,)*) => {{
 
         use $crate::{styled_buf::StyledBuf };
@@ -215,13 +269,13 @@ mod tests {
         use crossterm::style::Stylize;
         println!("test {}", "lol".blue().reset());
 
-        let styled_buf = styled! {
-            styled!{"lol".blue()},
+        let styled_buf = styled_buf! {
+            styled_buf!{"lol".blue()},
             Some("lol"),
             "lol",
             String::from("lol"),
             "lol".blue(),
-            styled! { "lol" }
+            styled_buf! { "lol" }
         };
         println!("out {styled_buf}");
     }

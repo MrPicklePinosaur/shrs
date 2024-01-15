@@ -1,6 +1,9 @@
 //! Core readline configuration
 
-use std::borrow::BorrowMut;
+use std::{
+    borrow::BorrowMut,
+    io::{Read, Seek, Write},
+};
 
 use crossterm::{
     cursor::SetCursorStyle,
@@ -208,19 +211,49 @@ impl Line {
         enable_raw_mode()?;
         execute!(std::io::stdout(), EnableBracketedPaste)?;
 
+        let mut auto_run = false;
         self.painter.init().unwrap();
-
-        let mut styled_buf = StyledBuf::empty();
-
-        self.painter.paint(
-            line_ctx,
-            &self.prompt,
-            &self.menu,
-            &styled_buf,
-            line_ctx.cb.cursor(),
-        )?;
+        if let Some(c) = line_ctx.ctx.prompt_content_queue.pop() {
+            auto_run = c.auto_run;
+            line_ctx.cb.insert(Location::Cursor(), c.content.as_str())?;
+        }
 
         loop {
+            let res = line_ctx.get_full_command();
+
+            // syntax highlight
+            let mut styled_buf = self
+                .highlighter
+                .highlight(&res)
+                .slice_from(line_ctx.lines.len());
+
+            // add currently selected completion to buf
+            if self.menu.is_active() {
+                if let Some(selection) = self.menu.current_selection() {
+                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
+                    styled_buf.push(
+                        trimmed_selection,
+                        ContentStyle {
+                            foreground_color: Some(Color::Red),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+
+            self.painter.paint(
+                line_ctx,
+                &self.prompt,
+                &self.menu,
+                &styled_buf,
+                line_ctx.cb.cursor(),
+            )?;
+            if auto_run {
+                self.buffer_history.clear();
+                self.painter.newline()?;
+                break;
+            }
+
             let event = read()?;
 
             if let Event::Key(key_event) = event {
@@ -252,36 +285,6 @@ impl Line {
                     },
                 }
             }
-
-            let res = line_ctx.get_full_command();
-
-            // syntax highlight
-            styled_buf = self
-                .highlighter
-                .highlight(&res)
-                .slice_from(line_ctx.lines.len());
-
-            // add currently selected completion to buf
-            if self.menu.is_active() {
-                if let Some(selection) = self.menu.current_selection() {
-                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                    styled_buf.push(
-                        trimmed_selection,
-                        ContentStyle {
-                            foreground_color: Some(Color::Red),
-                            ..Default::default()
-                        },
-                    );
-                }
-            }
-
-            self.painter.paint(
-                line_ctx,
-                &self.prompt,
-                &self.menu,
-                &styled_buf,
-                line_ctx.cb.cursor(),
-            )?;
         }
 
         let res = line_ctx.get_full_command();
@@ -593,6 +596,42 @@ impl Line {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {},
+                            },
+                            Action::Editor => {
+                                // TODO should this just use the env var? or should shrs have
+                                // dedicated config?
+
+                                let editor = std::env::var("EDITOR")?;
+
+                                let mut tempbuf = tempfile::NamedTempFile::new().unwrap();
+
+                                // write contexts of line to file
+                                tempbuf.write_all(ctx.cb.as_str().as_bytes()).unwrap();
+
+                                // TODO should use shrs_job for this?
+                                // TODO configure the command used
+                                let mut child = std::process::Command::new(editor)
+                                    .arg(tempbuf.path())
+                                    .spawn()
+                                    .unwrap();
+
+                                child.wait().unwrap();
+
+                                // read update file contexts back to line
+                                let mut new_contents = String::new();
+                                tempbuf.rewind().unwrap();
+                                tempbuf.read_to_string(&mut new_contents).unwrap();
+
+                                // strip last newline
+                                // TODO this is very platform and editor dependent
+                                let trimmed = new_contents.trim_end_matches("\n");
+
+                                ctx.cb.clear();
+                                ctx.cb.insert(Location::Cursor(), trimmed).unwrap();
+
+                                // TODO should auto run the command?
+
+                                tempbuf.close().unwrap();
                             },
                             _ => {
                                 self.buffer_history.add(&ctx.cb);

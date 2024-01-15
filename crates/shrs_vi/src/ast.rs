@@ -34,4 +34,6 @@ pub enum Action {
     Paste(Motion),
     LowerCase(Motion),
     UpperCase(Motion),
+    /// Open line in editor of choice
+    Editor,
 }

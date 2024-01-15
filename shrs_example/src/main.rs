@@ -5,7 +5,7 @@ use std::{
     process::Command,
 };
 
-use ::crossterm::style::{Attribute, Color};
+use ::crossterm::style::{Attribute, Color, StyledContent};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
@@ -31,10 +31,18 @@ impl Prompt for MyPrompt {
             LineMode::Normal => String::from(":").yellow(),
         };
         if !line_ctx.lines.is_empty() {
-            return styled! {" ", indicator, " "};
+            return styled_buf! {" ", indicator, " "};
         }
 
-        styled! {" ", username().map(|u|u.with(Color::Blue)), " ", top_pwd().with(Color::White).attribute(Attribute::Bold), " ", indicator, " "}
+        styled_buf!(
+            " ",
+            username().map(|u| u.blue()),
+            " ",
+            top_pwd().white().bold(),
+            " ",
+            indicator,
+            " "
+        )
     }
     fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
@@ -48,25 +56,17 @@ impl Prompt for MyPrompt {
             .ctx
             .state
             .get::<MuxState>()
-            .map(|state| state.get_lang());
+            .map(|state| state.get_lang())
+            .expect("MuxState should be provided");
 
-        let git_branch = git::branch().map(|s| {
-            format!("git:{s}")
-                .with(line_ctx.sh.theme.blue)
-                .attribute(Attribute::Bold)
-        });
         if !line_ctx.lines.is_empty() {
-            return styled! {""};
+            return styled_buf!("");
         }
-        styled! {git_branch,
-            " ",
-            time_str,
-            " ",
-            lang,
-            " "
+        if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
+            styled_buf!(git_branch, " ", time_str, " ", lang, " ")
+        } else {
+            styled_buf!(time_str, " ", lang, " ")
         }
-
-        // styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
     }
 }
 

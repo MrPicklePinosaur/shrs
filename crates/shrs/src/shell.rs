@@ -140,7 +140,7 @@ impl ShellConfig {
 
         let mut ctx = Context {
             alias: self.alias,
-            out: OutputWriter::new(self.theme.out_color, self.theme.err_color),
+            out: OutputWriter::new(self.theme.out_style, self.theme.err_style),
 
             state: self.state,
             jobs: Jobs::default(),

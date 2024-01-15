@@ -146,7 +146,7 @@ impl ShellConfig {
             jobs: Jobs::default(),
             startup_time: Instant::now(),
             history: self.history,
-            next_prompt_content: PromptContentQueue::new(),
+            prompt_content_queue: PromptContentQueue::new(),
         };
         let mut rt = Runtime {
             env: self.env,

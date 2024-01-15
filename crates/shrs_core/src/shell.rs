@@ -57,7 +57,7 @@ pub struct Context {
     pub startup_time: Instant,
     pub alias: Alias,
     pub history: Box<dyn History<HistoryItem = String>>,
-    pub next_prompt_content: PromptContentQueue,
+    pub prompt_content_queue: PromptContentQueue,
 }
 
 /// Runtime context for the shell

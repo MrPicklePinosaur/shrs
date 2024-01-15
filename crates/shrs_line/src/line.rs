@@ -213,7 +213,7 @@ impl Line {
 
         let mut auto_run = false;
         self.painter.init().unwrap();
-        if let Some(c) = line_ctx.ctx.next_prompt_content.pop() {
+        if let Some(c) = line_ctx.ctx.prompt_content_queue.pop() {
             auto_run = c.auto_run;
             line_ctx.cb.insert(Location::Cursor(), c.content.as_str())?;
         }

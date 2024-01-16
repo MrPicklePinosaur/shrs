@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use super::BuiltinCmd;
 use crate::{
     prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    shell::{Context, Runtime, Shell}, prompt_content_queue::PromptContent,
 };
 
 use skim::prelude::*;
@@ -52,10 +52,12 @@ impl BuiltinCmd for HistoryBuiltin {
             Some(Commands::Run { index }) => {
                 let index = *index as usize;
                 if (0.._ctx.history.len()).contains(&index) {
-                    // Run the command _ctx.history.get(index).unwrap()
+                    let cmd = _ctx.history.get(index).expect("Error: supplied index to history run is invalid");
+                    _ctx.prompt_content_queue.push(PromptContent::new(cmd.to_string(), true))
                 }
             },
             Some(Commands::Search { query }) => {
+                // We expect Skim to succeed
                 let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .nosort(true)
@@ -75,8 +77,7 @@ impl BuiltinCmd for HistoryBuiltin {
                     .unwrap_or_else(|| Vec::new());
             
                 for item in selected_items.iter() {
-                    // There should be only one item
-                    // Run the command item.output()
+                    _ctx.prompt_content_queue.push(PromptContent::new(item.output().to_string(), true));
                     break;
                 }
             },

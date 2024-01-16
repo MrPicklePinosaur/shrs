@@ -5,12 +5,18 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     ops::Add,
     os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio},
+    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
+    sync::Arc,
 };
 
 use shrs::{
     lang::{Lexer, Token},
     prelude::*,
+};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt},
+    runtime,
+    sync::RwLock,
 };
 
 use crate::{
@@ -155,21 +161,37 @@ impl Lang for NuLang {
 }
 
 pub struct PythonLang {
-    instance: RefCell<Child>,
+    instance: tokio::process::Child,
+    stdin: Arc<RwLock<tokio::process::ChildStdin>>,
+    runtime: runtime::Runtime,
 }
 
 impl PythonLang {
     pub fn new() -> Self {
         // TODO maybe support custom parameters to pass to command
-        let instance = Command::new("python3")
+        let mut instance = tokio::process::Command::new("python")
+            .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .expect("Failed to start python process");
 
+        let stdout = instance.stdout.take().unwrap();
+        let stdin = instance.stdin.take().unwrap();
+
+        let runtime = runtime::Runtime::new().unwrap();
+
+        runtime.spawn(async {
+            let mut stdout_reader = tokio::io::BufReader::new(stdout).lines();
+            while let Some(line) = stdout_reader.next_line().await.unwrap() {
+                println!("{line}");
+            }
+        });
+
         Self {
-            instance: RefCell::new(instance),
+            instance,
+            stdin: Arc::new(RwLock::new(stdin)),
+            runtime,
         }
     }
 }
@@ -182,16 +204,16 @@ impl Lang for PythonLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let mut instance = self.instance.borrow_mut();
-        let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
+        let stdin_clone = Arc::clone(&self.stdin);
 
-        stdin
-            .write_all((cmd + "\n").as_bytes())
-            .expect("Python command failed");
-
-        let stdout = instance.stdout.as_mut().expect("Failed to open stdout");
-        let stdout_reader = BufReader::new(stdout);
-        read_out(ctx, stdout_reader)?;
+        self.runtime.spawn(async move {
+            let mut borrow = stdin_clone.write().await;
+            let mut stdin_writer = tokio::io::BufWriter::new(&mut *borrow);
+            stdin_writer
+                .write_all((cmd + "\n").as_bytes())
+                .await
+                .expect("Python command failed");
+        });
 
         Ok(CmdOutput::success())
     }

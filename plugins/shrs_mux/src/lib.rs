@@ -4,6 +4,7 @@ mod lang;
 mod lang_options;
 
 use std::{
+    cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
 };
@@ -15,7 +16,6 @@ use lang_options::swap_lang_options;
 pub use lang_options::LangOptions;
 use shrs::prelude::*;
 
-#[derive(Clone)]
 pub struct MuxState {
     current_lang: (String, Rc<dyn Lang>),
     lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
@@ -73,7 +73,8 @@ pub struct ChangeLangCtx {
 
 pub struct MuxPlugin {
     lang_options: LangOptions,
-    mux_state: MuxState,
+    // TODO kinda stupid but need to pass ownership to state
+    mux_state: RefCell<Option<MuxState>>,
 }
 
 impl MuxPlugin {
@@ -82,14 +83,18 @@ impl MuxPlugin {
 
         MuxPlugin {
             lang_options: LangOptions::default(),
-            mux_state,
+            mux_state: RefCell::new(Some(mux_state)),
         }
     }
 
     // Proxy to register_lang of underlying MuxState
-    pub fn register_lang(mut self, name: &str, lang: impl Lang + 'static) -> Self {
+    pub fn register_lang(self, name: &str, lang: impl Lang + 'static) -> Self {
         // TODO make sure not called after plugin is inited
-        self.mux_state.register_lang(name, lang);
+        self.mux_state
+            .borrow_mut()
+            .as_mut()
+            .unwrap()
+            .register_lang(name, lang);
         self
     }
 
@@ -99,7 +104,9 @@ impl MuxPlugin {
 impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         // TODO pretty bad solution to just clone everything
-        shell.state.insert(self.mux_state.clone());
+        let mut mux_state_borrow = self.mux_state.borrow_mut();
+        let mux_state = mux_state_borrow.take().unwrap();
+        shell.state.insert(mux_state);
 
         shell.builtins.insert("mux", MuxBuiltin::new());
         shell.lang = Box::new(MuxLang::new());

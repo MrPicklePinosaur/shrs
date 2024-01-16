@@ -16,7 +16,7 @@ use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
-use shrs_mux::{MuxPlugin, MuxState};
+use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
 
@@ -52,20 +52,20 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{x:?}"));
 
-        let lang = line_ctx
+        let (lang_name, _) = line_ctx
             .ctx
             .state
             .get::<MuxState>()
-            .map(|state| state.get_lang())
+            .map(|state| state.current_lang())
             .expect("MuxState should be provided");
 
         if !line_ctx.lines.is_empty() {
             return styled_buf!("");
         }
         if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
-            styled_buf!(git_branch, " ", time_str, " ", lang, " ")
+            styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
         } else {
-            styled_buf!(time_str, " ", lang, " ")
+            styled_buf!(time_str, " ", lang_name, " ")
         }
     }
 }
@@ -185,6 +185,12 @@ a rusty POSIX shell | build {}"#,
     let mut hooks = Hooks::new();
     hooks.insert(startup_msg);
 
+    // =-=-= Plugins =-=-=
+    let mux_plugin = MuxPlugin::new()
+        .register_lang("bash", BashLang::new())
+        .register_lang("python", PythonLang::new())
+        .register_lang("nu", NuLang::new());
+
     // =-=-= Shell =-=-=
     // Construct the final shell
     let myshell = ShellBuilder::default()
@@ -197,10 +203,10 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin::default())
-        .with_plugin(MuxPlugin::new())
+        .with_plugin(mux_plugin)
         .with_plugin(CdStackPlugin)
         .build()
         .expect("Could not construct shell");
 
-    myshell.run();
+    myshell.run().unwrap();
 }

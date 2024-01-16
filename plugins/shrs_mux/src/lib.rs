@@ -3,61 +3,69 @@ mod interpreter;
 mod lang;
 mod lang_options;
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-use lang::{BashLang, MuxLang, NuLang, PythonLang};
-use lang_options::{swap_lang_options, LangOptions};
+pub use lang::{BashLang, MuxLang, NuLang, PythonLang};
+use lang_options::swap_lang_options;
+pub use lang_options::LangOptions;
 use shrs::prelude::*;
 
+#[derive(Clone)]
 pub struct MuxState {
-    // TODO I don't very like this 'string'-typing
-    lang: String,
-    registered_langs: HashSet<String>,
+    current_lang: (String, Rc<dyn Lang>),
+    lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
 }
 
 impl MuxState {
-    /// Construct a new container for keeping track of the currently used shell language
+    /// Create a new instance of lang
     ///
-    /// At least one language must be supplied. The first language that is supplied is used as the
-    /// starting language
-    pub fn new(langs: Vec<String>) -> anyhow::Result<MuxState> {
-        let first_lang = match langs.get(0) {
-            Some(first_lang) => first_lang,
-            None => return Err(anyhow!("require at least one language")),
-        };
-
-        let res = MuxState {
-            lang: first_lang.to_owned(),
-            registered_langs: HashSet::from_iter(langs.into_iter()),
-        };
-        Ok(res)
-    }
-
-    /// Set the current language being used by the MuxLang
-    ///
-    /// If an invalid language is used an error is returned
-    pub fn set_lang(&mut self, lang: &str) -> anyhow::Result<()> {
-        if self.registered_langs.contains(lang) {
-            self.lang = lang.to_owned();
-            Ok(())
-        } else {
-            Err(anyhow!("invalid lang"))
+    /// Must be initialized with at least one language
+    pub fn new(name: &str, lang: impl Lang + 'static) -> Self {
+        let mut lang_map = HashMap::new();
+        lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn Lang>);
+        Self {
+            current_lang: (name.into(), lang_map.get(name).unwrap().clone()),
+            lang_map,
         }
     }
 
-    /// Get the currently used language
-    pub fn get_lang(&self) -> &str {
-        &self.lang
+    /// Register a language using a name
+    ///
+    /// If the language has already been registered previously, it is overwritten
+    pub fn register_lang(&mut self, name: &str, lang: impl Lang + 'static) {
+        self.lang_map.insert(name.into(), Rc::new(lang));
     }
 
-    /// Get an iterator for list of all the available languages
-    pub fn registered_langs(&self) -> impl Iterator<Item = &String> {
-        self.registered_langs.iter()
+    /// Get the current language
+    pub fn current_lang(&self) -> (String, Rc<dyn Lang>) {
+        self.current_lang.clone()
+    }
+
+    /// Set the language using the name
+    ///
+    /// Selecting invalid language returns error
+    pub fn set_current_lang(&mut self, name: &str) -> anyhow::Result<()> {
+        if let Some(lang) = self.lang_map.get(name) {
+            self.current_lang = (name.into(), lang.clone());
+        } else {
+            return Err(anyhow!("Invalid language: {}", name));
+        }
+
+        Ok(())
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn Lang>)> {
+        self.lang_map.iter()
     }
 }
+
 #[derive(Clone)]
+/// Hook that emitted when the language is changed
 pub struct ChangeLangCtx {
     old_lang: String,
     new_lang: String,
@@ -65,37 +73,36 @@ pub struct ChangeLangCtx {
 
 pub struct MuxPlugin {
     lang_options: LangOptions,
+    mux_state: MuxState,
 }
 
 impl MuxPlugin {
     pub fn new() -> Self {
+        let mux_state = MuxState::new("shrs", PosixLang::default());
+
         MuxPlugin {
             lang_options: LangOptions::default(),
+            mux_state,
         }
     }
+
+    // Proxy to register_lang of underlying MuxState
+    pub fn register_lang(mut self, name: &str, lang: impl Lang + 'static) -> Self {
+        // TODO make sure not called after plugin is inited
+        self.mux_state.register_lang(name, lang);
+        self
+    }
+
+    // TODO maybe add abilitiy to set the default lang
 }
 
 impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        // This might be able to be indexed by typeid?
-        let langs: Vec<(String, Box<dyn Lang>)> = vec![
-            (
-                "shrs".into(),
-                Box::new(PosixLang::default()) as Box<dyn Lang>,
-            ),
-            ("bash".into(), Box::new(BashLang::new()) as Box<dyn Lang>),
-            ("nu".into(), Box::new(NuLang::new()) as Box<dyn Lang>),
-            ("py".into(), Box::new(PythonLang::new()) as Box<dyn Lang>),
-        ];
+        // TODO pretty bad solution to just clone everything
+        shell.state.insert(self.mux_state.clone());
 
         shell.builtins.insert("mux", MuxBuiltin::new());
-        let lang_names = langs
-            .iter()
-            .map(|(lang_name, _)| lang_name.to_owned())
-            .collect::<Vec<_>>();
-        shell.state.insert(MuxState::new(lang_names).unwrap());
-        let langs_map = HashMap::from_iter(langs);
-        shell.lang = Box::new(MuxLang::new(langs_map));
+        shell.lang = Box::new(MuxLang::new());
         shell.hooks.insert(swap_lang_options);
 
         Ok(())

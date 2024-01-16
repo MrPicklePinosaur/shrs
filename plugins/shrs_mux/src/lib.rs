@@ -10,10 +10,12 @@ use std::{
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-use lang::{BashLang, MuxLang, NuLang, PythonLang};
-use lang_options::{swap_lang_options, LangOptions};
+pub use lang::{BashLang, MuxLang, NuLang, PythonLang};
+use lang_options::swap_lang_options;
+pub use lang_options::LangOptions;
 use shrs::prelude::*;
 
+#[derive(Clone)]
 pub struct MuxState {
     current_lang: (String, Rc<dyn Lang>),
     lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
@@ -71,23 +73,33 @@ pub struct ChangeLangCtx {
 
 pub struct MuxPlugin {
     lang_options: LangOptions,
+    mux_state: MuxState,
 }
 
 impl MuxPlugin {
     pub fn new() -> Self {
+        let mux_state = MuxState::new("shrs", PosixLang::default());
+
         MuxPlugin {
             lang_options: LangOptions::default(),
+            mux_state,
         }
     }
+
+    // Proxy to register_lang of underlying MuxState
+    pub fn register_lang(mut self, name: &str, lang: impl Lang + 'static) -> Self {
+        // TODO make sure not called after plugin is inited
+        self.mux_state.register_lang(name, lang);
+        self
+    }
+
+    // TODO maybe add abilitiy to set the default lang
 }
 
 impl Plugin for MuxPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        let mut mux_state = MuxState::new("shrs", PosixLang::default());
-        mux_state.register_lang("bash", BashLang::new());
-        mux_state.register_lang("nu", NuLang::new());
-        mux_state.register_lang("py", PythonLang::new());
-        shell.state.insert(mux_state);
+        // TODO pretty bad solution to just clone everything
+        shell.state.insert(self.mux_state.clone());
 
         shell.builtins.insert("mux", MuxBuiltin::new());
         shell.lang = Box::new(MuxLang::new());

@@ -52,20 +52,20 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{x:?}"));
 
-        let lang = line_ctx
+        let (lang_name, _) = line_ctx
             .ctx
             .state
             .get::<MuxState>()
-            .map(|state| state.get_lang())
+            .map(|state| state.current_lang())
             .expect("MuxState should be provided");
 
         if !line_ctx.lines.is_empty() {
             return styled_buf!("");
         }
         if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
-            styled_buf!(git_branch, " ", time_str, " ", lang, " ")
+            styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
         } else {
-            styled_buf!(time_str, " ", lang, " ")
+            styled_buf!(time_str, " ", lang_name, " ")
         }
     }
 }

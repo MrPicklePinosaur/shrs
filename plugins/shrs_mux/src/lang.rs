@@ -18,14 +18,11 @@ use crate::{
     MuxState,
 };
 
-pub struct MuxLang {
-    langs: HashMap<String, Box<dyn Lang>>,
-}
+pub struct MuxLang {}
 
 impl MuxLang {
-    pub fn new(langs: HashMap<String, Box<dyn Lang>>) -> Self {
-        // TODO should be configurable later
-        Self { langs }
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
@@ -37,17 +34,12 @@ impl Lang for MuxLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> anyhow::Result<CmdOutput> {
-        let lang_name = match ctx.state.get::<MuxState>() {
-            Some(state) => &state.lang,
-            None => return Ok(CmdOutput::error()),
+        let Some(state) = ctx.state.get::<MuxState>() else {
+            return Ok(CmdOutput::error());
         };
-        // TODO maybe return error if we can't find a lang
 
-        if let Some(lang) = self.langs.get(lang_name) {
-            return lang.eval(sh, ctx, rt, cmd);
-        }
-
-        Ok(CmdOutput::error())
+        let (lang_name, lang) = state.current_lang();
+        lang.eval(sh, ctx, rt, cmd)
     }
 
     fn name(&self) -> String {
@@ -56,6 +48,7 @@ impl Lang for MuxLang {
 
     fn needs_line_check(&self, cmd: String) -> bool {
         //TODO check if open quotes or brackets
+        // TODO this is super duplicated code
 
         if let Some(last_char) = cmd.chars().last() {
             if last_char == '\\' {

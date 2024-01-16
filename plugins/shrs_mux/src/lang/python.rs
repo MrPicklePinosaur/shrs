@@ -1,20 +1,9 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::format,
-    io::{BufRead, BufReader, Read, Write},
-    ops::Add,
-    os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
-    sync::Arc,
-};
+use std::{process::Stdio, sync::Arc};
 
-use shrs::{
-    lang::{Lexer, Token},
-    prelude::*,
-};
+use shrs::prelude::*;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt},
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
+    process::{Child, ChildStdin, ChildStdout, Command},
     runtime,
     sync::RwLock,
 };
@@ -25,28 +14,30 @@ use crate::{
 };
 
 pub struct PythonLang {
-    instance: tokio::process::Child,
-    stdin: Arc<RwLock<tokio::process::ChildStdin>>,
+    instance: Child,
+    stdin: Arc<RwLock<ChildStdin>>,
     runtime: runtime::Runtime,
 }
 
 impl PythonLang {
     pub fn new() -> Self {
+        let runtime = runtime::Runtime::new().unwrap();
+
+        let _guard = runtime.enter();
+
         // TODO maybe support custom parameters to pass to command
-        let mut instance = tokio::process::Command::new("python")
+        let mut instance = Command::new("python")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .expect("Failed to start python process");
 
-        let stdout = instance.stdout.take().unwrap();
         let stdin = instance.stdin.take().unwrap();
-
-        let runtime = runtime::Runtime::new().unwrap();
+        let stdout = instance.stdout.take().unwrap();
 
         runtime.spawn(async {
-            let mut stdout_reader = tokio::io::BufReader::new(stdout).lines();
+            let mut stdout_reader = BufReader::new(stdout).lines();
             while let Some(line) = stdout_reader.next_line().await.unwrap() {
                 println!("{line}");
             }
@@ -72,7 +63,7 @@ impl Lang for PythonLang {
 
         self.runtime.spawn(async move {
             let mut borrow = stdin_clone.write().await;
-            let mut stdin_writer = tokio::io::BufWriter::new(&mut *borrow);
+            let mut stdin_writer = BufWriter::new(&mut *borrow);
             stdin_writer
                 .write_all((cmd + "\n").as_bytes())
                 .await

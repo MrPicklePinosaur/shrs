@@ -32,30 +32,31 @@ impl BuiltinCmd for MuxBuiltin {
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
+        let Some(state) = ctx.state.get_mut::<MuxState>() else {
+            return Ok(CmdOutput::error());
+        };
+
         if cli.list {
-            ctx.state.get::<MuxState>().map(|state| {
-                println!("Available languages:");
-                for lang in state.registered_langs() {
-                    println!("{lang}");
-                }
-            });
+            for (lang_name, _) in state.iter() {
+                println!("{lang_name}")
+            }
         }
 
         if let Some(lang_name) = cli.lang {
-            if let Some(state) = ctx.state.get_mut::<MuxState>() {
-                let hook_ctx = ChangeLangCtx {
-                    old_lang: state.get_lang().to_string(),
-                    new_lang: lang_name.to_string(),
-                };
-                match state.set_lang(&lang_name) {
-                    Ok(_) => println!("setting lang to {lang_name}"),
-                    Err(e) => eprintln!("{e}"),
-                }
-
-                sh.hooks
-                    .run(sh, ctx, rt, hook_ctx)
-                    .expect("failed running hook");
+            let (old_lang_name, _) = state.current_lang();
+            let hook_ctx = ChangeLangCtx {
+                old_lang: old_lang_name,
+                new_lang: lang_name.clone().into(),
             };
+
+            match state.set_current_lang(&lang_name) {
+                Ok(_) => println!("setting lang to {lang_name}"),
+                Err(e) => eprintln!("{e}"),
+            }
+
+            sh.hooks
+                .run(sh, ctx, rt, hook_ctx)
+                .expect("failed running hook");
         }
 
         Ok(CmdOutput::success())

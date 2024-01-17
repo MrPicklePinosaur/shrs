@@ -50,9 +50,7 @@ impl BuiltinCmd for HistoryBuiltin {
                 _ctx.history.clear();
             },
             Some(Commands::Run { index }) => {
-                let index = *index as usize;
-                if (0.._ctx.history.len()).contains(&index) {
-                    let cmd = _ctx.history.get(index).expect("Error: supplied index to history run is invalid");
+                if let Some(cmd) = _ctx.history.get(*index as usize) {
                     _ctx.prompt_content_queue.push(PromptContent::new(cmd.to_string(), true))
                 } else {
                     _ctx.out.print(format!("Please specificy an index from {} to {} inclusive", 0, _ctx.history.len() - 1))?;

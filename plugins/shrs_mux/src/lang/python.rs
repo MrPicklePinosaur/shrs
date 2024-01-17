@@ -30,21 +30,34 @@ impl PythonLang {
         let _guard = runtime.enter();
 
         // TODO maybe support custom parameters to pass to command
+        // pass some options to make repl work better
+        // -i forces interactive
+        // -q silences help message
+        // the command given by the -c is used to remove the prompt
+        let args = vec!["-i", "-q", "-c", "import sys; sys.ps1=''; sys.ps2=''"];
         let mut instance = Command::new("python")
-            .arg("-i")
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .expect("Failed to start python process");
 
-        let stdin = instance.stdin.take().unwrap();
         let stdout = instance.stdout.take().unwrap();
+        let stderr = instance.stderr.take().unwrap();
+        let stdin = instance.stdin.take().unwrap();
 
         runtime.spawn(async {
             let mut stdout_reader = BufReader::new(stdout).lines();
             while let Some(line) = stdout_reader.next_line().await.unwrap() {
                 println!("{line}");
+            }
+        });
+
+        runtime.spawn(async {
+            let mut stderr_reader = BufReader::new(stderr).lines();
+            while let Some(line) = stderr_reader.next_line().await.unwrap() {
+                eprintln!("{line}");
             }
         });
 

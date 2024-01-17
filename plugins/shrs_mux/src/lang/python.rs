@@ -5,7 +5,10 @@ use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
     process::{Child, ChildStdin, ChildStdout, Command},
     runtime,
-    sync::RwLock,
+    sync::{
+        mpsc::{self, Sender},
+        RwLock,
+    },
 };
 
 use crate::{
@@ -15,7 +18,8 @@ use crate::{
 
 pub struct PythonLang {
     instance: Child,
-    stdin: Arc<RwLock<ChildStdin>>,
+    /// Channel for writing to process
+    write_tx: Sender<String>,
     runtime: runtime::Runtime,
 }
 
@@ -27,6 +31,7 @@ impl PythonLang {
 
         // TODO maybe support custom parameters to pass to command
         let mut instance = Command::new("python")
+            .arg("-i")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -43,9 +48,24 @@ impl PythonLang {
             }
         });
 
+        let (write_tx, mut write_rx) = mpsc::channel::<String>(8);
+
+        runtime.spawn(async move {
+            let mut stdin_writer = BufWriter::new(stdin);
+
+            while let Some(cmd) = write_rx.recv().await {
+                stdin_writer
+                    .write_all((cmd + "\n").as_bytes())
+                    .await
+                    .expect("Python command failed");
+
+                stdin_writer.flush().await.unwrap();
+            }
+        });
+
         Self {
             instance,
-            stdin: Arc::new(RwLock::new(stdin)),
+            write_tx,
             runtime,
         }
     }
@@ -59,15 +79,8 @@ impl Lang for PythonLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let stdin_clone = Arc::clone(&self.stdin);
-
-        self.runtime.spawn(async move {
-            let mut borrow = stdin_clone.write().await;
-            let mut stdin_writer = BufWriter::new(&mut *borrow);
-            stdin_writer
-                .write_all((cmd + "\n").as_bytes())
-                .await
-                .expect("Python command failed");
+        self.runtime.block_on(async {
+            self.write_tx.send(cmd).await.unwrap();
         });
 
         Ok(CmdOutput::success())

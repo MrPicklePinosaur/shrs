@@ -188,7 +188,7 @@ a rusty POSIX shell | build {}"#,
     // =-=-= Plugins =-=-=
     let mux_plugin = MuxPlugin::new()
         .register_lang("bash", BashLang::new())
-        // .register_lang("python", PythonLang::new())
+        .register_lang("python", PythonLang::new())
         .register_lang("nu", NuLang::new());
 
     // =-=-= Shell =-=-=

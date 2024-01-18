@@ -1,4 +1,7 @@
-use std::{process::Stdio, sync::Arc};
+use std::{
+    process::Stdio,
+    sync::{Arc, OnceLock},
+};
 
 use shrs::prelude::*;
 use tokio::{
@@ -16,17 +19,14 @@ use crate::{
     MuxState,
 };
 
-pub struct PythonLang {
-    instance: Child,
+struct PythonLangCtx {
     /// Channel for writing to process
     write_tx: Sender<String>,
-    runtime: runtime::Runtime,
+    instance: Child,
 }
 
-impl PythonLang {
-    pub fn new() -> Self {
-        let runtime = runtime::Runtime::new().unwrap();
-
+impl PythonLangCtx {
+    fn init(runtime: &runtime::Runtime) -> Self {
         let _guard = runtime.enter();
 
         // TODO maybe support custom parameters to pass to command
@@ -76,10 +76,22 @@ impl PythonLang {
             }
         });
 
+        Self { instance, write_tx }
+    }
+}
+
+pub struct PythonLang {
+    runtime: runtime::Runtime,
+    lang_ctx: OnceLock<PythonLangCtx>,
+}
+
+impl PythonLang {
+    pub fn new() -> Self {
+        let runtime = runtime::Runtime::new().unwrap();
+
         Self {
-            instance,
-            write_tx,
             runtime,
+            lang_ctx: OnceLock::new(),
         }
     }
 }
@@ -92,8 +104,12 @@ impl Lang for PythonLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
+        let lang_ctx = self
+            .lang_ctx
+            .get_or_init(|| PythonLangCtx::init(&self.runtime));
+
         self.runtime.block_on(async {
-            self.write_tx.send(cmd).await.unwrap();
+            lang_ctx.write_tx.send(cmd).await.unwrap();
         });
 
         Ok(CmdOutput::success())

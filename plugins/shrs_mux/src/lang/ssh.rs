@@ -1,8 +1,14 @@
-use std::{process::Stdio, sync::Arc};
+use std::{
+    env,
+    io::{BufRead, BufReader},
+    net::TcpStream,
+    process::Stdio,
+    sync::{Arc, OnceLock},
+};
 
 use shrs::prelude::*;
+use ssh2::Session;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
     process::{Child, ChildStdin, ChildStdout, Command},
     runtime,
     sync::{
@@ -16,68 +22,60 @@ use crate::{
     MuxState,
 };
 
-// TODO this is just a copy pasted version of PythonLang, abstract in future
+struct SshLangCtx {}
 
-pub struct SshLang {
-    instance: Child,
-    /// Channel for writing to process
-    write_tx: Sender<String>,
-    runtime: runtime::Runtime,
-}
+impl SshLangCtx {
+    // TODO kinda ugly to be passing remote through the original SshLang too
+    fn init(runtime: &runtime::Runtime, remote: &str) -> Self {
+        // TODO just use env vars for auth for now
+        let address = env::var("SHRS_SSH_ADDRESS").unwrap();
+        let username = env::var("SHRS_SSH_USERNAME").unwrap();
+        let password = env::var("SHRS_SSH_PASSWORD").unwrap();
 
-impl SshLang {
-    pub fn new() -> Self {
-        let runtime = runtime::Runtime::new().unwrap();
+        let tcp = TcpStream::connect(address).unwrap();
+        let mut session = Session::new().unwrap();
+        session.set_tcp_stream(tcp);
+        session.handshake().unwrap();
+        session.userauth_password(&username, &password).unwrap();
+        // TODO we can implement an interactive password prompt
+        // session.userauth_keyboard_interactive();;
+
+        println!("successful auth");
+
+        let mut channel = session.channel_session().unwrap();
+        channel.exec("ls -al").unwrap();
 
         let _guard = runtime.enter();
 
-        // TODO maybe support custom parameters to pass to command
-        let args = vec!["-tt", "website@danieliu.xyz"];
-        let mut instance = Command::new("ssh")
-            .args(args)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .expect("Failed to start ssh process");
-
-        let stdout = instance.stdout.take().unwrap();
-        let stderr = instance.stderr.take().unwrap();
-        let stdin = instance.stdin.take().unwrap();
+        let stdin = channel.stream(0);
+        let stdout = channel.stream(0);
+        let stderr = channel.stderr();
 
         runtime.spawn(async {
             let mut stdout_reader = BufReader::new(stdout).lines();
-            while let Some(line) = stdout_reader.next_line().await.unwrap() {
+            while let Some(Ok(line)) = stdout_reader.next() {
                 println!("{line}");
             }
         });
 
-        runtime.spawn(async {
-            let mut stderr_reader = BufReader::new(stderr).lines();
-            while let Some(line) = stderr_reader.next_line().await.unwrap() {
-                eprintln!("{line}");
-            }
-        });
+        SshLangCtx {}
+    }
+}
 
-        let (write_tx, mut write_rx) = mpsc::channel::<String>(8);
+pub struct SshLang {
+    runtime: runtime::Runtime,
+    lang_ctx: OnceLock<SshLangCtx>,
+    remote: String,
+}
 
-        runtime.spawn(async move {
-            let mut stdin_writer = BufWriter::new(stdin);
-
-            while let Some(cmd) = write_rx.recv().await {
-                stdin_writer
-                    .write_all((cmd + "\n").as_bytes())
-                    .await
-                    .expect("ssh command failed");
-
-                stdin_writer.flush().await.unwrap();
-            }
-        });
+impl SshLang {
+    pub fn new(remote: impl ToString) -> Self {
+        let runtime = runtime::Runtime::new().unwrap();
 
         Self {
-            instance,
-            write_tx,
             runtime,
+            lang_ctx: OnceLock::new(),
+            remote: remote.to_string(),
         }
     }
 }
@@ -90,9 +88,11 @@ impl Lang for SshLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        self.runtime.block_on(async {
-            self.write_tx.send(cmd).await.unwrap();
-        });
+        let lang_ctx = self
+            .lang_ctx
+            .get_or_init(|| SshLangCtx::init(&self.runtime, &self.remote));
+
+        self.runtime.block_on(async {});
 
         Ok(CmdOutput::success())
     }

@@ -33,17 +33,14 @@ impl SshLangCtx {
         let _guard = runtime.enter();
 
         let ctx = runtime.block_on(async {
-            let session =
-                Session::connect(env::var("SHRS_SSH_ADDRESS").unwrap(), KnownHosts::Strict)
-                    .await
-                    .unwrap();
+            let session = Session::connect(remote, KnownHosts::Strict).await.unwrap();
             let session = Arc::new(session);
 
             println!("connected to server");
 
             let mut shell = session
                 .clone()
-                .arc_command("bash")
+                .arc_command("bash") // TODO let user customize the login shell
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())

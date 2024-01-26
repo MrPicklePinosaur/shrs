@@ -1,13 +1,14 @@
 use std::{
+    cell::RefCell,
     env,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     net::TcpStream,
     process::Stdio,
     sync::{Arc, OnceLock},
 };
 
 use shrs::prelude::*;
-use ssh2::Session;
+use ssh2::{Session, Stream};
 use tokio::{
     process::{Child, ChildStdin, ChildStdout, Command},
     runtime,
@@ -22,7 +23,9 @@ use crate::{
     MuxState,
 };
 
-struct SshLangCtx {}
+struct SshLangCtx {
+    stdin_writer: RefCell<BufWriter<Stream>>,
+}
 
 impl SshLangCtx {
     // TODO kinda ugly to be passing remote through the original SshLang too
@@ -43,7 +46,10 @@ impl SshLangCtx {
         println!("successful auth");
 
         let mut channel = session.channel_session().unwrap();
-        channel.exec("ls -al").unwrap();
+        channel.request_pty("xterm", None, None).unwrap();
+        channel.shell().unwrap();
+        session.set_blocking(false);
+        // channel.exec("ls -al").unwrap();
 
         let _guard = runtime.enter();
 
@@ -56,9 +62,12 @@ impl SshLangCtx {
             while let Some(Ok(line)) = stdout_reader.next() {
                 println!("{line}");
             }
+            eprintln!("EXITED");
         });
 
-        SshLangCtx {}
+        SshLangCtx {
+            stdin_writer: RefCell::new(BufWriter::new(stdin)),
+        }
     }
 }
 
@@ -92,7 +101,13 @@ impl Lang for SshLang {
             .lang_ctx
             .get_or_init(|| SshLangCtx::init(&self.runtime, &self.remote));
 
-        self.runtime.block_on(async {});
+        // self.runtime.block_on(async {});
+        let mut stdin_writer = lang_ctx.stdin_writer.borrow_mut();
+        stdin_writer
+            .write_all((cmd.clone() + "\n").as_bytes())
+            .unwrap();
+        stdin_writer.flush().unwrap();
+        println!("wrote {cmd}");
 
         Ok(CmdOutput::success())
     }

@@ -24,6 +24,7 @@ use crate::{
 struct SshLangCtx {
     session: Arc<Session>,
     shell: Child<Arc<Session>>,
+    write_tx: Sender<String>,
 }
 
 impl SshLangCtx {
@@ -42,7 +43,7 @@ impl SshLangCtx {
 
             let mut shell = session
                 .clone()
-                .arc_command("sh")
+                .arc_command("bash")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -51,6 +52,7 @@ impl SshLangCtx {
                 .unwrap();
 
             let stdout = shell.stdout().take().unwrap();
+            let stdin = shell.stdin().take().unwrap();
 
             runtime.spawn(async {
                 let mut stdout_reader = BufReader::new(stdout).lines();
@@ -59,7 +61,26 @@ impl SshLangCtx {
                 }
             });
 
-            SshLangCtx { session, shell }
+            let (write_tx, mut write_rx) = mpsc::channel::<String>(8);
+
+            runtime.spawn(async move {
+                let mut stdin_writer = BufWriter::new(stdin);
+
+                while let Some(cmd) = write_rx.recv().await {
+                    stdin_writer
+                        .write_all((cmd + "\n").as_bytes())
+                        .await
+                        .expect("Ssh command failed");
+
+                    stdin_writer.flush().await.unwrap();
+                }
+            });
+
+            SshLangCtx {
+                session,
+                shell,
+                write_tx,
+            }
         });
 
         ctx
@@ -95,6 +116,10 @@ impl Lang for SshLang {
         let lang_ctx = self
             .lang_ctx
             .get_or_init(|| SshLangCtx::init(&self.runtime, &self.remote));
+
+        self.runtime.block_on(async {
+            lang_ctx.write_tx.send(cmd).await.unwrap();
+        });
 
         Ok(CmdOutput::success())
     }

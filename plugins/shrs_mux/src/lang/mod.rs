@@ -2,8 +2,6 @@ mod bash;
 mod lang;
 mod nu;
 mod python;
+mod ssh;
 
-pub use bash::BashLang;
-pub use lang::MuxLang;
-pub use nu::NuLang;
-pub use python::PythonLang;
+pub use self::{bash::*, lang::*, nu::*, python::*, ssh::*};

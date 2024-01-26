@@ -11,7 +11,7 @@ use std::{
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-pub use lang::{BashLang, MuxLang, NuLang, PythonLang};
+pub use lang::{BashLang, MuxLang, NuLang, PythonLang, SshLang};
 use lang_options::swap_lang_options;
 pub use lang_options::LangOptions;
 use shrs::prelude::*;

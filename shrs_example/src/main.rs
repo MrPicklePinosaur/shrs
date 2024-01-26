@@ -16,7 +16,7 @@ use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
-use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang};
+use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang, SshLang};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
 

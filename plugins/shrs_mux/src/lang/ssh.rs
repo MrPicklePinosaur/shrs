@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     env,
+    io::Write,
     net::TcpStream,
     sync::{Arc, OnceLock},
 };
@@ -49,12 +50,20 @@ impl SshLangCtx {
                 .unwrap();
 
             let stdout = shell.stdout().take().unwrap();
+            let stderr = shell.stderr().take().unwrap();
             let stdin = shell.stdin().take().unwrap();
 
             runtime.spawn(async {
                 let mut stdout_reader = BufReader::new(stdout).lines();
                 while let Some(line) = stdout_reader.next_line().await.unwrap() {
-                    println!("{line}");
+                    write!(std::io::stdout(), "{line}\r\n").unwrap();
+                }
+            });
+
+            runtime.spawn(async {
+                let mut stderr_reader = BufReader::new(stderr).lines();
+                while let Some(line) = stderr_reader.next_line().await.unwrap() {
+                    write!(std::io::stderr(), "{line}\r\n").unwrap();
                 }
             });
 

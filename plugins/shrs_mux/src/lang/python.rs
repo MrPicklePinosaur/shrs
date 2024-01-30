@@ -1,4 +1,5 @@
 use std::{
+    io::Write,
     process::Stdio,
     sync::{Arc, OnceLock},
 };
@@ -50,14 +51,14 @@ impl PythonLangCtx {
         runtime.spawn(async {
             let mut stdout_reader = BufReader::new(stdout).lines();
             while let Some(line) = stdout_reader.next_line().await.unwrap() {
-                println!("{line}");
+                write!(std::io::stdout(), "{line}\r\n").unwrap();
             }
         });
 
         runtime.spawn(async {
             let mut stderr_reader = BufReader::new(stderr).lines();
             while let Some(line) = stderr_reader.next_line().await.unwrap() {
-                eprintln!("{line}");
+                write!(std::io::stderr(), "{line}\r\n").unwrap();
             }
         });
 

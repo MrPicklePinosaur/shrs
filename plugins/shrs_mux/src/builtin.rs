@@ -49,10 +49,17 @@ impl BuiltinCmd for MuxBuiltin {
                 new_lang: lang_name.clone().into(),
             };
 
-            match state.set_current_lang(&lang_name) {
-                Ok(_) => println!("setting lang to {lang_name}"),
-                Err(e) => eprintln!("{e}"),
+            if let Err(e) = state.set_current_lang(&lang_name) {
+                eprintln!("{e}");
+                return Ok(CmdOutput::error());
             }
+
+            println!("setting lang to {lang_name}");
+
+            // HACK, prime the language so it can run any init that it needs (this is to support
+            // lazy loading languages)
+            let (_, current_lang) = state.current_lang();
+            let _ = current_lang.eval(sh, ctx, rt, "".into());
 
             sh.hooks
                 .run(sh, ctx, rt, hook_ctx)

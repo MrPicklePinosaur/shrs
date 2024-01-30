@@ -21,32 +21,18 @@ use shrs::{
 
 use crate::interpreter::{read_err, read_out};
 
-/// Extension trait ontop of Lang for Mux specific capabilities
-pub trait MuxLangExt: Lang {
-    /// Called by mux when we switch to the langauge
-    fn on_switch(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
-        Ok(())
-    }
-}
-
-impl<L: Lang> MuxLangExt for L {
-    fn on_switch(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
-        Ok(())
-    }
-}
-
 pub struct MuxState {
-    current_lang: (String, Rc<dyn MuxLangExt>),
-    lang_map: HashMap<String, Rc<dyn MuxLangExt + 'static>>,
+    current_lang: (String, Rc<dyn Lang>),
+    lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
 }
 
 impl MuxState {
     /// Create a new instance of lang
     ///
     /// Must be initialized with at least one language
-    pub fn new(name: &str, lang: impl MuxLangExt + 'static) -> Self {
+    pub fn new(name: &str, lang: impl Lang + 'static) -> Self {
         let mut lang_map = HashMap::new();
-        lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn MuxLangExt>);
+        lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn Lang>);
         Self {
             current_lang: (name.into(), lang_map.get(name).unwrap().clone()),
             lang_map,
@@ -56,12 +42,12 @@ impl MuxState {
     /// Register a language using a name
     ///
     /// If the language has already been registered previously, it is overwritten
-    pub fn register_lang(&mut self, name: &str, lang: impl MuxLangExt + 'static) {
+    pub fn register_lang(&mut self, name: &str, lang: impl Lang + 'static) {
         self.lang_map.insert(name.into(), Rc::new(lang));
     }
 
     /// Get the current language
-    pub fn current_lang(&self) -> (String, Rc<dyn MuxLangExt>) {
+    pub fn current_lang(&self) -> (String, Rc<dyn Lang>) {
         self.current_lang.clone()
     }
 
@@ -78,7 +64,7 @@ impl MuxState {
         Ok(())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn MuxLangExt>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn Lang>)> {
         self.lang_map.iter()
     }
 }
@@ -107,7 +93,7 @@ impl MuxPlugin {
     }
 
     // Proxy to register_lang of underlying MuxState
-    pub fn register_lang(self, name: &str, lang: impl MuxLangExt + 'static) -> Self {
+    pub fn register_lang(self, name: &str, lang: impl Lang + 'static) -> Self {
         // TODO make sure not called after plugin is inited
         self.mux_state
             .borrow_mut()

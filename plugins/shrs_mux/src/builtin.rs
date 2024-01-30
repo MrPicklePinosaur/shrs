@@ -56,11 +56,10 @@ impl BuiltinCmd for MuxBuiltin {
 
             println!("setting lang to {lang_name}");
 
-            // TODO MuxTraitExt provides sort of a duplicate function as the hook, although it
-            // makes it so language writers can keep all of their handling code in one place
-
+            // HACK, prime the language so it can run any init that it needs (this is to support
+            // lazy loading languages)
             let (_, current_lang) = state.current_lang();
-            let _ = current_lang.on_switch(sh, ctx, rt); // TODO current just ignoring errors
+            let _ = current_lang.eval(sh, ctx, rt, "".into());
 
             sh.hooks
                 .run(sh, ctx, rt, hook_ctx)

@@ -49,10 +49,18 @@ impl BuiltinCmd for MuxBuiltin {
                 new_lang: lang_name.clone().into(),
             };
 
-            match state.set_current_lang(&lang_name) {
-                Ok(_) => println!("setting lang to {lang_name}"),
-                Err(e) => eprintln!("{e}"),
+            if let Err(e) = state.set_current_lang(&lang_name) {
+                eprintln!("{e}");
+                return Ok(CmdOutput::error());
             }
+
+            println!("setting lang to {lang_name}");
+
+            // TODO MuxTraitExt provides sort of a duplicate function as the hook, although it
+            // makes it so language writers can keep all of their handling code in one place
+
+            let (_, current_lang) = state.current_lang();
+            let _ = current_lang.on_switch(sh, ctx, rt); // TODO current just ignoring errors
 
             sh.hooks
                 .run(sh, ctx, rt, hook_ctx)

@@ -18,7 +18,7 @@ use tokio::{
 
 use crate::{
     interpreter::{read_err, read_out},
-    MuxState,
+    MuxLangExt, MuxState,
 };
 
 struct SshLangCtx {
@@ -102,6 +102,18 @@ impl SshLang {
     }
 }
 
+/*
+impl MuxLangExt for SshLang {
+    fn on_switch(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        let lang_ctx = self
+            .lang_ctx
+            .get_or_init(|| SshLangCtx::init(&self.runtime, &self.remote));
+
+        Ok(())
+    }
+}
+*/
+
 impl Lang for SshLang {
     fn eval(
         &self,
@@ -110,9 +122,7 @@ impl Lang for SshLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let lang_ctx = self
-            .lang_ctx
-            .get_or_init(|| SshLangCtx::init(&self.runtime, &self.remote));
+        let lang_ctx = self.lang_ctx.get().unwrap();
 
         self.runtime.block_on(async {
             lang_ctx.write_tx.send(cmd).await.unwrap();

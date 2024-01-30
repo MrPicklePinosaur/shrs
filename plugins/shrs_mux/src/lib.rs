@@ -11,23 +11,42 @@ use std::{
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-pub use lang::{BashLang, MuxLang, NuLang, PythonLang, SshLang};
+pub use lang::{BashLang, NuLang, PythonLang, SshLang};
 use lang_options::swap_lang_options;
 pub use lang_options::LangOptions;
-use shrs::prelude::*;
+use shrs::{
+    lang::{Lexer, Token},
+    prelude::*,
+};
+
+use crate::interpreter::{read_err, read_out};
+
+/// Extension trait ontop of Lang for Mux specific capabilities
+pub trait MuxLangExt: Lang {
+    /// Called by mux when we switch to the langauge
+    fn on_switch(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+impl<L: Lang> MuxLangExt for L {
+    fn on_switch(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
 
 pub struct MuxState {
-    current_lang: (String, Rc<dyn Lang>),
-    lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
+    current_lang: (String, Rc<dyn MuxLangExt>),
+    lang_map: HashMap<String, Rc<dyn MuxLangExt + 'static>>,
 }
 
 impl MuxState {
     /// Create a new instance of lang
     ///
     /// Must be initialized with at least one language
-    pub fn new(name: &str, lang: impl Lang + 'static) -> Self {
+    pub fn new(name: &str, lang: impl MuxLangExt + 'static) -> Self {
         let mut lang_map = HashMap::new();
-        lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn Lang>);
+        lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn MuxLangExt>);
         Self {
             current_lang: (name.into(), lang_map.get(name).unwrap().clone()),
             lang_map,
@@ -37,12 +56,12 @@ impl MuxState {
     /// Register a language using a name
     ///
     /// If the language has already been registered previously, it is overwritten
-    pub fn register_lang(&mut self, name: &str, lang: impl Lang + 'static) {
+    pub fn register_lang(&mut self, name: &str, lang: impl MuxLangExt + 'static) {
         self.lang_map.insert(name.into(), Rc::new(lang));
     }
 
     /// Get the current language
-    pub fn current_lang(&self) -> (String, Rc<dyn Lang>) {
+    pub fn current_lang(&self) -> (String, Rc<dyn MuxLangExt>) {
         self.current_lang.clone()
     }
 
@@ -59,7 +78,7 @@ impl MuxState {
         Ok(())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn Lang>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn MuxLangExt>)> {
         self.lang_map.iter()
     }
 }
@@ -88,7 +107,7 @@ impl MuxPlugin {
     }
 
     // Proxy to register_lang of underlying MuxState
-    pub fn register_lang(self, name: &str, lang: impl Lang + 'static) -> Self {
+    pub fn register_lang(self, name: &str, lang: impl MuxLangExt + 'static) -> Self {
         // TODO make sure not called after plugin is inited
         self.mux_state
             .borrow_mut()
@@ -113,5 +132,105 @@ impl Plugin for MuxPlugin {
         shell.hooks.insert(swap_lang_options);
 
         Ok(())
+    }
+}
+
+pub struct MuxLang {}
+
+impl MuxLang {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Lang for MuxLang {
+    fn eval(
+        &self,
+        sh: &Shell,
+        ctx: &mut Context,
+        rt: &mut Runtime,
+        cmd: String,
+    ) -> anyhow::Result<CmdOutput> {
+        let Some(state) = ctx.state.get::<MuxState>() else {
+            return Ok(CmdOutput::error());
+        };
+
+        let (lang_name, lang) = state.current_lang();
+        lang.eval(sh, ctx, rt, cmd)
+    }
+
+    fn name(&self) -> String {
+        "mux".to_string()
+    }
+
+    fn needs_line_check(&self, cmd: String) -> bool {
+        //TODO check if open quotes or brackets
+        // TODO this is super duplicated code
+
+        if let Some(last_char) = cmd.chars().last() {
+            if last_char == '\\' {
+                return true;
+            }
+        };
+
+        let mut brackets: Vec<Token> = vec![];
+
+        let lexer = Lexer::new(cmd.as_str());
+
+        for t in lexer {
+            if let Ok(token) = t {
+                match token.1 {
+                    Token::LBRACE => brackets.push(token.1),
+                    Token::LPAREN => brackets.push(token.1),
+                    Token::RPAREN => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LPAREN {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::RBRACE => {
+                        if let Some(bracket) = brackets.last() {
+                            if bracket == &Token::LBRACE {
+                                brackets.pop();
+                            } else {
+                                return false;
+                            }
+                        }
+                    },
+                    Token::WORD(w) => {
+                        if let Some(c) = w.chars().next() {
+                            if c == '\'' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\'';
+                                } else {
+                                    return true;
+                                }
+                            }
+                            if c == '\"' {
+                                if w.len() == 1 {
+                                    return true;
+                                }
+
+                                if let Some(e) = w.chars().last() {
+                                    return e != '\"';
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+
+                    _ => (),
+                }
+            }
+        }
+
+        !brackets.is_empty()
     }
 }

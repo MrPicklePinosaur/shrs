@@ -119,6 +119,9 @@ impl Plugin for MuxPlugin {
 
         Ok(())
     }
+    fn meta(&self) -> PluginMeta {
+        PluginMeta { name: "Mux".into(), description: "Provides the ability to switch between various languages at runtime using the mux command".into() }
+    }
 }
 
 pub struct MuxLang {}

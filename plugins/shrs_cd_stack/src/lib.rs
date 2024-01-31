@@ -71,4 +71,11 @@ impl Plugin for CdStackPlugin {
 
         Ok(())
     }
+    fn meta(&self) -> PluginMeta {
+        PluginMeta {
+            name: "Cd Stack".into(),
+            description: "Provides the ability to quickly navigate directories like a stack."
+                .into(),
+        }
+    }
 }

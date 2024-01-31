@@ -17,6 +17,7 @@ struct Cli {
 enum Commands {
     Builtin,
     Bindings,
+    Plugins,
 }
 
 #[derive(Default)]
@@ -48,6 +49,16 @@ impl BuiltinCmd for HelpBuiltin {
 
                 for (binding, desc) in info {
                     ctx.out.println(format!("{}: {}", binding, desc))?;
+                }
+            },
+            Commands::Plugins => {
+                ctx.out
+                    .println(format!("{} Plugins\n", sh.plugin_metas.len()))?;
+                for meta in sh.plugin_metas.iter() {
+                    ctx.out.println("")?;
+
+                    ctx.out.println(meta.name.clone())?;
+                    ctx.out.println(meta.description.clone())?;
                 }
             },
         }

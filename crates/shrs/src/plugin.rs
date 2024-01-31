@@ -1,15 +1,12 @@
 //! Plugin System
 
 use log::warn;
-use shrs_core::shell::{Context, Runtime, Shell};
+use shrs_core::{
+    prelude::PluginMeta,
+    shell::{Context, Runtime, Shell},
+};
 
 use crate::ShellConfig;
-
-#[derive(Debug)]
-pub struct PluginMeta {
-    pub name: String,
-    pub description: String,
-}
 
 /// How should the plugin be handled if it errors during initialization
 #[derive(Debug)]
@@ -18,15 +15,6 @@ pub enum FailMode {
     Warn,
     /// Abort entire shell initialization process and crash
     Abort,
-}
-
-impl Default for PluginMeta {
-    fn default() -> Self {
-        Self {
-            name: String::from("unnamed plugin"),
-            description: String::from("a plugin for shrs"),
-        }
-    }
 }
 
 /// Implement this trait to build your own plugins
@@ -68,3 +56,4 @@ pub trait Plugin {
 pub trait ShellPlugin {
     fn with_plugin(&mut self, plugin: impl Plugin);
 }
+

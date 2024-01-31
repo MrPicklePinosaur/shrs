@@ -166,6 +166,7 @@ impl ShellConfig {
             hooks: self.hooks,
             signals: Signals::new().unwrap(),
             keybinding: self.keybinding,
+            plugin_metas: plugins.iter().map(|p| p.meta()).collect(),
         };
 
         // run post init for plugins

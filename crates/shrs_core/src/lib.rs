@@ -12,6 +12,7 @@ pub mod jobs;
 pub mod keybinding;
 pub mod lang;
 pub mod output_writer;
+pub mod plugin_meta;
 pub mod prompt;
 pub mod prompt_content_queue;
 pub mod shell;
@@ -32,6 +33,7 @@ pub mod prelude {
         keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         lang::Lang,
         output_writer::OutputWriter,
+        plugin_meta::PluginMeta,
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         shell::{Context, Runtime, Shell},

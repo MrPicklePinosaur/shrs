@@ -35,7 +35,8 @@ impl Plugin for RunContextPlugin {
     fn meta(&self) -> PluginMeta {
         PluginMeta {
             name: "Run Context".into(),
-            description: String::new(),
+            description: "Provides commands for storing the current run context and loading it"
+                .into(),
         }
     }
 

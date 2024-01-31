@@ -22,6 +22,7 @@ use crate::{
     keybinding::Keybinding,
     lang::Lang,
     output_writer::OutputWriter,
+    prelude::PluginMeta,
     prompt_content_queue::PromptContentQueue,
     signal::Signals,
     state::State,
@@ -33,6 +34,7 @@ use crate::{
 /// Data here is generally not mutated at runtime.
 pub struct Shell {
     pub job_manager: RefCell<JobManager>,
+    pub plugin_metas: Vec<PluginMeta>,
     pub hooks: Hooks,
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,

@@ -59,6 +59,7 @@ pub fn expand_arg(arg: &String) -> Vec<String> {
             .map(ToString::to_string)
             .collect();
     }
+
     //match globbed files only if the glob actually works
     else if glob::Pattern::escape(a.as_str()) != a.as_str() {
         if let Ok(files) = glob(a.as_str()) {
@@ -69,6 +70,7 @@ pub fn expand_arg(arg: &String) -> Vec<String> {
                 })
                 .collect();
         }
+
     }
 
     vec![a]

@@ -2,6 +2,7 @@
 
 use std::process::ExitStatus;
 
+use glob::glob;
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 
 use crate::{ast, PosixError};
@@ -38,6 +39,38 @@ pub fn run_job(
     }
     Ok(())
 }
+pub fn expand_arg(arg: &String) -> Vec<String> {
+    let mut a = arg.clone();
+
+    //expand ~
+    if let Some(remaining) = arg.strip_prefix("~") {
+        a = format!(
+            "{}{}",
+            dirs::home_dir().unwrap().to_string_lossy(),
+            remaining
+        );
+    }
+    //quotes escape all special characters
+    let first = arg.chars().next().unwrap();
+    if first == '\'' || first == '\"' {
+        return a
+            .trim_matches(|c| c == '\'' || c == '\"')
+            .split_whitespace()
+            .map(ToString::to_string)
+            .collect();
+    }
+    //match globbed files
+    else if let Ok(files) = glob(a.as_str()) {
+        return files
+            .filter_map(|file| match file {
+                Ok(s) => Some(s.to_string_lossy().to_string()),
+                Err(s) => Some(s.to_string()),
+            })
+            .collect();
+    }
+
+    vec![a]
+}
 
 /// Returns group of processes and also the pgid if it has one
 pub fn eval_command(
@@ -54,7 +87,7 @@ pub fn eval_command(
         } => {
             let mut args_it = args.iter();
             let program = args_it.next().unwrap();
-            let args = args_it.collect::<Vec<_>>();
+            let args = args_it.flat_map(expand_arg).collect::<Vec<_>>();
 
             let proc_stdin = stdin.unwrap_or(Stdin::Inherit);
             let proc_stdout = stdout.unwrap_or(Output::Inherit);

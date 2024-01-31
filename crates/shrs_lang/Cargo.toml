@@ -18,12 +18,16 @@ shrs_job = { path = "../shrs_job", version = "^0.0.3" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}
+log = { version = "0.4" }
+
 
 pino_deref = "0.1"
 
 lazy_static = "1.4"
 thiserror = "1"
 anyhow = "1"
+dirs = "5.0.1"
+glob = "0.3.1"
 
 [dev-dependencies]
 rexpect = "0.5"

@@ -1,8 +1,7 @@
 //! Environment variables
 
-use std::{collections::HashMap, env, ffi::OsString};
+use std::{collections::HashMap, env};
 
-use shrs_utils::warn_if_err;
 use thiserror::Error;
 
 /// Hook for when environment variable gets modified
@@ -32,19 +31,12 @@ pub enum EnvError {
 
 /// Set and query environment variables
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Env {
     var_table: HashMap<String, String>,
 }
 
 impl Env {
-    /// Construct a new [Env] struct
-    pub fn new() -> Self {
-        Env {
-            var_table: HashMap::new(),
-        }
-    }
-
     /// Load environment variables into shrs
     ///
     /// Useful if calling shrs from another shell and some environment variables are already set

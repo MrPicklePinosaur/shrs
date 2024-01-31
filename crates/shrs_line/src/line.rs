@@ -1,26 +1,25 @@
 //! Core readline configuration
 
-use std::{borrow::BorrowMut, io::Write, iter::repeat, time::Duration, vec};
+use std::{
+    borrow::BorrowMut,
+    io::{Read, Seek, Write},
+};
 
 use crossterm::{
     cursor::SetCursorStyle,
     event::{
-        poll, read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent,
-        KeyModifiers,
+        read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent, KeyModifiers,
     },
     execute,
-    style::{Color, ContentStyle, StyledContent},
+    style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use shrs_core::shell::{Context, Runtime, Shell};
-use shrs_lang::{Lexer, Token};
 use shrs_utils::{
-    algo::longest_common_prefix,
     cursor_buffer::{CursorBuffer, Location},
     styled_buf::StyledBuf,
 };
 use shrs_vi::{Action, Command, Motion, Parser};
-use trie_rs::TrieBuilder;
 
 use crate::{painter::Painter, prelude::*};
 
@@ -43,7 +42,7 @@ pub enum LineMode {
 #[builder(setter(prefix = "with"))]
 pub struct Line {
     /// Completion menu, see [Menu]
-    #[builder(default = "Box::new(DefaultMenu::new())")]
+    #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
 
@@ -52,7 +51,7 @@ pub struct Line {
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
 
-    #[builder(default = "Box::new(DefaultBufferHistory::new())")]
+    #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
 
@@ -62,12 +61,12 @@ pub struct Line {
     highlighter: Box<dyn Highlighter>,
 
     /// Custom prompt, see [Prompt]
-    #[builder(default = "Box::new(DefaultPrompt::new())")]
+    #[builder(default = "Box::new(DefaultPrompt::default())")]
     #[builder(setter(custom))]
     prompt: Box<dyn Prompt>,
 
     // ignored fields
-    #[builder(default = "Painter::new()")]
+    #[builder(default = "Painter::default()")]
     #[builder(setter(skip))]
     painter: Painter,
 
@@ -124,7 +123,7 @@ impl HistoryInd {
 
 /// Context that is passed to [Line]
 pub struct LineCtx<'a> {
-    cb: CursorBuffer,
+    pub cb: CursorBuffer,
     // TODO this is temp, find better way to store prefix of current word
     current_word: String,
     // TODO dumping history index here for now
@@ -143,7 +142,7 @@ pub struct LineCtx<'a> {
 impl<'a> LineCtx<'a> {
     pub fn new(sh: &'a Shell, ctx: &'a mut Context, rt: &'a mut Runtime) -> Self {
         LineCtx {
-            cb: CursorBuffer::new(),
+            cb: CursorBuffer::default(),
             current_word: String::new(),
             history_ind: HistoryInd::Prompt,
             saved_line: String::new(),
@@ -212,19 +211,49 @@ impl Line {
         enable_raw_mode()?;
         execute!(std::io::stdout(), EnableBracketedPaste)?;
 
+        let mut auto_run = false;
         self.painter.init().unwrap();
-
-        let mut styled_buf = StyledBuf::empty();
-
-        self.painter.paint(
-            line_ctx,
-            &self.prompt,
-            &self.menu,
-            &styled_buf,
-            line_ctx.cb.cursor(),
-        )?;
+        if let Some(c) = line_ctx.ctx.prompt_content_queue.pop() {
+            auto_run = c.auto_run;
+            line_ctx.cb.insert(Location::Cursor(), c.content.as_str())?;
+        }
 
         loop {
+            let res = line_ctx.get_full_command();
+
+            // syntax highlight
+            let mut styled_buf = self
+                .highlighter
+                .highlight(&res)
+                .slice_from(line_ctx.lines.len());
+
+            // add currently selected completion to buf
+            if self.menu.is_active() {
+                if let Some(selection) = self.menu.current_selection() {
+                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
+                    styled_buf.push(
+                        trimmed_selection,
+                        ContentStyle {
+                            foreground_color: Some(Color::Red),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+
+            self.painter.paint(
+                line_ctx,
+                &self.prompt,
+                &self.menu,
+                &styled_buf,
+                line_ctx.cb.cursor(),
+            )?;
+            if auto_run {
+                self.buffer_history.clear();
+                self.painter.newline()?;
+                break;
+            }
+
             let event = read()?;
 
             if let Event::Key(key_event) = event {
@@ -256,33 +285,6 @@ impl Line {
                     },
                 }
             }
-
-            let res = line_ctx.get_full_command();
-
-            // syntax highlight
-            styled_buf = self.highlighter.highlight(&res, line_ctx.lines.len());
-
-            // add currently selected completion to buf
-            if self.menu.is_active() {
-                if let Some(selection) = self.menu.current_selection() {
-                    let trimmed_selection = &selection.accept()[line_ctx.current_word.len()..];
-                    styled_buf.push(
-                        trimmed_selection,
-                        ContentStyle {
-                            foreground_color: Some(Color::Red),
-                            ..Default::default()
-                        },
-                    );
-                }
-            }
-
-            self.painter.paint(
-                line_ctx,
-                &self.prompt,
-                &self.menu,
-                &styled_buf,
-                line_ctx.cb.cursor(),
-            )?;
         }
 
         let res = line_ctx.get_full_command();
@@ -391,7 +393,7 @@ impl Line {
                 ..
             }) => {
                 // if current input is empty exit the shell, otherwise treat it as enter
-                if ctx.cb.len() == 0 {
+                if ctx.cb.is_empty() {
                     // TODO maybe unify exiting the shell
                     disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
                                         // handling cleanup code
@@ -520,7 +522,7 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                if !ctx.cb.is_empty() && ctx.cb.cursor() != 0 {
                     ctx.cb.delete(Location::Before(), Location::Cursor())?;
                 }
             },
@@ -529,7 +531,7 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if ctx.cb.len() > 0 && ctx.cb.cursor() != 0 {
+                if !ctx.cb.is_empty() && ctx.cb.cursor() != 0 {
                     let start = ctx.cb.motion_to_loc(Motion::BackWord)?;
                     ctx.cb.delete(start, Location::Cursor())?;
                 }
@@ -576,7 +578,7 @@ impl Line {
             }) => {
                 self.normal_keys.push(c);
 
-                if let Ok(Command { repeat, action }) = Parser::new().parse(&self.normal_keys) {
+                if let Ok(Command { repeat, action }) = Parser::default().parse(&self.normal_keys) {
                     for _ in 0..repeat {
                         // special cases (possibly consulidate with execute_vi somehow)
 
@@ -594,6 +596,42 @@ impl Line {
                                 Motion::Up => self.history_up(ctx)?,
                                 Motion::Down => self.history_down(ctx)?,
                                 _ => {},
+                            },
+                            Action::Editor => {
+                                // TODO should this just use the env var? or should shrs have
+                                // dedicated config?
+
+                                let editor = std::env::var("EDITOR")?;
+
+                                let mut tempbuf = tempfile::NamedTempFile::new().unwrap();
+
+                                // write contexts of line to file
+                                tempbuf.write_all(ctx.cb.as_str().as_bytes()).unwrap();
+
+                                // TODO should use shrs_job for this?
+                                // TODO configure the command used
+                                let mut child = std::process::Command::new(editor)
+                                    .arg(tempbuf.path())
+                                    .spawn()
+                                    .unwrap();
+
+                                child.wait().unwrap();
+
+                                // read update file contexts back to line
+                                let mut new_contents = String::new();
+                                tempbuf.rewind().unwrap();
+                                tempbuf.read_to_string(&mut new_contents).unwrap();
+
+                                // strip last newline
+                                // TODO this is very platform and editor dependent
+                                let trimmed = new_contents.trim_end_matches("\n");
+
+                                ctx.cb.clear();
+                                ctx.cb.insert(Location::Cursor(), trimmed).unwrap();
+
+                                // TODO should auto run the command?
+
+                                tempbuf.close().unwrap();
                             },
                             _ => {
                                 self.buffer_history.add(&ctx.cb);
@@ -694,12 +732,11 @@ impl Line {
         Ok(())
     }
 
-    fn to_normal_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
-        line_ctx
-            .ctx
-            .state
-            .get_mut::<CursorStyle>()
-            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBlock);
+    fn to_normal_mode(&self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        if let Some(cursor_style) = line_ctx.ctx.state.get_mut::<CursorStyle>() {
+            cursor_style.style = SetCursorStyle::BlinkingBlock;
+        }
+
         line_ctx.mode = LineMode::Normal;
 
         let hook_ctx = LineModeSwitchCtx {
@@ -714,12 +751,11 @@ impl Line {
         Ok(())
     }
 
-    fn to_insert_mode(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
-        line_ctx
-            .ctx
-            .state
-            .get_mut::<CursorStyle>()
-            .map(|cursor_style| cursor_style.style = SetCursorStyle::BlinkingBar);
+    fn to_insert_mode(&self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
+        if let Some(cursor_style) = line_ctx.ctx.state.get_mut::<CursorStyle>() {
+            cursor_style.style = SetCursorStyle::BlinkingBar;
+        }
+
         line_ctx.mode = LineMode::Insert;
 
         let hook_ctx = LineModeSwitchCtx {

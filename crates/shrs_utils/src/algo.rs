@@ -3,7 +3,7 @@
 // TODO maybe this solution could use some optimization
 // Should be O(nlogn + m), where m is length of longest string in input
 pub fn longest_common_prefix(input: Vec<&str>) -> String {
-    if input.len() < 1 {
+    if input.is_empty() {
         return String::new();
     }
 

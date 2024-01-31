@@ -38,7 +38,7 @@ impl BuiltinCmd for EchoBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> ::anyhow::Result<CmdOutput> {
         ctx.out.println(args.join(" "))?;
         Ok(CmdOutput::success())

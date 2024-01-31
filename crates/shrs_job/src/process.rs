@@ -63,27 +63,27 @@ struct BuiltinProcess {
     stdout: Option<Stdin>,
 }
 
-impl BuiltinProcess {
-    pub fn new<S1, S2>(
-        program: S1,
-        args: &[S2],
-        status_code: ExitStatus,
-        stdout: Option<Stdin>,
-    ) -> Self
-    where
-        S1: AsRef<str>,
-        S2: AsRef<str>,
-    {
-        Self {
-            argv: iter::once(program)
-                .map(|p| p.as_ref().to_string())
-                .chain(args.iter().map(|arg| arg.as_ref().to_string()))
-                .collect(),
-            status_code,
-            stdout,
-        }
-    }
-}
+// impl BuiltinProcess {
+//     pub fn new<S1, S2>(
+//         program: S1,
+//         args: &[S2],
+//         status_code: ExitStatus,
+//         stdout: Option<Stdin>,
+//     ) -> Self
+//     where
+//         S1: AsRef<str>,
+//         S2: AsRef<str>,
+//     {
+//         Self {
+//             argv: iter::once(program)
+//                 .map(|p| p.as_ref().to_string())
+//                 .chain(args.iter().map(|arg| arg.as_ref().to_string()))
+//                 .collect(),
+//             status_code,
+//             stdout,
+//         }
+//     }
+// }
 
 impl Process for BuiltinProcess {
     fn id(&self) -> Option<ProcessId> {
@@ -195,7 +195,7 @@ pub fn run_external_command<S1, S2>(
     stdout: Output,
     stderr: Output,
     pgid: Option<u32>,
-) -> anyhow::Result<(Box<dyn Process>, Option<u32>)>
+) -> std::io::Result<(Box<dyn Process>, Option<u32>)>
 where
     S1: AsRef<str>,
     S2: AsRef<str>,
@@ -311,7 +311,6 @@ where
                 // error
                 unistd::tcsetpgrp(util::get_terminal(), unistd::getpgrp()).unwrap();
             }
-
             return Err(e.into());
         },
     };

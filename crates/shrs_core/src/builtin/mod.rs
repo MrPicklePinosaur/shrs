@@ -29,18 +29,6 @@ use crate::{
     shell::{Context, Runtime, Shell},
 };
 
-macro_rules! hashmap (
-    { $($key:expr => $value:expr),+ } => {
-	{
-	    let mut m = std::collections::HashMap::new();
-	    $(
-		m.insert($key, $value);
-	    )+
-	    m
-	}
-    };
-);
-
 // TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 /// Store for all registered builtin commands
@@ -69,6 +57,8 @@ impl Builtins {
     }
 
     /// Find a builtin by name
+    // Clippy thinks this shouldn't be a box, but it does not compile if you follow the warning
+    #[allow(clippy::borrowed_box)]
     pub fn get(&self, name: &'static str) -> Option<&Box<dyn BuiltinCmd>> {
         self.builtins.get(name)
     }
@@ -80,45 +70,36 @@ impl Default for Builtins {
             builtins: HashMap::from([
                 (
                     "history",
-                    Box::new(HistoryBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<HistoryBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
-                (
-                    "exit",
-                    Box::new(ExitBuiltin::default()) as Box<dyn BuiltinCmd>,
-                ),
-                ("cd", Box::new(CdBuiltin::default()) as Box<dyn BuiltinCmd>),
+                ("exit", Box::<ExitBuiltin>::default() as Box<dyn BuiltinCmd>),
+                ("cd", Box::<CdBuiltin>::default() as Box<dyn BuiltinCmd>),
                 (
                     "debug",
-                    Box::new(DebugBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<DebugBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
                 (
                     "export",
-                    Box::new(ExportBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<ExportBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
                 (
                     "alias",
-                    Box::new(AliasBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<AliasBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
                 (
                     "unalias",
-                    Box::new(UnaliasBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<UnaliasBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
                 (
                     "source",
-                    Box::new(SourceBuiltin::default()) as Box<dyn BuiltinCmd>,
-                ),
-                (
-                    "jobs",
-                    Box::new(JobsBuiltin::default()) as Box<dyn BuiltinCmd>,
-                ),
-                (
-                    "help",
-                    Box::new(HelpBuiltin::default()) as Box<dyn BuiltinCmd>,
+                    Box::<SourceBuiltin>::default() as Box<dyn BuiltinCmd>,
                 ),
                 (
                     "type",
                     Box::new(TypeBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
+                ("jobs", Box::<JobsBuiltin>::default() as Box<dyn BuiltinCmd>),
+                ("help", Box::<HelpBuiltin>::default() as Box<dyn BuiltinCmd>),
             ]),
         }
     }
@@ -131,6 +112,6 @@ pub trait BuiltinCmd {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput>;
 }

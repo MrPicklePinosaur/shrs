@@ -1,14 +1,9 @@
-use std::{
-    os::unix::process::ExitStatusExt,
-    process::{ExitStatus, Stdio},
-};
-
 use shrs_core::{
     lang::Lang,
-    prelude::{BeforeCommandCtx, CmdOutput},
+    prelude::{CmdOutput, CommandNotFoundCtx},
     shell::{Context, Runtime, Shell},
 };
-use shrs_job::{initialize_job_control, Output};
+use shrs_job::initialize_job_control;
 use thiserror::Error;
 
 // use crate::eval::{command_output, eval_command},
@@ -28,13 +23,19 @@ pub enum PosixError {
     /// Issue evaluating command
     #[error("Failed evaluating command: {0}")]
     Eval(anyhow::Error),
+    /// Command not found
+    #[error("Command not found: {0}")]
+    CommandNotFound(String),
+    /// Job manager specific error
+    #[error("Job manager error: {0}")]
+    Job(anyhow::Error),
 }
 
 /// Posix implementation of shell command language
 pub struct PosixLang {}
 
-impl PosixLang {
-    pub fn new() -> Self {
+impl Default for PosixLang {
+    fn default() -> Self {
         initialize_job_control().unwrap();
         Self {}
     }
@@ -88,18 +89,25 @@ impl Lang for PosixLang {
     ) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
-        let parser = Parser::new();
+        let parser = Parser::default();
         let cmd = match parser.parse(lexer) {
             Ok(cmd) => cmd,
             Err(e) => {
                 // TODO detailed parse errors
-                eprintln!("{e}");
+                eprintln!("parse error: {e}");
                 return Err(e.into());
             },
         };
 
         let mut job_manager = sh.job_manager.borrow_mut();
-        let (procs, pgid) = eval2::eval_command(&mut job_manager, &cmd, None, None)?;
+        let (procs, pgid) = match eval2::eval_command(&mut job_manager, &cmd, None, None) {
+            Ok((procs, pgid)) => (procs, pgid),
+            Err(PosixError::CommandNotFound(_)) => {
+                sh.hooks.run(sh, ctx, rt, CommandNotFoundCtx {});
+                return Ok(CmdOutput::error_with_status(127));
+            },
+            _ => return Ok(CmdOutput::error()),
+        };
 
         eval2::run_job(&mut job_manager, procs, pgid, true)?;
 
@@ -122,57 +130,55 @@ impl Lang for PosixLang {
 
         let lexer = Lexer::new(command.as_str());
 
-        for t in lexer {
-            if let Ok(token) = t {
-                match token.1 {
-                    Token::LBRACE => brackets.push(token.1),
-                    Token::LPAREN => brackets.push(token.1),
-                    Token::RPAREN => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LPAREN {
-                                brackets.pop();
+        for token in lexer.flatten() {
+            match token.1 {
+                Token::LBRACE => brackets.push(token.1),
+                Token::LPAREN => brackets.push(token.1),
+                Token::RPAREN => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LPAREN {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::RBRACE => {
+                    if let Some(bracket) = brackets.last() {
+                        if bracket == &Token::LBRACE {
+                            brackets.pop();
+                        } else {
+                            return false;
+                        }
+                    }
+                },
+                Token::WORD(w) => {
+                    if let Some(c) = w.chars().next() {
+                        if c == '\'' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+                            if let Some(e) = w.chars().last() {
+                                return e != '\'';
                             } else {
-                                return false;
+                                return true;
                             }
                         }
-                    },
-                    Token::RBRACE => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LBRACE {
-                                brackets.pop();
+                        if c == '\"' {
+                            if w.len() == 1 {
+                                return true;
+                            }
+
+                            if let Some(e) = w.chars().last() {
+                                return e != '\"';
                             } else {
-                                return false;
+                                return true;
                             }
                         }
-                    },
-                    Token::WORD(w) => {
-                        if let Some(c) = w.chars().next() {
-                            if c == '\'' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\'';
-                                } else {
-                                    return true;
-                                }
-                            }
-                            if c == '\"' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
+                    }
+                },
 
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\"';
-                                } else {
-                                    return true;
-                                }
-                            }
-                        }
-                    },
-
-                    _ => (),
-                }
+                _ => (),
             }
         }
 

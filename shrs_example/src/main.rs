@@ -5,17 +5,18 @@ use std::{
     process::Command,
 };
 
+use ::crossterm::style::{Attribute, Color, StyledContent};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
     line::_core::shell::set_working_dir,
-    prelude::{styled_buf::StyledBuf, *},
+    prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
-use shrs_mux::{MuxPlugin, MuxState};
+use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang, SshLang};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_run_context::RunContextPlugin;
 
@@ -24,18 +25,26 @@ use shrs_run_context::RunContextPlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
         let indicator = match line_ctx.mode() {
             LineMode::Insert => String::from(">").cyan(),
             LineMode::Normal => String::from(":").yellow(),
         };
         if !line_ctx.lines.is_empty() {
-            return styled! {" ", indicator, " "};
+            return styled_buf! {" ", indicator, " "};
         }
 
-        styled! {" ", @(blue)username(), " ", @(white,bold)top_pwd(), " ", indicator, " "}
+        styled_buf!(
+            " ",
+            username().map(|u| u.blue()),
+            " ",
+            top_pwd().white().bold(),
+            " ",
+            indicator,
+            " "
+        )
     }
-    fn prompt_right(&self, line_ctx: &mut LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
         let time_str = line_ctx
             .ctx
             .state
@@ -43,18 +52,21 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{x:?}"));
 
-        let lang = line_ctx
+        let (lang_name, _) = line_ctx
             .ctx
             .state
             .get::<MuxState>()
-            .map(|state| state.get_lang());
+            .map(|state| state.current_lang())
+            .expect("MuxState should be provided");
 
-        let git_branch = git::branch().map(|s| format!("git:{s}"));
         if !line_ctx.lines.is_empty() {
-            return styled! {""};
+            return styled_buf!("");
         }
-
-        styled! {@(bold,blue)git_branch, " ", time_str, " ", lang, " "}
+        if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
+            styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
+        } else {
+            styled_buf!(time_str, " ", lang_name, " ")
+        }
     }
 }
 
@@ -77,7 +89,7 @@ fn main() {
 
     // =-=-= Environment variables =-=-=
     // Load environment variables from calling shell
-    let mut env = Env::new();
+    let mut env = Env::default();
     env.load();
     env.set("SHELL_NAME", "shrs_example");
 
@@ -97,7 +109,7 @@ fn main() {
     ));
 
     // =-=-= Menu =-=-=-=
-    let menu = DefaultMenu::new();
+    let menu = DefaultMenu::default();
 
     // =-=-= History =-=-=
     // Use history that writes to file on disk
@@ -173,6 +185,12 @@ a rusty POSIX shell | build {}"#,
     let mut hooks = Hooks::new();
     hooks.insert(startup_msg);
 
+    // =-=-= Plugins =-=-=
+    let mux_plugin = MuxPlugin::new()
+        .register_lang("bash", BashLang::new())
+        .register_lang("python", PythonLang::new())
+        .register_lang("nu", NuLang::new());
+
     // =-=-= Shell =-=-=
     // Construct the final shell
     let myshell = ShellBuilder::default()
@@ -184,11 +202,11 @@ a rusty POSIX shell | build {}"#,
         .with_keybinding(keybinding)
         .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
-        .with_plugin(RunContextPlugin::new())
-        .with_plugin(MuxPlugin::new())
+        .with_plugin(RunContextPlugin::default())
+        .with_plugin(mux_plugin)
         .with_plugin(CdStackPlugin)
         .build()
         .expect("Could not construct shell");
 
-    myshell.run();
+    myshell.run().unwrap();
 }

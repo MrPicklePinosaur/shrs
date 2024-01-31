@@ -1,6 +1,6 @@
 [package]
 name = "shrs_core"
-version = "0.0.2"
+version = "0.0.3"
 description = "modular library to build your own shell in rust"
 
 authors.workspace = true
@@ -25,9 +25,10 @@ derive_builder = "0.12"
 dirs = "5"
 anymap = "1.0.0-beta.2"
 multimap = "0.9"
+skim = "0.10.4"
 
-shrs_job = { path = "../shrs_job", version = "^0.0.2" }
-shrs_utils = { path = "../shrs_utils", version = "^0.0.2" }
+shrs_job = { path = "../shrs_job", version = "^0.0.3" }
+shrs_utils = { path = "../shrs_utils", version = "^0.0.3" }
 
 pino_deref = "0.1"
 

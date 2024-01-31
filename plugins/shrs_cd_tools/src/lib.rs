@@ -112,7 +112,7 @@ impl Plugin for DirParsePlugin {
 }
 
 /// Default example prompt that displays some information based on language
-pub fn default_prompt(line_ctx: &mut LineCtx) -> StyledBuf {
+pub fn default_prompt(line_ctx: &LineCtx) -> StyledBuf {
     if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
         let rust_info: Option<String> = dir_parse_state
             .get_module_metadata::<rust::CargoToml>("rust")
@@ -122,11 +122,11 @@ pub fn default_prompt(line_ctx: &mut LineCtx) -> StyledBuf {
             .get_module_metadata::<node::NodeJs>("node")
             .map(|node_js| format!(" {} ", node_js.version));
 
-        styled! {
+        styled_buf! {
             rust_info, node_info,
         }
     } else {
-        styled! {
+        styled_buf! {
             ""
         }
     }

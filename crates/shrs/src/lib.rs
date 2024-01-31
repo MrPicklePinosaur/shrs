@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/shrs/0.0.2")]
+#![doc(html_root_url = "https://docs.rs/shrs/0.0.3")]
 
 //! **shrs** is a framework for building and configuring your own shell in rust.
 //!
@@ -44,7 +44,7 @@ pub mod crossterm {
     //! Re-export of crossterm types
 
     pub use crossterm::{
-        style::{Print, Stylize},
+        style::{Attribute, Color, Print, Stylize},
         QueueableCommand,
     };
 }

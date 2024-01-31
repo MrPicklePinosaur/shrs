@@ -4,6 +4,8 @@ mod completer;
 pub use completer::*;
 
 mod utils;
+// TODO: Report bugged warning (this reexport is required)
+#[allow(unused_imports)]
 pub use utils::*;
 
 mod data;

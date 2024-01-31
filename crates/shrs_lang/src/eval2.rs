@@ -2,14 +2,15 @@
 
 use std::process::ExitStatus;
 
+use glob::glob;
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 
-use crate::ast;
+use crate::{ast, PosixError};
 
 pub struct Os {
-    job_manager: JobManager,
+    _job_manager: JobManager,
     /// Exit status of last command executed.
-    last_exit_status: ExitStatus,
+    _last_exit_status: ExitStatus,
 }
 
 pub fn run_job(
@@ -17,7 +18,7 @@ pub fn run_job(
     procs: Vec<Box<dyn Process>>,
     pgid: Option<u32>,
     foreground: bool,
-) -> anyhow::Result<()> {
+) -> Result<(), PosixError> {
     let proc_group = ProcessGroup {
         id: pgid,
         processes: procs,
@@ -28,11 +29,49 @@ pub fn run_job(
     let job_id = job_manager.create_job("", proc_group);
 
     if is_foreground {
-        job_manager.put_job_in_foreground(Some(job_id), false)?;
+        job_manager
+            .put_job_in_foreground(Some(job_id), false)
+            .map_err(|e| PosixError::Job(e))?;
     } else {
-        job_manager.put_job_in_background(Some(job_id), false)?;
+        job_manager
+            .put_job_in_background(Some(job_id), false)
+            .map_err(|e| PosixError::Job(e))?;
     }
     Ok(())
+}
+pub fn expand_arg(arg: &String) -> Vec<String> {
+    let mut a = arg.clone();
+
+    //expand ~
+    if let Some(remaining) = arg.strip_prefix("~") {
+        a = format!(
+            "{}{}",
+            dirs::home_dir().unwrap().to_string_lossy(),
+            remaining
+        );
+    }
+    //quotes escape all special characters
+    let first = arg.chars().next().unwrap();
+    if first == '\'' || first == '\"' {
+        return a
+            .trim_matches(|c| c == '\'' || c == '\"')
+            .split_whitespace()
+            .map(ToString::to_string)
+            .collect();
+    }
+    //match globbed files only if the glob actually works
+    else if glob::Pattern::escape(a.as_str()) != a.as_str() {
+        if let Ok(files) = glob(a.as_str()) {
+            return files
+                .filter_map(|file| match file {
+                    Ok(s) => Some(s.to_string_lossy().to_string()),
+                    Err(s) => Some(s.to_string()),
+                })
+                .collect();
+        }
+    }
+
+    vec![a]
 }
 
 /// Returns group of processes and also the pgid if it has one
@@ -41,7 +80,7 @@ pub fn eval_command(
     cmd: &ast::Command,
     stdin: Option<Stdin>,
     stdout: Option<Output>,
-) -> anyhow::Result<(Vec<Box<dyn Process>>, Option<u32>)> {
+) -> Result<(Vec<Box<dyn Process>>, Option<u32>), PosixError> {
     match cmd {
         ast::Command::Simple {
             assigns: _,
@@ -50,19 +89,27 @@ pub fn eval_command(
         } => {
             let mut args_it = args.iter();
             let program = args_it.next().unwrap();
-            let args = args_it.collect::<Vec<_>>();
+            let args = args_it.flat_map(expand_arg).collect::<Vec<_>>();
 
             let proc_stdin = stdin.unwrap_or(Stdin::Inherit);
             let proc_stdout = stdout.unwrap_or(Output::Inherit);
 
-            let (proc, pgid) = run_external_command(
+            let (proc, pgid) = match run_external_command(
                 program,
                 &args,
                 proc_stdin,
                 proc_stdout,
                 Output::Inherit,
                 None,
-            )?;
+            ) {
+                Ok((proc, pgid)) => (proc, pgid),
+                Err(e) => match e.kind() {
+                    std::io::ErrorKind::NotFound => {
+                        return Err(PosixError::CommandNotFound(program.clone()))
+                    },
+                    _ => return Err(PosixError::Eval(e.into())),
+                },
+            };
             Ok((vec![proc], pgid))
         },
         ast::Command::Pipeline(a_cmd, b_cmd) => {

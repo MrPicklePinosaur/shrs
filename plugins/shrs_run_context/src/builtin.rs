@@ -18,7 +18,7 @@ impl BuiltinCmd for SaveBuiltin {
         _sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = SaveBuiltinCli::try_parse_from(args)?;
 
@@ -61,11 +61,11 @@ impl BuiltinCmd for LoadBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         use std::mem;
 
-        let cli = LoadBuiltinCli::parse_from(vec!["load".to_string()].iter().chain(args.iter()));
+        let cli = LoadBuiltinCli::parse_from(["load".to_string()].iter().chain(args.iter()));
 
         let mut new_rt: Option<Runtime> = None;
         if let Some(state) = ctx.state.get_mut::<RunContextState>() {

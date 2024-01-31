@@ -211,7 +211,7 @@ mod test {
 
     #[test]
     fn move_next_word() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello world goodbye world");
+        let mut cb = CursorBuffer::from_text("hello world goodbye world");
 
         assert_eq!(cb.cursor(), 0);
 
@@ -226,7 +226,7 @@ mod test {
 
     #[test]
     fn move_back_word() -> Result<()> {
-        let mut cb = CursorBuffer::from_str("hello world goodbye world");
+        let mut cb = CursorBuffer::from_text("hello world goodbye world");
         cb.execute_vi(Action::Move(Motion::End))?;
         cb.execute_vi(Action::Move(Motion::Left))?;
         assert_eq!(cb.cursor(), 24);

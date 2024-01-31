@@ -38,6 +38,7 @@ pub Action: Action = {
     "r" => Action::Redo,
     "p" => Action::Paste(Motion::Right),
     "P" => Action::Paste(Motion::None),
+    "v" => Action::Editor,
     <m:Motion> => Action::Move(m)
 };
 

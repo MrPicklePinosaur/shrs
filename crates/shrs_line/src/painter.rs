@@ -2,14 +2,12 @@
 
 use std::{
     cell::RefCell,
-    collections::HashMap,
-    fmt::Display,
     io::{stdout, BufWriter, Write},
 };
 
 use crossterm::{
     cursor::{self, MoveToColumn, MoveToNextLine, MoveToPreviousLine},
-    style::{ContentStyle, Print, PrintStyledContent, StyledContent},
+    style::{Print, PrintStyledContent},
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
@@ -29,16 +27,18 @@ pub struct Painter {
     num_newlines: usize,
 }
 
-impl Painter {
-    pub fn new() -> Self {
-        Painter {
+impl Default for Painter {
+    fn default() -> Self {
+        Self {
             out: RefCell::new(BufWriter::new(stdout())),
             term_size: (0, 0),
             prompt_line: 0,
             num_newlines: 0,
         }
     }
+}
 
+impl Painter {
     /// Clear screen and move prompt to the top
     pub fn init(&mut self) -> crossterm::Result<()> {
         self.prompt_line = 0;
@@ -62,6 +62,8 @@ impl Painter {
         self.term_size
     }
 
+    // Clippy thinks we can just use &dyn but we cannot
+    #[allow(clippy::borrowed_box)]
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,
         line_ctx: &mut LineCtx,
@@ -74,13 +76,11 @@ impl Painter {
 
         // scroll up if we need more lines
         if menu.is_active() {
-            let required_lines = menu.required_lines(&self) as u16;
+            let required_lines = menu.required_lines(self) as u16;
             let remaining_lines = self.term_size.1.saturating_sub(self.prompt_line);
             if required_lines > remaining_lines {
                 let extra_lines = required_lines.saturating_sub(remaining_lines);
-                self.out
-                    .borrow_mut()
-                    .queue(ScrollUp(extra_lines.try_into().unwrap()))?;
+                self.out.borrow_mut().queue(ScrollUp(extra_lines))?;
                 self.prompt_line = self.prompt_line.saturating_sub(extra_lines);
             }
         }
@@ -96,7 +96,9 @@ impl Painter {
             .max(styled_buf_lines.len() - 1 + prompt_left_lines.len() - 1);
 
         //make sure num_newlines never gets smaller, and adds newlines to adjust for prompt
-        if self.num_newlines < total_newlines {
+        if self.num_newlines < total_newlines
+            && cursor::position()?.1 + self.num_newlines as u16 == self.term_size.1 - 1
+        {
             self.out
                 .borrow_mut()
                 .queue(ScrollUp((total_newlines - self.num_newlines) as u16))?;
@@ -144,7 +146,7 @@ impl Painter {
 
             if ri < prompt_right_lines.len() {
                 let mut right_space = self.term_size.0;
-                right_space -= line_content_len(prompt_right_lines[ri].clone()) as u16;
+                right_space -= line_content_len(prompt_right_lines[ri].clone());
                 self.out.borrow_mut().queue(MoveToColumn(right_space))?;
                 for span in prompt_right_lines[ri].iter() {
                     self.out
@@ -200,7 +202,7 @@ impl Painter {
 
         // render menu
         if menu.is_active() {
-            menu.render(&mut self.out.borrow_mut(), &self)?;
+            menu.render(&mut self.out.borrow_mut(), self)?;
         }
 
         //move cursor to correct position

@@ -28,34 +28,42 @@ impl BuiltinCmd for MuxBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
+        let Some(state) = ctx.state.get_mut::<MuxState>() else {
+            return Ok(CmdOutput::error());
+        };
+
         if cli.list {
-            ctx.state.get::<MuxState>().map(|state| {
-                println!("Available languages:");
-                for lang in state.registered_langs() {
-                    println!("{lang}");
-                }
-            });
+            for (lang_name, _) in state.iter() {
+                println!("{lang_name}")
+            }
         }
 
         if let Some(lang_name) = cli.lang {
-            if let Some(state) = ctx.state.get_mut::<MuxState>() {
-                let hook_ctx = ChangeLangCtx {
-                    old_lang: state.get_lang().to_string(),
-                    new_lang: lang_name.to_string(),
-                };
-                match state.set_lang(&lang_name) {
-                    Ok(_) => println!("setting lang to {lang_name}"),
-                    Err(e) => eprintln!("{e}"),
-                }
-
-                sh.hooks
-                    .run(sh, ctx, rt, hook_ctx)
-                    .expect("failed running hook");
+            let (old_lang_name, _) = state.current_lang();
+            let hook_ctx = ChangeLangCtx {
+                old_lang: old_lang_name,
+                new_lang: lang_name.clone().into(),
             };
+
+            if let Err(e) = state.set_current_lang(&lang_name) {
+                eprintln!("{e}");
+                return Ok(CmdOutput::error());
+            }
+
+            println!("setting lang to {lang_name}");
+
+            // HACK, prime the language so it can run any init that it needs (this is to support
+            // lazy loading languages)
+            let (_, current_lang) = state.current_lang();
+            let _ = current_lang.eval(sh, ctx, rt, "".into());
+
+            sh.hooks
+                .run(sh, ctx, rt, hook_ctx)
+                .expect("failed running hook");
         }
 
         Ok(CmdOutput::success())

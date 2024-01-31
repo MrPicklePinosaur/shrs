@@ -7,9 +7,10 @@ use crate::{
     shell::{Context, Runtime, Shell},
 };
 
+// TODO make function signature of this MUCH more generic
+
 /// Trait to implement a shell command language
 pub trait Lang {
-    // TODO make function signature of this MUCH more generic
     fn eval(
         &self,
         sh: &Shell,

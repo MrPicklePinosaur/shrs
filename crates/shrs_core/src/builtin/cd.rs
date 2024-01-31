@@ -1,14 +1,11 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
 use super::BuiltinCmd;
 use crate::{
-    hooks::ChangeDirCtx,
     prelude::CmdOutput,
+    prompt_content_queue::PromptContent,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
 
@@ -26,10 +23,9 @@ impl BuiltinCmd for CdBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
-
         let path = if let Some(path) = cli.path {
             // `cd -` moves us back to previous directory
             if path == "-" {
@@ -38,6 +34,14 @@ impl BuiltinCmd for CdBuiltin {
                 } else {
                     ctx.out.eprintln("no OLDPWD")?;
                     return Ok(CmdOutput::error());
+                }
+            } else if let Some(remaining) = path.strip_prefix("~") {
+                match dirs::home_dir() {
+                    Some(home) => PathBuf::from(format!("{}{}", home.to_string_lossy(), remaining)),
+                    None => {
+                        ctx.out.eprintln("No Home Directory")?;
+                        return Ok(CmdOutput::error());
+                    },
                 }
             } else {
                 rt.working_dir.join(Path::new(&path))

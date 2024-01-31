@@ -1,9 +1,5 @@
 //! Core functionality of shrs
-
-#[macro_use]
 extern crate derive_builder;
-
-#[macro_use]
 extern crate lazy_static;
 
 pub mod alias;
@@ -17,6 +13,7 @@ pub mod keybinding;
 pub mod lang;
 pub mod output_writer;
 pub mod prompt;
+pub mod prompt_content_queue;
 pub mod shell;
 pub mod signal;
 pub mod state;
@@ -36,6 +33,7 @@ pub mod prelude {
         lang::Lang,
         output_writer::OutputWriter,
         prompt::*,
+        prompt_content_queue::{PromptContent, PromptContentQueue},
         shell::{Context, Runtime, Shell},
         signal::Signals,
         state::State,

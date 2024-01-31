@@ -16,7 +16,7 @@ This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 First add this plugin to your dependencies
 ```toml
-shrs_command_timer = { version = "0.0.2" }
+shrs_command_timer = { version = "0.0.3" }
 ```
 
 Then include this plugin when initializing shrs

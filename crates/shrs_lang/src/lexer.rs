@@ -291,8 +291,7 @@ fn is_word_start(ch: char) -> bool {
 /// predicate for when to keep reading word token
 fn is_word_continue(ch: char) -> bool {
     match ch {
-        ';' | ')' | '(' | '`' | '!' | '\\' | '\'' | '"' | '>' | '<' | '&' | '|' | '{' | '}'
-        | '*' => false,
+        ';' | ')' | '(' | '`' | '!' | '\'' | '"' | '>' | '<' | '&' | '|' | '{' | '}' => false,
         _ => !ch.is_whitespace(),
     }
 }

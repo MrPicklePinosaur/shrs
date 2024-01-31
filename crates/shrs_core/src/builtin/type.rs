@@ -1,14 +1,13 @@
-use super::BuiltinCmd;
+use std::fs::metadata;
 
 use anyhow::Error;
 use clap::Parser;
 
+use super::BuiltinCmd;
 use crate::{
     prelude::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
-
-use std::fs::metadata;
 
 #[derive(Parser)]
 struct Cli {
@@ -105,7 +104,7 @@ impl BuiltinCmd for TypeBuiltin {
         sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
-        args: &Vec<String>,
+        args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 

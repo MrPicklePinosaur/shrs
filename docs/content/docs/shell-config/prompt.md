@@ -14,16 +14,33 @@ toc = true
 top = false
 +++
 
-## NOTE: This page is outdated
-
-### Will be updated when prompt API is more stable
+Prompts can be customized and built with various styled custom components.
 
 First define your own prompt and implement the `Prompt` trait:
 
 ```rust
-use shrs::{Prompt, prompt::top_pwd};
+use shrs::prelude::{Prompt, prompt::top_pwd};
 
 struct MyPrompt;
+impl Prompt for MyPrompt {
+    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
+
+        styled!(
+            top_pwd().blue().bold(),
+            " ",
+            ">".green(),
+            " "
+        )
+    }
+
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
+
+        styled!(
+            line_ctx.cb.cursor().to_string().dark_cyan(),
+        )
+    }
+}
+
 
 impl Prompt for MyPrompt {
     fn prompt_left(&self) -> String {
@@ -32,12 +49,13 @@ impl Prompt for MyPrompt {
 }
 ```
 
-Then add it when building the shell:
+Then add it to `LineBuilder` when building the shell:
 
 ```shrs
-let prompt = MyPrompt;
 
-myshell.with_prompt(prompt);
+let prompt = MyPrompt;
+let readline = LineBuilder::default().with_prompt(prompt);
+myshell.with_readline(readline);
 ```
 
 ### Utility Functions
@@ -48,8 +66,12 @@ The `prompt` module comes with a variety of helpful functions for building the p
 struct BashPrompt;
 
 impl Prompt for BashPrompt {
-    fn prompt_left(&self) -> String {
-        format!("{}@{}:{}$ ", hostname(), username(), top_pwd())
+    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
+        styled_buf!(hostname(),"@", username(),":", top_pwd(),"$")
     }
+    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
+        styled_buf!()
+    }
+
 }
 ```

@@ -1,6 +1,6 @@
 [package]
 name = "shrs_completion"
-version = "0.0.3"
+version = "0.0.4"
 description = "More completions for shrs"
 
 authors.workspace = true
@@ -12,7 +12,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.3" }
+shrs = { path = "../../crates/shrs", version = "^0.0.4" }
 
 ssh2-config = { version = "0.2.3" }
 dirs = { version = "5.0" }

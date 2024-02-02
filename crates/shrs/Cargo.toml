@@ -1,6 +1,6 @@
 [package]
 name = "shrs"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -31,11 +31,11 @@ anyhow = "1"
 lazy_static = "1.4"
 log = "0.4"
 
-shrs_core = { path = "../shrs_core", version = "^0.0.3" }
-shrs_line = { path = "../shrs_line", version = "^0.0.3" }
-shrs_lang = { path = "../shrs_lang", version = "^0.0.3" }
-shrs_job = { path = "../shrs_job", version = "^0.0.3" }
-shrs_utils = { path = "../shrs_utils", version = "^0.0.3" }
+shrs_core = { path = "../shrs_core", version = "^0.0.4" }
+shrs_line = { path = "../shrs_line", version = "^0.0.4" }
+shrs_lang = { path = "../shrs_lang", version = "^0.0.4" }
+shrs_job = { path = "../shrs_job", version = "^0.0.4" }
+shrs_utils = { path = "../shrs_utils", version = "^0.0.4" }
 
 serde = { version = "1", features = ["derive"], optional = true }
 

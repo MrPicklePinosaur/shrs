@@ -1,6 +1,6 @@
 [package]
 name = "shrs_vi"
-version = "0.0.3"
+version = "0.0.4"
 description = "parser for vi like commands"
 build = "build.rs"
 

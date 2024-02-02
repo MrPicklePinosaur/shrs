@@ -20,13 +20,14 @@ plugins=(
     shrs_file_logger
     shrs_mux
     shrs_output_capture
+    shrs_rhai
     shrs_run_context
 )
 
-# for crate in "${crates[@]}"; do
-#     echo "Publishing $crate"
-#     cargo publish -p $crate
-# done
+for crate in "${crates[@]}"; do
+    echo "Publishing $crate"
+    cargo publish -p $crate
+done
 
 for plugin in "${plugins[@]}"; do
     echo "Publishing $plugin"

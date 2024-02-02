@@ -1,6 +1,6 @@
 [package]
 name = "shrs_lang"
-version = "0.0.3"
+version = "0.0.4"
 description = "parser and lexer for shrs posix shell"
 build = "build.rs"
 
@@ -13,8 +13,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs_core = { path = "../shrs_core", version = "^0.0.3" }
-shrs_job = { path = "../shrs_job", version = "^0.0.3" }
+shrs_core = { path = "../shrs_core", version = "^0.0.4" }
+shrs_job = { path = "../shrs_job", version = "^0.0.4" }
 lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}

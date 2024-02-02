@@ -1,6 +1,6 @@
 [package]
 name = "shrs_command_timer"
-version = "0.0.3"
+version = "0.0.4"
 description = "shrs plugin to time how long the previous command took to run"
 readme = "README.md"
 
@@ -13,4 +13,4 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.3" }
+shrs = { path = "../../crates/shrs", version = "^0.0.4" }

@@ -360,6 +360,18 @@ impl Line {
             Event::Paste(p) => {
                 ctx.cb.insert(Location::Cursor(), p.as_str())?;
             },
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
+            }) => {
+                ctx.cb.clear();
+                self.buffer_history.clear();
+                ctx.lines = String::new();
+                self.painter.newline()?;
+
+                return Ok(true);
+            },
 
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,

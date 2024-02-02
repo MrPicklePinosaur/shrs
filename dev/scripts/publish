@@ -2,10 +2,10 @@
 
 crates=(
     shrs_job
+    shrs_utils
     shrs_core
     shrs_lang
     shrs_line
-    shrs_utils
     shrs_vi
     shrs
 )

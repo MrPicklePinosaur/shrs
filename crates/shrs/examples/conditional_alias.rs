@@ -11,7 +11,7 @@ fn in_home_directory() -> bool {
 }
 
 fn main() {
-    let mut alias = Alias::default();
+    let mut alias = Alias::new();
     alias.set(
         "inhome",
         AliasInfo::with_rule("true", |_ctx| in_home_directory()),

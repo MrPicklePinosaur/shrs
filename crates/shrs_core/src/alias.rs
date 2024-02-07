@@ -1,5 +1,7 @@
 //! Shell aliasing
 //!
+//! Aliases can be specified as a key value pair of the alias name and the actual command it expands to. Keep in mind that aliases are not evaluated or syntax checked at time of definition, only during substitution. This means that it is possible to define aliases that are invalid commands.
+//!
 //! ```
 //! # use shrs_core::prelude::*;
 //! let alias = Alias::from_iter([
@@ -43,6 +45,13 @@ impl AliasInfo {
     }
 
     /// Conditionally run this alias
+    // ```
+    // # use chrono::{Datelike, Local, Weekday};
+    // let myalias = AliasInfo::with_rule("ls | lolcat", |ctx: &AliasRuleCtx| -> bool {
+    //     let weekday = Local::now().weekday();
+    //     weekday == Weekday::Fri
+    // });
+    // ```
     pub fn with_rule<S, R>(subst: S, rule: R) -> Self
     where
         S: ToString,
@@ -59,12 +68,18 @@ impl AliasInfo {
 ///
 /// Aliases are stored as the raw string entered, therefore invalid syntax can be set as an alias,
 /// but upon substitution the error is emitted. This may be changed in the future.
-#[derive(Default)]
 pub struct Alias {
     aliases: MultiMap<String, AliasInfo>,
 }
 
 impl Alias {
+    // Construct a new alias map
+    pub fn new() -> Self {
+        Alias {
+            aliases: MultiMap::new(),
+        }
+    }
+
     /// Fetch all possible aliases
     pub fn get(&self, alias_ctx: &AliasRuleCtx) -> Vec<&String> {
         let alias_list = match self.aliases.get_vec(alias_ctx.alias_name) {

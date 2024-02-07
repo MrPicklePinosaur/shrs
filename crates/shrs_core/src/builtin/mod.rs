@@ -18,7 +18,7 @@ mod unalias;
 
 use std::collections::{hash_map::Iter, HashMap};
 
-use self::{
+pub use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
     export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
     source::SourceBuiltin, unalias::UnaliasBuiltin,
@@ -37,6 +37,10 @@ pub struct Builtins {
 
 // TODO a lot of this api is silly, perhaps just expose the entire hashmap
 impl Builtins {
+    /// Initializes a builtin container with no registered builtins
+    ///
+    /// You probably want to use `Builtins::default()` instead to get some sensible default
+    /// builtins to use, then override the ones you want
     pub fn new() -> Self {
         Builtins {
             builtins: HashMap::new(),

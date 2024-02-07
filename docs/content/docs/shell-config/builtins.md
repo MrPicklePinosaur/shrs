@@ -14,25 +14,25 @@ toc = true
 top = false
 +++
 
-Builtin Commands are a set of commands that **shrs** that users can call in the shell. This lets you create custom commands in rust and make them easily available.
+Builtin Commands are a set of commands that users can call in the shell. **shrs** lets you create custom commands in rust and make them callable from the shell.
 
-The main difference between builtin commands and external commands is that builtin commands
-have access to the shell's context during execution. This may be useful if you specifically
-need to query or mutate the shell's state. Some uses of this include switching the working
-directory, calling hooks or accessing the state store.
+The main difference between builtin commands and external commands is that builtin commands have access to the shell's context during execution. This may be useful if you specifically need to query or mutate the shell's state. Some uses of this include switching the working directory, calling hooks or accessing the state store.
 
-Builtins can also be used in conjunction with plugins to easily create a command that allows users to configure plugin settings.
+There is a set of predefined builtins for certain commands like `cd` and `help` in **shrs** to provide some basic functionalities. Builtins are called first after alias resolution so they will shadow other commands. You can see the available builtins by typing
+```
+help builtins
+```
 
-There is a set of predefined builtins for certain commands like `cd` and `help` in **shrs** to provide some basic functionalities.
-Builtins are called first after alias resolution so they will shadow other commands.
+## Creating your own Builtin
 
 An example of creating a builtin and registering it is provided below.
 
 First, define a builtin and implement the `BuiltinCmd` trait:
 
 ```rust
-struct EchoBuiltin;
-impl BuiltinCmd for EchoBuiltin {
+struct MyBuiltin { }
+
+impl BuiltinCmd for MyBuiltin {
     fn run(
         &self,
         sh: &Shell,
@@ -40,16 +40,26 @@ impl BuiltinCmd for EchoBuiltin {
         rt: &mut Runtime,
         args: &[String],
     ) -> ::anyhow::Result<CmdOutput> {
-        ctx.out.println(args.join(" "))?;
+
+        // builtin implementation ...
+        println!("this is my builtin~");
+
+        // return command status code
         Ok(CmdOutput::success())
     }
 }
 ```
 
-Then you can insert it after building the shell:
-
+Then you can register it like so
 ```rust
-myshell.builtins.insert("echo", EchoBuiltin);
-```
+let mut builtins = Builtins::default();
+builtins.insert("mybuiltin", MyBuiltin {});
 
-Now users can call echo to use the command.
+myshell.with_builtins(builtins);
+```
+The builtin can then be ran by calling `mybuiltin`. Any existing builtins of the same name will also be overwritten, so this is a good way to override default builtins with your own version.
+
+A much more comprehensive example can be found in the `shrs` examples directory, [here](https://github.com/MrPicklePinosaur/shrs/blob/master/crates/shrs/examples/custom_builtin.rs).
+
+Note that we used `Builtins::default` instead of `Builtins::new`, it is highly recommended that you use the default builtins since it gives you many essential builtin commands like `cd` and `exit`, where `Builtins::new` gives you literally nothing. So it is much better practice to start with `Builtins::default` and override the ones you want.
+

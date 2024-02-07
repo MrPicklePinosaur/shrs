@@ -24,7 +24,7 @@ pub mod prelude {
 
     pub use crate::{
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
-        builtin::{BuiltinCmd, Builtins},
+        builtin::*,
         cmd_output::CmdOutput,
         env::Env,
         hooks::{Hook, HookFn, Hooks, *},

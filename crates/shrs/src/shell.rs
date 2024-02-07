@@ -33,7 +33,7 @@ pub struct ShellConfig {
     pub readline: Box<dyn Readline>,
 
     /// Aliases, see [Alias]
-    #[builder(default = "Alias::default()")]
+    #[builder(default = "Alias::new()")]
     pub alias: Alias,
 
     /// Environment variables, see [Env]

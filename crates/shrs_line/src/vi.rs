@@ -3,7 +3,7 @@ use arboard::Clipboard;
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
-use crate::line::LineMode;
+use crate::{completion::CompletionCtx, line::LineMode};
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {
@@ -14,13 +14,29 @@ pub trait ViCursorBuffer {
 impl ViCursorBuffer for CursorBuffer {
     fn motion_to_loc(&self, motion: Motion) -> Result<Location> {
         match motion {
-            Motion::Find(c) => {
+            Motion::Find { ch, back, to } => {
                 // if current char is character we are looking for go to next one
                 let offset = match self.char_at(Location::Cursor()) {
-                    Some(cur_char) if cur_char == c => Location::After(),
+                    Some(cur_char) if cur_char == ch => Location::After(),
                     _ => Location::Cursor(),
                 };
-                Ok(Location::FindChar(self, offset, c).unwrap_or_default())
+
+                let mut loc = if back {
+                    Location::FindCharBack(self, offset, ch).unwrap_or_default()
+                } else {
+                    Location::FindChar(self, offset, ch).unwrap_or_default()
+                };
+
+                if to && loc != Location::Cursor() {
+                    loc = loc
+                        + if back {
+                            Location::After()
+                        } else {
+                            Location::Before()
+                        };
+                }
+
+                Ok(loc)
             },
             Motion::Left => Ok(Location::Before()),
             Motion::Right => Ok(Location::After()),
@@ -110,7 +126,7 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Word
                 | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => {
+                | Motion::Find { .. } => {
                     self.move_cursor(self.motion_to_loc(motion)?)?;
                 },
                 _ => (),
@@ -126,7 +142,7 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Word
                 | Motion::WordPunc
                 | Motion::BackWord
-                | Motion::Find(_) => {
+                | Motion::Find { .. } => {
                     self.delete(Location::Cursor(), self.motion_to_loc(motion)?)?;
                 },
                 _ => (),

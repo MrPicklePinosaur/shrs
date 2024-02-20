@@ -18,7 +18,14 @@ pub enum Motion {
     End,
     /// Select entire line (for Move action this behaves same as End)
     All,
-    Find(char),
+    /// Search forward/backward for/to character
+    ///
+    /// Encapsulates `f`, `F`, `t`, and `T`
+    Find {
+        ch: char,
+        back: bool,
+        to: bool,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

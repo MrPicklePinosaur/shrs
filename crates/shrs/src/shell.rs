@@ -40,6 +40,9 @@ pub struct ShellConfig {
     #[builder(default = "Env::default()")]
     pub env: Env,
 
+    /// Completion system, see [Completer]
+    completer: DefaultCompleter,
+
     // /// List of defined functions
     // #[builder(default = "HashMap::new()")]
     // pub functions: HashMap<String, Box<ast::Command>>,
@@ -147,6 +150,7 @@ impl ShellConfig {
             startup_time: Instant::now(),
             history: self.history,
             prompt_content_queue: PromptContentQueue::new(),
+            completer: self.completer,
         };
         let mut rt = Runtime {
             env: self.env,

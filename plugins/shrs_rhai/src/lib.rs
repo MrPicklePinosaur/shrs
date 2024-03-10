@@ -1,7 +1,7 @@
 mod builtin;
 mod rhai;
 
-use builtin::command_not_found_hook;
+use builtin::{command_not_found_hook, rhai_completions};
 use rhai::RhaiState;
 use shrs::prelude::*;
 
@@ -11,14 +11,12 @@ impl Plugin for RhaiPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("source", builtin::RhaiBuiltin::new());
         shell.hooks.insert(command_not_found_hook);
+        shell.hooks.insert(rhai_completions);
+        shell.state.insert(RhaiState::new());
         Ok(())
     }
 
     fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
-        let state = RhaiState::new(sh, ctx, rt);
-
-        ctx.state.insert(state);
-
         // TODO path currently not configurable
         // source `init.rhai` if exists
         if let Some(mut home_dir) = dirs::home_dir() {

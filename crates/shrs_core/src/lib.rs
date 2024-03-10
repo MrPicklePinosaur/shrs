@@ -5,6 +5,7 @@ extern crate lazy_static;
 pub mod alias;
 pub mod builtin;
 pub mod cmd_output;
+pub mod completion;
 pub mod env;
 pub mod history;
 pub mod hooks;
@@ -26,6 +27,7 @@ pub mod prelude {
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
         builtin::*,
         cmd_output::CmdOutput,
+        completion::*,
         env::Env,
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},

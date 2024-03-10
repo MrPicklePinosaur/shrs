@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use shrs_core::builtin::Builtins;
+use crate::prelude::Builtins;
 
 use super::{
     data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,

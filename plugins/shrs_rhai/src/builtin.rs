@@ -1,5 +1,7 @@
-use rhai::{Engine, EvalAltResult};
-use shrs::prelude::*;
+use std::error::Error;
+
+use rhai::{Array, Engine, EvalAltResult, Scope};
+use shrs::{anyhow::anyhow, prelude::*};
 
 use crate::rhai::RhaiState;
 
@@ -30,6 +32,48 @@ pub fn command_not_found_hook(
             .engine
             .call_fn::<()>(&mut state.scope, ast, cmd_name, ());
     }
+
+    Ok(())
+}
+pub fn rhai_completions(
+    sh: &Shell,
+    sh_ctx: &mut Context,
+    sh_rt: &mut Runtime,
+    ctx: &StartupCtx,
+) -> anyhow::Result<()> {
+    let Some(state) = sh_ctx.state.get_mut::<RhaiState>() else {
+        eprintln!("rhai state not found");
+        return Ok(());
+    };
+    //TODO make this a folder
+    let compiled = state
+        .engine
+        .compile_file("/Users/nithin/.config/shrs/completions.rhai".into());
+    let ast = match compiled {
+        Ok(ast) => ast,
+        Err(e) => {
+            eprintln!("Rhai script compile error {}", e);
+            return Err(anyhow!("compile error"));
+        },
+    };
+    let name = state
+        .engine
+        .call_fn::<String>(&mut state.scope, &ast, "name", ())
+        .unwrap();
+    let completions: Vec<Completion> = default_format(
+        state
+            .engine
+            .call_fn::<Array>(&mut state.scope, &ast, "completions", ())
+            .unwrap()
+            .iter()
+            .map(|d| d.to_string())
+            .collect(),
+    );
+    sh_ctx
+        .completer
+        .register(Rule::new(Pred::new(cmdname_eq_pred(name)), move |_| {
+            completions.clone()
+        }));
 
     Ok(())
 }

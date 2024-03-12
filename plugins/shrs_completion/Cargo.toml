@@ -19,3 +19,5 @@ dirs = { version = "5.0" }
 
 thiserror = "1"
 anyhow = "1"
+rhai = { version = "1.16" }
+

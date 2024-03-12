@@ -15,6 +15,7 @@ use shrs::{
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
+use shrs_completion::CompletionsPlugin;
 use shrs_file_logger::{FileLogger, LevelFilter};
 use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang, SshLang};
 use shrs_output_capture::OutputCapturePlugin;
@@ -207,6 +208,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(mux_plugin)
         .with_plugin(CdStackPlugin)
         .with_plugin(RhaiPlugin)
+        .with_plugin(CompletionsPlugin)
         .build()
         .expect("Could not construct shell");
 

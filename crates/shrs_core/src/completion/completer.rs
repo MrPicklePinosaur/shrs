@@ -47,7 +47,7 @@ pub struct Rule {
     /// Predicate to check
     pub pred: Pred,
     /// Action to execute if predicate is satisfied
-    pub action: Action,
+    pub completions: Action,
     // pub filter: Filter,
     // pub format: Format,
 }
@@ -56,7 +56,7 @@ impl Rule {
     pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<Completion> + 'static) -> Self {
         Self {
             pred,
-            action: Box::new(action),
+            completions: Box::new(action),
             // filter:
             // format: Box::new(default_format),
         }
@@ -75,11 +75,6 @@ impl DefaultCompleter {
         Self { rules: vec![] }
     }
 
-    /// Register a new rule to use
-    pub fn register(&mut self, rule: Rule) {
-        self.rules.push(rule);
-    }
-
     fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
 
@@ -87,7 +82,7 @@ impl DefaultCompleter {
         for rule in rules {
             // if rule was matched, run the corresponding action
             // also do prefix search (could make if prefix search is used a config option)
-            let mut comps = (rule.action)(ctx)
+            let mut comps = (rule.completions)(ctx)
                 .into_iter()
                 .filter(|s| {
                     s.accept()
@@ -105,6 +100,10 @@ impl DefaultCompleter {
 impl Completer for DefaultCompleter {
     fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         self.complete_helper(ctx)
+    }
+    /// Register a new rule to use
+    fn register(&mut self, rule: Rule) {
+        self.rules.push(rule);
     }
 }
 
@@ -254,7 +253,7 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
         .collect::<Vec<_>>()
 }
 
-pub fn default_format_with_comment(s: Vec<(&'static str, &'static str)>) -> Vec<Completion> {
+pub fn default_format_with_comment(s: Vec<(String, String)>) -> Vec<Completion> {
     s.iter()
         .map(|x| Completion {
             add_space: true,

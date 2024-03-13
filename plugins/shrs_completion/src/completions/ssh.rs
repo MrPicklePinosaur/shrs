@@ -1,5 +1,6 @@
 use shrs::prelude::{
-    cmdname_eq_pred, Completion, CompletionCtx, DefaultCompleter, Pred, ReplaceMethod, Rule,
+    cmdname_eq_pred, Completer, Completion, CompletionCtx, DefaultCompleter, Pred, ReplaceMethod,
+    Rule,
 };
 
 use crate::helpers::known_hosts;

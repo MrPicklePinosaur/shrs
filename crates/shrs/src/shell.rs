@@ -41,7 +41,9 @@ pub struct ShellConfig {
     pub env: Env,
 
     /// Completion system, see [Completer]
-    completer: DefaultCompleter,
+    #[builder(default = "Box::new(DefaultCompleter::new())")]
+    #[builder(setter(custom))]
+    completer: Box<dyn Completer>,
 
     // /// List of defined functions
     // #[builder(default = "HashMap::new()")]
@@ -104,6 +106,10 @@ impl ShellBuilder {
     }
     pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
         self.keybinding = Some(Box::new(keybinding));
+        self
+    }
+    pub fn with_completer(mut self, completer: impl Completer + 'static) -> Self {
+        self.completer = Some(Box::new(completer));
         self
     }
 }

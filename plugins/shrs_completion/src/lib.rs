@@ -4,19 +4,34 @@
 
 pub mod completions;
 mod helpers;
+use std::{fs, path::PathBuf, rc::Rc};
 
 use ::anyhow::anyhow;
-use rhai::{Array, CustomType, Dynamic, Engine, ImmutableString, Scope, TypeBuilder};
+use rhai::{Array, CustomType, Dynamic, Engine, ImmutableString, Scope, Shared, TypeBuilder};
 use shrs::prelude::*;
+pub struct CompletionsState {
+    pub engine: Engine,
+}
+
+impl CompletionsState {
+    pub fn new() -> Self {
+        let mut engine = Engine::new();
+        setup_engine(&mut engine);
+
+        CompletionsState { engine }
+    }
+}
 
 pub struct CompletionsPlugin;
 
 impl Plugin for CompletionsPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
+        shell.state.insert(CompletionsState::new());
         shell.hooks.insert(rhai_completions);
         Ok(())
     }
 }
+
 fn new_completion(
     add_space: bool,
     display: String,
@@ -88,6 +103,12 @@ pub fn setup_engine(engine: &mut Engine) {
     engine.register_fn("Replace", replace_method);
     engine.register_fn("default_format", df);
     engine.register_fn("default_format_with_comment", dfc);
+    //have to do this because Rhai calls with CompletionCtx instead of &CompletionCtx
+    engine.register_fn("is_short_flag", |c| short_flag_pred(&c));
+    engine.register_fn("is_long_flag", |c| long_flag_pred(&c));
+    engine.register_fn("is_cmdname", |c| cmdname_pred(&c));
+    engine.register_fn("is_path", |c| path_pred(&c));
+    engine.register_fn("is_arg", |c| arg_pred(&c));
 }
 
 pub fn rhai_completions(
@@ -96,58 +117,52 @@ pub fn rhai_completions(
     sh_rt: &mut Runtime,
     ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
-    sh_ctx.completer.register(Rule::new(
-        Pred::new(move |c| {
-            let mut engine = Engine::new();
-            setup_engine(&mut engine);
+    let Some(state) = sh_ctx.state.get::<CompletionsState>() else {
+        eprintln!("rhai state not found");
+        return Ok(());
+    };
 
-            let mut scope = Scope::new();
+    let mut e = Engine::new();
+    setup_engine(&mut e);
+    let engine = Rc::new(e);
+    let folder: PathBuf = "/Users/nithin/.config/shrs/completions".into();
+    for p in fs::read_dir(folder).unwrap() {
+        let path = p.unwrap().path();
+        let compiled = engine.compile_file(path);
+        let ast = Rc::new(match compiled {
+            Ok(ast) => ast,
+            Err(e) => {
+                eprintln!("Rhai script compile error {}", e);
+                return Err(anyhow!("Can compile"));
+            },
+        });
+        let ast1 = ast.clone();
 
-            //TODO make this a folder
-            let compiled = engine.compile_file_with_scope(
-                &mut scope,
-                "/Users/nithin/.config/shrs/completions.rhai".into(),
-            );
-            let ast = match compiled {
-                Ok(ast) => ast,
-                Err(e) => {
-                    eprintln!("Rhai script compile error {}", e);
-                    return false;
-                },
-            };
+        let e1 = engine.clone();
+        let e2 = engine.clone();
 
-            let predicate: bool = engine
-                .call_fn::<bool>(&mut scope, &ast, "predicate", (c.clone(),))
-                .unwrap();
-            predicate
-        }),
-        |c| -> Vec<Completion> {
-            let mut engine = Engine::new();
-            setup_engine(&mut engine);
-            let mut scope = Scope::new();
+        sh_ctx.completer.register(Rule::new(
+            Pred::new(move |c| {
+                let mut scope = Scope::new();
 
-            //TODO make this a folder
-            let compiled = engine.compile_file_with_scope(
-                &mut scope,
-                "/Users/nithin/.config/shrs/completions.rhai".into(),
-            );
-            let ast = match compiled {
-                Ok(ast) => ast,
-                Err(e) => {
-                    eprintln!("Rhai script compile error {}", e);
-                    return vec![];
-                },
-            };
+                let predicate: bool = e1
+                    .call_fn::<bool>(&mut scope, &ast, "predicate", (c.clone(),))
+                    .unwrap();
+                predicate
+            }),
+            move |c| -> Vec<Completion> {
+                let mut scope = Scope::new();
 
-            let completions: Vec<Completion> = engine
-                .call_fn::<Array>(&mut scope, &ast, "completions", (c.clone(),))
-                .unwrap()
-                .iter()
-                .map(|x| x.clone().cast::<Completion>())
-                .collect();
-            completions
-        },
-    ));
+                let completions: Vec<Completion> = e2
+                    .call_fn::<Array>(&mut scope, &ast1, "completions", (c.clone(),))
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.clone().cast::<Completion>())
+                    .collect();
+                completions
+            },
+        ));
+    }
 
     Ok(())
 }

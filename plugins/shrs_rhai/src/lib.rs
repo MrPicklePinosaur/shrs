@@ -1,5 +1,5 @@
 mod builtin;
-mod rhai;
+pub mod rhai;
 
 use builtin::command_not_found_hook;
 use rhai::RhaiState;

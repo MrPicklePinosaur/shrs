@@ -2,12 +2,11 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::prelude::Builtins;
-
 use super::{
     data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,
     CompletionCtx, ReplaceMethod,
 };
+use crate::prelude::Builtins;
 
 // TODO make this FnMut?
 /// Actions return a list of possible completions

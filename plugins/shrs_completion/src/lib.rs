@@ -9,24 +9,11 @@ use std::{fs, path::PathBuf, rc::Rc};
 use ::anyhow::anyhow;
 use rhai::{Array, CustomType, Dynamic, Engine, ImmutableString, Scope, Shared, TypeBuilder};
 use shrs::prelude::*;
-pub struct CompletionsState {
-    pub engine: Engine,
-}
-
-impl CompletionsState {
-    pub fn new() -> Self {
-        let mut engine = Engine::new();
-        setup_engine(&mut engine);
-
-        CompletionsState { engine }
-    }
-}
 
 pub struct CompletionsPlugin;
 
 impl Plugin for CompletionsPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        shell.state.insert(CompletionsState::new());
         shell.hooks.insert(rhai_completions);
         Ok(())
     }
@@ -82,7 +69,8 @@ fn df(arr: Array) -> Array {
 fn dfc(arr: Array) -> Array {
     let c: Vec<(String, String)> = arr
         .iter()
-        .map(|s| s.clone().cast::<(String, String)>())
+        .map(|s| s.clone().into_typed_array::<String>().unwrap())
+        .map(|a| (a.first().unwrap().clone(), a.last().unwrap().clone()))
         .collect();
     let g = default_format_with_comment(c);
     g.iter().map(|f| Dynamic::from(f.clone())).collect()
@@ -117,11 +105,6 @@ pub fn rhai_completions(
     sh_rt: &mut Runtime,
     ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
-    let Some(state) = sh_ctx.state.get::<CompletionsState>() else {
-        eprintln!("rhai state not found");
-        return Ok(());
-    };
-
     let mut e = Engine::new();
     setup_engine(&mut e);
     let engine = Rc::new(e);

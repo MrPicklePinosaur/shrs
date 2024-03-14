@@ -75,9 +75,20 @@ impl DefaultCompleter {
     }
 
     fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
-        let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
+        let rules: Vec<&Rule> = self.rules.iter().filter(|p| (p.pred).test(ctx)).collect();
 
         let mut output = vec![];
+        if rules.is_empty() {
+            return filename_action(ctx)
+                .into_iter()
+                .filter(|s| {
+                    s.accept()
+                        .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                })
+                // .map(|s| (rule.format)(s))
+                .collect::<Vec<_>>();
+        }
+
         for rule in rules {
             // if rule was matched, run the corresponding action
             // also do prefix search (could make if prefix search is used a config option)
@@ -113,11 +124,6 @@ impl Default for DefaultCompleter {
 
         let mut comp = DefaultCompleter::new();
         comp.register(Rule::new(
-            Pred::new(git_pred).and(flag_pred),
-            Box::new(git_flag_action),
-        ));
-        comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
-        comp.register(Rule::new(
             Pred::new(ls_pred).and(short_flag_pred),
             Box::new(ls_short_flag_action),
         ));
@@ -125,7 +131,6 @@ impl Default for DefaultCompleter {
             Pred::new(ls_pred).and(long_flag_pred),
             Box::new(ls_long_flag_action),
         ));
-        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
 }

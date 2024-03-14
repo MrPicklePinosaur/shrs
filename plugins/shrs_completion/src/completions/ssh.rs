@@ -7,7 +7,7 @@ use crate::helpers::known_hosts;
 
 // TODO this only works with the default completer, perhaps make register part of the completer
 // trait?
-pub fn ssh_completion(comp: &mut DefaultCompleter) {
+pub fn ssh_completion(comp: &mut Box<dyn Completer>) {
     comp.register(Rule::new(Pred::new(ssh_pred), Box::new(known_hosts_action)));
 }
 

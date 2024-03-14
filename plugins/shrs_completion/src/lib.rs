@@ -18,6 +18,24 @@ impl Plugin for CompletionsPlugin {
         Ok(())
     }
 }
+fn default_completion(completion: String) -> Completion {
+    Completion {
+        add_space: true,
+        display: None,
+        completion,
+        replace_method: ReplaceMethod::Replace,
+        comment: None,
+    }
+}
+fn default_completion_with_comment(completion: String, comment: String) -> Completion {
+    Completion {
+        add_space: true,
+        display: None,
+        completion,
+        replace_method: ReplaceMethod::Replace,
+        comment: Some(comment),
+    }
+}
 
 fn new_completion(
     add_space: bool,
@@ -55,8 +73,8 @@ fn cur_word(ctx: &mut CompletionCtx) -> Dynamic {
     }
     Dynamic::UNIT
 }
-fn arg_num(ctx: &mut CompletionCtx) -> usize {
-    ctx.arg_num()
+fn arg_num(ctx: &mut CompletionCtx) -> i64 {
+    ctx.arg_num() as i64
 }
 fn df(arr: Array) -> Array {
     let c: Vec<String> = arr
@@ -75,6 +93,12 @@ fn dfc(arr: Array) -> Array {
     let g = default_format_with_comment(c);
     g.iter().map(|f| Dynamic::from(f.clone())).collect()
 }
+fn fa(ctx: CompletionCtx) -> Array {
+    filename_action(&ctx)
+        .iter()
+        .map(|f| Dynamic::from(f.clone()))
+        .collect()
+}
 
 pub fn setup_engine(engine: &mut Engine) {
     engine.register_type::<Completion>();
@@ -86,12 +110,22 @@ pub fn setup_engine(engine: &mut Engine) {
         .register_get("cur_word", cur_word)
         .register_get("arg_num", arg_num);
 
+    //create completion
     engine.register_fn("Completion", new_completion);
+    engine.register_fn("Completion", default_completion);
+    engine.register_fn("Completion", default_completion_with_comment);
+
+    //ReplaceMethod enum
     engine.register_fn("Append", append_method);
     engine.register_fn("Replace", replace_method);
+
+    //Vec<Completion> utilities
     engine.register_fn("default_format", df);
     engine.register_fn("default_format_with_comment", dfc);
+    engine.register_fn("curdir_completions", fa);
     //have to do this because Rhai calls with CompletionCtx instead of &CompletionCtx
+    //need way to combine short and long flag
+    //Pred Utilities
     engine.register_fn("is_short_flag", |c| short_flag_pred(&c));
     engine.register_fn("is_long_flag", |c| long_flag_pred(&c));
     engine.register_fn("is_cmdname", |c| cmdname_pred(&c));

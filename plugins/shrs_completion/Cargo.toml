@@ -13,7 +13,6 @@ repository.workspace = true
 
 [dependencies]
 shrs = { path = "../../crates/shrs", version = "^0.0.4" }
-shrs_rhai = { path = "../shrs_rhai", version = "^0.0.4" }
 
 ssh2-config = { version = "0.2.3" }
 dirs = { version = "5.0" }

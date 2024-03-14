@@ -8,8 +8,7 @@ use std::{fs, rc::Rc};
 
 use ::anyhow::anyhow;
 use dirs::home_dir;
-use rhai::Engine;
-use rhai::{Array, Scope};
+use rhai::{Array, Engine, Scope};
 use setup::setup_engine;
 use shrs::prelude::*;
 

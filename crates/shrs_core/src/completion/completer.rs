@@ -78,6 +78,7 @@ impl DefaultCompleter {
         let rules: Vec<&Rule> = self.rules.iter().filter(|p| (p.pred).test(ctx)).collect();
 
         let mut output = vec![];
+        //if no rules were matched, default to files in the current folder
         if rules.is_empty() {
             return filename_action(ctx)
                 .into_iter()

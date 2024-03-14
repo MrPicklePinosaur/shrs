@@ -80,7 +80,7 @@ impl Default for Line {
     }
 }
 
-/// State for where the prompt is in history browse mode
+/// State or where the prompt is in history browse mode
 #[derive(Debug, PartialEq, Eq)]
 pub enum HistoryInd {
     /// Brand new prompt

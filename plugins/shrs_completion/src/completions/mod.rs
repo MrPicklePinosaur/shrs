@@ -2,4 +2,4 @@
 
 mod ssh;
 
-pub use ssh::ssh_completion;
+pub use ssh::ssh_rule;

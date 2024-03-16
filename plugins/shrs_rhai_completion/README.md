@@ -10,9 +10,12 @@ Support for adding completions with Rhai scripts
 </div>
 
 This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs), which adds support for adding tab completion with [Rhai](https://github.com/rhaiscript/rhai) scripts.
+
 Tab completions in various shells such as fish usually use scripts to handle completions and this plugin mirrors that.
-For shrs, this allows scripts to be decoupled from the shell code so they can be easily modified. There will also be a set of curated Rhai scripts which can easily be copied without having to build it into the shell.
-This also makes generating completions easy since other tools can be easily modified to generate Rhai scripts instead.
+
+For shrs, this allows scripts to be decoupled from the shell code so they can be modified. There will also be a set of curated Rhai scripts which can be copied without having to build it into the shell.
+
+This also makes generating completions easy since other tools can be modified to generate Rhai scripts instead.
 
 ## Using this plugin
 

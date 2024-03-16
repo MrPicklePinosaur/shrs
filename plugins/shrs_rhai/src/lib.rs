@@ -16,6 +16,8 @@ impl Plugin for RhaiPlugin {
     }
 
     fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+        let state = RhaiState::new();
+        ctx.state.insert(state);
         // TODO path currently not configurable
         // source `init.rhai` if exists
         if let Some(mut home_dir) = dirs::home_dir() {

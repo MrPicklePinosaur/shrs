@@ -11,7 +11,7 @@ pub use utils::*;
 mod data;
 
 /// How should the completion be substituted
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ReplaceMethod {
     /// Append the returned value after the cursor
     Append,

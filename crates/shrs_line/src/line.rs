@@ -654,14 +654,19 @@ impl Line {
     }
 
     // recalculate the current completions
-    fn populate_completions(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+    fn populate_completions(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
         // TODO IFS
-        let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-        ctx.current_word = args.clone().last().unwrap_or("").to_string();
+        let args = line_ctx
+            .cb
+            .slice(..line_ctx.cb.cursor())
+            .as_str()
+            .unwrap()
+            .split(' ');
+        line_ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
-        let completions = ctx.ctx.completer.complete(&comp_ctx);
+        let completions = line_ctx.ctx.completer.complete(&comp_ctx);
         let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions

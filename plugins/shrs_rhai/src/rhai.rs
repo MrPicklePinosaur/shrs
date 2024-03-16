@@ -13,7 +13,7 @@ pub struct RhaiState<'a> {
 
 impl<'a> RhaiState<'a> {
     pub fn new() -> Self {
-        let mut engine = Engine::new();
+        let engine = Engine::new();
 
         RhaiState {
             engine,

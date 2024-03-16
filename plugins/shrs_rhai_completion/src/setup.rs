@@ -1,5 +1,9 @@
-use rhai::{Array, CustomType, Dynamic, Engine, ImmutableString, Scope, Shared, TypeBuilder};
+use std::any::type_name;
+
+use rhai::{Array, Dynamic, Engine};
 use shrs::prelude::*;
+
+/// Constructor utilites for Completions
 fn default_completion(completion: String) -> Completion {
     Completion {
         add_space: true,
@@ -9,6 +13,7 @@ fn default_completion(completion: String) -> Completion {
         comment: None,
     }
 }
+
 fn default_completion_with_comment(completion: String, comment: String) -> Completion {
     Completion {
         add_space: true,
@@ -21,60 +26,94 @@ fn default_completion_with_comment(completion: String, comment: String) -> Compl
 
 fn new_completion(
     add_space: bool,
-    display: String,
+    display: Dynamic,
     completion: String,
     replace_method: ReplaceMethod,
-    comment: String,
+    comment: Dynamic,
 ) -> Completion {
     Completion {
         add_space,
-        display: Some(display),
+        display: if display.is_unit() {
+            None
+        } else {
+            Some(display.into_string().unwrap())
+        },
         completion,
         replace_method,
-        comment: Some(comment),
+        comment: if comment.is_unit() {
+            None
+        } else {
+            Some(comment.into_string().unwrap())
+        },
     }
 }
+
+/// Enum constructors
 fn append_method() -> ReplaceMethod {
     ReplaceMethod::Append
 }
+
 fn replace_method() -> ReplaceMethod {
     ReplaceMethod::Replace
 }
-fn get_line(ctx: &mut CompletionCtx) -> Vec<String> {
-    ctx.line.clone()
+
+///CompletionCtx Getters
+fn get_line(ctx: &mut CompletionCtx) -> Array {
+    ctx.line.iter().map(|f| Dynamic::from(f.clone())).collect()
 }
+
 fn cmd_name(ctx: &mut CompletionCtx) -> Dynamic {
     if let Some(n) = ctx.cmd_name() {
         return n.into();
     }
     Dynamic::UNIT
 }
+
 fn cur_word(ctx: &mut CompletionCtx) -> Dynamic {
     if let Some(w) = ctx.cur_word() {
         return w.into();
     }
     Dynamic::UNIT
 }
+
 fn arg_num(ctx: &mut CompletionCtx) -> i64 {
     ctx.arg_num() as i64
 }
-fn df(arr: Array) -> Array {
-    let c: Vec<String> = arr
-        .iter()
-        .map(|s| s.clone().into_string().unwrap())
-        .collect();
-    let g = default_format(c);
-    g.iter().map(|f| Dynamic::from(f.clone())).collect()
+
+fn with_format_default(arr: Array) -> Array {
+    with_format(arr, true, ReplaceMethod::Replace)
 }
-fn dfc(arr: Array) -> Array {
-    let c: Vec<(String, String)> = arr
-        .iter()
-        .map(|s| s.clone().into_typed_array::<String>().unwrap())
-        .map(|a| (a.first().unwrap().clone(), a.last().unwrap().clone()))
-        .collect();
-    let g = default_format_with_comment(c);
-    g.iter().map(|f| Dynamic::from(f.clone())).collect()
+fn with_format(arr: Array, add_space: bool, replace_method: ReplaceMethod) -> Array {
+    arr.iter()
+        .map(|s| {
+            if s.is_string() {
+                Completion {
+                    add_space,
+                    display: None,
+                    completion: s.clone().cast(),
+                    replace_method,
+                    comment: None,
+                }
+            } else if s.is::<Completion>() {
+                s.clone_cast::<Completion>()
+            } else if s.is_array() {
+                let c = s.clone().into_typed_array::<String>().unwrap();
+                Completion {
+                    add_space,
+                    display: None,
+                    completion: c.first().unwrap().into(),
+                    replace_method,
+                    comment: Some(c.last().unwrap().into()),
+                }
+            } else {
+                panic!("Incorrect type {}", s.type_name());
+            }
+        })
+        .map(Dynamic::from)
+        .collect()
 }
+
+/// Returns all file names in cwd
 fn filename_completions(ctx: CompletionCtx) -> Array {
     filename_action(&ctx)
         .iter()
@@ -94,22 +133,31 @@ pub fn setup_engine(engine: &mut Engine) {
         .register_get("cur_word", cur_word)
         .register_get("arg_num", arg_num);
 
-    //create completion
+    // create completion
     engine.register_fn("Completion", new_completion);
     engine.register_fn("Completion", default_completion);
     engine.register_fn("Completion", default_completion_with_comment);
 
-    //ReplaceMethod enum
+    // ReplaceMethod enum
     engine.register_fn("Append", append_method);
     engine.register_fn("Replace", replace_method);
 
-    //Vec<Completion> utilities
-    engine.register_fn("default_format", df);
-    engine.register_fn("default_format_with_comment", dfc);
+    // Vec<Completion> utilities
+    engine.register_fn("with_format", with_format);
+    engine.register_fn("with_format", with_format_default);
+
     engine.register_fn("filename_completions", filename_completions);
-    //have to do this because Rhai calls with CompletionCtx instead of &CompletionCtx
-    //need way to combine short and long flag
-    //Pred Utilities
+    //  Filters flags from Array of strings
+    engine.register_fn("filter_flags", |line: Array| -> Array {
+        line.iter()
+            .map(|s| s.clone().into_string().unwrap())
+            .filter(|v| !v.starts_with("-"))
+            .map(Dynamic::from)
+            .collect()
+    });
+    // have to do this because Rhai calls with CompletionCtx instead of &CompletionCtx
+    // need way to combine short and long flag
+    // Pred Utilities
     engine.register_fn("is_short_flag", |c| short_flag_pred(&c));
     engine.register_fn("is_long_flag", |c| long_flag_pred(&c));
     engine.register_fn("is_cmdname", |c| cmdname_pred(&c));

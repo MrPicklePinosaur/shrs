@@ -15,6 +15,7 @@ use shrs_job::JobManager;
 use crate::{
     alias::Alias,
     builtin::Builtins,
+    completion::Completer,
     env::Env,
     history::History,
     hooks::{ChangeDirCtx, Hooks},
@@ -58,6 +59,8 @@ pub struct Context {
     pub alias: Alias,
     pub history: Box<dyn History<HistoryItem = String>>,
     pub prompt_content_queue: PromptContentQueue,
+
+    pub completer: Box<dyn Completer>,
 }
 
 /// Runtime context for the shell

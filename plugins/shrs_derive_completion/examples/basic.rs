@@ -13,10 +13,8 @@ fn main() {
     let mut comp = DefaultCompleter::new();
     MyCli::rules(&mut comp);
 
-    let readline = LineBuilder::default().with_completer(comp).build().unwrap();
-
     let myshell = ShellBuilder::default()
-        .with_readline(readline)
+        .with_completer(comp)
         .build()
         .unwrap();
 

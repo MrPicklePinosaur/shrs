@@ -18,7 +18,6 @@
 extern crate derive_builder;
 
 pub mod buffer_history;
-pub mod completion;
 pub mod cursor;
 pub mod highlight;
 pub mod hooks;
@@ -37,7 +36,6 @@ pub mod prelude {
     // Macros
     pub use crate::{
         buffer_history::{BufferHistory, DefaultBufferHistory},
-        completion::*,
         cursor::CursorStyle,
         highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme},
         hooks::*,

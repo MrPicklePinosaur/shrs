@@ -18,6 +18,8 @@ use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
 use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang, SshLang};
 use shrs_output_capture::OutputCapturePlugin;
+use shrs_rhai::RhaiPlugin;
+use shrs_rhai_completion::CompletionsPlugin;
 use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
@@ -144,7 +146,6 @@ fn main() {
     // Initialize readline with all of our components
 
     let readline = LineBuilder::default()
-        .with_completer(completer)
         .with_menu(menu)
         .with_prompt(prompt)
         .build()
@@ -194,6 +195,7 @@ a rusty POSIX shell | build {}"#,
     // =-=-= Shell =-=-=
     // Construct the final shell
     let myshell = ShellBuilder::default()
+        .with_completer(completer)
         .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)
@@ -205,6 +207,8 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(RunContextPlugin::default())
         .with_plugin(mux_plugin)
         .with_plugin(CdStackPlugin)
+        .with_plugin(RhaiPlugin)
+        .with_plugin(CompletionsPlugin)
         .build()
         .expect("Could not construct shell");
 

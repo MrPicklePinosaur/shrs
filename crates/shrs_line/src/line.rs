@@ -14,7 +14,10 @@ use crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use shrs_core::shell::{Context, Runtime, Shell};
+use shrs_core::{
+    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    shell::{Context, Runtime, Shell},
+};
 use shrs_utils::{
     cursor_buffer::{CursorBuffer, Location},
     styled_buf::StyledBuf,
@@ -45,11 +48,6 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
-
-    /// Completion system, see [Completer]
-    #[builder(default = "Box::new(DefaultCompleter::default())")]
-    #[builder(setter(custom))]
-    completer: Box<dyn Completer>,
 
     #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
@@ -82,7 +80,7 @@ impl Default for Line {
     }
 }
 
-/// State for where the prompt is in history browse mode
+/// State or where the prompt is in history browse mode
 #[derive(Debug, PartialEq, Eq)]
 pub enum HistoryInd {
     /// Brand new prompt
@@ -172,10 +170,6 @@ impl LineBuilder {
         menu: impl Menu<MenuItem = Completion, PreviewItem = String> + 'static,
     ) -> Self {
         self.menu = Some(Box::new(menu));
-        self
-    }
-    pub fn with_completer(mut self, completer: impl Completer + 'static) -> Self {
-        self.completer = Some(Box::new(completer));
         self
     }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
@@ -660,14 +654,19 @@ impl Line {
     }
 
     // recalculate the current completions
-    fn populate_completions(&mut self, ctx: &mut LineCtx) -> anyhow::Result<()> {
+    fn populate_completions(&mut self, line_ctx: &mut LineCtx) -> anyhow::Result<()> {
         // TODO IFS
-        let args = ctx.cb.slice(..ctx.cb.cursor()).as_str().unwrap().split(' ');
-        ctx.current_word = args.clone().last().unwrap_or("").to_string();
+        let args = line_ctx
+            .cb
+            .slice(..line_ctx.cb.cursor())
+            .as_str()
+            .unwrap()
+            .split(' ');
+        line_ctx.current_word = args.clone().last().unwrap_or("").to_string();
 
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
-        let completions = self.completer.complete(&comp_ctx);
+        let completions = line_ctx.ctx.completer.complete(&comp_ctx);
         let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions

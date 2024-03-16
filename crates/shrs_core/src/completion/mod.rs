@@ -11,7 +11,7 @@ pub use utils::*;
 mod data;
 
 /// How should the completion be substituted
-#[derive(Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum ReplaceMethod {
     /// Append the returned value after the cursor
     Append,
@@ -52,13 +52,14 @@ impl Completion {
 pub trait Completer {
     /// Given context on the current state of the input, output list of possible completions
     fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion>;
+    fn register(&mut self, rule: Rule);
 }
-
+#[derive(Clone)]
 pub struct CompletionCtx {
     /// The currently entered line split by arguments
     ///
     /// The cursor position is after the very last argument
-    line: Vec<String>,
+    pub line: Vec<String>,
 }
 
 impl CompletionCtx {

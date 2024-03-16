@@ -1,5 +1,7 @@
-use rhai::{Engine, EvalAltResult};
-use shrs::prelude::*;
+use std::error::Error;
+
+use rhai::{Array, Engine, EvalAltResult, Scope};
+use shrs::{anyhow::anyhow, prelude::*};
 
 use crate::rhai::RhaiState;
 

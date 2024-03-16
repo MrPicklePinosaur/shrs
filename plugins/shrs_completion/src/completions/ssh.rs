@@ -1,13 +1,14 @@
 use shrs::prelude::{
-    cmdname_eq_pred, Completion, CompletionCtx, DefaultCompleter, Pred, ReplaceMethod, Rule,
+    cmdname_eq_pred, Completer, Completion, CompletionCtx, DefaultCompleter, Pred, ReplaceMethod,
+    Rule,
 };
 
 use crate::helpers::known_hosts;
 
 // TODO this only works with the default completer, perhaps make register part of the completer
 // trait?
-pub fn ssh_completion(comp: &mut DefaultCompleter) {
-    comp.register(Rule::new(Pred::new(ssh_pred), Box::new(known_hosts_action)));
+pub fn ssh_rule() -> Rule {
+    Rule::new(Pred::new(ssh_pred), Box::new(known_hosts_action))
 }
 
 fn ssh_pred(ctx: &CompletionCtx) -> bool {

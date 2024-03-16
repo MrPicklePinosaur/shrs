@@ -27,7 +27,7 @@ pub fn ls_short_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
         ]
         .iter()
         .map(|s| s.to_string())
-        .collect::<Vec<_>>(),
+        .collect(),
     )
 }
 
@@ -79,5 +79,6 @@ pub fn ls_long_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
             ("--help", "display this help and exit"),
             ("--version", "output version information and exit"),
         ]
+            .iter().map(|s| (s.0.to_string(),s.1.to_string())).collect()
     )
 }

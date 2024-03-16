@@ -107,10 +107,7 @@ fn impl_struct(item: ItemStruct) -> Result<proc_macro2::TokenStream, Error> {
 
     let output = quote! {
         // TODO might run into issues using a use statement here
-        use shrs::line::completion::{
-            cmdname_eq_pred, default_format, flag_pred, Action, Completion, CompletionCtx,
-            DefaultCompleter, Pred, Rule,
-        };
+        use shrs::prelude::*;
 
         impl #struct_name {
             pub fn rules(comp: &mut DefaultCompleter) {

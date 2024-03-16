@@ -2,12 +2,11 @@
 
 use std::path::{Path, PathBuf};
 
-use shrs_core::builtin::Builtins;
-
 use super::{
     data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,
     CompletionCtx, ReplaceMethod,
 };
+use crate::prelude::Builtins;
 
 // TODO make this FnMut?
 /// Actions return a list of possible completions
@@ -47,7 +46,7 @@ pub struct Rule {
     /// Predicate to check
     pub pred: Pred,
     /// Action to execute if predicate is satisfied
-    pub action: Action,
+    pub completions: Action,
     // pub filter: Filter,
     // pub format: Format,
 }
@@ -56,7 +55,7 @@ impl Rule {
     pub fn new(pred: Pred, action: impl Fn(&CompletionCtx) -> Vec<Completion> + 'static) -> Self {
         Self {
             pred,
-            action: Box::new(action),
+            completions: Box::new(action),
             // filter:
             // format: Box::new(default_format),
         }
@@ -75,19 +74,26 @@ impl DefaultCompleter {
         Self { rules: vec![] }
     }
 
-    /// Register a new rule to use
-    pub fn register(&mut self, rule: Rule) {
-        self.rules.push(rule);
-    }
-
     fn complete_helper(&self, ctx: &CompletionCtx) -> Vec<Completion> {
-        let rules = self.rules.iter().filter(|p| (p.pred).test(ctx));
+        let rules: Vec<&Rule> = self.rules.iter().filter(|p| (p.pred).test(ctx)).collect();
 
         let mut output = vec![];
+        //if no rules were matched, default to files in the current folder
+        if rules.is_empty() {
+            return filename_action(ctx)
+                .into_iter()
+                .filter(|s| {
+                    s.accept()
+                        .starts_with(ctx.cur_word().unwrap_or(&String::new()))
+                })
+                // .map(|s| (rule.format)(s))
+                .collect::<Vec<_>>();
+        }
+
         for rule in rules {
             // if rule was matched, run the corresponding action
             // also do prefix search (could make if prefix search is used a config option)
-            let mut comps = (rule.action)(ctx)
+            let mut comps = (rule.completions)(ctx)
                 .into_iter()
                 .filter(|s| {
                     s.accept()
@@ -106,6 +112,10 @@ impl Completer for DefaultCompleter {
     fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion> {
         self.complete_helper(ctx)
     }
+    /// Register a new rule to use
+    fn register(&mut self, rule: Rule) {
+        self.rules.push(rule);
+    }
 }
 
 impl Default for DefaultCompleter {
@@ -115,11 +125,6 @@ impl Default for DefaultCompleter {
 
         let mut comp = DefaultCompleter::new();
         comp.register(Rule::new(
-            Pred::new(git_pred).and(flag_pred),
-            Box::new(git_flag_action),
-        ));
-        comp.register(Rule::new(Pred::new(git_pred), Box::new(git_action)));
-        comp.register(Rule::new(
             Pred::new(ls_pred).and(short_flag_pred),
             Box::new(ls_short_flag_action),
         ));
@@ -127,7 +132,6 @@ impl Default for DefaultCompleter {
             Pred::new(ls_pred).and(long_flag_pred),
             Box::new(ls_long_flag_action),
         ));
-        comp.register(Rule::new(Pred::new(arg_pred), Box::new(filename_action)));
         comp
     }
 }
@@ -254,7 +258,7 @@ pub fn default_format(s: Vec<String>) -> Vec<Completion> {
         .collect::<Vec<_>>()
 }
 
-pub fn default_format_with_comment(s: Vec<(&'static str, &'static str)>) -> Vec<Completion> {
+pub fn default_format_with_comment(s: Vec<(String, String)>) -> Vec<Completion> {
     s.iter()
         .map(|x| Completion {
             add_space: true,

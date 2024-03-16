@@ -40,6 +40,11 @@ pub struct ShellConfig {
     #[builder(default = "Env::default()")]
     pub env: Env,
 
+    /// Completion system, see [Completer]
+    #[builder(default = "Box::new(DefaultCompleter::new())")]
+    #[builder(setter(custom))]
+    completer: Box<dyn Completer>,
+
     // /// List of defined functions
     // #[builder(default = "HashMap::new()")]
     // pub functions: HashMap<String, Box<ast::Command>>,
@@ -103,6 +108,10 @@ impl ShellBuilder {
         self.keybinding = Some(Box::new(keybinding));
         self
     }
+    pub fn with_completer(mut self, completer: impl Completer + 'static) -> Self {
+        self.completer = Some(Box::new(completer));
+        self
+    }
 }
 
 impl ShellConfig {
@@ -147,6 +156,7 @@ impl ShellConfig {
             startup_time: Instant::now(),
             history: self.history,
             prompt_content_queue: PromptContentQueue::new(),
+            completer: self.completer,
         };
         let mut rt = Runtime {
             env: self.env,

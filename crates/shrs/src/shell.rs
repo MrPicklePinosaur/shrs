@@ -1,8 +1,12 @@
 //! Shell configuration options
 
-use std::{cell::RefCell, collections::VecDeque, default, process::ExitStatus, time::Instant};
+use std::{
+    cell::RefCell, collections::VecDeque, default, path::PathBuf, process::ExitStatus,
+    time::Instant,
+};
 
 use ::crossterm::style::Color;
+use dirs::home_dir;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
@@ -76,6 +80,10 @@ pub struct ShellConfig {
     #[builder(default = "Box::new(DefaultKeybinding::default())")]
     #[builder(setter(custom))]
     pub keybinding: Box<dyn Keybinding>,
+
+    /// Configuration directory, easy access in the shell
+    #[builder(default = "home_dir().unwrap().join(\".config/shrs\")")]
+    pub config_dir: PathBuf,
 }
 
 impl ShellBuilder {
@@ -166,6 +174,7 @@ impl ShellConfig {
             // TODO currently unused (since we have not implemented functions etc)
             args: vec![],
             exit_status: 0,
+            config_dir: self.config_dir,
             // functions: self.functions,
         };
         let sh = Shell {

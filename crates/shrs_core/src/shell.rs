@@ -80,6 +80,8 @@ pub struct Runtime {
     pub args: Vec<String>,
     /// Exit status of most recent pipeline
     pub exit_status: i32,
+    /// Directory for configuration files
+    pub config_dir: PathBuf,
     // /// List of defined functions
     // pub functions: HashMap<String, Box<ast::Command>>,
 }

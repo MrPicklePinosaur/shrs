@@ -1,17 +1,14 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::format,
-    io::{BufRead, BufReader, Read, Write},
-    ops::Add,
-    os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
-    sync::Arc,
-};
+use std::{process::Stdio, sync::Arc};
 
-use shrs::{
-    lang::{Lexer, Token},
-    prelude::*,
+use shrs::prelude::*;
+use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
+    process::{Child, ChildStdin, ChildStdout, Command},
+    runtime,
+    sync::{
+        mpsc::{self, Sender},
+        RwLock,
+    },
 };
 
 use crate::{
@@ -19,21 +16,65 @@ use crate::{
     MuxState,
 };
 
+// TODO all of this is copied from PythonLang, definitely abstract this code
+
 pub struct BashLang {
-    instance: RefCell<Child>,
+    instance: Child,
+    /// Channel for writing to process
+    write_tx: Sender<String>,
+    runtime: runtime::Runtime,
 }
 
 impl BashLang {
     pub fn new() -> Self {
+        let runtime = runtime::Runtime::new().unwrap();
+
+        let _guard = runtime.enter();
+
+        let mut instance = Command::new("bash")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("Failed to start bash process");
+
+        let stdout = instance.stdout.take().unwrap();
+        let stderr = instance.stderr.take().unwrap();
+        let stdin = instance.stdin.take().unwrap();
+
+        runtime.spawn(async {
+            let mut stdout_reader = BufReader::new(stdout).lines();
+            while let Some(line) = stdout_reader.next_line().await.unwrap() {
+                println!("{line}");
+            }
+        });
+
+        runtime.spawn(async {
+            let mut stderr_reader = BufReader::new(stderr).lines();
+            while let Some(line) = stderr_reader.next_line().await.unwrap() {
+                eprintln!("{line}");
+            }
+        });
+
+        let (write_tx, mut write_rx) = mpsc::channel::<String>(8);
+
+        runtime.spawn(async move {
+            let mut stdin_writer = BufWriter::new(stdin);
+
+            while let Some(cmd) = write_rx.recv().await {
+                stdin_writer
+                    .write_all((cmd + "\n").as_bytes())
+                    .await
+                    .expect("Bash command failed");
+
+                stdin_writer.flush().await.unwrap();
+            }
+        });
+
         Self {
-            instance: RefCell::new(
-                Command::new("bash")
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
-                    .spawn()
-                    .expect("Failed to start bash process"),
-            ),
+            instance,
+            write_tx,
+            runtime,
         }
     }
 }
@@ -46,34 +87,11 @@ impl Lang for BashLang {
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let mut instance = self.instance.borrow_mut();
-        let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
+        self.runtime.block_on(async {
+            self.write_tx.send(cmd).await.unwrap();
+        });
 
-        let cd_statement = format!("cd {}\n", rt.working_dir.to_string_lossy());
-
-        stdin
-            .write_all(cd_statement.as_bytes())
-            .expect("unable to set var");
-
-        for (k, v) in rt.env.iter() {
-            let export_statement = format!("export {}={:?}\n", k, v);
-            stdin
-                .write_all(export_statement.as_bytes())
-                .expect("unable to set var");
-        }
-        stdin
-            .write_all((cmd + ";echo $?'\x1A'; echo '\x1A' >&2\n").as_bytes())
-            .expect("Bash command failed");
-
-        let stdout_reader =
-            BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
-        let status = read_out(ctx, stdout_reader)?;
-
-        let stderr_reader =
-            BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
-        read_err(ctx, stderr_reader)?;
-
-        Ok(CmdOutput::new(status))
+        Ok(CmdOutput::success())
     }
 
     fn name(&self) -> String {

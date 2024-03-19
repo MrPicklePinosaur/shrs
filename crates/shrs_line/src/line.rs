@@ -607,7 +607,11 @@ impl Line {
                                 // TODO should this just use the env var? or should shrs have
                                 // dedicated config?
 
-                                let editor = std::env::var("EDITOR")?;
+                                // If EDITOR command is not set just display some sort of warning
+                                // and move on
+                                let Ok(editor) = std::env::var("EDITOR") else {
+                                    return Ok(())
+                                };
 
                                 let mut tempbuf = tempfile::NamedTempFile::new().unwrap();
 

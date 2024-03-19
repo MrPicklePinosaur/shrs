@@ -1,0 +1,16 @@
+[package]
+name = "shrs_manpages"
+version = "0.0.4"
+description = "keybinding to open man page currently typed command"
+readme = "README.md"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+shrs = { path = "../../crates/shrs", version = "^0.0.4" }

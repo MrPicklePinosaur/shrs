@@ -233,6 +233,18 @@ impl Line {
                         },
                     );
                 }
+            } else {
+                // get search results from history and suggest the first result
+                if let Some(suggestion) = line_ctx.ctx.history.search(res.as_str()).first() {
+                    let trimmed_selection = suggestion[res.len()..].to_string();
+                    styled_buf.push(
+                        trimmed_selection.as_str(),
+                        ContentStyle {
+                            foreground_color: Some(Color::Yellow),
+                            ..Default::default()
+                        },
+                    );
+                }
             }
 
             self.painter.paint(
@@ -346,25 +358,45 @@ impl Line {
     }
 
     //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
-    fn handle_standard_keys(&mut self, ctx: &mut LineCtx, event: Event) -> anyhow::Result<bool> {
+    fn handle_standard_keys(
+        &mut self,
+        line_ctx: &mut LineCtx,
+        event: Event,
+    ) -> anyhow::Result<bool> {
         match event {
             Event::Resize(a, b) => {
                 self.painter.set_term_size(a, b);
             },
             Event::Paste(p) => {
-                ctx.cb.insert(Location::Cursor(), p.as_str())?;
+                line_ctx.cb.insert(Location::Cursor(), p.as_str())?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                ctx.cb.clear();
+                line_ctx.cb.clear();
                 self.buffer_history.clear();
-                ctx.lines = String::new();
+                line_ctx.lines = String::new();
                 self.painter.newline()?;
 
                 return Ok(true);
+            },
+            // Insert suggestion when right arrow
+            Event::Key(KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if let Some(suggestion) = line_ctx
+                    .ctx
+                    .history
+                    .search(line_ctx.get_full_command().as_str())
+                    .first()
+                {
+                    line_ctx.cb.clear();
+                    line_ctx.cb.insert(Location::Cursor(), suggestion)?;
+                }
             },
 
             Event::Key(KeyEvent {
@@ -383,10 +415,14 @@ impl Line {
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
-                if ctx.sh.lang.needs_line_check(ctx.get_full_command()) {
-                    ctx.lines += ctx.cb.as_str().into_owned().as_str();
-                    ctx.lines += "\n";
-                    ctx.cb.clear();
+                if line_ctx
+                    .sh
+                    .lang
+                    .needs_line_check(line_ctx.get_full_command())
+                {
+                    line_ctx.lines += line_ctx.cb.as_str().into_owned().as_str();
+                    line_ctx.lines += "\n";
+                    line_ctx.cb.clear();
 
                     return Ok(false);
                 }
@@ -399,7 +435,7 @@ impl Line {
                 ..
             }) => {
                 // if current input is empty exit the shell, otherwise treat it as enter
-                if ctx.cb.is_empty() {
+                if line_ctx.cb.is_empty() {
                     // TODO maybe unify exiting the shell
                     disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
                                         // handling cleanup code
@@ -610,7 +646,7 @@ impl Line {
                                 // If EDITOR command is not set just display some sort of warning
                                 // and move on
                                 let Ok(editor) = std::env::var("EDITOR") else {
-                                    return Ok(())
+                                    return Ok(());
                                 };
 
                                 let mut tempbuf = tempfile::NamedTempFile::new().unwrap();

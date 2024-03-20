@@ -57,7 +57,7 @@ pub struct Context {
     pub jobs: Jobs,
     pub startup_time: Instant,
     pub alias: Alias,
-    pub history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History>,
     pub prompt_content_queue: PromptContentQueue,
 
     pub completer: Box<dyn Completer>,

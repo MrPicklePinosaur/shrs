@@ -610,7 +610,7 @@ impl Line {
                                 // If EDITOR command is not set just display some sort of warning
                                 // and move on
                                 let Ok(editor) = std::env::var("EDITOR") else {
-                                    return Ok(())
+                                    return Ok(());
                                 };
 
                                 let mut tempbuf = tempfile::NamedTempFile::new().unwrap();

@@ -4,9 +4,9 @@ use std::process::ExitStatus;
 
 use glob::glob;
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
+use shrs_lang::ast;
 
 use super::posix_lang::PosixError;
-use shrs_lang::ast;
 
 pub struct Os {
     _job_manager: JobManager,

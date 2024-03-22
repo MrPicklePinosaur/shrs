@@ -52,7 +52,6 @@ pub mod prelude {
     //! `use shrs::prelude::*` to import most commonly used structs and functions
 
     pub use shrs_core::prelude::*;
-
     pub use shrs_utils::*;
 
     pub use crate::{anyhow, crossterm, crossterm::*, plugin::*, readline::*, shell::*};

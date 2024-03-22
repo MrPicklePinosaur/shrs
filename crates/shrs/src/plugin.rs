@@ -3,7 +3,7 @@
 use log::warn;
 use shrs_core::shell::{Context, Runtime, Shell};
 
-use crate::ShellConfig;
+use crate::prelude::ShellConfig;
 
 #[derive(Debug)]
 pub struct PluginMeta {

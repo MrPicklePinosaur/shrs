@@ -6,7 +6,6 @@ use dirs::home_dir;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
-use shrs_line::prelude::*;
 
 use crate::{
     history::{DefaultHistory, History},

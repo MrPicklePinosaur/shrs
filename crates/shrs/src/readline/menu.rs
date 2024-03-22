@@ -10,7 +10,7 @@ use crossterm::{
 };
 use shrs_core::prelude::Completion;
 
-use crate::painter::Painter;
+use super::painter::Painter;
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 

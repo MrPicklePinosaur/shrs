@@ -28,15 +28,9 @@ pub mod lang {
 
     pub use shrs_lang::*;
 }
-
-pub mod line {
-    //! Readline implementation
-
-    pub use shrs_line::*;
-}
+mod readline;
 
 mod shell;
-pub use shell::*;
 
 pub mod plugin;
 
@@ -58,8 +52,8 @@ pub mod prelude {
     //! `use shrs::prelude::*` to import most commonly used structs and functions
 
     pub use shrs_core::prelude::*;
-    pub use shrs_line::prelude::*;
+
     pub use shrs_utils::*;
 
-    pub use crate::{anyhow, crossterm, crossterm::*, plugin::*, shell::*};
+    pub use crate::{anyhow, crossterm, crossterm::*, plugin::*, readline::*, shell::*};
 }

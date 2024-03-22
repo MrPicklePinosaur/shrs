@@ -3,7 +3,7 @@
 use crossterm::style::{ContentStyle, StyledContent};
 use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
-use crate::line::LineCtx;
+use super::LineCtx;
 
 /// Implement this trait to create your own prompt
 pub trait Prompt {

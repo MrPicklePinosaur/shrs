@@ -1,6 +1,6 @@
 //! Hooks that are defined by shrs_readline
 
-use crate::line::LineMode;
+use super::LineMode;
 
 /// Runs whenever the current mode of the line changes
 #[derive(Clone)]

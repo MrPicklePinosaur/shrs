@@ -3,7 +3,7 @@ use arboard::Clipboard;
 use shrs_utils::cursor_buffer::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
 
-use crate::line::LineMode;
+use super::LineMode;
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {

@@ -5,7 +5,7 @@ use std::{
     io::{Read, Seek, Write},
 };
 
-use crossterm::{
+use ::crossterm::{
     cursor::SetCursorStyle,
     event::{
         read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent, KeyModifiers,
@@ -24,7 +24,7 @@ use shrs_utils::{
 };
 use shrs_vi::{Action, Command, Motion, Parser};
 
-use crate::{painter::Painter, prelude::*};
+use super::{painter::Painter, *};
 
 pub trait Readline {
     fn read_line(&mut self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> String;

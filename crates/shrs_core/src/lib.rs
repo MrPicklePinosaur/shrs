@@ -36,7 +36,7 @@ pub mod prelude {
         output_writer::OutputWriter,
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
-        shell::{Context, Runtime, Shell},
+        shell::{set_working_dir, Context, Runtime, Shell},
         signal::Signals,
         state::State,
         theme::Theme,

@@ -2,7 +2,6 @@
 
 use std::{cmp::Ordering, fmt::Display};
 
-use crate::prelude::Completion;
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
     execute,
@@ -11,6 +10,7 @@ use crossterm::{
 };
 
 use super::painter::Painter;
+use crate::prelude::Completion;
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 

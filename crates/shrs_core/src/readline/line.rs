@@ -5,10 +5,6 @@ use std::{
     io::{Read, Seek, Write},
 };
 
-use crate::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
-    shell::{Context, Runtime, Shell},
-};
 use ::crossterm::{
     cursor::SetCursorStyle,
     event::{
@@ -25,6 +21,10 @@ use shrs_utils::{
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
+use crate::{
+    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    shell::{Context, Runtime, Shell},
+};
 
 pub trait Readline {
     fn read_line(&mut self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> String;

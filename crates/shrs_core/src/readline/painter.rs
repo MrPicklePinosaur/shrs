@@ -5,7 +5,6 @@ use std::{
     io::{stdout, BufWriter, Write},
 };
 
-use crate::prelude::Completion;
 use crossterm::{
     cursor::{self, MoveToColumn, MoveToNextLine, MoveToPreviousLine},
     style::{Print, PrintStyledContent},
@@ -16,6 +15,7 @@ use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
 use super::{cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt};
+use crate::prelude::Completion;
 pub struct Painter {
     /// The output buffer
     out: RefCell<BufWriter<std::io::Stdout>>,

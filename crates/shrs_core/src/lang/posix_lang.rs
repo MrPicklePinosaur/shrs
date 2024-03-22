@@ -1,13 +1,12 @@
-use shrs_core::{
-    lang::Lang,
-    prelude::{CmdOutput, CommandNotFoundCtx},
-    shell::{Context, Runtime, Shell},
-};
+use super::{eval2, Lang};
+
+use crate::prelude::{CmdOutput, CommandNotFoundCtx};
+use crate::shell::{Context, Runtime, Shell};
 use shrs_job::initialize_job_control;
+use shrs_lang::{Lexer, Parser, ParserError, Token};
 use thiserror::Error;
 
 // use crate::eval::{command_output, eval_command},
-use crate::{eval2, parser, Lexer, Parser, Token};
 
 #[derive(Error, Debug)]
 pub enum PosixError {
@@ -19,7 +18,7 @@ pub enum PosixError {
     Hook(),
     /// Issue parsing command
     #[error("Parse failed: {0}")]
-    Parse(parser::Error),
+    Parse(ParserError),
     /// Issue evaluating command
     #[error("Failed evaluating command: {0}")]
     Eval(anyhow::Error),

@@ -10,7 +10,6 @@ use dirs::home_dir;
 use log::{info, warn};
 use shrs_core::prelude::*;
 use shrs_job::JobManager;
-use shrs_lang::PosixLang;
 use shrs_line::prelude::*;
 
 use crate::{

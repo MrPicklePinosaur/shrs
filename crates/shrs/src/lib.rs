@@ -58,7 +58,6 @@ pub mod prelude {
     //! `use shrs::prelude::*` to import most commonly used structs and functions
 
     pub use shrs_core::prelude::*;
-    pub use shrs_lang::PosixLang;
     pub use shrs_line::prelude::*;
     pub use shrs_utils::*;
 

@@ -32,7 +32,7 @@ pub mod prelude {
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
-        lang::Lang,
+        lang::{Lang, PosixLang},
         output_writer::OutputWriter,
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},

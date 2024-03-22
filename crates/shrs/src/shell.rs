@@ -1,11 +1,7 @@
 //! Shell configuration options
 
-use std::{
-    cell::RefCell, collections::VecDeque, default, path::PathBuf, process::ExitStatus,
-    time::Instant,
-};
+use std::{cell::RefCell, path::PathBuf, process::ExitStatus, time::Instant};
 
-use ::crossterm::style::Color;
 use dirs::home_dir;
 use log::{info, warn};
 use shrs_core::prelude::*;

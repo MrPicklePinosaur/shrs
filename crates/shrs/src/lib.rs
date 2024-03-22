@@ -28,7 +28,6 @@ pub mod lang {
 
     pub use shrs_lang::*;
 }
-mod readline;
 
 mod shell;
 

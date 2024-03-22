@@ -2,13 +2,13 @@
 
 use std::{cmp::Ordering, fmt::Display};
 
+use crate::prelude::Completion;
 use crossterm::{
     cursor::{MoveDown, MoveToColumn, MoveUp},
     execute,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     QueueableCommand,
 };
-use shrs_core::prelude::Completion;
 
 use super::painter::Painter;
 

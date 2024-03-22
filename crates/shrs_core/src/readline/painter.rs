@@ -5,13 +5,13 @@ use std::{
     io::{stdout, BufWriter, Write},
 };
 
+use crate::prelude::Completion;
 use crossterm::{
     cursor::{self, MoveToColumn, MoveToNextLine, MoveToPreviousLine},
     style::{Print, PrintStyledContent},
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
-use shrs_core::prelude::Completion;
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 

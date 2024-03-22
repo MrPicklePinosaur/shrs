@@ -35,14 +35,9 @@ shrs_core = { path = "../shrs_core", version = "^0.0.4" }
 shrs_lang = { path = "../shrs_lang", version = "^0.0.4" }
 shrs_job = { path = "../shrs_job", version = "^0.0.4" }
 shrs_utils = { path = "../shrs_utils", version = "^0.0.4" }
-shrs_vi = { path = "../shrs_vi", version = "^0.0.4" }
 
 serde = { version = "1", features = ["derive"], optional = true }
 
-trie-rs = "0.1"
-unicode-width = "0.1"
-arboard = "3.2.0"
-tempfile = "3.9"
 
 
 

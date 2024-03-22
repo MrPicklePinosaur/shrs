@@ -5,6 +5,10 @@ use std::{
     io::{Read, Seek, Write},
 };
 
+use crate::{
+    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    shell::{Context, Runtime, Shell},
+};
 use ::crossterm::{
     cursor::SetCursorStyle,
     event::{
@@ -13,10 +17,6 @@ use ::crossterm::{
     execute,
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
-};
-use shrs_core::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
-    shell::{Context, Runtime, Shell},
 };
 use shrs_utils::{
     cursor_buffer::{CursorBuffer, Location},

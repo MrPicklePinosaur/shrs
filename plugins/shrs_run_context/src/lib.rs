@@ -39,7 +39,7 @@ impl Plugin for RunContextPlugin {
         }
     }
 
-    fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
+    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("save", SaveBuiltin);
         shell.builtins.insert("load", LoadBuiltin);
 

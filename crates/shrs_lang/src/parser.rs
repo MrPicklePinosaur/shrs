@@ -6,7 +6,7 @@ use crate::{ast, grammar, lexer::Lexer};
 
 // TODO better errors for unsuccessful parses
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum ParserError {
     #[error("unsuccessful parse")]
     UnsuccessfulParse,
 }
@@ -15,10 +15,10 @@ pub enum Error {
 pub struct Parser {}
 
 impl Parser {
-    pub fn parse(&self, lexer: Lexer) -> Result<ast::Command, Error> {
+    pub fn parse(&self, lexer: Lexer) -> Result<ast::Command, ParserError> {
         grammar::ProgramParser::new()
             .parse(lexer.input(), lexer)
-            .map_err(|_e| Error::UnsuccessfulParse)
+            .map_err(|_e| ParserError::UnsuccessfulParse)
     }
 }
 

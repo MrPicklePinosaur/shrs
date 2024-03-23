@@ -11,11 +11,11 @@ use crossterm::{
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
-use shrs_core::prelude::Completion;
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
-use crate::{cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt};
+use super::{cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt};
+use crate::prelude::Completion;
 pub struct Painter {
     /// The output buffer
     out: RefCell<BufWriter<std::io::Stdout>>,

@@ -5,6 +5,7 @@ use std::{
     collections::VecDeque,
     env,
     path::{Path, PathBuf},
+    process::ExitStatus,
     time::Instant,
 };
 
@@ -12,23 +13,7 @@ use anyhow::anyhow;
 use log::error;
 use shrs_job::JobManager;
 
-use crate::{
-    alias::Alias,
-    builtin::Builtins,
-    completion::Completer,
-    env::Env,
-    history::History,
-    hooks::{ChangeDirCtx, Hooks},
-    jobs::Jobs,
-    keybinding::Keybinding,
-    lang::Lang,
-    output_writer::OutputWriter,
-    prompt_content_queue::PromptContentQueue,
-    signal::Signals,
-    state::State,
-    theme::Theme,
-};
-
+use crate::{history::History, prelude::*};
 /// Constant shell data
 ///
 /// Data here is generally not mutated at runtime.

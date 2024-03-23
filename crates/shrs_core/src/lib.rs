@@ -1,4 +1,5 @@
 //! Core functionality of shrs
+#[macro_use]
 extern crate derive_builder;
 extern crate lazy_static;
 
@@ -13,9 +14,12 @@ pub mod jobs;
 pub mod keybinding;
 pub mod lang;
 pub mod output_writer;
+pub mod plugin;
 pub mod prompt;
 pub mod prompt_content_queue;
+pub mod readline;
 pub mod shell;
+pub mod shell_config;
 pub mod signal;
 pub mod state;
 pub mod theme;
@@ -29,14 +33,18 @@ pub mod prelude {
         cmd_output::CmdOutput,
         completion::*,
         env::Env,
+        history::*,
         hooks::{Hook, HookFn, Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
-        lang::Lang,
+        lang::{Lang, PosixLang},
         output_writer::OutputWriter,
+        plugin::*,
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
-        shell::{Context, Runtime, Shell},
+        readline::*,
+        shell::{set_working_dir, Context, Runtime, Shell},
+        shell_config::*,
         signal::Signals,
         state::State,
         theme::Theme,

@@ -1,6 +1,6 @@
 use std::fs;
 
-use shrs::{line::_core::shell::set_working_dir, prelude::*};
+use shrs::prelude::*;
 
 pub struct AutocdPlugin;
 

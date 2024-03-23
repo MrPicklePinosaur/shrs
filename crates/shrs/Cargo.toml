@@ -16,10 +16,10 @@ default = ["serde"]
 serde = ["dep:serde", "shrs_core/serde"]
 
 [dependencies]
+crossterm = {version = "0.26", features = ["bracketed-paste"]}
 regex = "1"
 signal-hook = "0.3"
 clap = { version = "4.1", features = ["derive"] }
-crossterm = "0.26"
 derive_builder = "0.12"
 dirs = "5"
 anymap = "1.0.0-beta.2"
@@ -32,12 +32,14 @@ lazy_static = "1.4"
 log = "0.4"
 
 shrs_core = { path = "../shrs_core", version = "^0.0.4" }
-shrs_line = { path = "../shrs_line", version = "^0.0.4" }
 shrs_lang = { path = "../shrs_lang", version = "^0.0.4" }
 shrs_job = { path = "../shrs_job", version = "^0.0.4" }
 shrs_utils = { path = "../shrs_utils", version = "^0.0.4" }
 
 serde = { version = "1", features = ["derive"], optional = true }
+
+
+
 
 [dev-dependencies]
 rexpect = "0.5"

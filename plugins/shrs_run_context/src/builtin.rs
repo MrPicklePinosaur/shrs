@@ -1,7 +1,7 @@
 use std::{fs::OpenOptions, io::Write};
 
 use clap::Parser;
-use shrs::{line::_core::shell::set_working_dir, prelude::*};
+use shrs::prelude::*;
 
 use crate::RunContextState;
 

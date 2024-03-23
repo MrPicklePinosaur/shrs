@@ -2,12 +2,14 @@
 //!
 //!
 
+mod eval2;
+mod posix_lang;
+pub use posix_lang::PosixLang;
+
 use crate::{
     cmd_output::CmdOutput,
     shell::{Context, Runtime, Shell},
 };
-
-// TODO make function signature of this MUCH more generic
 
 /// Trait to implement a shell command language
 pub trait Lang {

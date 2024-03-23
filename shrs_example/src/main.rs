@@ -9,7 +9,6 @@ use ::crossterm::style::{Attribute, Color, StyledContent};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
-    line::_core::shell::set_working_dir,
     prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};

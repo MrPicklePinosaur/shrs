@@ -25,7 +25,7 @@ impl OutputCaptureState {
 pub struct OutputCapturePlugin;
 
 impl Plugin for OutputCapturePlugin {
-    fn init(&self, shell: &mut shrs::ShellConfig) -> anyhow::Result<()> {
+    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.hooks.insert(after_command_hook);
         shell.builtins.insert("again", AgainBuiltin::new());
         shell.state.insert(OutputCaptureState::new());
@@ -49,9 +49,9 @@ fn after_command_hook(
 
 #[cfg(test)]
 mod tests {
-    use shrs::{plugin::ShellPlugin, ShellBuilder};
+    use shrs::plugin::ShellPlugin;
 
-    use crate::OutputCapturePlugin;
+    use crate::{OutputCapturePlugin, ShellBuilder};
 
     #[test]
     pub fn register() {

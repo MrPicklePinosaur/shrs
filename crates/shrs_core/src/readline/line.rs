@@ -5,7 +5,7 @@ use std::{
     io::{Read, Seek, Write},
 };
 
-use crossterm::{
+use ::crossterm::{
     cursor::SetCursorStyle,
     event::{
         read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent, KeyModifiers,
@@ -14,17 +14,17 @@ use crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use shrs_core::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
-    shell::{Context, Runtime, Shell},
-};
 use shrs_utils::{
     cursor_buffer::{CursorBuffer, Location},
     styled_buf::StyledBuf,
 };
 use shrs_vi::{Action, Command, Motion, Parser};
 
-use crate::{painter::Painter, prelude::*};
+use super::{painter::Painter, *};
+use crate::{
+    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    shell::{Context, Runtime, Shell},
+};
 
 pub trait Readline {
     fn read_line(&mut self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> String;
@@ -610,7 +610,7 @@ impl Line {
                                 // If EDITOR command is not set just display some sort of warning
                                 // and move on
                                 let Ok(editor) = std::env::var("EDITOR") else {
-                                    return Ok(())
+                                    return Ok(());
                                 };
 
                                 let mut tempbuf = tempfile::NamedTempFile::new().unwrap();

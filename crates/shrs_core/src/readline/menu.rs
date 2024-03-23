@@ -8,9 +8,9 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     QueueableCommand,
 };
-use shrs_core::prelude::Completion;
 
-use crate::painter::Painter;
+use super::painter::Painter;
+use crate::prelude::Completion;
 
 pub type Out = std::io::BufWriter<std::io::Stdout>;
 

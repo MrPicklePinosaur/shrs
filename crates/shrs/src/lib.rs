@@ -26,6 +26,7 @@ pub use shrs_core::*;
 pub mod lang {
     //! Shell command language
 
+    pub use shrs_core::lang::*;
     pub use shrs_lang::*;
 }
 

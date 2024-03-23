@@ -1,10 +1,11 @@
 //! Plugin System
 
+use log::warn;
+
 use crate::{
     prelude::ShellConfig,
     shell::{Context, Runtime, Shell},
 };
-use log::warn;
 
 #[derive(Debug)]
 pub struct PluginMeta {

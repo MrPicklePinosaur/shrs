@@ -2,10 +2,11 @@
 
 use std::{cell::RefCell, path::PathBuf, process::ExitStatus, time::Instant};
 
-use crate::prelude::*;
 use dirs::home_dir;
 use log::{info, warn};
 use shrs_job::JobManager;
+
+use crate::prelude::*;
 
 /// Unified shell config struct
 #[derive(Builder)]

@@ -2,15 +2,10 @@
 
 use std::{cell::RefCell, path::PathBuf, process::ExitStatus, time::Instant};
 
+use crate::prelude::*;
 use dirs::home_dir;
 use log::{info, warn};
-use shrs_core::prelude::*;
 use shrs_job::JobManager;
-
-use crate::{
-    history::{DefaultHistory, History},
-    prelude::*,
-};
 
 /// Unified shell config struct
 #[derive(Builder)]
@@ -205,8 +200,6 @@ impl ShellConfig {
         run_shell(&sh, &mut ctx, &mut rt, &mut readline)
     }
 }
-
-///
 fn run_shell(
     sh: &Shell,
     ctx: &mut Context,

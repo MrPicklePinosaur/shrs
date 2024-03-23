@@ -29,10 +29,6 @@ pub mod lang {
     pub use shrs_lang::*;
 }
 
-mod shell;
-
-pub mod plugin;
-
 pub mod crossterm {
     //! Re-export of crossterm types
 

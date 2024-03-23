@@ -1,9 +1,10 @@
 //! Plugin System
 
+use crate::{
+    prelude::ShellConfig,
+    shell::{Context, Runtime, Shell},
+};
 use log::warn;
-use shrs_core::shell::{Context, Runtime, Shell};
-
-use crate::prelude::ShellConfig;
 
 #[derive(Debug)]
 pub struct PluginMeta {

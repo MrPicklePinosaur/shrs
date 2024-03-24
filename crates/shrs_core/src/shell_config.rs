@@ -155,7 +155,6 @@ impl ShellConfig {
             history: self.history,
             prompt_content_queue: PromptContentQueue::new(),
             completer: self.completer,
-            plugins,
         };
         let mut rt = Runtime {
             env: self.env,
@@ -176,6 +175,7 @@ impl ShellConfig {
             hooks: self.hooks,
             signals: Signals::new().unwrap(),
             keybinding: self.keybinding,
+            plugin_metas: plugins.iter().map(|p| p.meta()).collect(),
         };
 
         // run post init for plugins

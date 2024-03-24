@@ -29,6 +29,7 @@ pub struct Shell {
     /// Signals to be handled
     pub signals: Signals,
     pub keybinding: Box<dyn Keybinding>,
+    pub plugin_metas: Vec<PluginMeta>,
 }
 
 /// Shared global shell context
@@ -46,7 +47,6 @@ pub struct Context {
     pub prompt_content_queue: PromptContentQueue,
 
     pub completer: Box<dyn Completer>,
-    pub plugins: Vec<Box<dyn Plugin>>,
 }
 
 /// Runtime context for the shell

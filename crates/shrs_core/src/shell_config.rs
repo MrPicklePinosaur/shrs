@@ -2,6 +2,7 @@
 
 use std::{cell::RefCell, path::PathBuf, process::ExitStatus, time::Instant};
 
+use axum::Router;
 use dirs::home_dir;
 use log::{info, warn};
 use shrs_job::JobManager;
@@ -74,6 +75,12 @@ pub struct ShellConfig {
     /// Configuration directory, easy access in the shell
     #[builder(default = "home_dir().unwrap().join(\".config/shrs\")")]
     pub config_dir: PathBuf,
+
+    #[builder(default = "Router::new()")]
+    pub router: Router,
+
+    #[builder(default = "\"127.0.0.1:21845\".to_string()")]
+    pub server_port: String,
 }
 
 impl ShellBuilder {
@@ -144,6 +151,13 @@ impl ShellConfig {
                 }
             }
         }
+        let tokio_rt = tokio::runtime::Runtime::new().unwrap();
+        tokio_rt.spawn(async {
+            let listener = tokio::net::TcpListener::bind(self.server_port).await;
+            if let Ok(l) = listener {
+                axum::serve(l, self.router).await.unwrap();
+            }
+        });
 
         let mut ctx = Context {
             alias: self.alias,
@@ -175,6 +189,7 @@ impl ShellConfig {
             hooks: self.hooks,
             signals: Signals::new().unwrap(),
             keybinding: self.keybinding,
+            tokio_rt,
         };
 
         // run post init for plugins

@@ -29,6 +29,7 @@ pub struct Shell {
     /// Signals to be handled
     pub signals: Signals,
     pub keybinding: Box<dyn Keybinding>,
+    pub tokio_rt: tokio::runtime::Runtime,
 }
 
 /// Shared global shell context

@@ -46,6 +46,7 @@ pub struct Context {
     pub prompt_content_queue: PromptContentQueue,
 
     pub completer: Box<dyn Completer>,
+    pub plugins: Vec<Box<dyn Plugin>>,
 }
 
 /// Runtime context for the shell

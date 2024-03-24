@@ -155,6 +155,7 @@ impl ShellConfig {
             history: self.history,
             prompt_content_queue: PromptContentQueue::new(),
             completer: self.completer,
+            plugins,
         };
         let mut rt = Runtime {
             env: self.env,

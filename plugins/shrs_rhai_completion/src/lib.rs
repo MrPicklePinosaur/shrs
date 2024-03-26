@@ -14,9 +14,8 @@ pub struct CompletionsPlugin;
 pub mod setup;
 
 /// retrieve completions folder, create it if it doesnt exist and copy over completions
-fn completions_folder() -> PathBuf {
-    let mut folder = home_dir().unwrap();
-    folder.push(".config/shrs/completions");
+fn completions_folder(config_dir: &PathBuf) -> PathBuf {
+    let folder = config_dir.join("completions");
 
     // Create the folder if it doesn't exist
     if !folder.exists() {
@@ -29,11 +28,11 @@ impl Plugin for CompletionsPlugin {
     fn init(&self, _: &mut ShellConfig) -> anyhow::Result<()> {
         Ok(())
     }
-    fn post_init(&self, _sh: &Shell, ctx: &mut Context, _rt: &mut Runtime) -> ::anyhow::Result<()> {
+    fn post_init(&self, _sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> ::anyhow::Result<()> {
         let mut e = Engine::new();
         setup_engine(&mut e);
         let engine = Rc::new(e);
-        let folder = completions_folder();
+        let folder = completions_folder(&rt.config_dir);
 
         for p in fs::read_dir(folder).unwrap() {
             let path = p.unwrap().path();

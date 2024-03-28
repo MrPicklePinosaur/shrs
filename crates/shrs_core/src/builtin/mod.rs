@@ -14,6 +14,7 @@ mod help;
 mod history;
 mod jobs;
 mod source;
+mod r#type;
 mod unalias;
 
 use std::collections::{hash_map::Iter, HashMap};
@@ -21,7 +22,7 @@ use std::collections::{hash_map::Iter, HashMap};
 pub use self::{
     alias::AliasBuiltin, cd::CdBuiltin, debug::DebugBuiltin, exit::ExitBuiltin,
     export::ExportBuiltin, help::HelpBuiltin, history::HistoryBuiltin, jobs::JobsBuiltin,
-    source::SourceBuiltin, unalias::UnaliasBuiltin,
+    r#type::TypeBuiltin, source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
 use crate::{
     prelude::CmdOutput,
@@ -96,6 +97,10 @@ impl Default for Builtins {
                 (
                     "source",
                     Box::<SourceBuiltin>::default() as Box<dyn BuiltinCmd>,
+                ),
+                (
+                    "type",
+                    Box::new(TypeBuiltin::default()) as Box<dyn BuiltinCmd>,
                 ),
                 ("jobs", Box::<JobsBuiltin>::default() as Box<dyn BuiltinCmd>),
                 ("help", Box::<HelpBuiltin>::default() as Box<dyn BuiltinCmd>),

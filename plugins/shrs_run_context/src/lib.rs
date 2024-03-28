@@ -33,10 +33,10 @@ impl RunContextPlugin {
 
 impl Plugin for RunContextPlugin {
     fn meta(&self) -> PluginMeta {
-        PluginMeta {
-            name: "Run Context".into(),
-            description: String::new(),
-        }
+        PluginMeta::new(
+            "Run Context",
+            "Provides commands for storing the current run context and loading it",
+        )
     }
 
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {

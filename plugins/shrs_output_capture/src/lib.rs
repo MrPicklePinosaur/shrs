@@ -32,6 +32,12 @@ impl Plugin for OutputCapturePlugin {
 
         Ok(())
     }
+    fn meta(&self) -> PluginMeta {
+        PluginMeta::new(
+            "Output Capture",
+            "Plugin that stores the last command that was ran and the last output",
+        )
+    }
 }
 
 fn after_command_hook(

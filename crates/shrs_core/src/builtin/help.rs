@@ -1,4 +1,6 @@
 use clap::{Parser, Subcommand};
+use crossterm::style::Stylize;
+use shrs_utils::styled_buf;
 
 use super::BuiltinCmd;
 use crate::{
@@ -17,6 +19,7 @@ struct Cli {
 enum Commands {
     Builtin,
     Bindings,
+    Plugins,
 }
 
 #[derive(Default)]
@@ -49,6 +52,18 @@ impl BuiltinCmd for HelpBuiltin {
                 for (binding, desc) in info {
                     ctx.out.println(format!("{}: {}", binding, desc))?;
                 }
+            },
+            Commands::Plugins => {
+                ctx.out
+                    .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
+                for meta in sh.plugin_metas.iter() {
+                    ctx.out.println("")?;
+
+                    ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
+                    ctx.out.println("")?;
+                    ctx.out.println(meta.description.clone())?;
+                }
+                ctx.out.println("")?;
             },
         }
 

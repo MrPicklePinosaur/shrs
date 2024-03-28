@@ -94,4 +94,7 @@ impl Plugin for CompletionsPlugin {
 
         Ok(())
     }
+    fn meta(&self) -> PluginMeta {
+        PluginMeta::new("Completions", "Provides Rhai completions for shrs")
+    }
 }

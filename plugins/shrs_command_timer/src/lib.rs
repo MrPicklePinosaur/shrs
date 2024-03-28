@@ -52,6 +52,12 @@ impl Plugin for CommandTimerPlugin {
 
         Ok(())
     }
+    fn meta(&self) -> PluginMeta {
+        PluginMeta::new(
+            "Command Timer",
+            "Stores the amount of time taken for the previous command to run",
+        )
+    }
 }
 
 fn before_command_hook(

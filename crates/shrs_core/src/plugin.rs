@@ -12,6 +12,14 @@ pub struct PluginMeta {
     pub name: String,
     pub description: String,
 }
+impl PluginMeta {
+    pub fn new(name: &str, description: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            description: description.to_string(),
+        }
+    }
+}
 
 /// How should the plugin be handled if it errors during initialization
 #[derive(Debug)]

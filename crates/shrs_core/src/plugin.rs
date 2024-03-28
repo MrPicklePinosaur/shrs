@@ -13,7 +13,7 @@ pub struct PluginMeta {
     pub description: String,
 }
 impl PluginMeta {
-    pub fn new(name: &str, description: &str) -> Self {
+    pub fn new<S: ToString>(name: S, description: S) -> Self {
         Self {
             name: name.to_string(),
             description: description.to_string(),

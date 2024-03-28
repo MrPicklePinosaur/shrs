@@ -19,9 +19,7 @@ struct Cli {
 enum Commands {
     Builtin,
     Bindings,
-    Plugin {
-        plugin_name: Vec<String>
-    },
+    Plugin { plugin_name: Vec<String> },
 }
 
 #[derive(Default)]
@@ -55,9 +53,9 @@ impl BuiltinCmd for HelpBuiltin {
                     ctx.out.println(format!("{}: {}", binding, desc))?;
                 }
             },
-            Commands::Plugin{plugin_name} => {
-                let plg_name = plugin_name.join(" ");
-                if plg_name.len() == 0 {
+            Commands::Plugin { plugin_name } => {
+                let plugin_name = plugin_name.join(" ");
+                if plugin_name.len() == 0 {
                     ctx.out
                         .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
                     for meta in sh.plugin_metas.iter() {
@@ -67,10 +65,10 @@ impl BuiltinCmd for HelpBuiltin {
                         ctx.out.println("")?;
                         ctx.out.println(meta.description.clone())?;
                     }
-                }else {
+                } else {
                     let mut found = false;
                     for meta in sh.plugin_metas.iter() {
-                        if meta.name == plg_name {
+                        if meta.name == plugin_name {
                             found = true;
                             ctx.out.println("")?;
                             ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
@@ -79,17 +77,23 @@ impl BuiltinCmd for HelpBuiltin {
                                 Some(help_text) => ctx.out.println(help_text.clone())?,
                                 None => ctx.out.println("No help message provided.")?,
                             }
-                            break; 
+                            break;
                         }
                     }
                     if !found {
                         ctx.out.println("")?;
-                        ctx.out.print_buf(styled_buf!(format!("'{}' was not found, please specify a valid plugin name.", plg_name)).red())?;
+                        ctx.out.print_buf(
+                            styled_buf!(format!(
+                                "'{}' was not found, please specify a valid plugin name.",
+                                plugin_name
+                            ))
+                            .red(),
+                        )?;
                         ctx.out.println("")?;
                     }
                 }
                 ctx.out.println("")?;
-            }
+            },
         }
 
         Ok(CmdOutput::success())

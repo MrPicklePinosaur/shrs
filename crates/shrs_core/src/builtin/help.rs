@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use clap::{Parser, Subcommand};
 use crossterm::style::Stylize;
 use shrs_utils::styled_buf;
@@ -15,16 +13,15 @@ use crate::{
 struct Cli {
     #[command(subcommand)]
     command: Commands,
-    #[arg(global=true)]  // <-- here
-    args: Vec<String>
 }
 
 #[derive(Subcommand)]
 enum Commands {
     Builtin,
     Bindings,
-    Plugins,
-    Plugin,
+    Plugin {
+        plugin_name: Vec<String>
+    },
 }
 
 #[derive(Default)]
@@ -58,33 +55,38 @@ impl BuiltinCmd for HelpBuiltin {
                     ctx.out.println(format!("{}: {}", binding, desc))?;
                 }
             },
-            Commands::Plugins => {
-                ctx.out
-                    .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
-                for meta in sh.plugin_metas.iter() {
-                    ctx.out.println("")?;
+            Commands::Plugin{plugin_name} => {
+                let plg_name = plugin_name.join(" ");
+                if plg_name.len() == 0 {
+                    ctx.out
+                        .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
+                    for meta in sh.plugin_metas.iter() {
+                        ctx.out.println("")?;
 
-                    ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
-                    ctx.out.println("")?;
-                    ctx.out.println(meta.description.clone())?;
-                }
-                ctx.out.println("")?;
-            },
-            Commands::Plugin => {
-                let pgn = cli.args.join(" ");
-                let mut found = false;
-                for meta in sh.plugin_metas.iter() {
-                    if meta.name == pgn {
-                        found = true;
+                        ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
                         ctx.out.println("")?;
-                        ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
-                        ctx.out.println("")?;
-                        ctx.out.println(meta.help.clone())?;
-                        break; 
+                        ctx.out.println(meta.description.clone())?;
                     }
-                }
-                if !found {
-                    ctx.out.print_buf(styled_buf!("Please specify a valid plugin name: help plugin <plugin-name>").red())?;
+                }else {
+                    let mut found = false;
+                    for meta in sh.plugin_metas.iter() {
+                        if meta.name == plg_name {
+                            found = true;
+                            ctx.out.println("")?;
+                            ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
+                            ctx.out.println("")?;
+                            match &meta.help {
+                                Some(help_text) => ctx.out.println(help_text.clone())?,
+                                None => ctx.out.println("No help message provided.")?,
+                            }
+                            break; 
+                        }
+                    }
+                    if !found {
+                        ctx.out.println("")?;
+                        ctx.out.print_buf(styled_buf!(format!("'{}' was not found, please specify a valid plugin name.", plg_name)).red())?;
+                        ctx.out.println("")?;
+                    }
                 }
                 ctx.out.println("")?;
             }

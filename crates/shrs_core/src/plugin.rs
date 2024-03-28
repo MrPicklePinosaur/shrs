@@ -15,7 +15,7 @@ pub struct PluginMeta {
 }
 impl PluginMeta {
     pub fn new<S: ToString>(name: S, description: S, help: Option<S>) -> Self {
-        let help_string = help.map_or(String::from("-"), |h| h.to_string());
+        let help_string = help.map_or(String::from("no help text"), |h| h.to_string());
         Self {
             name: name.to_string(),
             description: description.to_string(),

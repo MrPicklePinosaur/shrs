@@ -11,12 +11,14 @@ use crate::{
 pub struct PluginMeta {
     pub name: String,
     pub description: String,
+    pub help: Option<String>,
 }
 impl PluginMeta {
-    pub fn new<S: ToString>(name: S, description: S) -> Self {
+    pub fn new<S: ToString>(name: S, description: S, help: Option<S>) -> Self {
         Self {
             name: name.to_string(),
             description: description.to_string(),
+            help: help.map(|s| s.to_string()),
         }
     }
 }
@@ -35,6 +37,7 @@ impl Default for PluginMeta {
         Self {
             name: String::from("unnamed plugin"),
             description: String::from("a plugin for shrs"),
+            help: None,
         }
     }
 }

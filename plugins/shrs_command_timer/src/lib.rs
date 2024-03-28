@@ -56,6 +56,7 @@ impl Plugin for CommandTimerPlugin {
         PluginMeta::new(
             "Command Timer",
             "Stores the amount of time taken for the previous command to run",
+            None,
         )
     }
 }

@@ -36,6 +36,7 @@ impl Plugin for OutputCapturePlugin {
         PluginMeta::new(
             "Output Capture",
             "Plugin that stores the last command that was ran and the last output",
+            None,
         )
     }
 }

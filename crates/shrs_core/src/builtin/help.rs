@@ -19,7 +19,7 @@ struct Cli {
 enum Commands {
     Builtin,
     Bindings,
-    Plugins,
+    Plugin { plugin_name: Vec<String> },
 }
 
 #[derive(Default)]
@@ -53,15 +53,44 @@ impl BuiltinCmd for HelpBuiltin {
                     ctx.out.println(format!("{}: {}", binding, desc))?;
                 }
             },
-            Commands::Plugins => {
-                ctx.out
-                    .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
-                for meta in sh.plugin_metas.iter() {
-                    ctx.out.println("")?;
+            Commands::Plugin { plugin_name } => {
+                let plugin_name = plugin_name.join(" ");
+                if plugin_name.len() == 0 {
+                    ctx.out
+                        .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
+                    for meta in sh.plugin_metas.iter() {
+                        ctx.out.println("")?;
 
-                    ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
-                    ctx.out.println("")?;
-                    ctx.out.println(meta.description.clone())?;
+                        ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
+                        ctx.out.println("")?;
+                        ctx.out.println(meta.description.clone())?;
+                    }
+                } else {
+                    let mut found = false;
+                    for meta in sh.plugin_metas.iter() {
+                        if meta.name == plugin_name {
+                            found = true;
+                            ctx.out.println("")?;
+                            ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
+                            ctx.out.println("")?;
+                            match &meta.help {
+                                Some(help_text) => ctx.out.println(help_text.clone())?,
+                                None => ctx.out.println("No help message provided.")?,
+                            }
+                            break;
+                        }
+                    }
+                    if !found {
+                        ctx.out.println("")?;
+                        ctx.out.print_buf(
+                            styled_buf!(format!(
+                                "'{}' was not found, please specify a valid plugin name.",
+                                plugin_name
+                            ))
+                            .red(),
+                        )?;
+                        ctx.out.println("")?;
+                    }
                 }
                 ctx.out.println("")?;
             },

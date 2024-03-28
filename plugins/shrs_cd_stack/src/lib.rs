@@ -75,6 +75,7 @@ impl Plugin for CdStackPlugin {
         PluginMeta::new(
             "Cd Stack",
             "Provides the ability to quickly navigate directories like a stack.",
+            None
         )
     }
 }

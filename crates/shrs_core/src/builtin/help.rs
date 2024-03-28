@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use clap::{Parser, Subcommand};
 use crossterm::style::Stylize;
 use shrs_utils::styled_buf;
@@ -13,6 +15,8 @@ use crate::{
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(global=true)]  // <-- here
+    args: Vec<String>
 }
 
 #[derive(Subcommand)]
@@ -20,6 +24,7 @@ enum Commands {
     Builtin,
     Bindings,
     Plugins,
+    Plugin,
 }
 
 #[derive(Default)]
@@ -65,6 +70,24 @@ impl BuiltinCmd for HelpBuiltin {
                 }
                 ctx.out.println("")?;
             },
+            Commands::Plugin => {
+                let pgn = cli.args.join(" ");
+                let mut found = false;
+                for meta in sh.plugin_metas.iter() {
+                    if meta.name == pgn {
+                        found = true;
+                        ctx.out.println("")?;
+                        ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
+                        ctx.out.println("")?;
+                        ctx.out.println(meta.help.clone())?;
+                        break; 
+                    }
+                }
+                if !found {
+                    ctx.out.print_buf(styled_buf!("Please specify a valid plugin name: help plugin <plugin-name>").red())?;
+                }
+                ctx.out.println("")?;
+            }
         }
 
         Ok(CmdOutput::success())

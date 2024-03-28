@@ -36,6 +36,7 @@ impl Plugin for RunContextPlugin {
         PluginMeta::new(
             "Run Context",
             "Provides commands for storing the current run context and loading it",
+            None
         )
     }
 

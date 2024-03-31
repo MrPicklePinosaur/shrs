@@ -19,7 +19,6 @@ pub mod prompt;
 pub mod prompt_content_queue;
 pub mod readline;
 pub mod shell;
-pub mod shell_config;
 pub mod signal;
 pub mod state;
 pub mod theme;
@@ -43,8 +42,7 @@ pub mod prelude {
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::*,
-        shell::{set_working_dir, Context, Runtime, Shell},
-        shell_config::*,
+        shell::{set_working_dir, Context, Runtime, Shell, ShellConfig},
         signal::Signals,
         state::State,
         theme::Theme,

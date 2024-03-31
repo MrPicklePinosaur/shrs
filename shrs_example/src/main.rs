@@ -26,12 +26,12 @@ use shrs_run_context::RunContextPlugin;
 struct MyPrompt;
 
 impl Prompt for MyPrompt {
-    fn prompt_left(&self, line_ctx: &LineCtx) -> StyledBuf {
-        let indicator = match line_ctx.mode() {
+    fn prompt_left(&self, state: &LineStateBundle) -> StyledBuf {
+        let indicator = match state.line.mode() {
             LineMode::Insert => String::from(">").cyan(),
             LineMode::Normal => String::from(":").yellow(),
         };
-        if !line_ctx.lines.is_empty() {
+        if !state.line.lines.is_empty() {
             return styled_buf! {" ", indicator, " "};
         }
 
@@ -45,7 +45,7 @@ impl Prompt for MyPrompt {
             " "
         )
     }
-    fn prompt_right(&self, line_ctx: &LineCtx) -> StyledBuf {
+    fn prompt_right(&self, line_ctx: &LineStateBundle) -> StyledBuf {
         let time_str = line_ctx
             .ctx
             .state
@@ -60,7 +60,7 @@ impl Prompt for MyPrompt {
             .map(|state| state.current_lang())
             .expect("MuxState should be provided");
 
-        if !line_ctx.lines.is_empty() {
+        if !line_ctx.line.lines.is_empty() {
             return styled_buf!("");
         }
         if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
@@ -120,19 +120,19 @@ fn main() {
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
     let keybinding = keybindings! {
-        |line|
+        |state|
         "C-l" => ("Clear the screen", { Command::new("clear").spawn()}),
         "C-p" => ("Move up one in the command history", {
-            if let Some(state) = line.ctx.state.get_mut::<CdStackState>() {
-                if let Some(new_path) = state.down() {
-                    set_working_dir(line.sh, line.ctx, line.rt, &new_path, false).unwrap();
+            if let Some(cd_state) = state.ctx.state.get_mut::<CdStackState>() {
+                if let Some(new_path) = cd_state.down() {
+                    set_working_dir(state.sh, state.ctx, state.rt, &new_path, false).unwrap();
                 }
             }
         }),
         "C-n" => ("Move down one in the command history", {
-            if let Some(state) = line.ctx.state.get_mut::<CdStackState>() {
-                if let Some(new_path) = state.up() {
-                    set_working_dir(line.sh, line.ctx, line.rt, &new_path, false).unwrap();
+            if let Some(cd_state) = state.ctx.state.get_mut::<CdStackState>() {
+                if let Some(new_path) = cd_state.up() {
+                    set_working_dir(state.sh, state.ctx, state.rt, &new_path, false).unwrap();
                 }
             }
         }),

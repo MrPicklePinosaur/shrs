@@ -14,7 +14,7 @@ use crossterm::{
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
-use super::{cursor::CursorStyle, line::LineCtx, menu::Menu, prompt::Prompt};
+use super::{cursor::CursorStyle, line::LineStateBundle, menu::Menu, prompt::Prompt};
 use crate::prelude::Completion;
 pub struct Painter {
     /// The output buffer
@@ -65,7 +65,7 @@ impl Painter {
     #[allow(clippy::borrowed_box)]
     pub fn paint<T: Prompt + ?Sized>(
         &mut self,
-        line_ctx: &mut LineCtx,
+        line_ctx: &mut LineStateBundle,
         prompt: impl AsRef<T>,
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: &StyledBuf,

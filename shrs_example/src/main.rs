@@ -120,19 +120,19 @@ fn main() {
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
     let keybinding = keybindings! {
-        |sh, ctx, rt|
+        |line|
         "C-l" => ("Clear the screen", { Command::new("clear").spawn()}),
         "C-p" => ("Move up one in the command history", {
-            if let Some(state) = ctx.state.get_mut::<CdStackState>() {
+            if let Some(state) = line.ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.down() {
-                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
+                    set_working_dir(line.sh, line.ctx, line.rt, &new_path, false).unwrap();
                 }
             }
         }),
         "C-n" => ("Move down one in the command history", {
-            if let Some(state) = ctx.state.get_mut::<CdStackState>() {
+            if let Some(state) = line.ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = state.up() {
-                    set_working_dir(sh, ctx, rt, &new_path, false).unwrap();
+                    set_working_dir(line.sh, line.ctx, line.rt, &new_path, false).unwrap();
                 }
             }
         }),

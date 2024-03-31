@@ -252,9 +252,7 @@ impl Line {
 
             if let Event::Key(key_event) = event {
                 if line_ctx.sh.keybinding.handle_key_event(
-                    line_ctx.sh,
-                    line_ctx.ctx,
-                    line_ctx.rt,
+                    line_ctx,
                     key_event,
                 ) {
                     break;

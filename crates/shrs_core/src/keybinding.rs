@@ -5,18 +5,16 @@ use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
-use crate::shell::{Context, Runtime, Shell};
+use crate::{shell::{Context, Runtime, Shell}, prelude::LineCtx};
 
-pub type BindingFn = dyn Fn(&Shell, &mut Context, &mut Runtime);
+pub type BindingFn = dyn Fn(&mut LineCtx);
 
 /// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
     fn handle_key_event(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        line: &mut LineCtx,
         key_event: KeyEvent,
     ) -> bool;
     fn get_info(&self) -> &HashMap<String, String>;
@@ -28,13 +26,13 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     // TODO temp hacky macro
-    (|$sh:ident, $ctx:ident, $rt:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
+    (|$line:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
-        use $crate::prelude::{Shell, Context, Runtime};
+        use $crate::prelude::{LineCtx};
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),
-                Box::new(|$sh: &Shell, $ctx: &mut Context, $rt: &mut Runtime| {
+                Box::new(|$line: &mut LineCtx| {
                     $func;
                 }) as Box<BindingFn>,
                 $binding.to_string(),
@@ -130,15 +128,13 @@ impl DefaultKeybinding {
 impl Keybinding for DefaultKeybinding {
     fn handle_key_event(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        line: &mut LineCtx,
         key_event: KeyEvent,
     ) -> bool {
         let mut event_handled = false;
         for (binding, binding_fn) in self.bindings.iter() {
             if (key_event.code, key_event.modifiers) == *binding {
-                binding_fn(sh, ctx, rt);
+                binding_fn(line);
                 event_handled = true;
             }
         }

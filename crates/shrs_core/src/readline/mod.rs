@@ -28,7 +28,7 @@ pub use buffer_history::{BufferHistory, DefaultBufferHistory};
 pub use cursor::CursorStyle;
 pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme};
 pub use hooks::*;
-pub use line::{Line, LineBuilder, LineBuilderError, LineCtx, LineMode, Readline};
+pub use line::{Line, LineBuilder, LineBuilderError, LineStateBundle, LineMode, Readline};
 pub use menu::{DefaultMenu, Menu};
 pub use prompt::{DefaultPrompt, Prompt, *};
 pub use vi::*;

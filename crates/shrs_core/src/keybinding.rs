@@ -5,16 +5,16 @@ use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
-use crate::{shell::{Context, Runtime, Shell}, prelude::LineCtx};
+use crate::{shell::{Context, Runtime, Shell}, prelude::LineStateBundle};
 
-pub type BindingFn = dyn Fn(&mut LineCtx);
+pub type BindingFn = dyn Fn(&mut LineStateBundle);
 
 /// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
     fn handle_key_event(
         &self,
-        line: &mut LineCtx,
+        line: &mut LineStateBundle,
         key_event: KeyEvent,
     ) -> bool;
     fn get_info(&self) -> &HashMap<String, String>;
@@ -26,13 +26,13 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     // TODO temp hacky macro
-    (|$line:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
+    (|$state:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
-        use $crate::prelude::{LineCtx};
+        use $crate::prelude::{LineStateBundle};
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),
-                Box::new(|$line: &mut LineCtx| {
+                Box::new(|$state: &mut LineStateBundle| {
                     $func;
                 }) as Box<BindingFn>,
                 $binding.to_string(),
@@ -128,7 +128,7 @@ impl DefaultKeybinding {
 impl Keybinding for DefaultKeybinding {
     fn handle_key_event(
         &self,
-        line: &mut LineCtx,
+        line: &mut LineStateBundle,
         key_event: KeyEvent,
     ) -> bool {
         let mut event_handled = false;

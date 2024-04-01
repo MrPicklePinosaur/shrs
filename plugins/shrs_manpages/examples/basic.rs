@@ -1,5 +1,5 @@
 use shrs::{prelude::*, keybindings};
-use shrs_manpages::{ManPagesPlugin, open_manpage};
+use shrs_manpages::{open_manpage};
 
 fn main() {
 
@@ -10,7 +10,6 @@ fn main() {
 
     let myshell = ShellBuilder::default()
         .with_keybinding(keybinding)
-        .with_plugin(ManPagesPlugin::new())
         .build()
         .unwrap();
 

@@ -1,51 +1,32 @@
-use std::process::{Command, Stdio};
+use std::{process::{Command, Stdio}, ffi::OsStr};
 
 use shrs::prelude::*;
 
-pub struct ManPagesPlugin {
-    /// The command to use to open the man page
-    man_command: Option<String>,
+/// Open a man page for the currently typed command using the `man` command by default.
+/// If you wish to specify a different man command, use [open_manpage_with].
+pub fn open_manpage(state: &mut LineStateBundle) {
+    _open_manpage(state, "man")
+}
+
+pub fn open_manpage_with<S: AsRef<OsStr>>(state: &mut LineStateBundle,man_command: S) {
+    _open_manpage(state, man_command)
 }
 
 /// Grab the current line and attempt to open man page of command
-pub fn open_manpage(state: &mut LineStateBundle) {
+fn _open_manpage<S: AsRef<OsStr>>(state: &mut LineStateBundle, man_command: S){
     // TODO IFS
     let full_command = state.line.get_full_command();
     let Some(command) = full_command.split(' ').next() else { return; };
-    println!("full  command '{command}'");
 
-    // TODO Spawn man command and pass `command` to it as the man page to open 
-    Command::new("man").arg(command).spawn().unwrap();
-}
+    // Spawn man command and pass `command` to it as the man page to open 
+    Command::new(man_command).arg(command).spawn().unwrap();
 
-// TODO i don't think we actually need an entire plugin to do this
-impl ManPagesPlugin {
+    // TODO: the old cursor buffer isn't actually preserved after executing the command.
+    // so we need to save the old line and restore it after
+    state.line.cb.clear();
+    // state.line.cb.insert(cursor_buffer::Location::Front(), &full_command);
 
-    /// Initialize the man pages plugin to use the `man` command by default.
-    /// If you wish to specify a different man command, use [from_man_command].
-    pub fn new() -> Self {
-        ManPagesPlugin {
-            man_command: None
-        }
-    }
-
-    /// Initialize the man pages plugin using a specific command to use to open man pages
-    pub fn from_man_command<S: ToString>(man_command: S) -> Self {
-        ManPagesPlugin {
-            man_command: Some(man_command.to_string())
-        }
-    }
-}
-
-impl Plugin for ManPagesPlugin {
-    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        // TODO insert keybinding in plugin init or let user do it themselves?
-        // TODO should include config for what to bind keybinding function to?
-        Ok(())
-    }
-
-
-    fn meta(&self) -> PluginMeta {
-        PluginMeta::new("manpages", "keybinding to open manpage for currently typed command", None)
-    }
+    // TODO after handling keybinding it seems that the line accepts the contents, so we
+    // automatically run the command that was present before - open issue to allow keybindings to
+    // decide if the line should accept after the keybinding or not
 }

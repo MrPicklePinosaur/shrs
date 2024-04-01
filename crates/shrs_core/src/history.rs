@@ -11,19 +11,17 @@ use thiserror::Error;
 
 /// Trait to implement for shell history
 pub trait History {
-    type HistoryItem;
-
     /// Insert item into shell history
-    fn add(&mut self, cmd: Self::HistoryItem);
+    fn add(&mut self, cmd: String);
     /// Remove all history entries
     fn clear(&mut self);
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem>;
+    // fn iter(&self) -> impl Iterator<Item = String>;
     /// Query for a history entry
-    fn search(&self, query: &str) -> Option<&Self::HistoryItem>;
+    fn search(&self, query: &str) -> Option<&String>;
     /// Get number of history entries
     fn len(&self) -> usize;
     /// Get a history entry by index
-    fn get(&self, i: usize) -> Option<&Self::HistoryItem>;
+    fn get(&self, i: usize) -> Option<&String>;
 
     /// Check if the history is empty
     fn is_empty(&self) -> bool {
@@ -38,9 +36,7 @@ pub struct DefaultHistory {
 }
 
 impl History for DefaultHistory {
-    type HistoryItem = String;
-
-    fn add(&mut self, item: Self::HistoryItem) {
+    fn add(&mut self, item: String) {
         if !item.starts_with("history run") {
             self.hist.insert(0, item);
         }
@@ -50,11 +46,11 @@ impl History for DefaultHistory {
         self.hist.clear();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem> {
+    // fn iter(&self) -> impl Iterator<Item = String> {
     //     todo!()
     // }
 
-    fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
+    fn search(&self, _query: &str) -> Option<&String> {
         todo!()
     }
 
@@ -63,7 +59,7 @@ impl History for DefaultHistory {
     }
 
     /// Get index starts at most recent (index zero is previous command)
-    fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
+    fn get(&self, i: usize) -> Option<&String> {
         self.hist.get(i)
     }
 }
@@ -124,9 +120,7 @@ impl FileBackedHistory {
 }
 
 impl History for FileBackedHistory {
-    type HistoryItem = String;
-
-    fn add(&mut self, item: Self::HistoryItem) {
+    fn add(&mut self, item: String) {
         if !item.starts_with("history run") {
             self.hist.insert(0, item);
             // TODO consider how often we want to flush
@@ -139,11 +133,11 @@ impl History for FileBackedHistory {
         self.flush().unwrap();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = Self::HistoryItem> {
+    // fn iter(&self) -> impl Iterator<Item = String> {
     //     todo!()
     // }
 
-    fn search(&self, _query: &str) -> Option<&Self::HistoryItem> {
+    fn search(&self, _query: &str) -> Option<&String> {
         todo!()
     }
 
@@ -151,7 +145,7 @@ impl History for FileBackedHistory {
         self.hist.len()
     }
 
-    fn get(&self, i: usize) -> Option<&Self::HistoryItem> {
+    fn get(&self, i: usize) -> Option<&String> {
         self.hist.get(i)
     }
 }

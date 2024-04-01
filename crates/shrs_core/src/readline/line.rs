@@ -112,7 +112,7 @@ impl LineState {
     }
 
     /// Get the contents of the prompt
-    fn get_full_command(&self) -> String {
+    pub fn get_full_command(&self) -> String {
         let mut res: String = self.lines.clone();
         let cur_line: String = self.cb.as_str().into();
         res += cur_line.as_str();

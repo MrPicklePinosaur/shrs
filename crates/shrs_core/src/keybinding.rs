@@ -5,18 +5,17 @@ use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
-use crate::{shell::{Context, Runtime, Shell}, prelude::LineStateBundle};
+use crate::{
+    prelude::LineStateBundle,
+    shell::{Context, Runtime, Shell},
+};
 
 pub type BindingFn = dyn Fn(&mut LineStateBundle);
 
 /// Implement this trait to define your own keybinding system
 pub trait Keybinding {
     /// Return true indicates that event was handled
-    fn handle_key_event(
-        &self,
-        line: &mut LineStateBundle,
-        key_event: KeyEvent,
-    ) -> bool;
+    fn handle_key_event(&self, line: &mut LineStateBundle, key_event: KeyEvent) -> bool;
     fn get_info(&self) -> &HashMap<String, String>;
 }
 
@@ -126,11 +125,7 @@ impl DefaultKeybinding {
 }
 
 impl Keybinding for DefaultKeybinding {
-    fn handle_key_event(
-        &self,
-        line: &mut LineStateBundle,
-        key_event: KeyEvent,
-    ) -> bool {
+    fn handle_key_event(&self, line: &mut LineStateBundle, key_event: KeyEvent) -> bool {
         let mut event_handled = false;
         for (binding, binding_fn) in self.bindings.iter() {
             if (key_event.code, key_event.modifiers) == *binding {

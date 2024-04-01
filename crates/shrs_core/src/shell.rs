@@ -9,8 +9,8 @@ use std::{
     time::Instant,
 };
 
-use dirs::home_dir;
 use anyhow::anyhow;
+use dirs::home_dir;
 use log::{error, info, warn};
 use shrs_job::JobManager;
 
@@ -44,7 +44,7 @@ pub struct Context {
     pub jobs: Jobs,
     pub startup_time: Instant,
     pub alias: Alias,
-    pub history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History>,
     pub prompt_content_queue: PromptContentQueue,
 
     pub completer: Box<dyn Completer>,
@@ -129,7 +129,7 @@ pub struct ShellConfig {
     /// History, see [History]
     #[builder(default = "Box::new(DefaultHistory::default())")]
     #[builder(setter(custom))]
-    pub history: Box<dyn History<HistoryItem = String>>,
+    pub history: Box<dyn History>,
 
     /// Keybindings, see [Keybinding]
     #[builder(default = "Box::new(DefaultKeybinding::default())")]
@@ -163,7 +163,7 @@ impl ShellBuilder {
         self.readline = Some(Box::new(line));
         self
     }
-    pub fn with_history(mut self, history: impl History<HistoryItem = String> + 'static) -> Self {
+    pub fn with_history(mut self, history: impl History + 'static) -> Self {
         self.history = Some(Box::new(history));
         self
     }
@@ -247,7 +247,7 @@ impl ShellConfig {
         for plugin in plugins.iter() {
             if let Err(e) = plugin.post_init(&sh, &mut ctx, &mut rt) {
                 let plugin_meta = plugin.meta();
-                info!("Post-initializing plugin '{}'...",plugin_meta.name);
+                info!("Post-initializing plugin '{}'...", plugin_meta.name);
 
                 // Error handling for plugin
                 match plugin.fail_mode() {
@@ -271,7 +271,7 @@ fn run_shell(
     sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,
-    readline: &mut Box<dyn Readline>
+    readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
     let res = sh.hooks.run::<StartupCtx>(

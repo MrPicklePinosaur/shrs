@@ -589,10 +589,12 @@ impl Line {
                         // special cases (possibly consulidate with execute_vi somehow)
 
                         if let Ok(mode) = ctx.cb.execute_vi(action.clone()) {
-                            match mode {
-                                LineMode::Insert => self.to_insert_mode(ctx)?,
-                                LineMode::Normal => self.to_normal_mode(ctx)?,
-                            };
+                            if mode != ctx.mode {
+                                match mode {
+                                    LineMode::Insert => self.to_insert_mode(ctx)?,
+                                    LineMode::Normal => self.to_normal_mode(ctx)?,
+                                };
+                            }
                         }
                         match action {
                             Action::Undo => self.buffer_history.prev(ctx.cb.borrow_mut()),

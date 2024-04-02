@@ -6,7 +6,7 @@ use super::{
     data::*, drop_path_end, filepaths, find_executables_in_path, Completer, Completion,
     CompletionCtx, ReplaceMethod,
 };
-use crate::prelude::Builtins;
+use crate::prelude::{Builtins, LineStateBundle};
 
 // TODO make this FnMut?
 /// Actions return a list of possible completions
@@ -109,7 +109,7 @@ impl DefaultCompleter {
 }
 
 impl Completer for DefaultCompleter {
-    fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion> {
+    fn complete(&self, ctx: &CompletionCtx, state: &LineStateBundle) -> Vec<Completion> {
         self.complete_helper(ctx)
     }
     /// Register a new rule to use

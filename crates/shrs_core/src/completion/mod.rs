@@ -8,6 +8,8 @@ mod utils;
 #[allow(unused_imports)]
 pub use utils::*;
 
+use crate::prelude::LineStateBundle;
+
 mod data;
 
 /// How should the completion be substituted
@@ -51,7 +53,7 @@ impl Completion {
 /// Implement this trait to define your own tab completion system
 pub trait Completer {
     /// Given context on the current state of the input, output list of possible completions
-    fn complete(&self, ctx: &CompletionCtx) -> Vec<Completion>;
+    fn complete(&self, ctx: &CompletionCtx, state: &LineStateBundle) -> Vec<Completion>;
     fn register(&mut self, rule: Rule);
 }
 #[derive(Clone)]

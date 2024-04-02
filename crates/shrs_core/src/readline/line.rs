@@ -711,7 +711,7 @@ impl Line {
 
         let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
-        let completions = state.ctx.completer.complete(&comp_ctx);
+        let completions = state.ctx.completer.complete(&comp_ctx, state);
         let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions

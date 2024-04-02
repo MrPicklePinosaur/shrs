@@ -12,11 +12,9 @@ impl Suggester for DefaultSuggester {
             return None;
         }
 
-        for i in 0..h.len() {
-            if let Some(s) = h.get(i) {
-                if s.starts_with(&res) {
-                    return Some(s.to_owned());
-                }
+        for s in h.iter() {
+            if s.starts_with(&res) {
+                return Some(s.to_owned());
             }
         }
         None

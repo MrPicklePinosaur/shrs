@@ -17,7 +17,7 @@ impl Default for Theme {
             err_style: ContentStyle::new().red(),
             selection_style: ContentStyle::new().white(),
             completion_style: ContentStyle::new().red(),
-            suggestion_style: ContentStyle::new().grey(),
+            suggestion_style: ContentStyle::new().dark_grey(),
         }
     }
 }

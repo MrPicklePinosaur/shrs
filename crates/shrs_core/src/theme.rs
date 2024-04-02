@@ -7,6 +7,7 @@ pub struct Theme {
     pub err_style: ContentStyle,
     pub selection_style: ContentStyle,
     pub completion_style: ContentStyle,
+    pub suggestion_style: ContentStyle,
 }
 
 impl Default for Theme {
@@ -16,6 +17,7 @@ impl Default for Theme {
             err_style: ContentStyle::new().red(),
             selection_style: ContentStyle::new().white(),
             completion_style: ContentStyle::new().red(),
+            suggestion_style: ContentStyle::new().dark_grey(),
         }
     }
 }

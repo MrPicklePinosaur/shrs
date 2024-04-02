@@ -14,6 +14,7 @@ use ::crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use clap::builder;
 use shrs_utils::{
     cursor_buffer::{CursorBuffer, Location},
     styled_buf::StyledBuf,
@@ -112,7 +113,7 @@ impl LineState {
     }
 
     /// Get the contents of the prompt
-    fn get_full_command(&self) -> String {
+    pub fn get_full_command(&self) -> String {
         let mut res: String = self.lines.clone();
         let cur_line: String = self.cb.as_str().into();
         res += cur_line.as_str();
@@ -173,6 +174,9 @@ pub struct Line {
     #[builder(default = "String::new()")]
     #[builder(setter(skip))]
     normal_keys: String,
+
+    #[builder(default = "Box::new(DefaultSuggester)")]
+    suggester: Box<dyn Suggester>,
 }
 
 impl Default for Line {
@@ -254,6 +258,12 @@ impl Line {
                             ..Default::default()
                         },
                     );
+                }
+            } else {
+                // get search results from history and suggest the first result
+                if let Some(suggestion) = self.suggester.suggest(state) {
+                    let trimmed_selection = suggestion[res.len()..].to_string();
+                    styled_buf.push(trimmed_selection.as_str(), state.sh.theme.suggestion_style);
                 }
             }
 
@@ -386,6 +396,20 @@ impl Line {
                 self.painter.newline()?;
 
                 return Ok(true);
+            },
+            // Insert suggestion when right arrow
+            Event::Key(KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+                ..
+            }) => {
+                if let Some(suggestion) = self.suggester.suggest(state) {
+                    state.line.cb.clear();
+                    state
+                        .line
+                        .cb
+                        .insert(Location::Cursor(), suggestion.as_str())?;
+                }
             },
 
             Event::Key(KeyEvent {

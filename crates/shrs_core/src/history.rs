@@ -11,6 +11,7 @@ use thiserror::Error;
 
 /// Trait to implement for shell history
 pub trait History {
+    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_>;
     /// Insert item into shell history
     fn add(&mut self, cmd: String);
     /// Remove all history entries
@@ -61,6 +62,10 @@ impl History for DefaultHistory {
     /// Get index starts at most recent (index zero is previous command)
     fn get(&self, i: usize) -> Option<&String> {
         self.hist.get(i)
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+        Box::new(self.hist.iter())
     }
 }
 
@@ -147,6 +152,10 @@ impl History for FileBackedHistory {
 
     fn get(&self, i: usize) -> Option<&String> {
         self.hist.get(i)
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+        Box::new(self.hist.iter())
     }
 }
 

@@ -23,7 +23,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},
     shell::{Context, Runtime, Shell},
 };
 
@@ -77,6 +77,11 @@ impl HistoryInd {
             },
         }
     }
+}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ExpandAlias {
+    Always,
+    Never,
 }
 
 /// State needed for readline
@@ -177,6 +182,9 @@ pub struct Line {
 
     #[builder(default = "Box::new(DefaultSuggester)")]
     suggester: Box<dyn Suggester>,
+
+    #[builder(default = "ExpandAlias::Never")]
+    expand_alias: ExpandAlias,
 }
 
 impl Default for Line {
@@ -239,7 +247,27 @@ impl Line {
         }
 
         loop {
-            let res = state.line.get_full_command();
+            match self.expand_alias {
+                ExpandAlias::Always => {
+                    state.line.get_full_command();
+                    let words = state.line.cb.as_str().split(" ");
+                    state.line.cb
+                    state.line.cb.delete_before(Location::Front(), )
+                    if let Some(first) = words.into_iter().next(){
+
+                    }
+
+                    let alias_ctx = AliasRuleCtx {
+                        alias_name: ,
+                        sh: state.sh,
+                        ctx: state.ctx,
+                        rt: state.rt,
+                    };
+
+                    if let Some(s) = state.ctx.alias.get(&alias_ctx).last() {}
+                },
+                ExpandAlias::Never => (),
+            }
 
             // syntax highlight
             let mut styled_buf = self

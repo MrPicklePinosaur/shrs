@@ -113,7 +113,8 @@ impl JobManager {
         let job_id = job_id
             .or(self.current_job)
             .ok_or_else(|| Error::NoSuchJob("current".into()))?;
-        debug!("putting job [{}] in foreground", job_id);
+
+        dbg!("putting job [{}] in foreground", job_id);
 
         let _terminal_state = {
             let job_index = self

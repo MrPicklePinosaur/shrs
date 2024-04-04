@@ -5,7 +5,10 @@ use std::{
     process::Command,
 };
 
-use ::crossterm::style::{Attribute, Color, StyledContent};
+use ::crossterm::{
+    event::KeyEvent,
+    style::{Attribute, Color, StyledContent},
+};
 use shrs::{
     history::FileBackedHistory,
     keybindings,

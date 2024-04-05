@@ -1,4 +1,6 @@
-use std::{fmt, process::ExitStatus};
+use std::{
+    fmt, os::unix::process::ExitStatusExt, process::ExitStatus, thread::sleep, time::Duration,
+};
 
 use log::*;
 use nix::{
@@ -95,13 +97,15 @@ impl JobManager {
     /// This function also updates the statuses of other jobs if we receive
     /// a signal for one of their processes.
     pub fn wait_for_job(&mut self, job_id: JobId) -> anyhow::Result<Option<ExitStatus>> {
-        while self.job_is_running(job_id) {
+        let job_index = self.find_job(job_id).expect("job not found");
+
+        while self.job_is_running(job_index) {
             for job in &mut self.jobs {
                 job.try_wait()?;
             }
+            sleep(Duration::from_millis(100));
         }
 
-        let job_index = self.find_job(job_id).expect("job not found");
         Ok(self.jobs[job_index].last_status_code())
     }
 
@@ -223,8 +227,7 @@ impl JobManager {
 
     /// # Panics
     /// Panics if job is not found
-    fn job_is_running(&self, job_id: JobId) -> bool {
-        let job_index = self.find_job(job_id).expect("job not found");
+    fn job_is_running(&self, job_index: usize) -> bool {
         !self.jobs[job_index].is_stopped() && !self.jobs[job_index].is_completed()
     }
 

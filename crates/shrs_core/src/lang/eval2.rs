@@ -8,12 +8,6 @@ use shrs_lang::ast;
 
 use crate::lang::posix_lang::PosixError;
 
-pub struct Os {
-    _job_manager: JobManager,
-    /// Exit status of last command executed.
-    _last_exit_status: ExitStatus,
-}
-
 pub fn run_job(
     job_manager: &mut JobManager,
     procs: Vec<Box<dyn Process>>,
@@ -26,10 +20,9 @@ pub fn run_job(
         foreground,
     };
 
-    let is_foreground = proc_group.foreground;
     let job_id = job_manager.create_job("", proc_group);
 
-    if is_foreground {
+    if foreground {
         job_manager
             .put_job_in_foreground(Some(job_id), false)
             .map_err(|e| PosixError::Job(e))?;

@@ -1,12 +1,12 @@
 use std::{
-    fs,
+    default, fs,
     io::{stdout, BufWriter},
     path::PathBuf,
     process::Command,
 };
 
 use ::crossterm::{
-    event::KeyEvent,
+    event::{KeyCode, KeyEvent, KeyModifiers},
     style::{Attribute, Color, StyledContent},
 };
 use shrs::{
@@ -150,6 +150,7 @@ fn main() {
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
+        .with_expand_alias(line::ExpandAlias::Always)
         .build()
         .expect("Could not construct readline");
 

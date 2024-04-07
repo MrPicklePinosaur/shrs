@@ -82,6 +82,7 @@ impl HistoryInd {
 pub enum ExpandAlias {
     Always,
     Never,
+    OnKey(KeyEvent),
 }
 
 /// State needed for readline
@@ -247,27 +248,7 @@ impl Line {
         }
 
         loop {
-            match self.expand_alias {
-                ExpandAlias::Always => {
-                    state.line.get_full_command();
-                    let words = state.line.cb.as_str().split(" ");
-                    state.line.cb
-                    state.line.cb.delete_before(Location::Front(), )
-                    if let Some(first) = words.into_iter().next(){
-
-                    }
-
-                    let alias_ctx = AliasRuleCtx {
-                        alias_name: ,
-                        sh: state.sh,
-                        ctx: state.ctx,
-                        rt: state.rt,
-                    };
-
-                    if let Some(s) = state.ctx.alias.get(&alias_ctx).last() {}
-                },
-                ExpandAlias::Never => (),
-            }
+            let res = state.line.get_full_command();
 
             // syntax highlight
             let mut styled_buf = self
@@ -499,6 +480,51 @@ impl Line {
         state: &mut LineStateBundle,
         event: Event,
     ) -> anyhow::Result<()> {
+        match self.expand_alias {
+            ExpandAlias::Always => {
+                if event == Event::Key(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE)) {
+                    let cur_line = state.line.cb.as_str().to_string();
+                    let words = cur_line.split_whitespace().collect::<Vec<_>>();
+
+                    if words.len() == 1 {
+                        let alias_ctx = AliasRuleCtx {
+                            alias_name: words[0],
+                            sh: state.sh,
+                            ctx: state.ctx,
+                            rt: state.rt,
+                        };
+
+                        if let Some(expanded) = state.ctx.alias.get(&alias_ctx).last() {
+                            state.line.cb.clear();
+                            state.line.cb.insert(Location::Front(), expanded)?;
+                        }
+                    }
+                }
+            },
+            ExpandAlias::Never => (),
+            ExpandAlias::OnKey(k) => {
+                if event == Event::Key(k) {
+                    if event == Event::Key(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE)) {
+                        let cur_line = state.line.cb.as_str().to_string();
+                        let words = cur_line.split_whitespace().collect::<Vec<_>>();
+
+                        let alias_ctx = AliasRuleCtx {
+                            alias_name: words[0],
+                            sh: state.sh,
+                            ctx: state.ctx,
+                            rt: state.rt,
+                        };
+
+                        if let Some(expanded) = state.ctx.alias.get(&alias_ctx).last() {
+                            state.line.cb.clear();
+                            state.line.cb.insert(Location::Front(), expanded)?;
+                        }
+                    }
+                }
+                return Ok(());
+            },
+        }
+
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Tab,

@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     default, fs,
     io::{stdout, BufWriter},
     path::PathBuf,
@@ -13,6 +14,7 @@ use shrs::{
     history::FileBackedHistory,
     keybindings,
     prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
+    readline::abbreviations::Abbreviations,
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -147,10 +149,15 @@ fn main() {
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
 
+    let abbrs = Abbreviations::new(
+        HashMap::from_iter([("ls", "ls --color=auto")]),
+        ExpandAbbreviation::OnKey(KeyEvent::new(KeyCode::Tab, KeyModifiers::CONTROL)),
+    );
+
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
-        .with_expand_alias(line::ExpandAlias::Always)
+        .with_abbreviations(abbrs)
         .build()
         .expect("Could not construct readline");
 

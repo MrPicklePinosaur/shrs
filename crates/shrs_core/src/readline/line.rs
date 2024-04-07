@@ -21,6 +21,8 @@ use shrs_utils::{
 };
 use shrs_vi::{Action, Command, Motion, Parser};
 
+use self::abbreviations::Abbreviations;
+
 use super::{painter::Painter, *};
 use crate::{
     prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},
@@ -77,12 +79,6 @@ impl HistoryInd {
             },
         }
     }
-}
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum ExpandAlias {
-    Always,
-    Never,
-    OnKey(KeyEvent),
 }
 
 /// State needed for readline
@@ -184,8 +180,9 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultSuggester)")]
     suggester: Box<dyn Suggester>,
 
-    #[builder(default = "ExpandAlias::Never")]
-    expand_alias: ExpandAlias,
+    /// Alias expansions, see [Abbreviations]
+    #[builder(default = "Abbreviations::default()")]
+    abbreviations: Abbreviations,
 }
 
 impl Default for Line {
@@ -474,55 +471,30 @@ impl Line {
 
         Ok(false)
     }
+    /// returns a bool whether input should still be handled
+    pub fn expand(&mut self, state: &mut LineStateBundle, event: &Event) -> anyhow::Result<bool> {
+        if !self.abbreviations.should_expand(event) {
+            return Ok(true);
+        }
+        let cur_line = state.line.cb.as_str().to_string();
+        let words = cur_line.split_whitespace().collect::<Vec<_>>();
+
+        if words.len() == 1 {
+            if let Some(expanded) = self.abbreviations.get(&words[0].to_string()) {
+                state.line.cb.clear();
+                state.line.cb.insert(Location::Front(), expanded)?;
+            }
+        }
+        return Ok(true);
+    }
 
     fn handle_insert_keys(
         &mut self,
         state: &mut LineStateBundle,
         event: Event,
     ) -> anyhow::Result<()> {
-        match self.expand_alias {
-            ExpandAlias::Always => {
-                if event == Event::Key(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE)) {
-                    let cur_line = state.line.cb.as_str().to_string();
-                    let words = cur_line.split_whitespace().collect::<Vec<_>>();
-
-                    if words.len() == 1 {
-                        let alias_ctx = AliasRuleCtx {
-                            alias_name: words[0],
-                            sh: state.sh,
-                            ctx: state.ctx,
-                            rt: state.rt,
-                        };
-
-                        if let Some(expanded) = state.ctx.alias.get(&alias_ctx).last() {
-                            state.line.cb.clear();
-                            state.line.cb.insert(Location::Front(), expanded)?;
-                        }
-                    }
-                }
-            },
-            ExpandAlias::Never => (),
-            ExpandAlias::OnKey(k) => {
-                if event == Event::Key(k) {
-                    if event == Event::Key(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE)) {
-                        let cur_line = state.line.cb.as_str().to_string();
-                        let words = cur_line.split_whitespace().collect::<Vec<_>>();
-
-                        let alias_ctx = AliasRuleCtx {
-                            alias_name: words[0],
-                            sh: state.sh,
-                            ctx: state.ctx,
-                            rt: state.rt,
-                        };
-
-                        if let Some(expanded) = state.ctx.alias.get(&alias_ctx).last() {
-                            state.line.cb.clear();
-                            state.line.cb.insert(Location::Front(), expanded)?;
-                        }
-                    }
-                }
-                return Ok(());
-            },
+        if !self.expand(state, &event)? {
+            return Ok(());
         }
 
         match event {

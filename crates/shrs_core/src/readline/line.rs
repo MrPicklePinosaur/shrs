@@ -476,16 +476,41 @@ impl Line {
         if !self.abbreviations.should_expand(event) {
             return Ok(true);
         }
-        let cur_line = state.line.cb.as_str().to_string();
-        let words = cur_line.split_whitespace().collect::<Vec<_>>();
+        //find current word
 
-        if words.len() == 1 {
-            if let Some(expanded) = self.abbreviations.get(&words[0].to_string()) {
+        let cur_line = state.line.cb.as_str().to_string();
+        let mut words = cur_line.split(' ').collect::<Vec<_>>();
+        let mut char_offset = 0;
+        //cursor is positioned just after the last typed character
+        let index_before_cursor = state.line.cb.cursor().saturating_sub(1);
+        let mut cur_word_index = None;
+        for (i, word) in words.iter().enumerate() {
+            // Determine the start and end indices of the current word
+            let start_index = char_offset;
+            let end_index = char_offset + word.len();
+
+            // Check if the cursor index falls within the current word
+            if index_before_cursor > start_index && index_before_cursor < end_index {
+                cur_word_index = Some(i);
+            }
+
+            // Update the character offset to account for the current word and whitespace
+            char_offset = end_index + 1; // Add 1 for the space between words
+        }
+
+        if let Some(c) = cur_word_index {
+            if let Some(expanded) = self.abbreviations.get(&words[c].to_string()) {
+                words[c] = expanded.as_str();
+
                 state.line.cb.clear();
-                state.line.cb.insert(Location::Front(), expanded)?;
+                state
+                    .line
+                    .cb
+                    .insert(Location::Front(), words.join(" ").as_str())?;
             }
         }
-        return Ok(true);
+        //Allow space to still be entered when always is selected, otherwise ignore the input
+        return Ok(self.abbreviations.expand_abbreviation == ExpandAbbreviation::Always);
     }
 
     fn handle_insert_keys(

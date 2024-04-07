@@ -17,7 +17,7 @@ pub enum ExpandAbbreviation {
 #[derive(Default)]
 pub struct Abbreviations {
     abbrs: HashMap<String, String>,
-    expand_abbreviation: ExpandAbbreviation,
+    pub expand_abbreviation: ExpandAbbreviation,
 }
 impl Abbreviations {
     pub fn new<T: ToString>(abbrs: HashMap<T, T>, expand_abbreviation: ExpandAbbreviation) -> Self {

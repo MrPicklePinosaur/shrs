@@ -151,7 +151,7 @@ fn main() {
 
     let abbrs = Abbreviations::new(
         HashMap::from_iter([("ls", "ls --color=auto")]),
-        ExpandAbbreviation::OnKey(KeyEvent::new(KeyCode::Tab, KeyModifiers::CONTROL)),
+        ExpandAbbreviation::Always,
     );
 
     let readline = LineBuilder::default()

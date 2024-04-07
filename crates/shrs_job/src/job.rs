@@ -99,11 +99,11 @@ impl JobManager {
     pub fn wait_for_job(&mut self, job_id: JobId) -> anyhow::Result<Option<ExitStatus>> {
         let job_index = self.find_job(job_id).expect("job not found");
 
-        while self.job_is_running(job_index) {
+        while self.job_is_running(job_id) {
             for job in &mut self.jobs {
                 job.try_wait()?;
             }
-            sleep(Duration::from_millis(100));
+            sleep(Duration::from_millis(10));
         }
 
         Ok(self.jobs[job_index].last_status_code())
@@ -117,7 +117,6 @@ impl JobManager {
         let job_id = job_id
             .or(self.current_job)
             .ok_or_else(|| Error::NoSuchJob("current".into()))?;
-        debug!("putting job [{}] in foreground", job_id);
 
         let _terminal_state = {
             let job_index = self
@@ -226,7 +225,8 @@ impl JobManager {
 
     /// # Panics
     /// Panics if job is not found
-    fn job_is_running(&self, job_index: usize) -> bool {
+    fn job_is_running(&self, job_id: JobId) -> bool {
+        let job_index = self.find_job(job_id).expect("job not found");
         !self.jobs[job_index].is_stopped() && !self.jobs[job_index].is_completed()
     }
 

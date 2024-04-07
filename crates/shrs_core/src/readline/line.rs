@@ -22,7 +22,6 @@ use shrs_utils::{
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use self::abbreviations::Abbreviations;
-
 use super::{painter::Painter, *};
 use crate::{
     prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},

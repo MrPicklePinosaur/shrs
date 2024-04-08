@@ -21,7 +21,6 @@ use shrs_utils::{
 };
 use shrs_vi::{Action, Command, Motion, Parser};
 
-use self::abbreviations::Abbreviations;
 use super::{painter::Painter, *};
 use crate::{
     prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},
@@ -180,8 +179,8 @@ pub struct Line {
     suggester: Box<dyn Suggester>,
 
     /// Alias expansions, see [Abbreviations]
-    #[builder(default = "Abbreviations::default()")]
-    abbreviations: Abbreviations,
+    #[builder(default = "Snippets::default()")]
+    snippets: Snippets,
 }
 
 impl Default for Line {
@@ -472,7 +471,7 @@ impl Line {
     }
     /// returns a bool whether input should still be handled
     pub fn expand(&mut self, state: &mut LineStateBundle, event: &Event) -> anyhow::Result<bool> {
-        if !self.abbreviations.should_expand(event) {
+        if !self.snippets.should_expand(event) {
             return Ok(true);
         }
         //find current word
@@ -481,7 +480,7 @@ impl Line {
         let mut words = cur_line.split(' ').collect::<Vec<_>>();
         let mut char_offset = 0;
         //cursor is positioned just after the last typed character
-        let index_before_cursor = state.line.cb.cursor().saturating_sub(1);
+        let index_before_cursor = state.line.cb.cursor();
         let mut cur_word_index = None;
         for (i, word) in words.iter().enumerate() {
             // Determine the start and end indices of the current word
@@ -489,7 +488,7 @@ impl Line {
             let end_index = char_offset + word.len();
 
             // Check if the cursor index falls within the current word
-            if index_before_cursor > start_index && index_before_cursor < end_index {
+            if index_before_cursor >= start_index && index_before_cursor <= end_index {
                 cur_word_index = Some(i);
             }
 
@@ -498,18 +497,25 @@ impl Line {
         }
 
         if let Some(c) = cur_word_index {
-            if let Some(expanded) = self.abbreviations.get(&words[c].to_string()) {
-                words[c] = expanded.as_str();
+            if let Some(expanded) = self.snippets.get(&words[c].to_string()) {
+                //check if we're we're expanding the first word
+                if expanded.position == Position::Command {
+                    if c != 0 {
+                        return Ok(true);
+                    }
+                }
+                words[c] = expanded.value.as_str();
 
                 state.line.cb.clear();
+                //cursor automatically positioned at end
                 state
                     .line
                     .cb
-                    .insert(Location::Front(), words.join(" ").as_str())?;
+                    .insert(Location::Cursor(), words.join(" ").as_str())?;
+                return Ok(false);
             }
         }
-        //Allow space to still be entered when always is selected, otherwise ignore the input
-        return Ok(self.abbreviations.expand_abbreviation == ExpandAbbreviation::Always);
+        return Ok(true);
     }
 
     fn handle_insert_keys(

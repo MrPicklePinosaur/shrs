@@ -13,8 +13,11 @@ use ::crossterm::{
 use shrs::{
     history::FileBackedHistory,
     keybindings,
-    prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
-    readline::abbreviations::Abbreviations,
+    prelude::{
+        cursor_buffer::{CursorBuffer, Location},
+        styled_buf::StyledBuf,
+        *,
+    },
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -149,15 +152,16 @@ fn main() {
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
 
-    let abbrs = Abbreviations::new(
-        HashMap::from_iter([("ls", "ls --color=auto")]),
-        ExpandAbbreviation::Always,
+    let mut snips = Snippets::new(ExpandSnippet::Always);
+    snips.add(
+        "ls".to_string(),
+        SnippetInfo::new("ls --color=auto", Position::Command),
     );
 
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
-        .with_abbreviations(abbrs)
+        .with_snippets(snips)
         .build()
         .expect("Could not construct readline");
 

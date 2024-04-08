@@ -14,7 +14,6 @@
 //! let mut myline = LineBuilder::default();
 //! ```
 
-pub mod abbreviations;
 pub mod buffer_history;
 pub mod cursor;
 pub mod highlight;
@@ -23,10 +22,10 @@ pub mod line;
 pub mod menu;
 pub mod painter;
 pub mod prompt;
+pub mod snippet;
 pub mod suggester;
 pub mod vi;
 
-pub use abbreviations::*;
 pub use buffer_history::{BufferHistory, DefaultBufferHistory};
 pub use cursor::CursorStyle;
 pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme};
@@ -34,5 +33,6 @@ pub use hooks::*;
 pub use line::{Line, LineBuilder, LineBuilderError, LineMode, LineStateBundle, Readline};
 pub use menu::{DefaultMenu, Menu};
 pub use prompt::{DefaultPrompt, Prompt, *};
+pub use snippet::*;
 pub use suggester::{DefaultSuggester, Suggester};
 pub use vi::*;

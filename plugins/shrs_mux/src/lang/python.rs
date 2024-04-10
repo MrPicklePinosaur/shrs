@@ -5,10 +5,6 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
 use ::crossterm::style::{ContentStyle, Stylize};
 use shrs::prelude::*;
 use tokio::{
@@ -19,6 +15,11 @@ use tokio::{
         mpsc::{self, Sender},
         Mutex, RwLock,
     },
+};
+
+use crate::{
+    interpreter::{read_err, read_out},
+    MuxState,
 };
 
 struct PythonLangCtx {

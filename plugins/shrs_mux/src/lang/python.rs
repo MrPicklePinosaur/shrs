@@ -1,9 +1,15 @@
 use std::{
+    fmt::format,
     io::Write,
     process::Stdio,
     sync::{Arc, OnceLock},
 };
 
+use crate::{
+    interpreter::{read_err, read_out},
+    MuxState,
+};
+use ::crossterm::style::{ContentStyle, Stylize};
 use shrs::prelude::*;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
@@ -11,13 +17,8 @@ use tokio::{
     runtime,
     sync::{
         mpsc::{self, Sender},
-        RwLock,
+        Mutex, RwLock,
     },
-};
-
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
 };
 
 struct PythonLangCtx {
@@ -29,6 +30,8 @@ struct PythonLangCtx {
 impl PythonLangCtx {
     fn init(runtime: &runtime::Runtime) -> Self {
         let _guard = runtime.enter();
+        let out = Arc::new(Mutex::new(OutputWriter::default()));
+        let err = out.clone();
 
         // TODO maybe support custom parameters to pass to command
         // pass some options to make repl work better
@@ -36,7 +39,7 @@ impl PythonLangCtx {
         // -q silences help message
         // the command given by the -c is used to remove the prompt
         let args = vec!["-i", "-q", "-c", "import sys; sys.ps1=''; sys.ps2=''"];
-        let mut instance = Command::new("python")
+        let mut instance = Command::new("python3")
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -48,17 +51,21 @@ impl PythonLangCtx {
         let stderr = instance.stderr.take().unwrap();
         let stdin = instance.stdin.take().unwrap();
 
-        runtime.spawn(async {
+        runtime.spawn(async move {
             let mut stdout_reader = BufReader::new(stdout).lines();
             while let Some(line) = stdout_reader.next_line().await.unwrap() {
-                write!(std::io::stdout(), "{line}\r\n").unwrap();
+                let mut guard = out.lock().await;
+
+                guard.println(format!("{line}")).unwrap();
             }
         });
 
-        runtime.spawn(async {
+        runtime.spawn(async move {
             let mut stderr_reader = BufReader::new(stderr).lines();
             while let Some(line) = stderr_reader.next_line().await.unwrap() {
-                write!(std::io::stderr(), "{line}\r\n").unwrap();
+                let mut o = err.lock().await;
+
+                o.eprintln(format!("{line}")).unwrap();
             }
         });
 

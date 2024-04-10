@@ -17,3 +17,4 @@ shrs = { path = "../../crates/shrs", version = "^0.0.4" }
 clap = { version = "4.1", features = ["derive"] }
 tokio = { version = "1.35", features = ["full"] }
 openssh = { version = "0.10.3" }
+crossterm = "0.26"

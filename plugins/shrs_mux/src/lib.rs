@@ -13,9 +13,8 @@ use std::{
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-pub use lang::{BashLang, NuLang, SqliteLang, SshLang};
-
 pub use highlighter::MuxHighlighter;
+pub use lang::{BashLang, NuLang, SqliteLang, SshLang};
 use shrs::{prelude::*, readline::highlight::ShrsSyntaxTheme};
 
 pub struct MuxState {

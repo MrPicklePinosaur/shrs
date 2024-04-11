@@ -171,4 +171,3 @@ impl SyntaxTheme for ShrsSyntaxTheme {
         }
     }
 }
-

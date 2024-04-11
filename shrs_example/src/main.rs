@@ -15,7 +15,8 @@ use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
-use shrs_mux::{BashLang, MuxPlugin, MuxState, NuLang, PythonLang, SshLang};
+use shrs_mux::python::*;
+use shrs_mux::{BashLang, MuxHighlighter, MuxPlugin, MuxState, NuLang, SshLang};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_rhai::RhaiPlugin;
 use shrs_rhai_completion::CompletionsPlugin;
@@ -53,12 +54,13 @@ impl Prompt for MyPrompt {
             .and_then(|x| x.command_time())
             .map(|x| format!("{x:?}"));
 
-        let (lang_name, _) = line_ctx
+        let lang_name = line_ctx
             .ctx
             .state
             .get::<MuxState>()
             .map(|state| state.current_lang())
-            .expect("MuxState should be provided");
+            .expect("MuxState should be provided")
+            .name();
 
         if !line_ctx.line.lines.is_empty() {
             return styled_buf!("");
@@ -147,6 +149,7 @@ fn main() {
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
+        .with_highlighter(MuxHighlighter {})
         .build()
         .expect("Could not construct readline");
 
@@ -189,6 +192,7 @@ a rusty POSIX shell | build {}"#,
     let mux_plugin = MuxPlugin::new()
         .register_lang("bash", BashLang::new())
         .register_lang("python", PythonLang::new())
+        .register_theme("python", Box::new(PythonSytaxTheme::new()))
         .register_lang("nu", NuLang::new());
 
     // =-=-= Shell =-=-=

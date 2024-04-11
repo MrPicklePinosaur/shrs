@@ -6,8 +6,11 @@ use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
 
+use super::line::LineStateBundle;
+
 pub trait Highlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf;
+    /// highlight buf, state allows access to additional info
+    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf;
 }
 
 /// Simple highlighter that colors the entire line one color
@@ -17,7 +20,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf {
+    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
@@ -32,8 +35,7 @@ impl Highlighter for DefaultHighlighter {
     }
 }
 
-//trait that works specifically with SyntaxHighlighter to allow users to use various highlighters
-//to highlight the text
+/// trait that modifies a StyledBuf inplace and applies a theme to highlight the text
 pub trait SyntaxTheme {
     fn apply(&self, buf: &mut StyledBuf);
 }
@@ -65,7 +67,7 @@ impl SyntaxHighlighter {
 }
 
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, buf: &str) -> StyledBuf {
+    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::new(&buf, self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {
@@ -75,8 +77,8 @@ impl Highlighter for SyntaxHighlighter {
         styled_buf
     }
 }
-//Implementation of a highlighter for the shrs language.
-//Utilizes the shrs parser to parse and highlight various tokens based on their type
+/// Implementation of a highlighter for the shrs language.
+/// Utilizes the shrs parser to parse and highlight various tokens based on their type
 pub struct ShrsSyntaxTheme {
     cmd_style: ContentStyle,
     string_style: ContentStyle,
@@ -101,7 +103,7 @@ impl Default for ShrsSyntaxTheme {
     }
 }
 impl ShrsSyntaxTheme {
-    fn new(
+    pub fn new(
         cmd_style: ContentStyle,
         string_style: ContentStyle,
         reserved_style: ContentStyle,
@@ -169,3 +171,4 @@ impl SyntaxTheme for ShrsSyntaxTheme {
         }
     }
 }
+

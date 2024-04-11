@@ -50,7 +50,7 @@ impl Lang for NuLang {
         "nu".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

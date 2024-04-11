@@ -43,9 +43,9 @@ impl BuiltinCmd for MuxBuiltin {
         }
 
         if let Some(lang_name) = cli.lang {
-            let (old_lang_name, _) = state.current_lang();
+            let old_lang = state.current_lang();
             let hook_ctx = ChangeLangCtx {
-                old_lang: old_lang_name,
+                old_lang: old_lang.name(),
                 new_lang: lang_name.clone().into(),
             };
 
@@ -58,7 +58,7 @@ impl BuiltinCmd for MuxBuiltin {
 
             // HACK, prime the language so it can run any init that it needs (this is to support
             // lazy loading languages)
-            let (_, current_lang) = state.current_lang();
+            let current_lang = state.current_lang();
             let _ = current_lang.eval(sh, ctx, rt, "".into());
 
             sh.hooks

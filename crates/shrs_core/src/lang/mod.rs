@@ -8,6 +8,7 @@ pub use posix_lang::PosixLang;
 
 use crate::{
     cmd_output::CmdOutput,
+    prelude::LineStateBundle,
     shell::{Context, Runtime, Shell},
 };
 
@@ -21,5 +22,7 @@ pub trait Lang {
         cmd: String,
     ) -> anyhow::Result<CmdOutput>;
     fn name(&self) -> String;
-    fn needs_line_check(&self, cmd: String) -> bool;
+    /// Called when enter is pressed in line to check if the command is complete or needs another
+    /// line. Use `state.line.get_full_command()`
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool;
 }

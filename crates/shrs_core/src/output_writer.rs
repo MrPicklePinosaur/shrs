@@ -85,6 +85,6 @@ impl OutputWriter {
 }
 impl Default for OutputWriter {
     fn default() -> Self {
-        Self::new(ContentStyle::new().magenta(), ContentStyle::new().red())
+        Self::new(ContentStyle::new().white(), ContentStyle::new().red())
     }
 }

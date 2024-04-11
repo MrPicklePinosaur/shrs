@@ -1,25 +1,17 @@
 use std::{
-    fmt::format,
-    io::Write,
     process::Stdio,
     sync::{Arc, OnceLock},
 };
 
-use ::crossterm::style::{ContentStyle, Stylize};
 use shrs::prelude::*;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
-    process::{Child, ChildStdin, ChildStdout, Command},
+    process::{Child, Command},
     runtime,
     sync::{
         mpsc::{self, Sender},
-        Mutex, RwLock,
+        Mutex,
     },
-};
-
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
 };
 
 struct PythonLangCtx {
@@ -128,7 +120,7 @@ impl Lang for PythonLang {
         "python".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

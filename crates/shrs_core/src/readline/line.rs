@@ -244,7 +244,7 @@ impl Line {
             // syntax highlight
             let mut styled_buf = self
                 .highlighter
-                .highlight(&res)
+                .highlight(state, &res)
                 .slice_from(state.line.lines.len());
 
             // add currently selected completion to buf
@@ -428,11 +428,7 @@ impl Line {
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
-                if state
-                    .sh
-                    .lang
-                    .needs_line_check(state.line.get_full_command())
-                {
+                if state.sh.lang.needs_line_check(state) {
                     state.line.lines += state.line.cb.as_str().into_owned().as_str();
                     state.line.lines += "\n";
                     state.line.cb.clear();

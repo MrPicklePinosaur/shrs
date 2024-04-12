@@ -19,3 +19,5 @@ tokio = { version = "1.35", features = ["full"] }
 openssh = { version = "0.10.3" }
 crossterm = "0.26"
 rustpython-parser = "0.3.1"
+regex = "1.10.4"
+lazy_static = "1.4.0"

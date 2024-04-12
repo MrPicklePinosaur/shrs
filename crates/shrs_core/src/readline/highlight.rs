@@ -48,7 +48,7 @@ impl Default for SyntaxHighlighter {
     fn default() -> Self {
         Self {
             auto: ContentStyle::default(),
-            syntax_themes: vec![Box::new(ShrsSyntaxTheme::default())],
+            syntax_themes: vec![Box::new(ShrsTheme::default())],
         }
     }
 }
@@ -68,7 +68,7 @@ impl SyntaxHighlighter {
 
 impl Highlighter for SyntaxHighlighter {
     fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf {
-        let mut styled_buf = StyledBuf::new(&buf, self.auto);
+        let mut styled_buf = StyledBuf::new(&buf).style(self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {
             syntax_theme.apply(&mut styled_buf);
@@ -79,14 +79,14 @@ impl Highlighter for SyntaxHighlighter {
 }
 /// Implementation of a highlighter for the shrs language.
 /// Utilizes the shrs parser to parse and highlight various tokens based on their type
-pub struct ShrsSyntaxTheme {
+pub struct ShrsTheme {
     cmd_style: ContentStyle,
     string_style: ContentStyle,
     reserved_style: ContentStyle,
 }
-impl Default for ShrsSyntaxTheme {
+impl Default for ShrsTheme {
     fn default() -> Self {
-        ShrsSyntaxTheme::new(
+        ShrsTheme::new(
             ContentStyle {
                 foreground_color: Some(Color::Blue),
                 ..Default::default()
@@ -102,20 +102,20 @@ impl Default for ShrsSyntaxTheme {
         )
     }
 }
-impl ShrsSyntaxTheme {
+impl ShrsTheme {
     pub fn new(
         cmd_style: ContentStyle,
         string_style: ContentStyle,
         reserved_style: ContentStyle,
     ) -> Self {
-        ShrsSyntaxTheme {
+        ShrsTheme {
             cmd_style,
             string_style,
             reserved_style,
         }
     }
 }
-impl SyntaxTheme for ShrsSyntaxTheme {
+impl SyntaxTheme for ShrsTheme {
     fn apply(&self, buf: &mut StyledBuf) {
         let content = buf.content.clone();
         let lexer = Lexer::new(content.as_str());

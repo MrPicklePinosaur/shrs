@@ -1,12 +1,7 @@
 use std::{
     cell::RefCell,
-    collections::HashMap,
-    fmt::format,
-    io::{BufRead, BufReader, Read, Write},
-    ops::Add,
-    os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
-    sync::Arc,
+    io::{BufReader, Write},
+    process::{Child, Command, Stdio},
 };
 
 use shrs::{

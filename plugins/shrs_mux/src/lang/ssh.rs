@@ -17,11 +17,6 @@ use tokio::{
     },
 };
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
-
 struct SshLangCtx {
     session: Arc<Session>,
     shell: Child<Arc<Session>>,

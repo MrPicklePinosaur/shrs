@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use shrs::prelude::*;
+use shrs::prelude::{styled_buf::StyledBuf, *};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
     process::{Child, Command},
@@ -13,6 +13,8 @@ use tokio::{
         Mutex,
     },
 };
+
+use super::error_theme::PythonErrorTheme;
 
 struct PythonLangCtx {
     /// Channel for writing to process
@@ -24,6 +26,7 @@ impl PythonLangCtx {
     fn init(runtime: &runtime::Runtime) -> Self {
         let _guard = runtime.enter();
         let out = Arc::new(Mutex::new(OutputWriter::default()));
+        let err_theme = PythonErrorTheme::new();
         let err = out.clone();
 
         // TODO maybe support custom parameters to pass to command
@@ -57,8 +60,11 @@ impl PythonLangCtx {
             let mut stderr_reader = BufReader::new(stderr).lines();
             while let Some(line) = stderr_reader.next_line().await.unwrap() {
                 let mut o = err.lock().await;
+                let mut buf = StyledBuf::new(line.as_str());
+                err_theme.apply(&mut buf);
 
-                o.eprintln(format!("{line}")).unwrap();
+                o.print_buf(buf).unwrap();
+                o.println("").unwrap();
             }
         });
 

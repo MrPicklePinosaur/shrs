@@ -16,11 +16,6 @@ use tokio::{
     },
 };
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
-
 struct SqliteLangCtx {
     /// Channel for writing to process
     write_tx: Sender<String>,

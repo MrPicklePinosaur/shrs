@@ -15,24 +15,26 @@ use anyhow::anyhow;
 use builtin::MuxBuiltin;
 pub use highlighter::MuxHighlighter;
 pub use lang::{BashLang, NuLang, SqliteLang, SshLang};
-use shrs::{prelude::*, readline::highlight::ShrsSyntaxTheme};
+use shrs::{prelude::*, readline::highlight::ShrsTheme};
 
 pub struct MuxState {
     current_lang: Rc<dyn Lang>,
     lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
-    syntax_themes: HashMap<String, Box<dyn SyntaxTheme>>,
+    theme_map: HashMap<String, Box<dyn SyntaxTheme>>,
 }
 
 impl MuxState {
     /// Create a new instance of lang
     ///
     /// Must be initialized with at least one language
-    pub fn new(name: &str, lang: impl Lang + 'static, syntax_theme: impl SyntaxTheme) -> Self {
+    pub fn new(name: &str, lang: impl Lang + 'static, syntax_theme: Box<dyn SyntaxTheme>) -> Self {
         let mut lang_map = HashMap::new();
         lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn Lang>);
+        let mut theme_map = HashMap::new();
+        theme_map.insert(name.into(), syntax_theme);
         Self {
             current_lang: lang_map.get(name).unwrap().clone(),
-            syntax_themes: HashMap::new(),
+            theme_map,
             lang_map,
         }
     }
@@ -44,7 +46,7 @@ impl MuxState {
         self.lang_map.insert(name.into(), Rc::new(lang));
     }
     pub fn register_theme(&mut self, name: &str, syntax_theme: Box<dyn SyntaxTheme>) {
-        self.syntax_themes.insert(name.into(), syntax_theme);
+        self.theme_map.insert(name.into(), syntax_theme);
     }
 
     /// Get the current language
@@ -70,7 +72,7 @@ impl MuxState {
     }
 
     fn get_syntax_theme(&self) -> Option<&Box<dyn SyntaxTheme>> {
-        self.syntax_themes.get(&self.current_lang.name())
+        self.theme_map.get(&self.current_lang.name())
     }
 }
 
@@ -88,7 +90,7 @@ pub struct MuxPlugin {
 
 impl MuxPlugin {
     pub fn new() -> Self {
-        let mux_state = MuxState::new("shrs", PosixLang::default(), ShrsSyntaxTheme::default());
+        let mux_state = MuxState::new("shrs", PosixLang::default(), Box::new(ShrsTheme::default()));
 
         MuxPlugin {
             mux_state: RefCell::new(Some(mux_state)),

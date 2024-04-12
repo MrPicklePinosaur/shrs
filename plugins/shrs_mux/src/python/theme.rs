@@ -2,10 +2,11 @@ use crossterm::style::ContentStyle;
 use rustpython_parser::{lexer::lex, Mode, Tok};
 use shrs::{
     crossterm::{Color, Stylize},
+    prelude::{self, styled_buf::StyledBuf},
     readline::SyntaxTheme,
 };
 
-pub struct PythonSytaxTheme {
+pub struct PythonTheme {
     pub name_style: ContentStyle,
     pub number_style: ContentStyle,
     pub string_style: ContentStyle,
@@ -13,9 +14,9 @@ pub struct PythonSytaxTheme {
     pub operator_style: ContentStyle,
     pub punctuation_style: ContentStyle,
 }
-impl PythonSytaxTheme {
+impl PythonTheme {
     pub fn new() -> Self {
-        PythonSytaxTheme {
+        PythonTheme {
             name_style: ContentStyle::new().white(),
             number_style: ContentStyle::new().dark_green(),
             string_style: ContentStyle::new().green(),
@@ -114,8 +115,8 @@ impl PythonSytaxTheme {
         }
     }
 }
-impl SyntaxTheme for PythonSytaxTheme {
-    fn apply(&self, buf: &mut shrs::prelude::styled_buf::StyledBuf) {
+impl SyntaxTheme for PythonTheme {
+    fn apply(&self, buf: &mut StyledBuf) {
         // yields tokens, if error will continue yielding infinitely
         let content = buf.content.to_owned();
         let tokens = lex(content.as_str(), Mode::Expression);

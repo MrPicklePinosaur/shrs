@@ -38,9 +38,9 @@ impl StyledBuf {
             styles: vec![],
         }
     }
-    pub fn new(content: &str, style: ContentStyle) -> Self {
+    pub fn new(content: &str) -> Self {
         let mut s = Self::empty();
-        s.push(content, style);
+        s.push(content, ContentStyle::new());
         s
     }
 
@@ -93,6 +93,10 @@ impl StyledBuf {
         UnicodeWidthStr::width(self.content.as_str()) as u16
     }
 
+    pub fn apply_style(&mut self, style: ContentStyle) {
+        self.styles.iter_mut().for_each(|x| *x = style);
+    }
+
     pub fn apply_style_at(&mut self, index: usize, style: ContentStyle) {
         self.styles[index] = style;
     }
@@ -134,10 +138,11 @@ impl StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = x.attribute(attr));
         self
     }
-    pub fn apply_style(mut self, style: ContentStyle) -> StyledBuf {
+    pub fn style(mut self, style: ContentStyle) -> StyledBuf {
         self.styles.iter_mut().for_each(|x| *x = style);
         self
     }
+
     stylize_buf_method!(reset Attribute::Reset);
     stylize_buf_method!(bold Attribute::Bold);
     stylize_buf_method!(underlined Attribute::Underlined);
@@ -192,17 +197,17 @@ impl FromIterator<StyledBuf> for StyledBuf {
 }
 impl From<String> for StyledBuf {
     fn from(value: String) -> Self {
-        StyledBuf::new(value.as_str(), ContentStyle::default())
+        StyledBuf::new(value.as_str())
     }
 }
 impl From<&str> for StyledBuf {
     fn from(value: &str) -> Self {
-        StyledBuf::new(value, ContentStyle::default())
+        StyledBuf::new(value)
     }
 }
 impl<T: Display> From<StyledContent<T>> for StyledBuf {
     fn from(value: StyledContent<T>) -> Self {
-        StyledBuf::new(value.content().to_string().as_str(), value.style().clone())
+        StyledBuf::new(value.content().to_string().as_str())
     }
 }
 impl<T: Display> From<Option<StyledContent<T>>> for StyledBuf {

@@ -5,7 +5,7 @@ use shrs_utils::cursor_buffer::Location;
 
 use super::line::LineState;
 
-///Controls when abbreviations should be applied
+///Controls when snippet should be applied
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ExpandSnippet {
     OnTab,
@@ -35,7 +35,7 @@ impl SnippetInfo {
         }
     }
 }
-
+/// Snippets are substitutions that apply in the line when a trigger key is pressed
 #[derive(Default)]
 pub struct Snippets {
     pub snippets: HashMap<String, SnippetInfo>,

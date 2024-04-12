@@ -22,6 +22,7 @@ pub mod line;
 pub mod menu;
 pub mod painter;
 pub mod prompt;
+pub mod snippet;
 pub mod suggester;
 pub mod vi;
 
@@ -32,5 +33,6 @@ pub use hooks::*;
 pub use line::{Line, LineBuilder, LineBuilderError, LineMode, LineStateBundle, Readline};
 pub use menu::{DefaultMenu, Menu};
 pub use prompt::{DefaultPrompt, Prompt, *};
+pub use snippet::*;
 pub use suggester::{DefaultSuggester, Suggester};
 pub use vi::*;

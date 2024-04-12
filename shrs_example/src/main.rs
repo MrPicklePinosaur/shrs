@@ -1,15 +1,23 @@
 use std::{
-    fs,
+    collections::HashMap,
+    default, fs,
     io::{stdout, BufWriter},
     path::PathBuf,
     process::Command,
 };
 
-use ::crossterm::style::{Attribute, Color, StyledContent};
+use ::crossterm::{
+    event::{KeyCode, KeyEvent, KeyModifiers},
+    style::{Attribute, Color, StyledContent},
+};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
-    prelude::{cursor_buffer::CursorBuffer, styled_buf::StyledBuf, *},
+    prelude::{
+        cursor_buffer::{CursorBuffer, Location},
+        styled_buf::StyledBuf,
+        *,
+    },
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
@@ -144,9 +152,20 @@ fn main() {
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
 
+    let mut snippets = Snippets::new(ExpandSnippet::OnSpace);
+    snippets.add(
+        "gc".to_string(),
+        SnippetInfo::new("git commit -m \"", Position::Command),
+    );
+    snippets.add(
+        "ga".to_string(),
+        SnippetInfo::new("git add .", Position::Command),
+    );
+
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
+        .with_snippets(snippets)
         .build()
         .expect("Could not construct readline");
 

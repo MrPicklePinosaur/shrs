@@ -23,7 +23,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod},
+    prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},
     shell::{Context, Runtime, Shell},
 };
 
@@ -177,6 +177,10 @@ pub struct Line {
 
     #[builder(default = "Box::new(DefaultSuggester)")]
     suggester: Box<dyn Suggester>,
+
+    /// Alias expansions, see [Abbreviations]
+    #[builder(default = "Snippets::default()")]
+    snippets: Snippets,
 }
 
 impl Default for Line {
@@ -465,12 +469,64 @@ impl Line {
 
         Ok(false)
     }
+    /// returns a bool whether input should still be handled
+    pub fn expand(&mut self, state: &mut LineStateBundle, event: &Event) -> anyhow::Result<bool> {
+        if !self.snippets.should_expand(event) {
+            return Ok(true);
+        }
+        //find current word
+
+        let cur_line = state.line.cb.as_str().to_string();
+        let mut words = cur_line.split(' ').collect::<Vec<_>>();
+        let mut char_offset = 0;
+        //cursor is positioned just after the last typed character
+        let index_before_cursor = state.line.cb.cursor();
+        let mut cur_word_index = None;
+        for (i, word) in words.iter().enumerate() {
+            // Determine the start and end indices of the current word
+            let start_index = char_offset;
+            let end_index = char_offset + word.len();
+
+            // Check if the cursor index falls within the current word
+            if index_before_cursor >= start_index && index_before_cursor <= end_index {
+                cur_word_index = Some(i);
+            }
+
+            // Update the character offset to account for the current word and whitespace
+            char_offset = end_index + 1; // Add 1 for the space between words
+        }
+
+        if let Some(c) = cur_word_index {
+            if let Some(expanded) = self.snippets.get(&words[c].to_string()) {
+                //check if we're we're expanding the first word
+                if expanded.position == Position::Command {
+                    if c != 0 {
+                        return Ok(true);
+                    }
+                }
+                words[c] = expanded.value.as_str();
+
+                state.line.cb.clear();
+                //cursor automatically positioned at end
+                state
+                    .line
+                    .cb
+                    .insert(Location::Cursor(), words.join(" ").as_str())?;
+                return Ok(false);
+            }
+        }
+        return Ok(true);
+    }
 
     fn handle_insert_keys(
         &mut self,
         state: &mut LineStateBundle,
         event: Event,
     ) -> anyhow::Result<()> {
+        if !self.expand(state, &event)? {
+            return Ok(());
+        }
+
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Tab,

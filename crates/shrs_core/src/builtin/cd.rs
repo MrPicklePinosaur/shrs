@@ -47,8 +47,7 @@ impl BuiltinCmd for CdBuiltin {
                 rt.working_dir.join(Path::new(&path))
             }
         } else {
-            let home_dir = rt.env.get("HOME").unwrap();
-            Path::new(&home_dir).to_path_buf()
+            dirs::home_dir().unwrap()
         };
 
         if let Err(e) = set_working_dir(sh, ctx, rt, &path, true) {

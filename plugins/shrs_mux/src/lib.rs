@@ -90,7 +90,11 @@ pub struct MuxPlugin {
 
 impl MuxPlugin {
     pub fn new() -> Self {
-        let mux_state = MuxState::new("shrs", PosixLang::default(), Box::new(ShrsTheme::default()));
+        let mux_state = MuxState::new(
+            "posix",
+            PosixLang::default(),
+            Box::new(ShrsTheme::default()),
+        );
 
         MuxPlugin {
             mux_state: RefCell::new(Some(mux_state)),

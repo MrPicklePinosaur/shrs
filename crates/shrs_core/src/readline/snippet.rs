@@ -8,7 +8,8 @@ use super::line::LineState;
 ///Controls when abbreviations should be applied
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ExpandSnippet {
-    Always,
+    OnTab,
+    OnSpace,
     #[default]
     Never,
     OnKey(KeyEvent),
@@ -37,14 +38,16 @@ impl SnippetInfo {
 
 #[derive(Default)]
 pub struct Snippets {
-    snippets: HashMap<String, SnippetInfo>,
-    expand_snippet: ExpandSnippet,
+    pub snippets: HashMap<String, SnippetInfo>,
+    pub expand_snippet: ExpandSnippet,
+    pub enabled: bool,
 }
 impl Snippets {
     pub fn new(expand_snippet: ExpandSnippet) -> Self {
         Self {
             expand_snippet,
             snippets: HashMap::new(),
+            enabled: true,
         }
     }
     pub fn add(&mut self, name: String, s: SnippetInfo) {
@@ -53,15 +56,28 @@ impl Snippets {
     /// Returns whether the event was matched or not.
     /// Always is mapped to when the user presses space
     pub fn should_expand(&self, event: &Event) -> bool {
+        if !self.enabled {
+            return false;
+        }
         match self.expand_snippet {
-            ExpandSnippet::Always => {
+            ExpandSnippet::OnSpace => {
                 *event == Event::Key(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE))
             },
+            ExpandSnippet::OnTab => {
+                *event == Event::Key(KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE))
+            },
+
             ExpandSnippet::Never => false,
             ExpandSnippet::OnKey(k) => *event == Event::Key(k),
         }
     }
     pub fn get(&self, name: &String) -> Option<&SnippetInfo> {
         self.snippets.get(name)
+    }
+    pub fn enable(&mut self) {
+        self.enabled = true
+    }
+    pub fn disable(&mut self) {
+        self.enabled = false
     }
 }

@@ -152,16 +152,20 @@ fn main() {
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
 
-    let mut snips = Snippets::new(ExpandSnippet::Always);
-    snips.add(
-        "ls".to_string(),
-        SnippetInfo::new("ls --color=auto", Position::Command),
+    let mut snippets = Snippets::new(ExpandSnippet::OnSpace);
+    snippets.add(
+        "gc".to_string(),
+        SnippetInfo::new("git commit -m \"", Position::Command),
+    );
+    snippets.add(
+        "ga".to_string(),
+        SnippetInfo::new("git add .", Position::Command),
     );
 
     let readline = LineBuilder::default()
         .with_menu(menu)
         .with_prompt(prompt)
-        .with_snippets(snips)
+        .with_snippets(snippets)
         .build()
         .expect("Could not construct readline");
 

@@ -1,23 +1,6 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    fmt::format,
-    io::{BufRead, BufReader, Read, Write},
-    ops::Add,
-    os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
-    sync::Arc,
-};
+use std::process::{Command, Stdio};
 
-use shrs::{
-    lang::{Lexer, Token},
-    prelude::*,
-};
-
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
+use shrs::prelude::*;
 
 pub struct NuLang {}
 
@@ -50,7 +33,7 @@ impl Lang for NuLang {
         "nu".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

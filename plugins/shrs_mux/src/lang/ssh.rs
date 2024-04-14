@@ -17,11 +17,6 @@ use tokio::{
     },
 };
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
-
 struct SshLangCtx {
     session: Arc<Session>,
     shell: Child<Arc<Session>>,
@@ -134,7 +129,7 @@ impl Lang for SshLang {
         "ssh".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{CmdOutput, CommandNotFoundCtx},
+    prelude::{CmdOutput, CommandNotFoundCtx, LineStateBundle},
     shell::{Context, Runtime, Shell},
 };
 
@@ -118,8 +118,9 @@ impl Lang for PosixLang {
     fn name(&self) -> String {
         "posix".to_string()
     }
-    fn needs_line_check(&self, command: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         //TODO check if open quotes or brackets
+        let command = state.line.get_full_command();
 
         if let Some(last_char) = command.chars().last() {
             if last_char == '\\' {

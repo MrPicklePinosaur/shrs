@@ -1,9 +1,11 @@
 mod builtin;
+mod highlighter;
 mod interpreter;
 mod lang;
-mod lang_options;
+pub mod python;
 
 use std::{
+    borrow::BorrowMut,
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -11,30 +13,28 @@ use std::{
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
-pub use lang::{BashLang, NuLang, PythonLang, SqliteLang, SshLang};
-use lang_options::swap_lang_options;
-pub use lang_options::LangOptions;
-use shrs::{
-    lang::{Lexer, Token},
-    prelude::*,
-};
-
-use crate::interpreter::{read_err, read_out};
+pub use highlighter::MuxHighlighter;
+pub use lang::{BashLang, NuLang, SqliteLang, SshLang};
+use shrs::{prelude::*, readline::highlight::ShrsTheme};
 
 pub struct MuxState {
-    current_lang: (String, Rc<dyn Lang>),
+    current_lang: Rc<dyn Lang>,
     lang_map: HashMap<String, Rc<dyn Lang + 'static>>,
+    theme_map: HashMap<String, Box<dyn SyntaxTheme>>,
 }
 
 impl MuxState {
     /// Create a new instance of lang
     ///
     /// Must be initialized with at least one language
-    pub fn new(name: &str, lang: impl Lang + 'static) -> Self {
+    pub fn new(name: &str, lang: impl Lang + 'static, syntax_theme: Box<dyn SyntaxTheme>) -> Self {
         let mut lang_map = HashMap::new();
         lang_map.insert(name.into(), Rc::new(lang) as Rc<dyn Lang>);
+        let mut theme_map = HashMap::new();
+        theme_map.insert(name.into(), syntax_theme);
         Self {
-            current_lang: (name.into(), lang_map.get(name).unwrap().clone()),
+            current_lang: lang_map.get(name).unwrap().clone(),
+            theme_map,
             lang_map,
         }
     }
@@ -45,9 +45,12 @@ impl MuxState {
     pub fn register_lang(&mut self, name: &str, lang: impl Lang + 'static) {
         self.lang_map.insert(name.into(), Rc::new(lang));
     }
+    pub fn register_theme(&mut self, name: &str, syntax_theme: Box<dyn SyntaxTheme>) {
+        self.theme_map.insert(name.into(), syntax_theme);
+    }
 
     /// Get the current language
-    pub fn current_lang(&self) -> (String, Rc<dyn Lang>) {
+    pub fn current_lang(&self) -> Rc<dyn Lang> {
         self.current_lang.clone()
     }
 
@@ -56,7 +59,7 @@ impl MuxState {
     /// Selecting invalid language returns error
     pub fn set_current_lang(&mut self, name: &str) -> anyhow::Result<()> {
         if let Some(lang) = self.lang_map.get(name) {
-            self.current_lang = (name.into(), lang.clone());
+            self.current_lang = lang.clone();
         } else {
             return Err(anyhow!("Invalid language: {}", name));
         }
@@ -66,6 +69,10 @@ impl MuxState {
 
     pub fn iter(&self) -> impl Iterator<Item = (&String, &Rc<dyn Lang>)> {
         self.lang_map.iter()
+    }
+
+    fn get_syntax_theme(&self) -> Option<&Box<dyn SyntaxTheme>> {
+        self.theme_map.get(&self.current_lang.name())
     }
 }
 
@@ -77,17 +84,19 @@ pub struct ChangeLangCtx {
 }
 
 pub struct MuxPlugin {
-    lang_options: LangOptions,
     // TODO kinda stupid but need to pass ownership to state
     mux_state: RefCell<Option<MuxState>>,
 }
 
 impl MuxPlugin {
     pub fn new() -> Self {
-        let mux_state = MuxState::new("shrs", PosixLang::default());
+        let mux_state = MuxState::new(
+            "posix",
+            PosixLang::default(),
+            Box::new(ShrsTheme::default()),
+        );
 
         MuxPlugin {
-            lang_options: LangOptions::default(),
             mux_state: RefCell::new(Some(mux_state)),
         }
     }
@@ -102,6 +111,14 @@ impl MuxPlugin {
             .register_lang(name, lang);
         self
     }
+    pub fn register_theme(self, name: &str, syntax_theme: Box<dyn SyntaxTheme>) -> Self {
+        self.mux_state
+            .borrow_mut()
+            .as_mut()
+            .unwrap()
+            .register_theme(name, syntax_theme);
+        self
+    }
 
     // TODO maybe add abilitiy to set the default lang
 }
@@ -111,11 +128,11 @@ impl Plugin for MuxPlugin {
         // TODO pretty bad solution to just clone everything
         let mut mux_state_borrow = self.mux_state.borrow_mut();
         let mux_state = mux_state_borrow.take().unwrap();
+
         shell.state.insert(mux_state);
 
         shell.builtins.insert("mux", MuxBuiltin::new());
         shell.lang = Box::new(MuxLang::new());
-        shell.hooks.insert(swap_lang_options);
 
         Ok(())
     }
@@ -141,82 +158,18 @@ impl Lang for MuxLang {
             return Ok(CmdOutput::error());
         };
 
-        let (lang_name, lang) = state.current_lang();
-        lang.eval(sh, ctx, rt, cmd)
+        state.current_lang().eval(sh, ctx, rt, cmd)
     }
 
     fn name(&self) -> String {
         "mux".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
-        //TODO check if open quotes or brackets
-        // TODO this is super duplicated code
-
-        if let Some(last_char) = cmd.chars().last() {
-            if last_char == '\\' {
-                return true;
-            }
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+        let Some(mux_state) = state.ctx.state.get::<MuxState>() else {
+            return false;
         };
-
-        let mut brackets: Vec<Token> = vec![];
-
-        let lexer = Lexer::new(cmd.as_str());
-
-        for t in lexer {
-            if let Ok(token) = t {
-                match token.1 {
-                    Token::LBRACE => brackets.push(token.1),
-                    Token::LPAREN => brackets.push(token.1),
-                    Token::RPAREN => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LPAREN {
-                                brackets.pop();
-                            } else {
-                                return false;
-                            }
-                        }
-                    },
-                    Token::RBRACE => {
-                        if let Some(bracket) = brackets.last() {
-                            if bracket == &Token::LBRACE {
-                                brackets.pop();
-                            } else {
-                                return false;
-                            }
-                        }
-                    },
-                    Token::WORD(w) => {
-                        if let Some(c) = w.chars().next() {
-                            if c == '\'' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\'';
-                                } else {
-                                    return true;
-                                }
-                            }
-                            if c == '\"' {
-                                if w.len() == 1 {
-                                    return true;
-                                }
-
-                                if let Some(e) = w.chars().last() {
-                                    return e != '\"';
-                                } else {
-                                    return true;
-                                }
-                            }
-                        }
-                    },
-
-                    _ => (),
-                }
-            }
-        }
-
-        !brackets.is_empty()
+        let lang = mux_state.current_lang();
+        lang.needs_line_check(state)
     }
 }

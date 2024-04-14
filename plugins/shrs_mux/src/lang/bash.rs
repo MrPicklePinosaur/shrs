@@ -1,12 +1,7 @@
 use std::{
     cell::RefCell,
-    collections::HashMap,
-    fmt::format,
-    io::{BufRead, BufReader, Read, Write},
-    ops::Add,
-    os::unix::process::ExitStatusExt,
-    process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, ExitStatus, Stdio},
-    sync::Arc,
+    io::{BufReader, Write},
+    process::{Child, Command, Stdio},
 };
 
 use shrs::{
@@ -80,7 +75,7 @@ impl Lang for BashLang {
         "bash".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

@@ -16,11 +16,6 @@ use tokio::{
     },
 };
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
-
 struct SqliteLangCtx {
     /// Channel for writing to process
     write_tx: Sender<String>,
@@ -118,7 +113,7 @@ impl Lang for SqliteLang {
         "sqlite".to_string()
     }
 
-    fn needs_line_check(&self, cmd: String) -> bool {
+    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
         false
     }
 }

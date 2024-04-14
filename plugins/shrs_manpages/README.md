@@ -19,14 +19,21 @@ First add this plugin to your dependencies
 shrs_manpages = { version = "0.0.4" }
 ```
 
-Then include this plugin when initializing shrs
+Register your own keybinding with the manpage handler
 ```rust
 use shrs::prelude::*;
-use shrs_manpages::ManPagesPlugin;
+use shrs_manpages::{open_manpage};
+
+let keybinding = keybindings! {
+    |state|
+    "C-n" => ("Open manpage", { open_manpage(state); }),
+};
 
 let myshell = ShellBuilder::default()
-    .with_plugin(ManPagesPlugin)
+    .with_keybinding(keybinding)
     .build()
     .unwrap();
+
+myshell.run();
 
 ```

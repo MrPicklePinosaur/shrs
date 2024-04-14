@@ -24,7 +24,7 @@ fn _open_manpage<S: AsRef<OsStr>>(state: &mut LineStateBundle, man_command: S){
     // TODO: the old cursor buffer isn't actually preserved after executing the command.
     // so we need to save the old line and restore it after
     state.line.cb.clear();
-    // state.line.cb.insert(cursor_buffer::Location::Front(), &full_command);
+    // let _ = state.line.cb.insert(cursor_buffer::Location::Front(), &full_command);
 
     // TODO after handling keybinding it seems that the line accepts the contents, so we
     // automatically run the command that was present before - open issue to allow keybindings to

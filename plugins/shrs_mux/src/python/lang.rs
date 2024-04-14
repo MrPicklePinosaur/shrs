@@ -35,7 +35,7 @@ impl PythonLangCtx {
         // -q silences help message
         // the command given by the -c is used to remove the prompt
         let args = vec!["-i", "-q", "-c", "import sys; sys.ps1=''; sys.ps2=''"];
-        let mut instance = Command::new("python3")
+        let mut instance = Command::new("python")
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

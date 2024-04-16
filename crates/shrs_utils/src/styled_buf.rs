@@ -5,7 +5,7 @@ use unicode_width::UnicodeWidthStr;
 
 /// Text to be rendered by painter
 /// styles has a style for each character in content
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StyledBuf {
     pub content: String,
     styles: Vec<ContentStyle>,
@@ -207,7 +207,7 @@ impl From<&str> for StyledBuf {
 }
 impl<T: Display> From<StyledContent<T>> for StyledBuf {
     fn from(value: StyledContent<T>) -> Self {
-        StyledBuf::new(value.content().to_string().as_str())
+        StyledBuf::new(value.content().to_string().as_str()).style(*value.style())
     }
 }
 impl<T: Display> From<Option<StyledContent<T>>> for StyledBuf {

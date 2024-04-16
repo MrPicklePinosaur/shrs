@@ -2,7 +2,6 @@
 
 use std::{
     cell::RefCell,
-    collections::VecDeque,
     env,
     path::{Path, PathBuf},
     process::ExitStatus,
@@ -14,7 +13,7 @@ use dirs::home_dir;
 use log::{error, info, warn};
 use shrs_job::JobManager;
 
-use crate::{history::History, prelude::*, readline};
+use crate::{history::History, prelude::*};
 /// Constant shell data
 ///
 /// Data here is generally not mutated at runtime.

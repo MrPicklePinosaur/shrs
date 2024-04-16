@@ -1,8 +1,5 @@
 use std::{
-    cell::RefCell,
-    env,
     io::Write,
-    net::TcpStream,
     sync::{Arc, OnceLock},
 };
 
@@ -11,12 +8,10 @@ use shrs::prelude::*;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
     runtime,
-    sync::{
-        mpsc::{self, Sender},
-        RwLock,
-    },
+    sync::mpsc::{self, Sender},
 };
 
+#[allow(unused)]
 struct SshLangCtx {
     session: Arc<Session>,
     shell: Child<Arc<Session>>,
@@ -109,9 +104,9 @@ impl SshLang {
 impl Lang for SshLang {
     fn eval(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        _sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
@@ -129,7 +124,7 @@ impl Lang for SshLang {
         "ssh".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
         false
     }
 }

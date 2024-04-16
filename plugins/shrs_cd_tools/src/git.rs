@@ -5,7 +5,7 @@ use std::{path::PathBuf, process::Command, str};
 use shrs::anyhow;
 use thiserror::Error;
 
-use crate::query::{MetadataParser, Query, QueryBuilder, QueryBuilderError, QueryResult};
+use crate::query::{Query, QueryBuilder, QueryBuilderError, QueryResult};
 
 #[derive(Debug)]
 pub struct Git {

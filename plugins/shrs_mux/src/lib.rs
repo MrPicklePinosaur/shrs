@@ -4,12 +4,7 @@ mod interpreter;
 mod lang;
 pub mod python;
 
-use std::{
-    borrow::BorrowMut,
-    cell::RefCell,
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::anyhow;
 use builtin::MuxBuiltin;
@@ -77,6 +72,7 @@ impl MuxState {
 }
 
 #[derive(Clone)]
+#[allow(unused)]
 /// Hook that emitted when the language is changed
 pub struct ChangeLangCtx {
     old_lang: String,

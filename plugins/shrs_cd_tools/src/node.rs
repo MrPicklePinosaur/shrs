@@ -20,7 +20,7 @@ pub struct NodeJs {
     pub version: String,
 }
 
-fn package_json_parser(query_res: &mut QueryResult, content: &String) -> anyhow::Result<()> {
+fn package_json_parser(_query_res: &mut QueryResult, _content: &String) -> anyhow::Result<()> {
     Ok(())
 }
 
@@ -49,7 +49,6 @@ pub fn module() -> Result<Query, QueryBuilderError> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use shrs::anyhow;
 

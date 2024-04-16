@@ -1,6 +1,5 @@
 //! Shell prompt
 
-use crossterm::style::{ContentStyle, StyledContent};
 use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
 use super::LineStateBundle;

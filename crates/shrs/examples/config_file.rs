@@ -19,9 +19,9 @@ fn main() {
 
     let alias = Alias::from_iter(myconfig.aliases);
     let mut env = Env::default();
-    env.load();
+    env.load().expect("Couldnt load environment");
     for (ref k, ref v) in myconfig.envs {
-        env.set(k, v);
+        env.set(k, v).unwrap();
     }
 
     let myshell = ShellBuilder::default()
@@ -30,5 +30,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().unwrap();
 }

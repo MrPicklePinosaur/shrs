@@ -7,5 +7,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error while running shell");
 }

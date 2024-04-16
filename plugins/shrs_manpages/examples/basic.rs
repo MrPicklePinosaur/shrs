@@ -1,8 +1,7 @@
-use shrs::{prelude::*, keybindings};
-use shrs_manpages::{open_manpage};
+use shrs::{keybindings, prelude::*};
+use shrs_manpages::open_manpage;
 
 fn main() {
-
     let keybinding = keybindings! {
         |state|
         "C-n" => ("Open manpage", { open_manpage(state); }),
@@ -13,5 +12,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error while running shell");
 }

@@ -3,7 +3,7 @@ use std::{
     process::{ChildStderr, ChildStdout},
 };
 
-use shrs::prelude::{Context, OutputWriter};
+use shrs::prelude::Context;
 
 pub fn read_out(
     ctx: &mut Context,

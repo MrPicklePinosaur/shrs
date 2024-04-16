@@ -3,8 +3,6 @@
 //!
 mod builtin;
 
-use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
-
 use builtin::AgainBuiltin;
 use shrs::prelude::*;
 
@@ -56,7 +54,6 @@ fn after_command_hook(
 
 #[cfg(test)]
 mod tests {
-    use shrs::plugin::ShellPlugin;
 
     use crate::{OutputCapturePlugin, ShellBuilder};
 

@@ -23,5 +23,5 @@ fn main() {
 
     let myshell = ShellBuilder::default().with_alias(alias).build().unwrap();
 
-    myshell.run();
+    myshell.run().unwrap();
 }

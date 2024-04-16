@@ -9,11 +9,11 @@ fn main() {
         level: LevelFilter::Debug,
     };
 
-    logger.init();
+    logger.init().unwrap();
 
-    let readline = LineBuilder::default().build().unwrap();
+    let _readline = LineBuilder::default().build().unwrap();
 
     let myshell = ShellBuilder::default().build().unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error when running shell");
 }

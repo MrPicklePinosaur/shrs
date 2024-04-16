@@ -1,4 +1,4 @@
-use std::{process::{Command, Stdio}, ffi::OsStr};
+use std::{ffi::OsStr, process::Command};
 
 use shrs::prelude::*;
 
@@ -8,17 +8,19 @@ pub fn open_manpage(state: &mut LineStateBundle) {
     _open_manpage(state, "man")
 }
 
-pub fn open_manpage_with<S: AsRef<OsStr>>(state: &mut LineStateBundle,man_command: S) {
+pub fn open_manpage_with<S: AsRef<OsStr>>(state: &mut LineStateBundle, man_command: S) {
     _open_manpage(state, man_command)
 }
 
 /// Grab the current line and attempt to open man page of command
-fn _open_manpage<S: AsRef<OsStr>>(state: &mut LineStateBundle, man_command: S){
+fn _open_manpage<S: AsRef<OsStr>>(state: &mut LineStateBundle, man_command: S) {
     // TODO IFS
     let full_command = state.line.get_full_command();
-    let Some(command) = full_command.split(' ').next() else { return; };
+    let Some(command) = full_command.split(' ').next() else {
+        return;
+    };
 
-    // Spawn man command and pass `command` to it as the man page to open 
+    // Spawn man command and pass `command` to it as the man page to open
     Command::new(man_command).arg(command).spawn().unwrap();
 
     // TODO: the old cursor buffer isn't actually preserved after executing the command.

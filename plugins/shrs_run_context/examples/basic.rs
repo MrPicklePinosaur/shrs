@@ -12,5 +12,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error when runnign shell");
 }

@@ -1,7 +1,5 @@
 //! Syntax highlighting
 
-use std::{collections::HashMap, usize};
-
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
@@ -20,7 +18,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf {
+    fn highlight(&self, _state: &LineStateBundle, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
@@ -67,7 +65,7 @@ impl SyntaxHighlighter {
 }
 
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf {
+    fn highlight(&self, _state: &LineStateBundle, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::new(&buf).style(self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {

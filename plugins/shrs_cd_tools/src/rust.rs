@@ -40,7 +40,6 @@ pub fn module() -> Result<Query, QueryBuilderError> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use shrs::anyhow;
 

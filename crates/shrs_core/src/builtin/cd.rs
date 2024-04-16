@@ -5,7 +5,6 @@ use clap::Parser;
 use super::BuiltinCmd;
 use crate::{
     prelude::CmdOutput,
-    prompt_content_queue::PromptContent,
     shell::{set_working_dir, Context, Runtime, Shell},
 };
 

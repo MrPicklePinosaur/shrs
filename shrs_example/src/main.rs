@@ -1,29 +1,20 @@
 use std::{
-    collections::HashMap,
-    default, fs,
+    fs,
     io::{stdout, BufWriter},
     path::PathBuf,
     process::Command,
 };
 
-use ::crossterm::{
-    event::{KeyCode, KeyEvent, KeyModifiers},
-    style::{Attribute, Color, StyledContent},
-};
 use shrs::{
     history::FileBackedHistory,
     keybindings,
-    prelude::{
-        cursor_buffer::{CursorBuffer, Location},
-        styled_buf::StyledBuf,
-        *,
-    },
+    prelude::{styled_buf::StyledBuf, *},
 };
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
-use shrs_mux::{python::*, BashLang, MuxHighlighter, MuxPlugin, MuxState, NuLang, SshLang};
+use shrs_mux::{python::*, BashLang, MuxHighlighter, MuxPlugin, MuxState, NuLang};
 use shrs_output_capture::OutputCapturePlugin;
 use shrs_rhai::RhaiPlugin;
 use shrs_rhai_completion::CompletionsPlugin;
@@ -95,13 +86,14 @@ fn main() {
     let config_dir = dirs::home_dir().unwrap().as_path().join(".config/shrs");
     // also log when creating dir
     // TODO ignore errors for now (we dont care if dir already exists)
-    fs::create_dir_all(config_dir.clone());
+    let _d = fs::create_dir_all(config_dir.clone());
 
     // =-=-= Environment variables =-=-=
     // Load environment variables from calling shell
     let mut env = Env::default();
-    env.load();
-    env.set("SHELL_NAME", "shrs_example");
+    env.load().expect("Couldn't load env");
+    env.set("SHELL_NAME", "shrs_example")
+        .expect("Couldnt set env var");
 
     let builtins = Builtins::default();
 
@@ -130,7 +122,7 @@ fn main() {
     // Add basic keybindings
     let keybinding = keybindings! {
         |state|
-        "C-l" => ("Clear the screen", { Command::new("clear").spawn()}),
+        "C-l" => ("Clear the screen", { Command::new("clear").spawn().expect("Couldn't clear screen")}),
         "C-p" => ("Move up one in the command history", {
             if let Some(cd_state) = state.ctx.state.get_mut::<CdStackState>() {
                 if let Some(new_path) = cd_state.down() {
@@ -192,7 +184,7 @@ fn main() {
      -> anyhow::Result<()> {
         let welcome_str = format!(
             r#"
-        __         
+        __
    ___ / /  _______
   (_-</ _ \/ __(_-<
  /___/_//_/_/ /___/

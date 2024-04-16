@@ -1,5 +1,5 @@
 use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
-
+/// Describes the output of a command
 #[derive(Clone, Debug)]
 pub struct CmdOutput {
     pub stdout: String,

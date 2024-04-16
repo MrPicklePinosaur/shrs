@@ -2,6 +2,7 @@ use shrs::prelude::*;
 use shrs_derive_completion::Completion;
 
 #[derive(Completion)]
+#[allow(unused)]
 struct MyCli {
     #[flag(long = "help", short)]
     help: bool,
@@ -18,5 +19,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error while running shell");
 }

@@ -14,16 +14,12 @@ use ::crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use clap::builder;
-use shrs_utils::{
-    cursor_buffer::{CursorBuffer, Location},
-    styled_buf::StyledBuf,
-};
+use shrs_utils::cursor_buffer::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    prelude::{AliasRuleCtx, Completer, Completion, CompletionCtx, ReplaceMethod},
+    prelude::{Completion, CompletionCtx, ReplaceMethod},
     shell::{Context, Runtime, Shell},
 };
 
@@ -223,8 +219,8 @@ impl Line {
         struct CleanUp;
         impl Drop for CleanUp {
             fn drop(&mut self) {
-                disable_raw_mode();
-                execute!(std::io::stdout(), DisableBracketedPaste);
+                let _ = disable_raw_mode();
+                let _ = execute!(std::io::stdout(), DisableBracketedPaste);
             }
         }
         let _cleanup = CleanUp;
@@ -450,8 +446,8 @@ impl Line {
                 // if current input is empty exit the shell, otherwise treat it as enter
                 if state.line.cb.is_empty() {
                     // TODO maybe unify exiting the shell
-                    disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
-                                        // handling cleanup code
+                    let _ = disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
+                                                // handling cleanup code
                     std::process::exit(0);
                 } else {
                     self.buffer_history.clear();

@@ -1,22 +1,13 @@
 //! Scan file system to match project type
 
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-    ffi::OsString,
-    fs,
-    marker::PhantomData,
-    path::Path,
-};
+use std::{collections::HashMap, ffi::OsString, fs, path::Path};
 
 use anymap::AnyMap;
-use multimap::MultiMap;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json::Value;
 use shrs::anyhow;
 
 #[derive(Builder)]
 #[builder(pattern = "owned")]
+#[allow(unused)]
 pub struct Query {
     /// Required files (exact match)
     #[builder(default = "Vec::new()")]
@@ -132,12 +123,12 @@ impl Query {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, path::PathBuf};
+    use std::path::PathBuf;
 
     use serde::Deserialize;
     use shrs::anyhow;
 
-    use super::{MetadataParser, QueryBuilder, QueryResult};
+    use super::{QueryBuilder, QueryResult};
 
     #[test]
     fn basic() {

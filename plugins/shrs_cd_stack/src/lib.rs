@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet, LinkedList},
+    collections::LinkedList,
     env::current_dir,
     path::{Path, PathBuf},
 };
@@ -47,9 +47,9 @@ impl CdStackState {
 }
 
 fn change_dir_hook(
-    sh: &Shell,
+    _sh: &Shell,
     ctx: &mut Context,
-    rt: &mut Runtime,
+    _rt: &mut Runtime,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
     if let Some(state) = ctx.state.get_mut::<CdStackState>() {

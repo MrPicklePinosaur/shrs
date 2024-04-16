@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use shrs_utils::cursor_buffer::Location;
-
-use super::line::LineState;
 
 ///Controls when snippet should be applied
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]

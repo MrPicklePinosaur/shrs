@@ -12,7 +12,6 @@ pub mod rust;
 
 use std::collections::HashMap;
 
-use anymap::AnyMap;
 use query::{Query, QueryResult};
 use shrs::prelude::{styled_buf::StyledBuf, *};
 
@@ -85,7 +84,7 @@ fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<(
             let mut query_res = module.scan(&sh_rt.working_dir);
             if query_res.matched {
                 // NOTE we ignore errors in metadata fn
-                module.metadata_fn(&mut query_res);
+                let _ = module.metadata_fn(&mut query_res);
                 updated.insert(mod_name.to_string(), query_res);
             }
         }

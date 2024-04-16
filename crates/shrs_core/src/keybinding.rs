@@ -5,10 +5,7 @@ use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
-use crate::{
-    prelude::LineStateBundle,
-    shell::{Context, Runtime, Shell},
-};
+use crate::prelude::LineStateBundle;
 
 pub type BindingFn = dyn Fn(&mut LineStateBundle);
 
@@ -25,9 +22,11 @@ pub type Binding = (KeyCode, KeyModifiers);
 #[macro_export]
 macro_rules! keybindings {
     // TODO temp hacky macro
+
     (|$state:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
         use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
         use $crate::prelude::{LineStateBundle};
+        #[allow(unused)]
         DefaultKeybinding::from_iter([
             $((
                 parse_keybinding($binding).unwrap(),
@@ -111,7 +110,7 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 #[derive(Default)]
 pub struct DefaultKeybinding {
     // TODO this can't take closure right now
-    pub bindings: HashMap<Binding, (Box<BindingFn>)>,
+    pub bindings: HashMap<Binding, Box<BindingFn>>,
     pub info: HashMap<String, String>,
 }
 

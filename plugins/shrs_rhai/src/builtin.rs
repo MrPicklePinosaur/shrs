@@ -1,15 +1,12 @@
-use std::error::Error;
-
-use rhai::{Array, Engine, EvalAltResult, Scope};
-use shrs::{anyhow::anyhow, prelude::*};
+use shrs::prelude::*;
 
 use crate::rhai::RhaiState;
 
 // Run functions defined in rhai script
 pub fn command_not_found_hook(
-    sh: &Shell,
+    _sh: &Shell,
     sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
+    _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // TODO this will make defined functions be shadowed by actual commands, not sure if this is
@@ -28,7 +25,7 @@ pub fn command_not_found_hook(
 
     // search all sourced scripts for function we wish to run
     for ast in state.ast.values() {
-        state
+        let _r = state
             .engine
             .call_fn::<()>(&mut state.scope, ast, cmd_name, ());
     }
@@ -48,9 +45,9 @@ impl RhaiBuiltin {
 impl BuiltinCmd for RhaiBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
+        _rt: &mut Runtime,
         args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         let Some(state) = ctx.state.get_mut::<RhaiState>() else {
@@ -74,7 +71,10 @@ impl BuiltinCmd for RhaiBuiltin {
             // Always insert in case script file was modified during runtime of shell
             state.ast.insert(file.to_string(), ast.clone());
 
-            state.engine.run_ast_with_scope(&mut state.scope, &ast);
+            state
+                .engine
+                .run_ast_with_scope(&mut state.scope, &ast)
+                .expect("unable to run ast");
         }
 
         Ok(CmdOutput::success())

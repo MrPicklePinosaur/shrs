@@ -5,10 +5,12 @@ use super::{
 };
 
 // completions for git
+#[allow(dead_code)]
 pub fn git_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     default_format(vec!["status".into(), "add".into(), "commit".into()])
 }
 
+#[allow(dead_code)]
 pub fn git_flag_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     default_format(vec!["--version".into(), "--help".into(), "--bare".into()])
 }

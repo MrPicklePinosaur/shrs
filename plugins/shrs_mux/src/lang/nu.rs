@@ -13,17 +13,17 @@ impl NuLang {
 impl Lang for NuLang {
     fn eval(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        _sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
-        let mut handle = Command::new("nu")
+        let handle = Command::new("nu")
             .args(vec!["-c", &cmd])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
-        let output = handle.wait_with_output()?;
+        handle.wait_with_output()?;
         // ctx.out.print(output.stdout);
 
         Ok(CmdOutput::success())
@@ -33,7 +33,7 @@ impl Lang for NuLang {
         "nu".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
         false
     }
 }

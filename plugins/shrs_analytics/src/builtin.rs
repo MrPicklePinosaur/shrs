@@ -1,4 +1,4 @@
-use shrs::{anyhow::Result, prelude::*};
+use shrs::prelude::*;
 
 use crate::AnalyticsState;
 
@@ -7,10 +7,10 @@ pub struct AnalyticsBuiltin;
 impl BuiltinCmd for AnalyticsBuiltin {
     fn run(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
+        _rt: &mut Runtime,
+        _args: &[String],
     ) -> anyhow::Result<CmdOutput> {
         //Args, timeframe; This session or all time
         //which metric

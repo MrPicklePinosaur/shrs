@@ -11,6 +11,7 @@ use crate::{
 // use crate::eval::{command_output, eval_command},
 
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum PosixError {
     /// Error when attempting file redirection
     #[error("Redirection Error: {0}")]
@@ -104,7 +105,9 @@ impl Lang for PosixLang {
         let (procs, pgid) = match eval2::eval_command(&mut job_manager, &cmd, None, None) {
             Ok((procs, pgid)) => (procs, pgid),
             Err(PosixError::CommandNotFound(_)) => {
-                sh.hooks.run(sh, ctx, rt, CommandNotFoundCtx {});
+                sh.hooks
+                    .run(sh, ctx, rt, CommandNotFoundCtx {})
+                    .expect("Error in hook");
                 return Ok(CmdOutput::error_with_status(127));
             },
             _ => return Ok(CmdOutput::error()),

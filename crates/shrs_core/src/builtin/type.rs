@@ -1,6 +1,5 @@
 use std::fs::metadata;
 
-use anyhow::Error;
 use clap::Parser;
 
 use super::BuiltinCmd;
@@ -108,19 +107,27 @@ impl BuiltinCmd for TypeBuiltin {
     ) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
-        for name in cli.names.iter() {
-            analyze_name(
-                name,
-                cli.path_search_only,
-                cli.path_result_only,
-                cli.type_only,
-                cli.all,
-                sh,
-                ctx,
-                rt,
-            );
-        }
+        let success = cli
+            .names
+            .iter()
+            .map(|n| {
+                analyze_name(
+                    n,
+                    cli.path_search_only,
+                    cli.path_result_only,
+                    cli.type_only,
+                    cli.all,
+                    sh,
+                    ctx,
+                    rt,
+                )
+            })
+            .all(|r| r.is_ok());
 
-        Ok(CmdOutput::success())
+        if success {
+            Ok(CmdOutput::success())
+        } else {
+            Ok(CmdOutput::error())
+        }
     }
 }

@@ -19,7 +19,7 @@ use super::error_theme::PythonErrorTheme;
 struct PythonLangCtx {
     /// Channel for writing to process
     write_tx: Sender<String>,
-    instance: Child,
+    _instance: Child,
 }
 
 impl PythonLangCtx {
@@ -83,7 +83,10 @@ impl PythonLangCtx {
             }
         });
 
-        Self { instance, write_tx }
+        Self {
+            _instance: instance,
+            write_tx,
+        }
     }
 }
 
@@ -106,9 +109,9 @@ impl PythonLang {
 impl Lang for PythonLang {
     fn eval(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        _sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
@@ -126,7 +129,7 @@ impl Lang for PythonLang {
         "python".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
         false
     }
 }

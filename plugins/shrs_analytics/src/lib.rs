@@ -52,16 +52,16 @@ impl Plugin for AnalyticsPlugin {
 }
 
 fn record_dir_change(
-    sh: &Shell,
-    ctx: &mut Context,
-    rt: &mut Runtime,
-    cd_ctx: &ChangeDirCtx,
+    _sh: &Shell,
+    _ctx: &mut Context,
+    _rt: &mut Runtime,
+    _cd_ctx: &ChangeDirCtx,
 ) -> Result<()> {
     Ok(())
 }
 
 fn most_common_commands(
-    sh: &Shell,
+    _sh: &Shell,
     ctx: &mut Context,
     rt: &mut Runtime,
     cmd_ctx: &BeforeCommandCtx,

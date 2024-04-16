@@ -1,8 +1,7 @@
 //! Library functions to interact with shrs from rhai scripts
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
-use rhai::{Dynamic, Engine, ImmutableString, Scope, AST};
-use shrs::prelude::*;
+use rhai::{Engine, Scope, AST};
 
 pub struct RhaiState<'a> {
     pub engine: Engine,

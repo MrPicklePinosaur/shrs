@@ -4,7 +4,6 @@
 
 use std::{fs, path::PathBuf, rc::Rc};
 
-use ::anyhow::anyhow;
 use dirs::home_dir;
 use rhai::{Array, Engine, Scope};
 use setup::setup_engine;

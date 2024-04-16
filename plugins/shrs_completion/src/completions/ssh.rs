@@ -1,7 +1,4 @@
-use shrs::prelude::{
-    cmdname_eq_pred, Completer, Completion, CompletionCtx, DefaultCompleter, Pred, ReplaceMethod,
-    Rule,
-};
+use shrs::prelude::{cmdname_eq_pred, Completion, CompletionCtx, Pred, ReplaceMethod, Rule};
 
 use crate::helpers::known_hosts;
 
@@ -15,7 +12,7 @@ fn ssh_pred(ctx: &CompletionCtx) -> bool {
     cmdname_eq_pred("ssh".into())(ctx)
 }
 
-fn known_hosts_action(ctx: &CompletionCtx) -> Vec<Completion> {
+fn known_hosts_action(_ctx: &CompletionCtx) -> Vec<Completion> {
     // TODO currently hardcoded config path
     let mut config_path = dirs::home_dir().unwrap();
     config_path.push(".ssh/config");

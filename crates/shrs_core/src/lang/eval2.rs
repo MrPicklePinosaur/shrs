@@ -1,7 +1,5 @@
 // Lot of code based off of https://github.com/nuta/nsh/blob/main/src/eval.rs
 
-use std::process::ExitStatus;
-
 use glob::glob;
 use shrs_job::{run_external_command, JobManager, Output, Process, ProcessGroup, Stdin};
 use shrs_lang::ast;

@@ -2,24 +2,21 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     process::Stdio,
-    sync::{Arc, OnceLock},
+    sync::OnceLock,
 };
 
 use shrs::prelude::*;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter},
-    process::{Child, ChildStdin, ChildStdout, Command},
+    process::{Child, Command},
     runtime,
-    sync::{
-        mpsc::{self, Sender},
-        RwLock,
-    },
+    sync::mpsc::{self, Sender},
 };
 
 struct SqliteLangCtx {
     /// Channel for writing to process
     write_tx: Sender<String>,
-    instance: Child,
+    _instance: Child,
 }
 
 impl SqliteLangCtx {
@@ -68,7 +65,10 @@ impl SqliteLangCtx {
             }
         });
 
-        Self { instance, write_tx }
+        Self {
+            _instance: instance,
+            write_tx,
+        }
     }
 }
 
@@ -93,9 +93,9 @@ impl SqliteLang {
 impl Lang for SqliteLang {
     fn eval(
         &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        _sh: &Shell,
+        _ctx: &mut Context,
+        _rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
@@ -113,7 +113,7 @@ impl Lang for SqliteLang {
         "sqlite".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
         false
     }
 }

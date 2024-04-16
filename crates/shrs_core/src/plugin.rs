@@ -54,7 +54,7 @@ pub trait Plugin {
     ///
     /// Gets called once after the shell has completed initialization process, giving access to
     /// shell, context, and runtime state
-    fn post_init(&self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> anyhow::Result<()> {
+    fn post_init(&self, _sh: &Shell, _ctx: &mut Context, _rt: &mut Runtime) -> anyhow::Result<()> {
         Ok(())
     }
 

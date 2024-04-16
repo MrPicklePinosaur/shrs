@@ -32,7 +32,7 @@ pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTh
 pub use hooks::*;
 pub use line::{Line, LineBuilder, LineBuilderError, LineMode, LineStateBundle, Readline};
 pub use menu::{DefaultMenu, Menu};
-pub use prompt::{DefaultPrompt, Prompt, *};
+pub use prompt::{DefaultPrompt, Prompt};
 pub use snippet::*;
 pub use suggester::{DefaultSuggester, Suggester};
 pub use vi::*;

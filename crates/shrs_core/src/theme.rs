@@ -1,6 +1,6 @@
 //! Configuration for common color values bundled into a theme
 
-use crossterm::style::{Color, ContentStyle, Stylize};
+use crossterm::style::{ContentStyle, Stylize};
 
 pub struct Theme {
     pub out_style: ContentStyle,

@@ -1,6 +1,4 @@
-use std::{
-    fmt, os::unix::process::ExitStatusExt, process::ExitStatus, thread::sleep, time::Duration,
-};
+use std::{fmt, process::ExitStatus, thread::sleep, time::Duration};
 
 use log::*;
 use nix::{

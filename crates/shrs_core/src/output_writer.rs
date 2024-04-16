@@ -4,7 +4,7 @@ use std::{
 };
 
 use crossterm::{
-    style::{Color, ContentStyle, Print, PrintStyledContent, Stylize},
+    style::{ContentStyle, PrintStyledContent, Stylize},
     QueueableCommand,
 };
 use shrs_utils::styled_buf::StyledBuf;

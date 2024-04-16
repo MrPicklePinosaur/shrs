@@ -4,15 +4,9 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use shrs::{
-    lang::{Lexer, Token},
-    prelude::*,
-};
+use shrs::prelude::*;
 
-use crate::{
-    interpreter::{read_err, read_out},
-    MuxState,
-};
+use crate::interpreter::{read_err, read_out};
 
 pub struct BashLang {
     instance: RefCell<Child>,
@@ -36,7 +30,7 @@ impl BashLang {
 impl Lang for BashLang {
     fn eval(
         &self,
-        sh: &Shell,
+        _sh: &Shell,
         ctx: &mut Context,
         rt: &mut Runtime,
         cmd: String,
@@ -75,7 +69,7 @@ impl Lang for BashLang {
         "bash".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
         false
     }
 }

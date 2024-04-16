@@ -3,7 +3,7 @@ use shrs_rhai::RhaiPlugin;
 
 fn main() {
     let mut env = Env::default();
-    env.load();
+    env.load().expect("unable to load env");
 
     let myshell = ShellBuilder::default()
         .with_env(env)
@@ -11,5 +11,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error when running shell");
 }

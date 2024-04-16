@@ -1,7 +1,5 @@
 use shrs::prelude::{styled_buf::StyledBuf, *};
-use shrs_cd_tools::{
-    default_prompt, git::Git, node::NodeJs, rust::CargoToml, DirParsePlugin, DirParseState,
-};
+use shrs_cd_tools::{default_prompt, git::Git, DirParsePlugin, DirParseState};
 
 struct MyPrompt;
 
@@ -41,5 +39,5 @@ fn main() {
         .build()
         .unwrap();
 
-    myshell.run();
+    myshell.run().expect("Error while running shell");
 }

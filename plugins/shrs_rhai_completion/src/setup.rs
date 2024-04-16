@@ -1,5 +1,3 @@
-use std::any::type_name;
-
 use rhai::{Array, Dynamic, Engine};
 use shrs::prelude::*;
 

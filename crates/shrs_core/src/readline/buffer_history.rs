@@ -44,7 +44,7 @@ impl BufferHistory for DefaultBufferHistory {
         if self.index < self.hist.len().saturating_sub(1) {
             self.index += 1;
 
-            self.update_buffer(cb);
+            self.update_buffer(cb).unwrap();
         }
     }
 
@@ -52,7 +52,7 @@ impl BufferHistory for DefaultBufferHistory {
         if self.index > 0 {
             self.index = self.index.saturating_sub(1);
 
-            self.update_buffer(cb);
+            self.update_buffer(cb).unwrap();
         }
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "shrs_job"
-version = "0.0.4"
+version = "0.0.5"
 description = "utilities for managing jobs and processes"
 
 authors.workspace = true

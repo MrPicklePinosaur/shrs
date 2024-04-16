@@ -16,7 +16,7 @@ This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 First add this plugin to your dependencies
 ```toml
-shrs_output_capture = { version = "0.0.4" }
+shrs_output_capture = { version = "0.0.5" }
 ```
 
 Then include this plugin when initializing shrs

@@ -59,14 +59,10 @@ If you encounter and bugs are have any feature requests, please don't hesitate t
 
 ## COMMUNITY PLUGINS
 
-List of cool 3rd part plugins (create a PR to add yours to this list):
-
+List of cool 3rd part plugins and community built shells can be found in [awesome_shrs](https://github.com/MrPicklePinosaur/awesome_shrs). Some notable examples includes
 - [shrs_insulter](https://github.com/nithinmuthukumar/shrs_insulter): port of [bash insulter](https://github.com/hkbakke/bash-insulter)
-- [shrs_reedline](https://github.com/MrPicklePinosaur/shrs_reedline): adapter layer to use [reedline](https://github.com/nushell/reedline) instead of shrs line
+- [shrs_openai](https://github.com/MrPicklePinosaur/shrs_openai): chatgpt for your shell
+- [shrs_presence](https://github.com/nithinmuthukumar/shrs_presence): show shrs on discord presence
+- [shrs_sound](https://github.com/nithinmuthukumar/shrs_sound): play sounds in your shell
 
-## COMMUNITY SHELLS
-
-Full shells that were built with shrs
-
-- [pinosh](https://github.com/MrPicklePinosaur/pinosh): MrPicklePinosaur's build of shrs
 

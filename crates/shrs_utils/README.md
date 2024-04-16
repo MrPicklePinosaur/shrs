@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# shrs_line
+# shrs_utils
 
 variety of utilities
 

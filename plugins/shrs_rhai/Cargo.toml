@@ -1,6 +1,6 @@
 [package]
 name = "shrs_rhai"
-version = "0.0.4"
+version = "0.0.5"
 description = "run rhai scripts with shrs context"
 readme = "README.md"
 
@@ -13,6 +13,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.4" }
+shrs = { path = "../../crates/shrs", version = "^0.0.5" }
 rhai = { version = "1.16" }
 dirs = { version = "5" }

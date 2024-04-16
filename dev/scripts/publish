@@ -5,7 +5,6 @@ crates=(
     shrs_utils
     shrs_core
     shrs_lang
-    shrs_line
     shrs_vi
     shrs
 )
@@ -18,9 +17,11 @@ plugins=(
     shrs_completion
     shrs_derive_completion
     shrs_file_logger
+    shrs_manpages
     shrs_mux
     shrs_output_capture
     shrs_rhai
+    shrs_rhai_completion
     shrs_run_context
 )
 

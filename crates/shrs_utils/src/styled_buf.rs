@@ -8,7 +8,7 @@ use unicode_width::UnicodeWidthStr;
 #[derive(Clone, Debug)]
 pub struct StyledBuf {
     pub content: String,
-    pub styles: Vec<ContentStyle>,
+    styles: Vec<ContentStyle>,
 }
 macro_rules! stylize_buf_method {
     ($method_name:ident Attribute::$attribute:ident) => {

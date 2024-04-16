@@ -1,6 +1,6 @@
 [package]
 name = "shrs_output_capture"
-version = "0.0.4"
+version = "0.0.5"
 description = "Capture the previous stdout and stderr output"
 readme = "README.md"
 
@@ -13,4 +13,4 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.4" }
+shrs = { path = "../../crates/shrs", version = "^0.0.5" }

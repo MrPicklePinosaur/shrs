@@ -45,7 +45,7 @@ impl Plugin for AnalyticsPlugin {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
         shell.hooks.insert(record_dir_change);
         shell.hooks.insert(most_common_commands);
-        shell.state.insert(AnalyticsState::new());
+        shell.states.insert(AnalyticsState::new());
 
         Ok(())
     }

@@ -3,9 +3,8 @@
 use crossterm::event::KeyEvent;
 use shrs_core_macros::Ctx;
 
-use crate::prelude::Ctx;
-
 use super::LineMode;
+use crate::prelude::Ctx;
 
 /// Runs whenever the current mode of the line changes
 #[derive(Ctx)]

@@ -125,7 +125,7 @@ impl Plugin for MuxPlugin {
         let mut mux_state_borrow = self.mux_state.borrow_mut();
         let mux_state = mux_state_borrow.take().unwrap();
 
-        shell.state.insert(mux_state);
+        shell.states.insert(mux_state);
 
         shell.builtins.insert("mux", MuxBuiltin::new());
         shell.lang = Box::new(MuxLang::new());

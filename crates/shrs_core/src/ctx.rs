@@ -1,7 +1,8 @@
 use std::{path::PathBuf, process::ExitStatus, time::Duration};
 
-use crate::prelude::{CmdOutput, Runtime, ShellPlugin};
 use shrs_core_macros::Ctx;
+
+use crate::prelude::{CmdOutput, Runtime, ShellPlugin};
 
 pub trait Ctx: 'static {}
 

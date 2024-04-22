@@ -10,11 +10,11 @@
 // - env hook (when environment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
+use std::marker::PhantomData;
+
 use anyhow::Result;
 
-use crate::ctx::Ctx;
-use crate::state::States;
-use std::marker::PhantomData;
+use crate::{ctx::Ctx, state::States};
 
 macro_rules! impl_hook{
     (

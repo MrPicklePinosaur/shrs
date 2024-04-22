@@ -102,7 +102,7 @@ impl Plugin for DirParsePlugin {
             (String::from("git"), git::module().unwrap()),
         ]);
 
-        shell.state.insert(DirParseState::new(modules));
+        shell.states.insert(DirParseState::new(modules));
         shell.hooks.insert(startup_hook);
         shell.hooks.insert(change_dir_hook);
 

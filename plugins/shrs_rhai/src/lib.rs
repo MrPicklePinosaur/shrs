@@ -11,7 +11,7 @@ impl Plugin for RhaiPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.builtins.insert("source", builtin::RhaiBuiltin::new());
         shell.hooks.insert(command_not_found_hook);
-        shell.state.insert(RhaiState::new());
+        shell.states.insert(RhaiState::new());
         Ok(())
     }
 

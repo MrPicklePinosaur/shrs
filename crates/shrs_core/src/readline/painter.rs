@@ -14,7 +14,7 @@ use crossterm::{
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
-use super::{cursor::CursorStyle, line::LineStateBundle, menu::Menu, prompt::Prompt};
+use super::{line::LineStateBundle, menu::Menu, prompt::Prompt};
 use crate::prelude::Completion;
 pub struct Painter {
     /// The output buffer
@@ -210,9 +210,12 @@ impl Painter {
             .queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.borrow_mut().queue(cursor::Show)?;
 
+        let cursor_style = match line_ctx.line.mode() {
+            super::line::LineMode::Insert => line_ctx.ctx.theme.insert_style,
+            super::line::LineMode::Normal => line_ctx.sh.theme.normal_style,
+        };
         // set cursor style
-        let cursor_style = line_ctx.ctx.state.get_or_default::<CursorStyle>();
-        self.out.borrow_mut().queue(cursor_style.style)?;
+        self.out.borrow_mut().queue(cursor_style)?;
 
         self.out.borrow_mut().flush()?;
 

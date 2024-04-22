@@ -15,7 +15,6 @@
 //! ```
 
 pub mod buffer_history;
-pub mod cursor;
 pub mod highlight;
 pub mod hooks;
 pub mod line;
@@ -27,7 +26,6 @@ pub mod suggester;
 pub mod vi;
 
 pub use buffer_history::{BufferHistory, DefaultBufferHistory};
-pub use cursor::CursorStyle;
 pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme};
 pub use hooks::*;
 pub use line::{Line, LineBuilder, LineBuilderError, LineMode, LineStateBundle, Readline};

@@ -11,43 +11,44 @@ use std::{
 use anyhow::{anyhow, Result};
 use dirs::home_dir;
 use log::{error, info, warn};
+use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use crate::{history::History, prelude::*, state::States};
-pub struct HookStates {
+use crate::{
+    history::History, prelude::*, prompt_content_queue::PromptContentQueuePlugin, state::States,
+};
+/// Constant shell data
+///
+/// Data here is generally not mutated at runtime.
+pub struct Shell {
+    pub job_manager: JobManager,
+    /// Builtin shell functions that have access to the shell's context
+    pub builtins: Builtins,
+    /// Color theme
+    pub theme: Theme,
+    /// The command language
+    pub lang: Box<dyn Lang>,
+    /// Signals to be handled
+    pub signals: Signals,
+    pub keybinding: Box<dyn Keybinding>,
+    pub plugin_metas: Vec<PluginMeta>,
+    pub out: OutputWriter,
     pub hooks: Hooks,
     pub states: States,
 }
-impl HookStates {
-    pub fn run_hooks<C: Ctx>(&mut self, sh_ctx: &mut Context, ctx: C) -> Result<()> {
+impl Shell {
+    pub fn run_hooks<C: Ctx>(&mut self, ctx: &C) -> Result<()> {
         if let Some(hook_list) = self.hooks.get_mut::<C>() {
             for hook in hook_list.iter_mut() {
-                hook.run(&mut self.states, &ctx)?
+                hook.run(&mut self.states, ctx)?
             }
         }
         Ok(())
     }
 }
 
-/// Shared global shell context
-///
-/// Context here is shared by each subshell
-// TODO can technically unify shell and context
-pub struct Context {
-    pub job_manager: JobManager,
-    /// Color theme
-    pub theme: Theme,
-    /// Output stream
-    pub out: OutputWriter,
-    pub jobs: Jobs,
-    pub startup_time: Instant,
-    pub alias: Alias,
-    pub history: Box<dyn History>,
-    pub prompt_content_queue: PromptContentQueue,
-
-    pub completer: Box<dyn Completer>,
-    pub plugin_metas: Vec<PluginMeta>,
-}
+#[derive(Deref)]
+pub struct InitTime(Instant);
 
 /// Runtime context for the shell
 ///
@@ -130,6 +131,11 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub history: Box<dyn History>,
 
+    /// Keybindings, see [Keybinding]
+    #[builder(default = "Box::new(DefaultKeybinding::default())")]
+    #[builder(setter(custom))]
+    pub keybinding: Box<dyn Keybinding>,
+
     /// Configuration directory, easy access in the shell
     #[builder(default = "home_dir().unwrap().join(\".config/shrs\")")]
     pub config_dir: PathBuf,
@@ -144,9 +150,9 @@ impl ShellBuilder {
         self
     }
     pub fn with_state<T: 'static>(mut self, state: T) -> Self {
-        let mut cur_states = self.states.unwrap_or_default();
-        cur_states.insert(state);
-        self.states = Some(cur_states);
+        let mut cur_state = self.states.unwrap_or_default();
+        cur_state.insert(state);
+        self.states = Some(cur_state);
         self
     }
     pub fn with_lang(mut self, lang: impl Lang + 'static) -> Self {
@@ -159,6 +165,10 @@ impl ShellBuilder {
     }
     pub fn with_history(mut self, history: impl History + 'static) -> Self {
         self.history = Some(Box::new(history));
+        self
+    }
+    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
+        self.keybinding = Some(Box::new(keybinding));
         self
     }
     pub fn with_completer(mut self, completer: impl Completer + 'static) -> Self {
@@ -176,6 +186,9 @@ impl ShellConfig {
         // TODO some default values for Context and Runtime are duplicated by the #[builder(default = "...")]
         // calls in ShellBuilder, so we are sort of defining the full default here. Maybe end
         // up implementing Default for Context and Runtime
+
+        //get the initial time
+        self.states.insert(InitTime(Instant::now()));
 
         // run plugins first
         // TODO ownership issue here since other plugins can technically add plugins during init
@@ -200,41 +213,32 @@ impl ShellConfig {
             }
         }
 
-        let mut ctx = Context {
-            alias: self.alias,
-            out: OutputWriter::new(self.theme.out_style, self.theme.err_style),
-            theme: self.theme,
-
-            jobs: Jobs::default(),
-            startup_time: Instant::now(),
-            history: self.history,
-            prompt_content_queue: PromptContentQueue::new(),
-            completer: self.completer,
-            plugin_metas: plugins.iter().map(|p| p.meta()).collect(),
-            job_manager: JobManager::default(),
-        };
-        let mut rt = Runtime {
+        self.states.insert(self.alias);
+        self.states.insert(Jobs::default());
+        self.states.insert(self.history);
+        self.plugins.push(PromptContentQueuePlugin);
+        self.states.insert(self.completer);
+        self.states.insert(self.env);
+        self.states.insert(Runtime {
             env: self.env,
             working_dir: std::env::current_dir().unwrap(),
-            // TODO currently hardcoded
             name: "shrs".into(),
-            // TODO currently unused (since we have not implemented functions etc)
             args: vec![],
             exit_status: 0,
             config_dir: self.config_dir,
-            // functions: self.functions,
-        };
-
-        self.states.insert(rt);
-
-        let mut hs = HookStates {
+        });
+        let mut sh = Shell {
+            out: OutputWriter::new(self.theme.out_style, self.theme.err_style),
             hooks: self.hooks,
             states: self.states,
-        };
-        let mut sh = Shell {
+
+            job_manager: JobManager::default(),
             builtins: self.builtins,
+            theme: self.theme,
             lang: self.lang,
             signals: Signals::new().unwrap(),
+            keybinding: self.keybinding,
+            plugin_metas: plugins.iter().map(|p| p.meta()).collect(),
         };
 
         // run post init for plugins
@@ -257,120 +261,92 @@ impl ShellConfig {
             }
         }
 
-        sh.run(&mut ctx, &mut hs, &mut self.readline)
+        run_shell(&mut sh, &mut self.readline)
     }
 }
-/// Constant shell data
-///
-/// Data here is generally not mutated at runtime.
-pub struct Shell {
-    /// Builtin shell functions that have access to the shell's context
-    pub builtins: Builtins,
-    /// The command language
-    pub lang: Box<dyn Lang>,
-    /// Signals to be handled
-    pub signals: Signals,
-}
 
-impl Shell {
-    fn run(
-        &mut self,
-        ctx: &mut Context,
-        hs: &mut HookStates,
-        readline: &mut Box<dyn Readline>,
-    ) -> anyhow::Result<()> {
-        // init stuff
-        let res = hs.run_hooks(
-            ctx,
-            StartupCtx {
-                startup_time: ctx.startup_time.elapsed(),
-            },
-        );
+fn run_shell(sh: &mut Shell, readline: &mut Box<dyn Readline>) -> anyhow::Result<()> {
+    // init stuff
+    let res = sh.run_hooks(&StartupCtx {
+        startup_time: sh.states.get::<InitTime>().unwrap().elapsed(),
+    });
 
-        if let Err(_e) = res {
-            // TODO log that startup hook failed
-        }
+    if let Err(_e) = res {
+        // TODO log that startup hook failed
+    }
 
-        loop {
-            let line = readline.read_line(&mut self, ctx);
+    loop {
+        let line = readline.read_line(sh);
 
-            // attempt to expand alias
-            // TODO IFS
-            let mut words = line
-                .split(' ')
-                .map(|s| s.trim_start_matches("\\\n").trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect::<Vec<_>>();
-            if let Some(first) = words.get_mut(0) {
-                let alias_ctx = AliasRuleCtx {
-                    alias_name: first,
-                    sh: &self,
-                    ctx,
-                };
-
-                // Currently only use the last alias, can also render a menu
-                if let Some(expanded) = ctx.alias.get(&alias_ctx).last() {
-                    *first = expanded.to_string();
-                }
-            }
-            let line = words.join(" ");
-
-            // TODO not sure if hook should run here (since not all vars are expanded yet)
-            let hook_ctx = BeforeCommandCtx {
-                raw_command: line.clone(),
-                command: line.clone(),
-            };
-            hs.run_hooks(ctx, hook_ctx)?;
-
-            // Retrieve command name or return immediately (empty command)
-            let cmd_name = match words.first() {
-                Some(cmd_name) => cmd_name,
-                None => continue,
-            };
-
-            let builtin_cmd = self
-                .builtins
-                .iter()
-                .find(|(builtin_name, _)| *builtin_name == cmd_name)
-                .map(|(_, builtin_cmd)| builtin_cmd);
-
-            let mut cmd_output: CmdOutput = CmdOutput::error();
-            ctx.out.begin_collecting();
-            if let Some(builtin_cmd) = builtin_cmd {
-                let output = builtin_cmd.run(sh, ctx, rt, &words);
-                match output {
-                    Ok(o) => cmd_output = o,
-                    Err(e) => eprintln!("error: {e:?}"),
-                }
-            } else {
-                let output = sh.lang.eval(sh, ctx, rt, line.clone());
-                match output {
-                    Ok(o) => cmd_output = o,
-                    Err(e) => eprintln!("error: {e:?}"),
-                }
-            }
-            let (out, err) = ctx.out.end_collecting();
-            cmd_output.set_output(out, err);
-            let _ = sh.hooks.run(
+        // attempt to expand alias
+        // TODO IFS
+        let mut words = line
+            .split(' ')
+            .map(|s| s.trim_start_matches("\\\n").trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>();
+        if let Some(first) = words.get_mut(0) {
+            let alias_ctx = AliasRuleCtx {
+                alias_name: first,
                 sh,
-                ctx,
-                rt,
-                AfterCommandCtx {
-                    command: line,
-                    cmd_output,
-                },
-            );
+            };
 
-            // check up on running jobs
-            let mut exit_statuses = vec![];
-            ctx.jobs.retain(|status: ExitStatus| {
-                exit_statuses.push(status);
-            });
-
-            for status in exit_statuses.into_iter() {
-                sh.hooks
-                    .run::<JobExitCtx>(sh, ctx, rt, JobExitCtx { status })?;
+            // Currently only use the last alias, can also render a menu
+            if let Some(expanded) = ctx.alias.get(&alias_ctx).last() {
+                *first = expanded.to_string();
             }
+        }
+        let line = words.join(" ");
+
+        // TODO not sure if hook should run here (since not all vars are expanded yet)
+        let hook_ctx = BeforeCommandCtx {
+            raw_command: line.clone(),
+            command: line.clone(),
+        };
+        sh.run_hooks::<BeforeCommandCtx>(&hook_ctx)?;
+
+        // Retrieve command name or return immediately (empty command)
+        let cmd_name = match words.first() {
+            Some(cmd_name) => cmd_name,
+            None => continue,
+        };
+
+        let builtin_cmd = sh
+            .builtins
+            .iter()
+            .find(|(builtin_name, _)| *builtin_name == cmd_name)
+            .map(|(_, builtin_cmd)| builtin_cmd);
+
+        let mut cmd_output: CmdOutput = CmdOutput::error();
+        sh.out.begin_collecting();
+        if let Some(builtin_cmd) = builtin_cmd {
+            let output = builtin_cmd.run(sh, ctx, rt, &words);
+            match output {
+                Ok(o) => cmd_output = o,
+                Err(e) => eprintln!("error: {e:?}"),
+            }
+        } else {
+            let output = sh.lang.eval(sh, ctx, rt, line.clone());
+            match output {
+                Ok(o) => cmd_output = o,
+                Err(e) => eprintln!("error: {e:?}"),
+            }
+        }
+        let (out, err) = sh.out.end_collecting();
+        cmd_output.set_output(out, err);
+        let _ = sh.run_hooks(&AfterCommandCtx {
+            command: line,
+            cmd_output,
+        });
+
+        // check up on running jobs
+        let mut exit_statuses = vec![];
+        ctx.jobs.retain(|status: ExitStatus| {
+            exit_statuses.push(status);
+        });
+
+        for status in exit_statuses.into_iter() {
+            sh.run_hooks(&JobExitCtx { status })?;
         }
     }
 }
@@ -413,7 +389,7 @@ pub fn set_working_dir(
             old_dir: old_path,
             new_dir: path,
         };
-        if let Err(e) = sh.hooks.run(sh, ctx, rt, hook_ctx) {
+        if let Err(e) = sh.run_hooks(&hook_ctx) {
             error!("Error running change dir hook {e:?}");
         }
     }

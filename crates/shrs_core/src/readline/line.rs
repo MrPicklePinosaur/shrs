@@ -6,7 +6,6 @@ use std::{
 };
 
 use ::crossterm::{
-    cursor::SetCursorStyle,
     event::{
         read, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEvent, KeyModifiers,
     },
@@ -19,12 +18,13 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
+    keybinding::{DefaultKeybinding, Keybinding},
     prelude::{Completion, CompletionCtx, ReplaceMethod},
-    shell::{Context, Runtime, Shell},
+    shell::{Context, Shell},
 };
 
 pub trait Readline {
-    fn read_line(&mut self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> String;
+    fn read_line(&mut self, sh: &mut Shell, ctx: &mut Context) -> String;
 }
 
 /// Operating mode of readline
@@ -122,18 +122,12 @@ impl LineState {
 pub struct LineStateBundle<'a> {
     pub sh: &'a Shell,
     pub ctx: &'a mut Context,
-    pub rt: &'a mut Runtime,
     pub line: &'a mut LineState,
 }
 
 impl<'a> LineStateBundle<'a> {
-    pub fn new(
-        sh: &'a Shell,
-        ctx: &'a mut Context,
-        rt: &'a mut Runtime,
-        line: &'a mut LineState,
-    ) -> Self {
-        LineStateBundle { sh, ctx, rt, line }
+    pub fn new(sh: &'a Shell, ctx: &'a mut Context, line: &'a mut LineState) -> Self {
+        LineStateBundle { sh, ctx, line }
     }
 }
 
@@ -146,6 +140,11 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
+
+    /// Keybindings, see [Keybinding]
+    #[builder(default = "Box::new(DefaultKeybinding::default())")]
+    #[builder(setter(custom))]
+    pub keybinding: Box<dyn Keybinding>,
 
     #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
@@ -202,13 +201,17 @@ impl LineBuilder {
         self.prompt = Some(Box::new(prompt));
         self
     }
+    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
+        self.keybinding = Some(Box::new(keybinding));
+        self
+    }
 }
 
 impl Readline for Line {
     /// Start readline and read one line of user input
-    fn read_line(&mut self, sh: &Shell, ctx: &mut Context, rt: &mut Runtime) -> String {
+    fn read_line(&mut self, sh: &mut Shell, ctx: &mut Context) -> String {
         let mut line_state = LineState::new();
-        let mut state_bundle = LineStateBundle::new(sh, ctx, rt, &mut line_state);
+        let mut state_bundle = LineStateBundle::new(sh, ctx, &mut line_state);
         self.read_events(&mut state_bundle).unwrap()
     }
 }
@@ -263,7 +266,7 @@ impl Line {
                 // get search results from history and suggest the first result
                 if let Some(suggestion) = self.suggester.suggest(state) {
                     let trimmed_selection = suggestion[res.len()..].to_string();
-                    styled_buf.push(trimmed_selection.as_str(), state.sh.theme.suggestion_style);
+                    styled_buf.push(trimmed_selection.as_str(), state.ctx.theme.suggestion_style);
                 }
             }
 
@@ -283,7 +286,7 @@ impl Line {
             let event = read()?;
 
             if let Event::Key(key_event) = event {
-                if state.sh.keybinding.handle_key_event(state, key_event) {
+                if self.keybinding.handle_key_event(state, key_event) {
                     break;
                 }
             }
@@ -872,10 +875,6 @@ impl Line {
     }
 
     fn to_normal_mode(&self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        if let Some(cursor_style) = state.ctx.state.get_mut::<CursorStyle>() {
-            cursor_style.style = SetCursorStyle::BlinkingBlock;
-        }
-
         state.line.mode = LineMode::Normal;
 
         let hook_ctx = LineModeSwitchCtx {
@@ -889,10 +888,6 @@ impl Line {
     }
 
     fn to_insert_mode(&self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        if let Some(cursor_style) = state.ctx.state.get_mut::<CursorStyle>() {
-            cursor_style.style = SetCursorStyle::BlinkingBar;
-        }
-
         state.line.mode = LineMode::Insert;
 
         let hook_ctx = LineModeSwitchCtx {

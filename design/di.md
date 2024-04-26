@@ -86,3 +86,14 @@ where
 Need to implement IntoHook for both somehow, Specialization is unstable TODO other solutions.
 
 For Now: Shell is mandatory TODO put up issue
+
+# Another Iteration
+
+Move everything in Context to States
+Use States for everything
+Problems: Interior Mutability leads to runtime issues
+Easy to debug with rust_backtrace
+Current problem with completions borrow mut error
+
+Can't Query for Command in hooks being run in commands
+Can't use sh.run_hooks() forced to use sh.hooks.run

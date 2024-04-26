@@ -4,7 +4,7 @@ use crate::AnalyticsState;
 
 pub struct AnalyticsBuiltin;
 
-impl BuiltinCmd for AnalyticsBuiltin {
+impl Builtin for AnalyticsBuiltin {
     fn run(
         &self,
         _sh: &Shell,

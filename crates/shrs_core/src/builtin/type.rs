@@ -2,7 +2,7 @@ use std::fs::metadata;
 
 use clap::Parser;
 
-use super::BuiltinCmd;
+use super::Builtin;
 use crate::{
     prelude::{Alias, CmdOutput, OutputWriter, Runtime, States},
     shell::Shell,
@@ -20,9 +20,6 @@ struct Cli {
     all: bool,
     names: Vec<String>,
 }
-
-#[derive(Default)]
-pub struct TypeBuiltin {}
 
 fn analyze_name(
     name: &String,
@@ -102,30 +99,28 @@ fn analyze_name(
     Ok(CmdOutput::success())
 }
 
-impl BuiltinCmd for TypeBuiltin {
-    fn run(&self, sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
-        let cli = Cli::try_parse_from(args)?;
+pub fn type_builtin(sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
+    let cli = Cli::try_parse_from(args)?;
 
-        let success = cli
-            .names
-            .iter()
-            .map(|n| {
-                analyze_name(
-                    n,
-                    cli.path_search_only,
-                    cli.path_result_only,
-                    cli.type_only,
-                    cli.all,
-                    sh,
-                    ctx,
-                )
-            })
-            .all(|r| r.is_ok());
+    let success = cli
+        .names
+        .iter()
+        .map(|n| {
+            analyze_name(
+                n,
+                cli.path_search_only,
+                cli.path_result_only,
+                cli.type_only,
+                cli.all,
+                sh,
+                ctx,
+            )
+        })
+        .all(|r| r.is_ok());
 
-        if success {
-            Ok(CmdOutput::success())
-        } else {
-            Ok(CmdOutput::error())
-        }
+    if success {
+        Ok(CmdOutput::success())
+    } else {
+        Ok(CmdOutput::error())
     }
 }

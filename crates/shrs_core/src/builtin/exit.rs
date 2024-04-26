@@ -1,14 +1,9 @@
-use super::BuiltinCmd;
+use super::Builtin;
 use crate::{
     prelude::{CmdOutput, States},
     shell::{Runtime, Shell},
 };
 
-#[derive(Default)]
-pub struct ExitBuiltin {}
-
-impl BuiltinCmd for ExitBuiltin {
-    fn run(&self, sh: &Shell, _ctx: &mut States, _args: &[String]) -> anyhow::Result<CmdOutput> {
-        std::process::exit(0)
-    }
+pub fn exit_builtin(sh: &Shell, _args: &Vec<String>) -> anyhow::Result<CmdOutput> {
+    std::process::exit(0)
 }

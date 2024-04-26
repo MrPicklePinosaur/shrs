@@ -2,10 +2,11 @@ use clap::{Parser, Subcommand};
 use crossterm::style::Stylize;
 use shrs_utils::styled_buf;
 
-use super::BuiltinCmd;
+use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, Shell, States},
+    prelude::{CmdOutput, OutputWriter, Shell, State, States},
     shell::PluginMetas,
+    state::StateMut,
 };
 
 #[derive(Parser)]
@@ -22,90 +23,74 @@ enum Commands {
     Plugin { plugin_name: Vec<String> },
 }
 
-#[derive(Default)]
-pub struct HelpBuiltin {}
-impl BuiltinCmd for HelpBuiltin {
-    fn run(&self, sh: &Shell, states: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
-        let cli = Cli::try_parse_from(args)?;
+pub fn help_builtin(
+    mut out: StateMut<OutputWriter>,
+    plugin_metas: State<PluginMetas>,
+    sh: &Shell,
+    args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
+    let cli = Cli::try_parse_from(args)?;
 
-        match &cli.command {
-            Commands::Builtin => {
-                let cmds = sh.builtins.builtins.keys();
+    match &cli.command {
+        Commands::Builtin => {
+            let cmds = sh.builtins.builtins.keys();
 
-                states
-                    .get_mut::<OutputWriter>()
-                    .println("Builtin Commands")?;
+            out.println("Builtin Commands")?;
 
-                for cmd in cmds {
-                    states.get_mut::<OutputWriter>().println(cmd)?;
+            for cmd in cmds {
+                out.println(cmd)?;
+            }
+        },
+        Commands::Bindings => {
+            let info = sh.keybinding.get_info();
+
+            out.println("Key Bindings")?;
+
+            for (binding, desc) in info {
+                out.println(format!("{}: {}", binding, desc))?;
+            }
+        },
+        Commands::Plugin { plugin_name } => {
+            let plugin_name = plugin_name.join(" ");
+            if plugin_name.len() == 0 {
+                out.println(format!("{} Plugins installed", plugin_metas.len()))?;
+                for meta in plugin_metas.iter() {
+                    out.println("")?;
+
+                    out.print_buf(styled_buf!(meta.name.clone().red()))?;
+                    out.println("")?;
+                    out.println(meta.description.clone())?;
                 }
-            },
-            Commands::Bindings => {
-                let info = sh.keybinding.get_info();
-
-                states.get_mut::<OutputWriter>().println("Key Bindings")?;
-
-                for (binding, desc) in info {
-                    states
-                        .get_mut::<OutputWriter>()
-                        .println(format!("{}: {}", binding, desc))?;
-                }
-            },
-            Commands::Plugin { plugin_name } => {
-                let plugin_name = plugin_name.join(" ");
-                if plugin_name.len() == 0 {
-                    states.get_mut::<OutputWriter>().println(format!(
-                        "{} Plugins installed",
-                        states.get::<PluginMetas>().len()
-                    ))?;
-                    for meta in states.get::<PluginMetas>().iter() {
-                        states.get_mut::<OutputWriter>().println("")?;
-
-                        states
-                            .get_mut::<OutputWriter>()
-                            .print_buf(styled_buf!(meta.name.clone().red()))?;
-                        states.get_mut::<OutputWriter>().println("")?;
-                        states
-                            .get_mut::<OutputWriter>()
-                            .println(meta.description.clone())?;
-                    }
-                } else {
-                    let mut found = false;
-                    for meta in states.get::<PluginMetas>().iter() {
-                        if meta.name == plugin_name {
-                            found = true;
-                            states.get_mut::<OutputWriter>().println("")?;
-                            states
-                                .get_mut::<OutputWriter>()
-                                .print_buf(styled_buf!(meta.name.clone().green()))?;
-                            states.get_mut::<OutputWriter>().println("")?;
-                            match &meta.help {
-                                Some(help_text) => states
-                                    .get_mut::<OutputWriter>()
-                                    .println(help_text.clone())?,
-                                None => states
-                                    .get_mut::<OutputWriter>()
-                                    .println("No help message provided.")?,
-                            }
-                            break;
+            } else {
+                let mut found = false;
+                for meta in plugin_metas.iter() {
+                    if meta.name == plugin_name {
+                        found = true;
+                        out.println("")?;
+                        out.print_buf(styled_buf!(meta.name.clone().green()))?;
+                        out.println("")?;
+                        match &meta.help {
+                            Some(help_text) => out.println(help_text.clone())?,
+                            None => out.println("No help message provided.")?,
                         }
-                    }
-                    if !found {
-                        states.get_mut::<OutputWriter>().println("")?;
-                        states.get_mut::<OutputWriter>().print_buf(
-                            styled_buf!(format!(
-                                "'{}' was not found, please specify a valid plugin name.",
-                                plugin_name
-                            ))
-                            .red(),
-                        )?;
-                        states.get_mut::<OutputWriter>().println("")?;
+                        break;
                     }
                 }
-                states.get_mut::<OutputWriter>().println("")?;
-            },
-        }
-
-        Ok(CmdOutput::success())
+                if !found {
+                    out.println("")?;
+                    out.print_buf(
+                        styled_buf!(format!(
+                            "'{}' was not found, please specify a valid plugin name.",
+                            plugin_name
+                        ))
+                        .red(),
+                    )?;
+                    out.println("")?;
+                }
+            }
+            out.println("")?;
+        },
     }
+
+    Ok(CmdOutput::success())
 }

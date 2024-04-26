@@ -42,7 +42,7 @@ impl RhaiBuiltin {
     }
 }
 
-impl BuiltinCmd for RhaiBuiltin {
+impl Builtin for RhaiBuiltin {
     fn run(
         &self,
         _sh: &Shell,

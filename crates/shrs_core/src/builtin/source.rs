@@ -4,7 +4,7 @@ use clap::Parser;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use super::BuiltinCmd;
+use super::Builtin;
 use crate::{
     prelude::{CmdOutput, OutputWriter, States},
     shell::{Runtime, Shell},
@@ -19,43 +19,38 @@ struct Cli {
     source_file: String,
 }
 
-#[derive(Default)]
-pub struct SourceBuiltin {}
+pub fn source_builtin(sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
+    let cli = Cli::try_parse_from(args)?;
 
-impl BuiltinCmd for SourceBuiltin {
-    fn run(&self, sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
-        let cli = Cli::try_parse_from(args)?;
+    let file_path = PathBuf::from(&cli.source_file);
+    let file_contents = read_to_string(file_path)?;
 
-        let file_path = PathBuf::from(&cli.source_file);
-        let file_contents = read_to_string(file_path)?;
+    // read shebang from first line
+    let mut it = file_contents.lines();
 
-        // read shebang from first line
-        let mut it = file_contents.lines();
+    let interp = it
+        .next()
+        .and_then(|first_line| SHEBANG_REGEX.captures(first_line))
+        .and_then(|capture| capture.name("interp"));
 
-        let interp = it
-            .next()
-            .and_then(|first_line| SHEBANG_REGEX.captures(first_line))
-            .and_then(|capture| capture.name("interp"));
+    match interp {
+        Some(interp) => {
+            let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
+            ctx.get_mut::<OutputWriter>().println(s)?;
+            let mut _child = Command::new(interp.as_str())
+                .args(vec![cli.source_file])
+                .spawn()?;
 
-        match interp {
-            Some(interp) => {
-                let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
-                ctx.get_mut::<OutputWriter>().println(s)?;
-                let mut _child = Command::new(interp.as_str())
-                    .args(vec![cli.source_file])
-                    .spawn()?;
+            // need command output here
+            // TODO temp disable this
+            // command_output(sh, ctx, rt, &mut child)?;
 
-                // need command output here
-                // TODO temp disable this
-                // command_output(sh, ctx, rt, &mut child)?;
+            Ok(CmdOutput::success())
+        },
+        None => {
+            // otherwise evaluate with self
 
-                Ok(CmdOutput::success())
-            },
-            None => {
-                // otherwise evaluate with self
-
-                todo!()
-            },
-        }
+            todo!()
+        },
     }
 }

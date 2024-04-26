@@ -11,7 +11,7 @@ impl AgainBuiltin {
     }
 }
 
-impl BuiltinCmd for AgainBuiltin {
+impl Builtin for AgainBuiltin {
     fn run(
         &self,
         _sh: &Shell,

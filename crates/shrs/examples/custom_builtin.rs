@@ -18,7 +18,7 @@ impl BetterCdBuiltin {
     }
 }
 
-impl BuiltinCmd for BetterCdBuiltin {
+impl Builtin for BetterCdBuiltin {
     fn run(
         &self,
         sh: &Shell,

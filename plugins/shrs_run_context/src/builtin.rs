@@ -12,7 +12,7 @@ struct SaveBuiltinCli {
     context_name: String,
 }
 
-impl BuiltinCmd for SaveBuiltin {
+impl Builtin for SaveBuiltin {
     fn run(
         &self,
         _sh: &Shell,
@@ -55,7 +55,7 @@ struct LoadBuiltinCli {
     context_name: String,
 }
 
-impl BuiltinCmd for LoadBuiltin {
+impl Builtin for LoadBuiltin {
     fn run(
         &self,
         sh: &Shell,

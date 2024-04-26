@@ -10,14 +10,14 @@ use std::{
 
 use crate::prelude::{line::LineState, Runtime, Shell};
 
-pub trait HookParam {
+pub trait Param {
     type Item<'new>;
 
     fn retrieve<'r>(states: &'r States) -> Self::Item<'r>;
 }
 
 /// State store that uses types to index
-impl<'res, T: 'static> HookParam for State<'res, T> {
+impl<'res, T: 'static> Param for State<'res, T> {
     type Item<'new> = State<'new, T>;
 
     fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
@@ -28,7 +28,7 @@ impl<'res, T: 'static> HookParam for State<'res, T> {
     }
 }
 
-impl<'res, T: 'static> HookParam for StateMut<'res, T> {
+impl<'res, T: 'static> Param for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
     fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {

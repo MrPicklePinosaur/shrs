@@ -17,7 +17,7 @@ use anyhow::Result;
 use crate::{
     ctx::Ctx,
     prelude::{Shell, States},
-    state::HookParam,
+    state::Param,
 };
 impl<F, C: Ctx> Hook<C> for FunctionHook<(Shell, C), F>
 where
@@ -42,25 +42,25 @@ macro_rules! impl_hook{
     ) => {
         #[allow(non_snake_case)]
         #[allow(unused)]
-        impl<F, C:Ctx,$($params: HookParam),+> Hook<C> for FunctionHook<($($params,)*C), F>
+        impl<F, C:Ctx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as HookParam>::Item<'b>),+,&Shell,&C )->Result<()>
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
         {
             fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
                 fn call_inner<C:Ctx,$($params),+>(
                     f: impl Fn($($params),+,&Shell,&C)->Result<()>,
-                    $($params: $params),*
+                    $($params: $params),+
                     ,sh:&Shell
                     ,ctx:&C
                 ) ->Result<()>{
-                    f($($params),*,sh,&ctx)
+                    f($($params),+,sh,&ctx)
                 }
 
                 $(
                     let $params = $params::retrieve(&states);
-                )*
+                )+
 
                 call_inner(&self.f, $($params),+,sh,c)
             }
@@ -84,13 +84,13 @@ where
 
 macro_rules! impl_into_hook {
     (
-        $($params:ident),*
+        $($params:ident),+
     ) => {
-        impl<F, C:Ctx,$($params: HookParam),*> IntoHook<($($params,)*),C> for F
+        impl<F, C:Ctx,$($params: Param),+> IntoHook<($($params,)+),C> for F
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as HookParam>::Item<'b>),+,&Shell,&C )->Result<()>
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
         {
             type Hook = FunctionHook<($($params,)+C), Self>;
 

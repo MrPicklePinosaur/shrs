@@ -91,9 +91,14 @@ For Now: Shell is mandatory TODO put up issue
 
 Move everything in Context to States
 Use States for everything
+
 Problems: Interior Mutability leads to runtime issues
 Easy to debug with rust_backtrace
 Current problem with completions borrow mut error
 
-Can't Query for Command in hooks being run in commands
+Hopefully Can find a better way then RefCell for things that are used commonly in readline
+
+Can't mutate State in Commands
 Can't use sh.run_hooks() forced to use sh.hooks.run
+
+Builtin DI

@@ -39,8 +39,12 @@ pub fn e(sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!("wqrg");
     Ok(())
 }
-pub fn f(sh: &Shell, ctx: &SCtx) -> Result<()> {
+pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
     dbg!("wqwe");
+    cmd.add(|sh: &mut Shell, states: &States| {
+        dbg!("qw");
+    });
+
     Ok(())
 }
 pub fn g(sh: &Shell, ctx: &AfterCommandCtx) -> Result<()> {

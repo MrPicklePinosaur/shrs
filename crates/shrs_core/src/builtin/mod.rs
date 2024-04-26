@@ -22,14 +22,14 @@ use std::{
     marker::PhantomData,
 };
 
+use anyhow::Result;
+
+use self::{exit::exit_builtin, help::help_builtin};
 use crate::{
     prelude::{CmdOutput, States},
     shell::Shell,
     state::Param,
 };
-use anyhow::Result;
-
-use self::{exit::exit_builtin, help::help_builtin};
 // TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
 // just provide an easy way to override the default ones
 /// Store for all registered builtin commands

@@ -4,11 +4,11 @@ use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
 
-use super::line::LineStateBundle;
+use crate::prelude::States;
 
 pub trait Highlighter {
     /// highlight buf, state allows access to additional info
-    fn highlight(&self, state: &LineStateBundle, buf: &str) -> StyledBuf;
+    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf;
 }
 
 /// Simple highlighter that colors the entire line one color
@@ -18,7 +18,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, _state: &LineStateBundle, buf: &str) -> StyledBuf {
+    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
@@ -65,7 +65,7 @@ impl SyntaxHighlighter {
 }
 
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, _state: &LineStateBundle, buf: &str) -> StyledBuf {
+    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf {
         let mut styled_buf = StyledBuf::new(&buf).style(self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {

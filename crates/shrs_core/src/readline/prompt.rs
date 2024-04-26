@@ -2,12 +2,12 @@
 
 use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
-use super::LineStateBundle;
+use crate::prelude::States;
 
 /// Implement this trait to create your own prompt
 pub trait Prompt {
-    fn prompt_left(&self, line_ctx: &LineStateBundle) -> StyledBuf;
-    fn prompt_right(&self, line_ctx: &LineStateBundle) -> StyledBuf;
+    fn prompt_left(&self, ctx: &States) -> StyledBuf;
+    fn prompt_right(&self, ctx: &States) -> StyledBuf;
 }
 
 /// Default implementation for [Prompt]
@@ -16,11 +16,11 @@ pub struct DefaultPrompt {}
 
 impl Prompt for DefaultPrompt {
     // TODO i still don't like passing all this context down
-    fn prompt_left(&self, _line_ctx: &LineStateBundle) -> StyledBuf {
+    fn prompt_left(&self, ctx: &States) -> StyledBuf {
         styled_buf!("> ")
     }
 
-    fn prompt_right(&self, _line_ctx: &LineStateBundle) -> StyledBuf {
+    fn prompt_right(&self, ctx: &States) -> StyledBuf {
         styled_buf!()
     }
 }

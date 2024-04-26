@@ -10,11 +10,30 @@
 // - env hook (when environment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
+use anyhow::Result;
 use std::marker::PhantomData;
 
-use anyhow::Result;
+use crate::{
+    ctx::Ctx,
+    prelude::{Shell, States},
+    state::HookParam,
+};
+impl<F, C: Ctx> Hook<C> for FunctionHook<(Shell, C), F>
+where
+    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
+{
+    fn run(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
+        fn call_inner<C: Ctx>(
+            f: impl Fn(&Shell, &C) -> Result<()>,
+            sh: &Shell,
+            ctx: &C,
+        ) -> Result<()> {
+            f(&sh, &ctx)
+        }
 
-use crate::{ctx::Ctx, state::States};
+        call_inner(&self.f, sh, c)
+    }
+}
 
 macro_rules! impl_hook{
     (
@@ -24,25 +43,40 @@ macro_rules! impl_hook{
         #[allow(unused)]
         impl<F, C:Ctx,$($params: HookParam),+> Hook<C> for FunctionHook<($($params,)*C), F>
             where
-                for<'a, 'b> &'a mut F:
-                    FnMut( $($params),+,&C ) ->Result<()>+
-                    FnMut( $(<$params as HookParam>::Item<'b>),+,&C )->Result<()>
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
+                    Fn( $(<$params as HookParam>::Item<'b>),+,&Shell,&C )->Result<()>
         {
-            fn run(&mut self, states: &mut States, ctx: &C)->Result<()> {
+            fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
                 fn call_inner<C:Ctx,$($params),+>(
-                    mut f: impl FnMut($($params),+,&C)->Result<()>,
+                    f: impl Fn($($params),+,&Shell,&C)->Result<()>,
                     $($params: $params),*
+                    ,sh:&Shell
                     ,ctx:&C
                 ) ->Result<()>{
-                    f($($params),*,&ctx)
+                    f($($params),*,sh,&ctx)
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
+                    let $params = $params::retrieve(&states);
                 )*
 
-                call_inner(&mut self.f, $($params),+,ctx)
+                call_inner(&self.f, $($params),+,sh,c)
             }
+        }
+    }
+}
+
+impl<F, C: Ctx> IntoHook<(), C> for F
+where
+    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
+{
+    type Hook = FunctionHook<(Shell, C), Self>;
+
+    fn into_system(self) -> Self::Hook {
+        FunctionHook {
+            f: self,
+            marker: Default::default(),
         }
     }
 }
@@ -53,9 +87,9 @@ macro_rules! impl_into_hook {
     ) => {
         impl<F, C:Ctx,$($params: HookParam),*> IntoHook<($($params,)*),C> for F
             where
-                for<'a, 'b> &'a mut F:
-                    FnMut( $($params),+,&C ) ->Result<()>+
-                    FnMut( $(<$params as HookParam>::Item<'b>),+,&C )->Result<()>
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
+                    Fn( $(<$params as HookParam>::Item<'b>),+,&Shell,&C )->Result<()>
         {
             type Hook = FunctionHook<($($params,)+C), Self>;
 
@@ -69,27 +103,21 @@ macro_rules! impl_into_hook {
     }
 }
 
-pub trait HookParam {
-    type Item<'new>;
-
-    fn retrieve<'r>(states: &'r States) -> Self::Item<'r>;
-}
-
-struct FunctionHook<Input, F> {
+pub struct FunctionHook<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
 
 pub trait Hook<C: Ctx> {
-    fn run(&mut self, resources: &mut States, ctx: &C) -> Result<()>;
+    fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
 }
-
 impl_hook!(T1);
 impl_hook!(T1, T2);
 impl_hook!(T1, T2, T3);
 impl_hook!(T1, T2, T3, T4);
+impl_hook!(T1, T2, T3, T4, T5);
 
-trait IntoHook<Input, C: Ctx> {
+pub trait IntoHook<Input, C: Ctx> {
     type Hook: Hook<C>;
 
     fn into_system(self) -> Self::Hook;
@@ -99,8 +127,9 @@ impl_into_hook!(T1);
 impl_into_hook!(T1, T2);
 impl_into_hook!(T1, T2, T3);
 impl_into_hook!(T1, T2, T3, T4);
+impl_into_hook!(T1, T2, T3, T4, T5);
 
-type StoredHook<C> = Box<dyn Hook<C>>;
+pub type StoredHook<C> = Box<dyn Hook<C>>;
 #[derive(Default)]
 pub struct Hooks {
     hooks: anymap::Map,
@@ -110,6 +139,14 @@ impl Hooks {
         Self {
             hooks: anymap::Map::new(),
         }
+    }
+    pub fn run<C: Ctx>(&self, sh: &Shell, ctx: &States, c: C) -> Result<()> {
+        if let Some(hook_list) = self.get::<C>() {
+            for hook in hook_list.iter() {
+                hook.run(sh, ctx, &c)?
+            }
+        }
+        Ok(())
     }
 
     pub fn insert<I, C: Ctx, S: Hook<C> + 'static>(
@@ -127,7 +164,8 @@ impl Hooks {
             },
         };
     }
-    pub fn get_mut<C: Ctx>(&mut self) -> Option<&mut Vec<Box<dyn Hook<C>>>> {
-        self.hooks.get_mut::<Vec<StoredHook<C>>>()
+    /// gets hooks associated with Ctx
+    pub fn get<C: Ctx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
+        self.hooks.get::<Vec<StoredHook<C>>>()
     }
 }

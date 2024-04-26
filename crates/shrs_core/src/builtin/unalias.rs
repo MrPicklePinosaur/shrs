@@ -2,8 +2,8 @@ use clap::{Parser, Subcommand};
 
 use super::BuiltinCmd;
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{Alias, CmdOutput, States},
+    shell::{Runtime, Shell},
 };
 
 #[derive(Parser)]
@@ -20,22 +20,16 @@ enum Commands {}
 pub struct UnaliasBuiltin {}
 
 impl BuiltinCmd for UnaliasBuiltin {
-    fn run(
-        &self,
-        _sh: &Shell,
-        ctx: &mut Context,
-        _rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
+    fn run(&self, sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         if cli.a {
-            ctx.alias.clear();
+            ctx.get_mut::<Alias>().clear();
             return Ok(CmdOutput::success());
         }
 
         for alias in cli.aliases.iter() {
-            ctx.alias.unset(alias);
+            ctx.get_mut::<Alias>().unset(alias);
         }
 
         Ok(CmdOutput::success())

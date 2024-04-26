@@ -25,8 +25,8 @@ pub use self::{
     r#type::TypeBuiltin, source::SourceBuiltin, unalias::UnaliasBuiltin,
 };
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{CmdOutput, Ctx, Hook, StartupCtx, States},
+    shell::{Runtime, Shell},
 };
 
 // TODO could prob just be a map, to support arbitrary (user defined even) number of builtin commands
@@ -111,11 +111,5 @@ impl Default for Builtins {
 
 /// Implement this trait to define your own builtin command
 pub trait BuiltinCmd {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput>;
+    fn run(&self, sh: &Shell, states: &mut States, args: &[String]) -> anyhow::Result<CmdOutput>;
 }

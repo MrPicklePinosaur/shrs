@@ -4,8 +4,8 @@ use clap::Parser;
 
 use super::BuiltinCmd;
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{Alias, CmdOutput, OutputWriter, Runtime, States},
+    shell::Shell,
 };
 
 #[derive(Parser)]
@@ -31,20 +31,20 @@ fn analyze_name(
     type_only: bool,
     all: bool,
     sh: &Shell,
-    ctx: &mut Context,
-    rt: &mut Runtime,
+    states: &mut States,
 ) -> anyhow::Result<CmdOutput> {
     let mut name_found = false;
     if !path_search_only {
         // check if name is an alias
-        let alias_matches = ctx.alias.get_subst(name);
+        let alias = states.get::<Alias>();
+        let alias_matches = alias.get_subst(name);
         if alias_matches.is_some() {
             name_found = true;
             if !path_result_only {
                 if type_only {
-                    ctx.out.println("alias")?;
+                    states.get_mut::<OutputWriter>().println("alias")?;
                 } else {
-                    ctx.out.println(format!(
+                    states.get_mut::<OutputWriter>().println(format!(
                         "{} is aliased to `{}'",
                         name,
                         alias_matches.unwrap()
@@ -61,9 +61,11 @@ fn analyze_name(
             name_found = true;
             if !path_result_only {
                 if type_only {
-                    ctx.out.println("builtin")?;
+                    states.get_mut::<OutputWriter>().println("builtin")?;
                 } else {
-                    ctx.out.println(format!("{} is a shell builtin", name))?;
+                    states
+                        .get_mut::<OutputWriter>()
+                        .println(format!("{} is a shell builtin", name))?;
                 }
             }
             if !all {
@@ -73,16 +75,18 @@ fn analyze_name(
     }
 
     // check if name is in path
-    for dir in rt.env.get("PATH")?.split(":") {
+    for dir in states.get::<Runtime>().env.get("PATH")?.split(":") {
         let full_path = format!("{}/{}", dir, name);
         let md = metadata(&full_path);
         if md.is_ok() && md.unwrap().is_file() {
             if type_only {
-                ctx.out.println("file")?;
+                states.get_mut::<OutputWriter>().println("file")?;
             } else if path_search_only {
-                ctx.out.println(&full_path)?;
+                states.get_mut::<OutputWriter>().println(&full_path)?;
             } else {
-                ctx.out.println(format!("{} is {}", name, &full_path))?;
+                states
+                    .get_mut::<OutputWriter>()
+                    .println(format!("{} is {}", name, &full_path))?;
             }
             return Ok(CmdOutput::success());
         }
@@ -92,19 +96,14 @@ fn analyze_name(
         return Ok(CmdOutput::success());
     }
 
-    ctx.out
+    states
+        .get_mut::<OutputWriter>()
         .eprintln(format!("-shrs: type: {} not found", name))?;
     Ok(CmdOutput::success())
 }
 
 impl BuiltinCmd for TypeBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
+    fn run(&self, sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         let success = cli
@@ -119,7 +118,6 @@ impl BuiltinCmd for TypeBuiltin {
                     cli.all,
                     sh,
                     ctx,
-                    rt,
                 )
             })
             .all(|r| r.is_ok());

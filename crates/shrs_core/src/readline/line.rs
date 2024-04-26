@@ -18,13 +18,13 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    keybinding::{DefaultKeybinding, Keybinding},
-    prelude::{Completion, CompletionCtx, ReplaceMethod},
-    shell::{Context, Shell},
+    prelude::{Completer, Completion, CompletionCtx, History, ReplaceMethod, Shell, Theme},
+    prompt_content_queue::PromptContentQueue,
+    state::States,
 };
 
 pub trait Readline {
-    fn read_line(&mut self, sh: &mut Shell, ctx: &mut Context) -> String;
+    fn read_line(&mut self, sh: &Shell, states: &mut States) -> String;
 }
 
 /// Operating mode of readline
@@ -118,19 +118,6 @@ impl LineState {
     }
 }
 
-/// Context that is passed to [Line]
-pub struct LineStateBundle<'a> {
-    pub sh: &'a Shell,
-    pub ctx: &'a mut Context,
-    pub line: &'a mut LineState,
-}
-
-impl<'a> LineStateBundle<'a> {
-    pub fn new(sh: &'a Shell, ctx: &'a mut Context, line: &'a mut LineState) -> Self {
-        LineStateBundle { sh, ctx, line }
-    }
-}
-
 /// Configuration for readline
 #[derive(Builder)]
 #[builder(pattern = "owned")]
@@ -140,11 +127,6 @@ pub struct Line {
     #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
-
-    /// Keybindings, see [Keybinding]
-    #[builder(default = "Box::new(DefaultKeybinding::default())")]
-    #[builder(setter(custom))]
-    pub keybinding: Box<dyn Keybinding>,
 
     #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
@@ -201,23 +183,18 @@ impl LineBuilder {
         self.prompt = Some(Box::new(prompt));
         self
     }
-    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
-        self.keybinding = Some(Box::new(keybinding));
-        self
-    }
 }
 
 impl Readline for Line {
     /// Start readline and read one line of user input
-    fn read_line(&mut self, sh: &mut Shell, ctx: &mut Context) -> String {
-        let mut line_state = LineState::new();
-        let mut state_bundle = LineStateBundle::new(sh, ctx, &mut line_state);
-        self.read_events(&mut state_bundle).unwrap()
+    fn read_line(&mut self, sh: &Shell, states: &mut States) -> String {
+        states.insert(LineState::new());
+        self.read_events(sh, states).unwrap()
     }
 }
 
 impl Line {
-    fn read_events(&mut self, state: &mut LineStateBundle) -> anyhow::Result<String> {
+    fn read_events(&mut self, sh: &Shell, states: &States) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -233,27 +210,27 @@ impl Line {
 
         let mut auto_run = false;
         self.painter.init().unwrap();
-        if let Some(c) = state.ctx.prompt_content_queue.pop() {
+        if let Some(c) = states.get_mut::<PromptContentQueue>().pop() {
             auto_run = c.auto_run;
-            state
-                .line
+            states
+                .line()
                 .cb
                 .insert(Location::Cursor(), c.content.as_str())?;
         }
 
         loop {
-            let res = state.line.get_full_command();
+            let res = states.line().get_full_command();
 
             // syntax highlight
             let mut styled_buf = self
                 .highlighter
-                .highlight(state, &res)
-                .slice_from(state.line.lines.len());
+                .highlight(states, &res)
+                .slice_from(states.line().lines.len());
 
             // add currently selected completion to buf
             if self.menu.is_active() {
                 if let Some(selection) = self.menu.current_selection() {
-                    let trimmed_selection = &selection.accept()[state.line.current_word.len()..];
+                    let trimmed_selection = &selection.accept()[states.line().current_word.len()..];
                     styled_buf.push(
                         trimmed_selection,
                         ContentStyle {
@@ -264,19 +241,17 @@ impl Line {
                 }
             } else {
                 // get search results from history and suggest the first result
-                if let Some(suggestion) = self.suggester.suggest(state) {
+                if let Some(suggestion) = self.suggester.suggest(states) {
                     let trimmed_selection = suggestion[res.len()..].to_string();
-                    styled_buf.push(trimmed_selection.as_str(), state.ctx.theme.suggestion_style);
+                    styled_buf.push(
+                        trimmed_selection.as_str(),
+                        states.get::<Theme>().suggestion_style,
+                    );
                 }
             }
 
-            self.painter.paint(
-                state,
-                &self.prompt,
-                &self.menu,
-                &styled_buf,
-                state.line.cb.cursor(),
-            )?;
+            self.painter
+                .paint(states, &self.prompt, &self.menu, &styled_buf)?;
             if auto_run {
                 self.buffer_history.clear();
                 self.painter.newline()?;
@@ -286,39 +261,41 @@ impl Line {
             let event = read()?;
 
             if let Event::Key(key_event) = event {
-                if self.keybinding.handle_key_event(state, key_event) {
+                if sh.keybinding.handle_key_event(states, key_event) {
                     break;
                 }
             }
 
-            let should_break = self.handle_standard_keys(state, event.clone())?;
+            let should_break = self.handle_standard_keys(sh, states, event.clone())?;
             if should_break {
                 break;
             }
 
             // handle menu events
             if self.menu.is_active() {
-                self.handle_menu_keys(state, event.clone())?;
+                self.handle_menu_keys(sh, states, event.clone())?;
             } else {
-                match state.line.mode {
-                    LineMode::Insert => {
-                        self.handle_insert_keys(state, event)?;
-                    },
-                    LineMode::Normal => {
-                        self.handle_normal_keys(state, event)?;
-                    },
+                if states.line().mode == LineMode::Insert {
+                    self.handle_insert_keys(sh, states, event)?;
+                } else if states.line().mode == LineMode::Normal {
+                    self.handle_normal_keys(sh, states, event)?;
                 }
             }
         }
 
-        let res = state.line.get_full_command();
+        let res = states.line().get_full_command();
         if !res.is_empty() {
-            state.ctx.history.add(res.clone());
+            states.get_mut::<Box<dyn History>>().add(res.clone());
         }
         Ok(res)
     }
 
-    fn handle_menu_keys(&mut self, ctx: &mut LineStateBundle, event: Event) -> anyhow::Result<()> {
+    fn handle_menu_keys(
+        &mut self,
+        sh: &Shell,
+        states: &States,
+        event: Event,
+    ) -> anyhow::Result<()> {
         match event {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -326,7 +303,7 @@ impl Line {
                 ..
             }) => {
                 if let Some(accepted) = self.menu.accept().cloned() {
-                    self.accept_completion(ctx, accepted)?;
+                    self.accept_completion(states, accepted)?;
                 }
             },
             Event::Key(KeyEvent {
@@ -362,12 +339,12 @@ impl Line {
             },
             _ => {
                 self.menu.disactivate();
-                match ctx.line.mode {
+                match states.line().mode {
                     LineMode::Insert => {
-                        self.handle_insert_keys(ctx, event)?;
+                        self.handle_insert_keys(sh, states, event)?;
                     },
                     LineMode::Normal => {
-                        self.handle_normal_keys(ctx, event)?;
+                        self.handle_normal_keys(sh, states, event)?;
                     },
                 };
             },
@@ -378,7 +355,8 @@ impl Line {
     //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
     fn handle_standard_keys(
         &mut self,
-        state: &mut LineStateBundle,
+        sh: &Shell,
+        states: &States,
         event: Event,
     ) -> anyhow::Result<bool> {
         match event {
@@ -386,16 +364,16 @@ impl Line {
                 self.painter.set_term_size(a, b);
             },
             Event::Paste(p) => {
-                state.line.cb.insert(Location::Cursor(), p.as_str())?;
+                states.line().cb.insert(Location::Cursor(), p.as_str())?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                state.line.cb.clear();
+                states.line().cb.clear();
                 self.buffer_history.clear();
-                state.line.lines = String::new();
+                states.line().lines = String::new();
                 self.painter.newline()?;
 
                 return Ok(true);
@@ -406,10 +384,10 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if let Some(suggestion) = self.suggester.suggest(state) {
-                    state.line.cb.clear();
-                    state
-                        .line
+                if let Some(suggestion) = self.suggester.suggest(states) {
+                    states.line().cb.clear();
+                    states
+                        .line()
                         .cb
                         .insert(Location::Cursor(), suggestion.as_str())?;
                 }
@@ -431,10 +409,10 @@ impl Line {
                 self.buffer_history.clear();
                 self.painter.newline()?;
 
-                if state.sh.lang.needs_line_check(state) {
-                    state.line.lines += state.line.cb.as_str().into_owned().as_str();
-                    state.line.lines += "\n";
-                    state.line.cb.clear();
+                if sh.lang.needs_line_check(sh, states) {
+                    states.line().lines += states.line().cb.as_str().into_owned().as_str();
+                    states.line().lines += "\n";
+                    states.line().cb.clear();
 
                     return Ok(false);
                 }
@@ -447,7 +425,7 @@ impl Line {
                 ..
             }) => {
                 // if current input is empty exit the shell, otherwise treat it as enter
-                if state.line.cb.is_empty() {
+                if states.line().cb.is_empty() {
                     // TODO maybe unify exiting the shell
                     let _ = disable_raw_mode(); // TODO this is temp fix, should be more graceful way of
                                                 // handling cleanup code
@@ -465,17 +443,17 @@ impl Line {
         Ok(false)
     }
     /// returns a bool whether input should still be handled
-    pub fn expand(&mut self, state: &mut LineStateBundle, event: &Event) -> anyhow::Result<bool> {
+    pub fn expand(&mut self, states: &States, event: &Event) -> anyhow::Result<bool> {
         if !self.snippets.should_expand(event) {
             return Ok(true);
         }
         //find current word
 
-        let cur_line = state.line.cb.as_str().to_string();
+        let cur_line = states.line().cb.as_str().to_string();
         let mut words = cur_line.split(' ').collect::<Vec<_>>();
         let mut char_offset = 0;
         //cursor is positioned just after the last typed character
-        let index_before_cursor = state.line.cb.cursor();
+        let index_before_cursor = states.line().cb.cursor();
         let mut cur_word_index = None;
         for (i, word) in words.iter().enumerate() {
             // Determine the start and end indices of the current word
@@ -501,10 +479,10 @@ impl Line {
                 }
                 words[c] = expanded.value.as_str();
 
-                state.line.cb.clear();
+                states.line().cb.clear();
                 //cursor automatically positioned at end
-                state
-                    .line
+                states
+                    .line()
                     .cb
                     .insert(Location::Cursor(), words.join(" ").as_str())?;
                 return Ok(false);
@@ -515,10 +493,11 @@ impl Line {
 
     fn handle_insert_keys(
         &mut self,
-        state: &mut LineStateBundle,
+        sh: &Shell,
+        states: &States,
         event: Event,
     ) -> anyhow::Result<()> {
-        if !self.expand(state, &event)? {
+        if !self.expand(states, &event)? {
             return Ok(());
         }
 
@@ -528,7 +507,7 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.populate_completions(state)?;
+                self.populate_completions(states)?;
                 self.menu.activate();
 
                 let completion_len = self.menu.items().len();
@@ -542,7 +521,7 @@ impl Line {
                 if completion_len == 1 {
                     // TODO stupid ownership stuff
                     let item = self.menu.items().get(0).map(|x| (*x).clone()).unwrap();
-                    self.accept_completion(state, item.1)?;
+                    self.accept_completion(states, item.1)?;
                     self.menu.disactivate();
                     return Ok(());
                 }
@@ -559,7 +538,7 @@ impl Line {
                     .collect();
                 let prefix = longest_common_prefix(completions);
                 self.accept_completion(
-                    ctx,
+                    states,
                     Completion {
                         add_space: false,
                         display: None,
@@ -589,8 +568,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if state.line.cb.cursor() > 0 {
-                    state.line.cb.move_cursor(Location::Before())?;
+                if states.line().cb.cursor() > 0 {
+                    states.line().cb.move_cursor(Location::Before())?;
                 }
             },
             Event::Key(KeyEvent {
@@ -598,8 +577,8 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if state.line.cb.cursor() < state.line.cb.len() {
-                    state.line.cb.move_cursor(Location::After())?;
+                if states.line().cb.cursor() < states.line().cb.len() {
+                    states.line().cb.move_cursor(Location::After())?;
                 }
             },
             Event::Key(KeyEvent {
@@ -607,20 +586,20 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_down(state)?;
+                self.history_down(states)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_up(state)?;
+                self.history_up(states)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
             }) => {
-                self.to_normal_mode(state)?;
-                self.buffer_history.add(&state.line.cb);
+                self.to_normal_mode(sh, states)?;
+                self.buffer_history.add(&states.line().cb);
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Backspace,
@@ -632,9 +611,9 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if !state.line.cb.is_empty() && state.line.cb.cursor() != 0 {
-                    state
-                        .line
+                if !states.line().cb.is_empty() && states.line().cb.cursor() != 0 {
+                    states
+                        .line()
                         .cb
                         .delete(Location::Before(), Location::Cursor())?;
                 }
@@ -644,9 +623,9 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                if !state.line.cb.is_empty() && state.line.cb.cursor() != 0 {
-                    let start = state.line.cb.motion_to_loc(Motion::BackWord)?;
-                    state.line.cb.delete(start, Location::Cursor())?;
+                if !states.line().cb.is_empty() && states.line().cb.cursor() != 0 {
+                    let start = states.line().cb.motion_to_loc(Motion::BackWord)?;
+                    states.line().cb.delete(start, Location::Cursor())?;
                 }
             },
 
@@ -655,7 +634,7 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                state.line.cb.move_cursor(Location::Front())?;
+                states.line().cb.move_cursor(Location::Front())?;
             },
 
             Event::Key(KeyEvent {
@@ -663,14 +642,20 @@ impl Line {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => {
-                state.line.cb.move_cursor(Location::Back(&state.line.cb))?;
+                states
+                    .line()
+                    .cb
+                    .move_cursor(Location::Back(&states.line().cb))?;
             },
 
             Event::Key(KeyEvent {
                 code: KeyCode::Char(c),
                 ..
             }) => {
-                state.line.cb.insert(Location::Cursor(), &c.to_string())?;
+                states
+                    .line()
+                    .cb
+                    .insert(Location::Cursor(), &c.to_string())?;
             },
             _ => {},
         };
@@ -679,7 +664,8 @@ impl Line {
 
     fn handle_normal_keys(
         &mut self,
-        state: &mut LineStateBundle,
+        sh: &Shell,
+        states: &States,
         event: Event,
     ) -> anyhow::Result<()> {
         // TODO write better system toString support key combinations
@@ -699,21 +685,21 @@ impl Line {
                     for _ in 0..repeat {
                         // special cases (possibly consulidate with execute_vi somehow)
 
-                        if let Ok(mode) = state.line.cb.execute_vi(action.clone()) {
-                            if mode != state.line.mode {
+                        if let Ok(mode) = states.line().cb.execute_vi(action.clone()) {
+                            if mode != states.line().mode {
                                 match mode {
-                                    LineMode::Insert => self.to_insert_mode(state)?,
-                                    LineMode::Normal => self.to_normal_mode(state)?,
+                                    LineMode::Insert => self.to_insert_mode(sh, states)?,
+                                    LineMode::Normal => self.to_normal_mode(sh, states)?,
                                 };
                             }
                         }
                         match action {
-                            Action::Undo => self.buffer_history.prev(state.line.cb.borrow_mut()),
+                            Action::Undo => self.buffer_history.prev(states.line().cb.borrow_mut()),
 
-                            Action::Redo => self.buffer_history.next(state.line.cb.borrow_mut()),
+                            Action::Redo => self.buffer_history.next(states.line().cb.borrow_mut()),
                             Action::Move(motion) => match motion {
-                                Motion::Up => self.history_up(state)?,
-                                Motion::Down => self.history_down(state)?,
+                                Motion::Up => self.history_up(states)?,
+                                Motion::Down => self.history_down(states)?,
                                 _ => {},
                             },
                             Action::Editor => {
@@ -730,7 +716,7 @@ impl Line {
 
                                 // write contexts of line to file
                                 tempbuf
-                                    .write_all(state.line.cb.as_str().as_bytes())
+                                    .write_all(states.line().cb.as_str().as_bytes())
                                     .unwrap();
 
                                 // TODO should use shrs_job for this?
@@ -751,15 +737,19 @@ impl Line {
                                 // TODO this is very platform and editor dependent
                                 let trimmed = new_contents.trim_end_matches("\n");
 
-                                state.line.cb.clear();
-                                state.line.cb.insert(Location::Cursor(), trimmed).unwrap();
+                                states.line().cb.clear();
+                                states
+                                    .line()
+                                    .cb
+                                    .insert(Location::Cursor(), trimmed)
+                                    .unwrap();
 
                                 // TODO should auto run the command?
 
                                 tempbuf.close().unwrap();
                             },
                             _ => {
-                                self.buffer_history.add(&state.line.cb);
+                                self.buffer_history.add(&states.line().cb);
                             },
                         }
                     }
@@ -773,20 +763,20 @@ impl Line {
     }
 
     // recalculate the current completions
-    fn populate_completions(&mut self, state: &mut LineStateBundle) -> anyhow::Result<()> {
+    fn populate_completions(&mut self, states: &States) -> anyhow::Result<()> {
         // TODO IFS
-        let args = state
-            .line
-            .cb
-            .slice(..state.line.cb.cursor())
-            .as_str()
-            .unwrap()
-            .split(' ');
-        state.line.current_word = args.clone().last().unwrap_or("").to_string();
+        let c = states.line();
+        let args =
+            c.cb.slice(..states.line().cb.cursor())
+                .clone()
+                .as_str()
+                .unwrap()
+                .split(' ');
+        states.line().current_word = args.clone().last().unwrap_or("").to_string();
 
-        let comp_ctx = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
+        let comp_states = CompletionCtx::new(args.map(|s| s.to_owned()).collect::<Vec<_>>());
 
-        let completions = state.ctx.completer.complete(&comp_ctx);
+        let completions = states.get::<Box<dyn Completer>>().complete(&comp_states);
         let completions = completions.iter().collect::<Vec<_>>();
 
         let menuitems = completions
@@ -799,11 +789,7 @@ impl Line {
     }
 
     // replace word at cursor with accepted word (used in automcompletion)
-    fn accept_completion(
-        &mut self,
-        state: &mut LineStateBundle,
-        completion: Completion,
-    ) -> anyhow::Result<()> {
+    fn accept_completion(&mut self, states: &States, completion: Completion) -> anyhow::Result<()> {
         // first remove current word
         // TODO could implement a delete_before
         // TODO make use of ReplaceMethod
@@ -812,91 +798,89 @@ impl Line {
                 // no-op
             },
             ReplaceMethod::Replace => {
-                state
-                    .line
+                states
+                    .line()
                     .cb
-                    .move_cursor(Location::Rel(-(state.line.current_word.len() as isize)))?;
+                    .move_cursor(Location::Rel(-(states.line().current_word.len() as isize)))?;
                 let cur_word_len =
-                    unicode_width::UnicodeWidthStr::width(state.line.current_word.as_str());
-                state
-                    .line
+                    unicode_width::UnicodeWidthStr::width(states.line().current_word.as_str());
+                states
+                    .line()
                     .cb
                     .delete(Location::Cursor(), Location::Rel(cur_word_len as isize))?;
-                state.line.current_word.clear();
+                states.line().current_word.clear();
             },
         }
 
         // then replace with the completion word
-        state
-            .line
+        states
+            .line()
             .cb
             .insert(Location::Cursor(), &completion.accept())?;
 
         Ok(())
     }
 
-    fn history_up(&mut self, state: &mut LineStateBundle) -> anyhow::Result<()> {
+    fn history_up(&mut self, states: &States) -> anyhow::Result<()> {
         // save current prompt
-        if HistoryInd::Prompt == state.line.history_ind {
-            state.line.saved_line = state.line.cb.slice(..).to_string();
+        if HistoryInd::Prompt == states.line().history_ind {
+            states.line().saved_line = states.line().cb.slice(..).to_string();
         }
 
-        state.line.history_ind = state.line.history_ind.up(state.ctx.history.len());
-        self.update_history(state)?;
+        states.line().history_ind = states
+            .line()
+            .history_ind
+            .up(states.get::<Box<dyn History>>().len());
+        self.update_history(states)?;
 
         Ok(())
     }
 
-    fn history_down(&mut self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        state.line.history_ind = state.line.history_ind.down();
-        self.update_history(state)?;
+    fn history_down(&mut self, states: &States) -> anyhow::Result<()> {
+        states.line().history_ind = states.line().history_ind.down();
+        self.update_history(states)?;
 
         Ok(())
     }
 
-    fn update_history(&mut self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        match state.line.history_ind {
+    fn update_history(&mut self, states: &States) -> anyhow::Result<()> {
+        match states.line().history_ind {
             // restore saved line
             HistoryInd::Prompt => {
-                state.line.cb.clear();
-                state
-                    .line
+                states.line().cb.clear();
+                states
+                    .line()
                     .cb
-                    .insert(Location::Cursor(), &state.line.saved_line)?;
+                    .insert(Location::Cursor(), &states.line().saved_line)?;
             },
             // fill prompt with history element
             HistoryInd::Line(i) => {
-                let history_item = state.ctx.history.get(i).unwrap();
-                state.line.cb.clear();
-                state.line.cb.insert(Location::Cursor(), history_item)?;
+                let h = states.get::<Box<dyn History>>();
+                let history_item = h.get(i).unwrap();
+                states.line().cb.clear();
+                states.line().cb.insert(Location::Cursor(), history_item)?;
             },
         }
         Ok(())
     }
 
-    fn to_normal_mode(&self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        state.line.mode = LineMode::Normal;
+    fn to_normal_mode(&self, sh: &Shell, states: &States) -> anyhow::Result<()> {
+        states.line().mode = LineMode::Normal;
 
-        let hook_ctx = LineModeSwitchCtx {
+        let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Normal,
         };
-        state
-            .sh
-            .hooks
-            .run::<LineModeSwitchCtx>(state.sh, state.ctx, state.rt, hook_ctx)?;
+        sh.hooks.run(sh, states, hook_states)?;
         Ok(())
     }
 
-    fn to_insert_mode(&self, state: &mut LineStateBundle) -> anyhow::Result<()> {
-        state.line.mode = LineMode::Insert;
+    fn to_insert_mode(&self, sh: &Shell, states: &States) -> anyhow::Result<()> {
+        states.line().mode = LineMode::Insert;
 
-        let hook_ctx = LineModeSwitchCtx {
+        let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Insert,
         };
-        state
-            .sh
-            .hooks
-            .run::<LineModeSwitchCtx>(state.sh, state.ctx, state.rt, hook_ctx)?;
+        sh.hooks.run(sh, states, hook_states)?;
         Ok(())
     }
 }

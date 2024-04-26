@@ -6,6 +6,7 @@ extern crate lazy_static;
 pub mod alias;
 pub mod builtin;
 pub mod cmd_output;
+pub mod commands;
 pub mod completion;
 pub mod ctx;
 pub mod env;
@@ -44,9 +45,10 @@ pub mod prelude {
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::*,
-        shell::{set_working_dir, Context, Runtime, Shell, ShellConfig},
+        shell::{set_working_dir, Runtime, Shell, ShellConfig},
         signal::Signals,
         state::State,
+        state::States,
         theme::Theme,
     };
 }

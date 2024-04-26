@@ -4,8 +4,8 @@ use shrs_utils::styled_buf;
 
 use super::BuiltinCmd;
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{CmdOutput, OutputWriter, Shell, States},
+    shell::PluginMetas,
 };
 
 #[derive(Parser)]
@@ -25,74 +25,84 @@ enum Commands {
 #[derive(Default)]
 pub struct HelpBuiltin {}
 impl BuiltinCmd for HelpBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        _rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
+    fn run(&self, sh: &Shell, states: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         match &cli.command {
             Commands::Builtin => {
                 let cmds = sh.builtins.builtins.keys();
 
-                ctx.out.println("Builtin Commands")?;
+                states
+                    .get_mut::<OutputWriter>()
+                    .println("Builtin Commands")?;
 
                 for cmd in cmds {
-                    ctx.out.println(cmd)?;
+                    states.get_mut::<OutputWriter>().println(cmd)?;
                 }
             },
             Commands::Bindings => {
                 let info = sh.keybinding.get_info();
 
-                ctx.out.println("Key Bindings")?;
+                states.get_mut::<OutputWriter>().println("Key Bindings")?;
 
                 for (binding, desc) in info {
-                    ctx.out.println(format!("{}: {}", binding, desc))?;
+                    states
+                        .get_mut::<OutputWriter>()
+                        .println(format!("{}: {}", binding, desc))?;
                 }
             },
             Commands::Plugin { plugin_name } => {
                 let plugin_name = plugin_name.join(" ");
                 if plugin_name.len() == 0 {
-                    ctx.out
-                        .println(format!("{} Plugins installed", sh.plugin_metas.len()))?;
-                    for meta in sh.plugin_metas.iter() {
-                        ctx.out.println("")?;
+                    states.get_mut::<OutputWriter>().println(format!(
+                        "{} Plugins installed",
+                        states.get::<PluginMetas>().len()
+                    ))?;
+                    for meta in states.get::<PluginMetas>().iter() {
+                        states.get_mut::<OutputWriter>().println("")?;
 
-                        ctx.out.print_buf(styled_buf!(meta.name.clone().red()))?;
-                        ctx.out.println("")?;
-                        ctx.out.println(meta.description.clone())?;
+                        states
+                            .get_mut::<OutputWriter>()
+                            .print_buf(styled_buf!(meta.name.clone().red()))?;
+                        states.get_mut::<OutputWriter>().println("")?;
+                        states
+                            .get_mut::<OutputWriter>()
+                            .println(meta.description.clone())?;
                     }
                 } else {
                     let mut found = false;
-                    for meta in sh.plugin_metas.iter() {
+                    for meta in states.get::<PluginMetas>().iter() {
                         if meta.name == plugin_name {
                             found = true;
-                            ctx.out.println("")?;
-                            ctx.out.print_buf(styled_buf!(meta.name.clone().green()))?;
-                            ctx.out.println("")?;
+                            states.get_mut::<OutputWriter>().println("")?;
+                            states
+                                .get_mut::<OutputWriter>()
+                                .print_buf(styled_buf!(meta.name.clone().green()))?;
+                            states.get_mut::<OutputWriter>().println("")?;
                             match &meta.help {
-                                Some(help_text) => ctx.out.println(help_text.clone())?,
-                                None => ctx.out.println("No help message provided.")?,
+                                Some(help_text) => states
+                                    .get_mut::<OutputWriter>()
+                                    .println(help_text.clone())?,
+                                None => states
+                                    .get_mut::<OutputWriter>()
+                                    .println("No help message provided.")?,
                             }
                             break;
                         }
                     }
                     if !found {
-                        ctx.out.println("")?;
-                        ctx.out.print_buf(
+                        states.get_mut::<OutputWriter>().println("")?;
+                        states.get_mut::<OutputWriter>().print_buf(
                             styled_buf!(format!(
                                 "'{}' was not found, please specify a valid plugin name.",
                                 plugin_name
                             ))
                             .red(),
                         )?;
-                        ctx.out.println("")?;
+                        states.get_mut::<OutputWriter>().println("")?;
                     }
                 }
-                ctx.out.println("")?;
+                states.get_mut::<OutputWriter>().println("")?;
             },
         }
 

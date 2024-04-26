@@ -8,7 +8,13 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::prelude::HookParam;
+use crate::prelude::{line::LineState, Runtime, Shell};
+
+pub trait HookParam {
+    type Item<'new>;
+
+    fn retrieve<'r>(states: &'r States) -> Self::Item<'r>;
+}
 
 /// State store that uses types to index
 impl<'res, T: 'static> HookParam for State<'res, T> {
@@ -16,7 +22,7 @@ impl<'res, T: 'static> HookParam for State<'res, T> {
 
     fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
         State {
-            value: states.get_ref(&TypeId::of::<T>()).unwrap().borrow(),
+            value: states.states.get(&TypeId::of::<T>()).unwrap().borrow(),
             _marker: PhantomData,
         }
     }
@@ -25,9 +31,9 @@ impl<'res, T: 'static> HookParam for State<'res, T> {
 impl<'res, T: 'static> HookParam for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
-    fn retrieve<'r>(resources: &'r States) -> Self::Item<'r> {
+    fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
         StateMut {
-            value: resources.get_ref(&TypeId::of::<T>()).unwrap().borrow_mut(),
+            value: states.states.get(&TypeId::of::<T>()).unwrap().borrow_mut(),
             _marker: PhantomData,
         }
     }
@@ -69,23 +75,29 @@ pub struct States {
     states: HashMap<TypeId, RefCell<Box<dyn Any>>>,
 }
 impl States {
-    pub fn insert<R: 'static>(&mut self, res: R) {
+    pub fn insert<S: 'static>(&mut self, res: S) {
         self.states
-            .insert(TypeId::of::<R>(), RefCell::new(Box::new(res)));
+            .insert(TypeId::of::<S>(), RefCell::new(Box::new(res)));
     }
-    pub fn get_ref(&mut self, t: &TypeId) -> Option<&RefCell<Box<dyn Any>>> {
-        self.states.get(t)
+    pub fn remove<S>() {}
+
+    pub fn get_mut<S: 'static>(&self) -> RefMut<S> {
+        let s = self
+            .states
+            .get(&TypeId::of::<S>())
+            .expect("Value Missing")
+            .borrow_mut();
+        RefMut::map(s, |b| b.downcast_mut::<S>().unwrap())
     }
-    pub fn get<T>(&mut self) -> Option<&T> {
-        if let Some(s) = self.states.get(&TypeId::of::<T>()) {
-            return s.borrow().downcast_ref();
-        }
-        None
+    pub fn get<S: 'static>(&self) -> Ref<S> {
+        let s = self
+            .states
+            .get(&TypeId::of::<S>())
+            .expect("Value Missing")
+            .borrow();
+        Ref::map(s, |b| b.downcast_ref::<S>().unwrap())
     }
-    pub fn get_mut<T>(&mut self) -> Option<&mut T> {
-        if let Some(s) = self.states.get(&TypeId::of::<T>()) {
-            return s.borrow().downcast_mut();
-        }
-        None
+    pub fn line(&self) -> RefMut<LineState> {
+        self.get_mut::<LineState>()
     }
 }

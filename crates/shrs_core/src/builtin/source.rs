@@ -6,8 +6,8 @@ use regex::Regex;
 
 use super::BuiltinCmd;
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{CmdOutput, OutputWriter, States},
+    shell::{Runtime, Shell},
 };
 
 lazy_static! {
@@ -23,13 +23,7 @@ struct Cli {
 pub struct SourceBuiltin {}
 
 impl BuiltinCmd for SourceBuiltin {
-    fn run(
-        &self,
-        _sh: &Shell,
-        ctx: &mut Context,
-        _rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
+    fn run(&self, sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
         let cli = Cli::try_parse_from(args)?;
 
         let file_path = PathBuf::from(&cli.source_file);
@@ -46,7 +40,7 @@ impl BuiltinCmd for SourceBuiltin {
         match interp {
             Some(interp) => {
                 let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
-                ctx.out.println(s)?;
+                ctx.get_mut::<OutputWriter>().println(s)?;
                 let mut _child = Command::new(interp.as_str())
                     .args(vec![cli.source_file])
                     .spawn()?;

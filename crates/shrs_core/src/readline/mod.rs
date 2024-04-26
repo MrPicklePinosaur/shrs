@@ -28,7 +28,7 @@ pub mod vi;
 pub use buffer_history::{BufferHistory, DefaultBufferHistory};
 pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme};
 pub use hooks::*;
-pub use line::{Line, LineBuilder, LineBuilderError, LineMode, LineStateBundle, Readline};
+pub use line::{Line, LineBuilder, LineBuilderError, LineMode, Readline};
 pub use menu::{DefaultMenu, Menu};
 pub use prompt::{DefaultPrompt, Prompt};
 pub use snippet::*;

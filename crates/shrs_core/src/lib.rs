@@ -47,8 +47,7 @@ pub mod prelude {
         readline::*,
         shell::{set_working_dir, Runtime, Shell, ShellConfig},
         signal::Signals,
-        state::State,
-        state::States,
+        state::{State, States},
         theme::Theme,
     };
 }

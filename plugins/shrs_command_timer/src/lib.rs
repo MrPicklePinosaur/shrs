@@ -63,7 +63,7 @@ impl Plugin for CommandTimerPlugin {
 
 fn before_command_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     _sh_rt: &mut Runtime,
     _ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
@@ -75,7 +75,7 @@ fn before_command_hook(
 
 fn after_command_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     _sh_rt: &mut Runtime,
     _ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {

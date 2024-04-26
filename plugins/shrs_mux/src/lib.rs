@@ -146,7 +146,7 @@ impl Lang for MuxLang {
     fn eval(
         &self,
         sh: &Shell,
-        ctx: &mut Context,
+        ctx: &mut States,
         rt: &mut Runtime,
         cmd: String,
     ) -> anyhow::Result<CmdOutput> {

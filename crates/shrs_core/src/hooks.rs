@@ -10,8 +10,9 @@
 // - env hook (when environment variable is set/changed)
 // - exit hook (tricky, make sure we know what cases to call this)
 
-use anyhow::Result;
 use std::marker::PhantomData;
+
+use anyhow::Result;
 
 use crate::{
     ctx::Ctx,

@@ -41,7 +41,7 @@ impl Plugin for OutputCapturePlugin {
 
 fn after_command_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {

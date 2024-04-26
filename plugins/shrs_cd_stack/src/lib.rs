@@ -48,7 +48,7 @@ impl CdStackState {
 
 fn change_dir_hook(
     _sh: &Shell,
-    ctx: &mut Context,
+    ctx: &mut States,
     _rt: &mut Runtime,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {

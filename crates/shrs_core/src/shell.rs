@@ -13,9 +13,8 @@ use log::{error, info, warn};
 use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use crate::{commands::Commands, history::History, prelude::*, state::States};
-
 use self::line::LineState;
+use crate::{commands::Commands, history::History, prelude::*, state::States};
 
 #[derive(Deref)]
 pub struct StartupTime(Instant);

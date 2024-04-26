@@ -3,10 +3,10 @@ use std::{
     process::{ChildStderr, ChildStdout},
 };
 
-use shrs::prelude::Context;
+use shrs::prelude::States;
 
 pub fn read_out(
-    ctx: &mut Context,
+    ctx: &mut States,
     mut reader: BufReader<&mut ChildStdout>,
 ) -> shrs::anyhow::Result<i32> {
     loop {
@@ -24,7 +24,7 @@ pub fn read_out(
 }
 
 pub fn read_err(
-    ctx: &mut Context,
+    ctx: &mut States,
     mut reader: BufReader<&mut ChildStderr>,
 ) -> shrs::anyhow::Result<()> {
     loop {

@@ -75,7 +75,7 @@ impl BuiltinCmd for LoadBuiltin {
         }
 
         if let Some(new_rt) = new_rt.take() {
-            set_working_dir(sh, ctx, rt, &new_rt.working_dir, false).unwrap();
+            set_working_dir(ctx, &new_rt.working_dir, false).unwrap();
             let _ = mem::replace(rt, new_rt);
         }
 

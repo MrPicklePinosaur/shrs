@@ -28,7 +28,7 @@ impl Plugin for CompletionsPlugin {
     fn init(&self, _: &mut ShellConfig) -> anyhow::Result<()> {
         Ok(())
     }
-    fn post_init(&self, _sh: &Shell, ctx: &mut Context, _rt: &mut Runtime) -> ::anyhow::Result<()> {
+    fn post_init(&self, _sh: &Shell, ctx: &mut States, _rt: &mut Runtime) -> ::anyhow::Result<()> {
         let mut e = Engine::new();
         setup_engine(&mut e);
         let engine = Rc::new(e);

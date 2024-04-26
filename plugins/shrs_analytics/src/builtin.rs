@@ -8,7 +8,7 @@ impl BuiltinCmd for AnalyticsBuiltin {
     fn run(
         &self,
         _sh: &Shell,
-        ctx: &mut Context,
+        ctx: &mut States,
         _rt: &mut Runtime,
         _args: &[String],
     ) -> anyhow::Result<CmdOutput> {

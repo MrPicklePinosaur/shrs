@@ -1,6 +1,5 @@
-use crate::prelude::{History, States};
-
 use super::line::LineState;
+use crate::prelude::{History, States};
 
 pub trait Suggester {
     fn suggest(&self, ctx: &States) -> Option<String>;

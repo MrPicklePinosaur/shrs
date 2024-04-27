@@ -3,7 +3,7 @@
 use std::time::Instant;
 
 use ::anyhow::Result;
-use shrs::{commands::Commands, prelude::*, state::StateMut};
+use shrs::{commands::Commands, prelude::*, readline::line::LineContents, state::StateMut};
 #[derive(Debug)]
 pub struct H {
     i: i32,
@@ -22,8 +22,14 @@ fn main() {
 
     myshell.run().expect("Error when running shell");
 }
-pub fn c(mut h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
+pub fn c(
+    mut h: StateMut<H>,
+    contents: State<LineContents>,
+    sh: &Shell,
+    ctx: &AfterCommandCtx,
+) -> Result<()> {
     h.i += 1;
+    println!("hello");
 
     Ok(())
 }

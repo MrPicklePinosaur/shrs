@@ -13,7 +13,7 @@ use log::{error, info, warn};
 use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use self::line::LineContents;
+use self::{line::LineContents, menu::DefaultMenuState, painter::Painter};
 use crate::{commands::Commands, history::History, prelude::*, state::States};
 
 #[derive(Deref)]
@@ -28,6 +28,9 @@ pub struct Shell {
     pub lang: Box<dyn Lang>,
     pub keybinding: Box<dyn Keybinding>,
     pub hooks: Hooks,
+    pub prompt: Box<dyn Prompt>,
+    pub highlighter: Box<dyn Highlighter>,
+    pub suggester: Box<dyn Suggester>,
 }
 impl Shell {
     pub fn run_hooks<C: Ctx>(&mut self, states: &States, c: C) -> Result<()> {
@@ -130,6 +133,35 @@ pub struct ShellConfig {
     #[builder(default = "Box::new(DefaultKeybinding::default())")]
     #[builder(setter(custom))]
     pub keybinding: Box<dyn Keybinding>,
+
+    //-------
+    //Line
+    /// Completion menu, see [Menu]
+    #[builder(default = "Box::new(DefaultMenu::default())")]
+    #[builder(setter(custom))]
+    menu: DefaultMenuState,
+
+    #[builder(default = "Box::new(DefaultBufferHistory::default())")]
+    #[builder(setter(custom))]
+    buffer_history: Box<dyn BufferHistory>,
+
+    /// Syntax highlighter, see [Highlighter]
+    #[builder(default = "Box::new(SyntaxHighlighter::default())")]
+    #[builder(setter(custom))]
+    highlighter: Box<dyn Highlighter>,
+
+    /// Custom prompt, see [Prompt]
+    #[builder(default = "Box::new(DefaultPrompt::default())")]
+    #[builder(setter(custom))]
+    prompt: Box<dyn Prompt>,
+
+    /// Suggestion inline
+    #[builder(default = "Box::new(DefaultSuggester)")]
+    suggester: Box<dyn Suggester>,
+
+    /// Alias expansions, see [Abbreviations]
+    #[builder(default = "Snippets::default()")]
+    snippets: Snippets,
 }
 
 impl ShellBuilder {
@@ -164,6 +196,21 @@ impl ShellBuilder {
     }
     pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
         self.keybinding = Some(Box::new(keybinding));
+        self
+    }
+    pub fn with_menu(
+        mut self,
+        menu: impl Menu<MenuItem = Completion, PreviewItem = String> + 'static,
+    ) -> Self {
+        self.menu = Some(Box::new(menu));
+        self
+    }
+    pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
+        self.highlighter = Some(Box::new(highlighter));
+        self
+    }
+    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
+        self.prompt = Some(Box::new(prompt));
         self
     }
 }
@@ -232,11 +279,19 @@ impl ShellConfig {
         ));
         self.states.insert(JobManager::default());
 
+        //Line states
+        self.states.insert(self.buffer_history);
+        self.states.insert(self.menu);
+        self.states.insert(self.snippets);
+
         let mut sh = Shell {
             builtins: self.builtins,
             lang: self.lang,
             keybinding: self.keybinding,
             hooks: self.hooks,
+            prompt: self.prompt,
+            highlighter: self.highlighter,
+            suggester: self.suggester,
         };
 
         // run post init for plugins

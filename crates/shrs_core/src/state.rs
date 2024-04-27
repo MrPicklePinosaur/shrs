@@ -1,7 +1,7 @@
 //! Globally accessible state store
 
 use std::{
-    any::{Any, TypeId},
+    any::{type_name, Any, TypeId},
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
     marker::PhantomData,
@@ -32,9 +32,17 @@ impl<'res, T: 'static> Param for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
     fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
-        StateMut {
-            value: states.states.get(&TypeId::of::<T>()).unwrap().borrow_mut(),
-            _marker: PhantomData,
+        let state = states.states.get(&TypeId::of::<T>());
+
+        match state {
+            Some(v) => StateMut {
+                value: states.states.get(&TypeId::of::<T>()).unwrap().borrow_mut(),
+                _marker: PhantomData,
+            },
+
+            None => {
+                panic!("{} Not Found", type_name::<T>())
+            },
         }
     }
 }

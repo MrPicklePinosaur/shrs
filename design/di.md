@@ -105,3 +105,11 @@ Builtin DI
 
 Move stuff in linestate to states
 move lineBuilder to builder:w
+
+# TODOS
+
+Make everything in sh DI
+
+Move Commands Out of State => allows states to be mutable in Command
+Optional States, Option<State<T>> useful when state could be missing
+Should Line Contents be created before startupctx?

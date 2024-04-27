@@ -1,4 +1,4 @@
-use super::line::LineState;
+use super::line::LineContents;
 use crate::prelude::{History, States};
 
 pub trait Suggester {
@@ -7,7 +7,7 @@ pub trait Suggester {
 pub struct DefaultSuggester;
 impl Suggester for DefaultSuggester {
     fn suggest(&self, ctx: &States) -> Option<String> {
-        let res = ctx.get_mut::<LineState>().get_full_command();
+        let res = ctx.get_mut::<LineContents>().get_full_command();
         if res.is_empty() {
             return None;
         }

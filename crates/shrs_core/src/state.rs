@@ -8,7 +8,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::prelude::{line::LineState, Runtime, Shell};
+use crate::prelude::{line::LineContents, Runtime, Shell};
 
 pub trait Param {
     type Item<'new>;
@@ -96,8 +96,5 @@ impl States {
             .expect("Value Missing")
             .borrow();
         Ref::map(s, |b| b.downcast_ref::<S>().unwrap())
-    }
-    pub fn line(&self) -> RefMut<LineState> {
-        self.get_mut::<LineState>()
     }
 }

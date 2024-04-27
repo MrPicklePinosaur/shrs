@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{line::LineState, CmdOutput, CommandNotFoundCtx, States},
+    prelude::{line::LineContents, CmdOutput, CommandNotFoundCtx, States},
     shell::{Runtime, Shell},
 };
 
@@ -117,7 +117,7 @@ impl Lang for PosixLang {
     }
     fn needs_line_check(&self, sh: &Shell, ctx: &States) -> bool {
         //TODO check if open quotes or brackets
-        let command = ctx.get::<LineState>().get_full_command();
+        let command = ctx.get::<LineContents>().get_full_command();
 
         if let Some(last_char) = command.chars().last() {
             if last_char == '\\' {

@@ -102,3 +102,6 @@ Can't mutate State in Commands
 Can't use sh.run_hooks() forced to use sh.hooks.run
 
 Builtin DI
+
+Move stuff in linestate to states
+move lineBuilder to builder:w

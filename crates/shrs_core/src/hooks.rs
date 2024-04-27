@@ -23,13 +23,13 @@ impl<F, C: Ctx> Hook<C> for FunctionHook<(Shell, C), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
 {
-    fn run(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
+    fn run(&self, sh: &Shell, _states: &States, c: &C) -> Result<()> {
         fn call_inner<C: Ctx>(
             f: impl Fn(&Shell, &C) -> Result<()>,
             sh: &Shell,
-            ctx: &C,
+            states: &C,
         ) -> Result<()> {
-            f(&sh, &ctx)
+            f(&sh, &states)
         }
 
         call_inner(&self.f, sh, c)
@@ -53,13 +53,13 @@ macro_rules! impl_hook{
                     f: impl Fn($($params),+,&Shell,&C)->Result<()>,
                     $($params: $params),+
                     ,sh:&Shell
-                    ,ctx:&C
+                    ,states:&C
                 ) ->Result<()>{
-                    f($($params),+,sh,&ctx)
+                    f($($params),+,sh,&states)
                 }
 
                 $(
-                    let $params = $params::retrieve(&states);
+                    let $params = $params::retrieve(states);
                 )+
 
                 call_inner(&self.f, $($params),+,sh,c)

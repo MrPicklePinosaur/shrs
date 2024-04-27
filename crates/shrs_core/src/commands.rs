@@ -19,7 +19,7 @@ pub struct Commands {
     pub queue: VecDeque<Box<dyn Command>>,
 }
 impl Commands {
-    pub fn add<C: Command + 'static>(&mut self, command: C) {
+    pub fn run<C: Command + 'static>(&mut self, command: C) {
         self.queue.push_back(Box::new(command));
     }
     pub fn apply_all(&mut self, sh: &mut Shell, states: &States) -> VecDeque<Box<dyn Command>> {

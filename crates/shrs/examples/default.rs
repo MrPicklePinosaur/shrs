@@ -29,7 +29,7 @@ pub fn c(mut h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
 }
 pub fn d(mut cmd: StateMut<Commands>, h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!(h.i);
-    cmd.add(|sh: &mut Shell, states: &States| {
+    cmd.run(|sh: &mut Shell, states: &States| {
         sh.run_hooks(states, SCtx {}).unwrap();
         sh.hooks.insert(g)
     });
@@ -41,7 +41,7 @@ pub fn e(sh: &Shell, ctx: &StartupCtx) -> Result<()> {
 }
 pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
     dbg!("wqwe");
-    cmd.add(|sh: &mut Shell, states: &States| {
+    cmd.run(|sh: &mut Shell, states: &States| {
         dbg!("qw");
     });
 

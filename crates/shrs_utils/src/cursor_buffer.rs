@@ -160,6 +160,11 @@ impl CursorBuffer {
     pub fn move_cursor_clamp(&mut self, _loc: Location) {
         todo!()
     }
+    /// Clears the buffer and inserts text
+    pub fn overwrite(&mut self, text: &str) -> Result<()> {
+        self.clear();
+        self.insert(Location::Front(), text)
+    }
 
     /// Insert text and advance cursor to after the text inserted
     pub fn insert(&mut self, loc: Location, text: &str) -> Result<()> {

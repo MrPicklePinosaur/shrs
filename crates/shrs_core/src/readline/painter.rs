@@ -14,7 +14,11 @@ use crossterm::{
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
-use super::{line::LineState, menu::Menu, prompt::Prompt};
+use super::{
+    line::{LineContents, LineMode},
+    menu::Menu,
+    prompt::Prompt,
+};
 use crate::prelude::{Completion, States, Theme};
 pub struct Painter {
     /// The output buffer
@@ -70,7 +74,7 @@ impl Painter {
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: &StyledBuf,
     ) -> anyhow::Result<()> {
-        let cursor_ind: usize = states.line().cb.cursor();
+        let cursor_ind: usize = states.get::<LineContents>().cb.cursor();
         self.out.borrow_mut().queue(cursor::Hide)?;
 
         // scroll up if we need more lines
@@ -210,7 +214,7 @@ impl Painter {
             .queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.borrow_mut().queue(cursor::Show)?;
 
-        let cursor_style = match states.line().mode() {
+        let cursor_style = match *states.get::<LineMode>() {
             super::line::LineMode::Insert => states.get::<Theme>().insert_cursor_style,
             super::line::LineMode::Normal => states.get::<Theme>().normal_cursor_style,
         };

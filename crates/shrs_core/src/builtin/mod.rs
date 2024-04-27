@@ -24,7 +24,10 @@ use std::{
 
 use anyhow::Result;
 
-use self::{exit::exit_builtin, help::help_builtin};
+use self::{
+    alias::alias_builtin, cd::cd_builtin, exit::exit_builtin, help::help_builtin,
+    r#type::type_builtin,
+};
 use crate::{
     prelude::{CmdOutput, States},
     shell::Shell,
@@ -79,6 +82,10 @@ impl Default for Builtins {
         let mut b = Builtins::new();
         b.insert("exit".to_string(), exit_builtin);
         b.insert("help".to_string(), help_builtin);
+        b.insert("alias".to_string(), alias_builtin);
+        b.insert("cd".to_string(), cd_builtin);
+        b.insert("type".to_string(), type_builtin);
+
         b
 
         // Builtins {

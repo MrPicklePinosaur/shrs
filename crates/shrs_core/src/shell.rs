@@ -13,7 +13,7 @@ use log::{error, info, warn};
 use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use self::line::LineState;
+use self::line::LineContents;
 use crate::{commands::Commands, history::History, prelude::*, state::States};
 
 #[derive(Deref)]
@@ -219,7 +219,6 @@ impl ShellConfig {
             self.theme.err_style,
         ));
         self.states.insert(self.theme);
-        self.states.insert(LineState::new());
         self.states.insert(Jobs::default());
         self.states.insert(self.history);
         self.states.insert(PromptContentQueue::new());
@@ -364,12 +363,12 @@ fn run_shell(
 /// Set the current working directory
 pub fn set_working_dir(
     sh: &Shell,
-    states: &mut States,
+    rt: &mut Runtime,
+    cmd: &mut Commands,
 
     wd: &Path,
     run_hook: bool,
 ) -> anyhow::Result<()> {
-    let mut rt = states.get_mut::<Runtime>();
     // Check working directory validity
     let path = if let Ok(path) = PathBuf::from(wd).canonicalize() {
         if !path.is_dir() {
@@ -396,13 +395,16 @@ pub fn set_working_dir(
 
     // Run change directory hook
     if run_hook {
-        let hook_ctx = ChangeDirCtx {
-            old_dir: old_path,
-            new_dir: path,
-        };
-        if let Err(e) = sh.hooks.run(sh, states, hook_ctx) {
-            error!("Error running change dir hook {e:?}");
-        }
+        cmd.run(move |sh: &mut Shell, states: &States| {
+            let hook_ctx = ChangeDirCtx {
+                old_dir: old_path.clone(),
+                new_dir: path.clone(),
+            };
+
+            if let Err(e) = sh.hooks.run(sh, states, hook_ctx) {
+                error!("Error running change dir hook {e:?}");
+            }
+        });
     }
 
     Ok(())

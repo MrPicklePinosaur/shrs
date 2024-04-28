@@ -28,7 +28,7 @@ pub struct Shell {
     pub lang: Box<dyn Lang>,
     pub keybinding: Box<dyn Keybinding>,
     pub hooks: Hooks,
-    pub prompt: Box<dyn Prompt>,
+    pub prompt: FullPrompt,
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
 }
@@ -151,9 +151,8 @@ pub struct ShellConfig {
     highlighter: Box<dyn Highlighter>,
 
     /// Custom prompt, see [Prompt]
-    #[builder(default = "Box::new(DefaultPrompt::default())")]
-    #[builder(setter(custom))]
-    prompt: Box<dyn Prompt>,
+    #[builder(default = "FullPrompt::default()")]
+    prompt: FullPrompt,
 
     /// Suggestion inline
     #[builder(default = "Box::new(DefaultSuggester)")]
@@ -207,10 +206,6 @@ impl ShellBuilder {
     }
     pub fn with_highlighter(mut self, highlighter: impl Highlighter + 'static) -> Self {
         self.highlighter = Some(Box::new(highlighter));
-        self
-    }
-    pub fn with_prompt(mut self, prompt: impl Prompt + 'static) -> Self {
-        self.prompt = Some(Box::new(prompt));
         self
     }
 }

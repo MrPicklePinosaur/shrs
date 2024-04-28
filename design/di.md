@@ -104,7 +104,7 @@ Can't use sh.run_hooks() forced to use sh.hooks.run
 Builtin DI
 
 Move stuff in linestate to states
-move lineBuilder to builder:w
+move lineBuilder to builder
 
 # TODOS
 
@@ -113,3 +113,7 @@ Make everything in sh DI
 Move Commands Out of State => allows states to be mutable in Command
 Optional States, Option<State<T>> useful when state could be missing
 Should Line Contents be created before startupctx?
+
+Do heavy review of changes, make sure no unintended changes
+More utility methods on states , return option
+Should highlighter return Option

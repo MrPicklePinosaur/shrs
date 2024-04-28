@@ -168,7 +168,7 @@ impl Line {
             // syntax highlight
             let mut styled_buf = sh
                 .highlighter
-                .highlight(states, &res)
+                .highlight(sh, states, &res)?
                 .slice_from(states.get::<LineContents>().lines.len());
 
             // add currently selected completion to buf
@@ -195,12 +195,8 @@ impl Line {
                 }
             }
 
-            self.painter.paint(
-                states,
-                &sh.prompt,
-                &states.get::<DefaultMenuState>(),
-                &styled_buf,
-            )?;
+            self.painter
+                .paint(states, sh, &states.get::<DefaultMenuState>(), &styled_buf)?;
             if auto_run {
                 states.get_mut::<Box<dyn BufferHistory>>().clear();
                 self.painter.newline()?;

@@ -17,9 +17,9 @@ use unicode_width::UnicodeWidthStr;
 use super::{
     line::{LineContents, LineMode},
     menu::Menu,
-    prompt::Prompt,
+    prompt::FullPrompt,
 };
-use crate::prelude::{Completion, States, Theme};
+use crate::prelude::{Completion, Shell, States, Theme};
 pub struct Painter {
     /// The output buffer
     out: RefCell<BufWriter<std::io::Stdout>>,
@@ -67,10 +67,10 @@ impl Painter {
 
     // Clippy thinks we can just use &dyn but we cannot
     #[allow(clippy::borrowed_box)]
-    pub fn paint<T: Prompt + ?Sized>(
+    pub fn paint(
         &mut self,
         states: &States,
-        prompt: impl AsRef<T>,
+        sh: &Shell,
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: &StyledBuf,
     ) -> anyhow::Result<()> {
@@ -88,8 +88,8 @@ impl Painter {
             }
         }
         //newlines to account for when clearing and printing prompt
-        let prompt_left = prompt.as_ref().prompt_left(states);
-        let prompt_right = prompt.as_ref().prompt_right(states);
+        let prompt_left = sh.prompt.prompt_left.prompt(sh, states);
+        let prompt_right = sh.prompt.prompt_left.prompt(sh, states);
         let prompt_left_lines = prompt_left.lines();
         let prompt_right_lines = prompt_right.lines();
         let styled_buf_lines = styled_buf.lines();

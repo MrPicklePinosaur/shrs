@@ -3,7 +3,13 @@
 use std::time::Instant;
 
 use ::anyhow::Result;
-use shrs::{commands::Commands, prelude::*, readline::line::LineContents, state::StateMut};
+use shrs::{
+    commands::Commands,
+    prelude::*,
+    readline::{highlight::IntoHighlighter, line::LineContents},
+    state::StateMut,
+};
+use shrs_utils::styled_buf::StyledBuf;
 #[derive(Debug)]
 pub struct H {
     i: i32,
@@ -14,8 +20,10 @@ fn main() {
     hooks.insert(d);
     hooks.insert(e);
     hooks.insert(f);
+    hooks.insert_hook(Box::new(Hooo { s: "S".to_string() }));
     let myshell = ShellBuilder::default()
         .with_hooks(hooks)
+        .with_highlighter(high.into_highlighter())
         .with_state(H { i: 10 })
         .build()
         .unwrap();
@@ -56,6 +64,19 @@ pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
 pub fn g(sh: &Shell, ctx: &AfterCommandCtx) -> Result<()> {
     dbg!("hqwe");
     Ok(())
+}
+pub fn high(sh: &Shell, buf: &String) -> Result<StyledBuf> {
+    Ok(styled_buf!(buf.clone().red()))
+}
+pub struct Hooo {
+    s: String,
+}
+
+impl Hook<StartupCtx> for Hooo {
+    fn run(&self, sh: &Shell, states: &States, ctx: &StartupCtx) -> Result<()> {
+        dbg!(self.s.clone());
+        Ok(())
+    }
 }
 pub struct SCtx {}
 impl Ctx for SCtx {}

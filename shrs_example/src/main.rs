@@ -24,7 +24,7 @@ use shrs_run_context::RunContextPlugin;
 // Create a new struct and implement the [Prompt] trait
 struct MyPrompt;
 
-impl Prompt for MyPrompt {
+impl FullPrompt for MyPrompt {
     fn prompt_left(&self, state: &LineStateBundle) -> StyledBuf {
         let indicator = match state.line.mode() {
             LineMode::Insert => String::from(">").cyan(),

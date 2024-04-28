@@ -1,15 +1,14 @@
 //! Syntax highlighting
 
+use std::marker::PhantomData;
+
+use super::super::prelude::Param;
+use anyhow::Result;
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
 
-use crate::prelude::States;
-
-pub trait Highlighter {
-    /// highlight buf, state allows access to additional info
-    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf;
-}
+use crate::prelude::{Shell, States};
 
 /// Simple highlighter that colors the entire line one color
 #[derive(Default)]
@@ -18,7 +17,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf {
+    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
@@ -29,7 +28,7 @@ impl Highlighter for DefaultHighlighter {
             },
         );
 
-        styled_buf
+        Ok(styled_buf)
     }
 }
 
@@ -63,16 +62,15 @@ impl SyntaxHighlighter {
         }
     }
 }
-
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, ctx: &States, buf: &str) -> StyledBuf {
+    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
         let mut styled_buf = StyledBuf::new(&buf).style(self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {
             syntax_theme.apply(&mut styled_buf);
         }
 
-        styled_buf
+        Ok(styled_buf)
     }
 }
 /// Implementation of a highlighter for the shrs language.
@@ -169,3 +167,107 @@ impl SyntaxTheme for ShrsTheme {
         }
     }
 }
+/// Implement this trait to define your own highlighter command
+pub trait Highlighter {
+    /// highlight buf
+    fn highlight(&self, sh: &Shell, states: &States, buf: &String) -> Result<StyledBuf>;
+}
+
+pub trait IntoHighlighter<Input> {
+    type Highlighter: Highlighter;
+    fn into_highlighter(self) -> Self::Highlighter;
+}
+pub struct FunctionHighlighter<Input, F> {
+    f: F,
+    marker: PhantomData<fn() -> Input>,
+}
+impl<F> Highlighter for FunctionHighlighter<(Shell, String), F>
+where
+    for<'a, 'b> &'a F: Fn(&Shell, &String) -> Result<StyledBuf>,
+{
+    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
+        fn call_inner(
+            f: impl Fn(&Shell, &String) -> Result<StyledBuf>,
+            sh: &Shell,
+            buf: &String,
+        ) -> Result<StyledBuf> {
+            f(&sh, &buf)
+        }
+
+        call_inner(&self.f, sh, &buf)
+    }
+}
+
+macro_rules! impl_highlighter {
+    (
+        $($params:ident),*
+    ) => {
+        #[allow(non_snake_case)]
+        #[allow(unused)]
+        impl<F, $($params: Param),+> Highlighter for FunctionHighlighter<($($params,)+), F>
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell,&String)->Result<StyledBuf> +
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&String )->Result<StyledBuf>
+        {
+            fn highlight(&self, sh: &Shell,states: &States, buf: &String)->Result<StyledBuf> {
+                fn call_inner<$($params),+>(
+                    f: impl Fn($($params),+,&Shell,&String)->Result<StyledBuf>,
+                    $($params: $params),*
+                    ,sh:&Shell,buf:&String
+                ) -> Result<StyledBuf>{
+                    f($($params),*,sh,buf)
+                }
+
+                $(
+                    let $params = $params::retrieve(states);
+                )+
+
+                call_inner(&self.f, $($params),+,sh,&buf)
+            }
+        }
+    }
+}
+impl<F> IntoHighlighter<()> for F
+where
+    for<'a, 'b> &'a F: Fn(&Shell, &String) -> Result<StyledBuf>,
+{
+    type Highlighter = FunctionHighlighter<(Shell, String), Self>;
+
+    fn into_highlighter(self) -> Self::Highlighter {
+        FunctionHighlighter {
+            f: self,
+            marker: Default::default(),
+        }
+    }
+}
+
+macro_rules! impl_into_highlighter {
+    (
+        $($params:ident),+
+    ) => {
+        impl<F, $($params: Param),+> IntoHighlighter<($($params,)*)> for F
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell,&String ) ->Result<StyledBuf>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&String )->Result<StyledBuf>
+        {
+            type Highlighter = FunctionHighlighter<($($params,)+), Self>;
+
+            fn into_highlighter(self) -> Self::Highlighter {
+                FunctionHighlighter {
+                    f: self,
+                    marker: Default::default(),
+                }
+            }
+        }
+    }
+}
+impl_highlighter!(T1);
+impl_highlighter!(T1, T2);
+impl_highlighter!(T1, T2, T3);
+impl_highlighter!(T1, T2, T3, T4);
+impl_into_highlighter!(T1);
+impl_into_highlighter!(T1, T2);
+impl_into_highlighter!(T1, T2, T3);
+impl_into_highlighter!(T1, T2, T3, T4);

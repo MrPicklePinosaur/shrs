@@ -1,9 +1,10 @@
 //! Shell prompt
 
-use super::super::state::Param;
-use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 use std::marker::PhantomData;
 
+use shrs_utils::{styled_buf, styled_buf::StyledBuf};
+
+use super::super::state::Param;
 use crate::prelude::{Shell, States};
 
 /// Implement this trait to create your own prompt

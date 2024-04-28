@@ -2,12 +2,12 @@
 
 use std::marker::PhantomData;
 
-use super::super::prelude::Param;
 use anyhow::Result;
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
 use shrs_utils::styled_buf::StyledBuf;
 
+use super::super::prelude::Param;
 use crate::prelude::{Shell, States};
 
 /// Simple highlighter that colors the entire line one color

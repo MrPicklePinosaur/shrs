@@ -1,6 +1,6 @@
 //! The most minimal working shell
 
-use std::time::Instant;
+use std::{process::Command, time::Instant};
 
 use ::anyhow::Result;
 use shrs::{
@@ -21,9 +21,18 @@ fn main() {
     hooks.insert(e);
     hooks.insert(f);
     hooks.insert_hook(Box::new(Hooo { s: "S".to_string() }));
+
+    let mut bindings = Keybindings::new();
+    bindings.insert("C-l", "Clear the screen", |shell: &Shell| -> Result<()> {
+        Command::new("clear")
+            .spawn()
+            .expect("Couldn't clear screen");
+        Ok(())
+    });
     let myshell = ShellBuilder::default()
         .with_hooks(hooks)
         .with_highlighter(high.into_highlighter())
+        .with_keybinding(bindings)
         .with_state(H { i: 10 })
         .build()
         .unwrap();

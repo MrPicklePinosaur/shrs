@@ -1,43 +1,52 @@
 //! Keybinding system
 
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
+use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
-use crate::prelude::States;
-
-pub type BindingFn = dyn Fn(&States);
+use super::state::Param;
+use crate::prelude::{Shell, States};
 
 /// Implement this trait to define your own keybinding system
-pub trait Keybinding {
-    /// Return true indicates that event was handled
-    fn handle_key_event(&self, ctx: &States, key_event: KeyEvent) -> bool;
-    fn get_info(&self) -> &HashMap<String, String>;
+pub struct Keybindings {
+    pub bindings: HashMap<KeyEvent, Box<dyn Keybinding>>,
+    pub info: HashMap<String, String>,
 }
+impl Keybindings {
+    pub fn new() -> Self {
+        Self {
+            bindings: HashMap::new(),
+            info: HashMap::new(),
+        }
+    }
+    pub fn insert<I, K: Keybinding + 'static>(
+        &mut self,
+        key: &str,
+        info: &str,
+        binding: impl IntoKeybinding<I, Keybinding = K>,
+    ) -> Result<()> {
+        let b = Box::new(binding.into_keybinding());
+        let key_event = parse_keybinding(key)?;
+        self.bindings.insert(key_event, b);
+        self.info.insert(key.to_string(), info.to_string());
+        Ok(())
+    }
+    /// Return true indicates that event was handled
+    pub fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
+        for (k, v) in self.bindings.iter() {
+            if key_event == *k {
+                v.run(sh, states);
+                return true;
+            }
+        }
+        return false;
+    }
 
-pub type Binding = (KeyCode, KeyModifiers);
-
-/// Macro to easily define keybindings
-#[macro_export]
-macro_rules! keybindings {
-    // TODO temp hacky macro
-
-    (|$state:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
-        use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
-        use $crate::prelude::{LineStateBundle};
-        #[allow(unused)]
-        DefaultKeybinding::from_iter([
-            $((
-                parse_keybinding($binding).unwrap(),
-                Box::new(|$state: &mut LineStateBundle| {
-                    $func;
-                }) as Box<BindingFn>,
-                $binding.to_string(),
-                $desc.to_string(),
-            )),*
-        ])
-    }};
+    pub fn get_info(&self) -> &HashMap<String, String> {
+        &self.info
+    }
 }
 
 /// Errors from parsing keybinding from string
@@ -52,7 +61,7 @@ pub enum BindingFromStrError {
 }
 
 /// Parse a keybinding from a keybinding string
-pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
+pub fn parse_keybinding(s: &str) -> Result<KeyEvent, BindingFromStrError> {
     let mut parts = s.split('-').collect::<Vec<_>>();
 
     // last part is always the keycode
@@ -66,7 +75,7 @@ pub fn parse_keybinding(s: &str) -> Result<Binding, BindingFromStrError> {
         mods.set(modifier, true);
     }
 
-    Ok((keycode, mods))
+    Ok(KeyEvent::new(keycode, mods))
 }
 
 /// Parse the keycode part of keybinding
@@ -103,56 +112,6 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
         "super" => Ok(KeyModifiers::SUPER),
         "m" | "meta" => Ok(KeyModifiers::META),
         _ => Err(BindingFromStrError::UnknownMod(s.to_string())),
-    }
-}
-
-/// Default implementation of [Keybinding]
-#[derive(Default)]
-pub struct DefaultKeybinding {
-    // TODO this can't take closure right now
-    pub bindings: HashMap<Binding, Box<BindingFn>>,
-    pub info: HashMap<String, String>,
-}
-
-impl DefaultKeybinding {
-    pub fn new() -> Self {
-        Self {
-            bindings: HashMap::new(),
-            info: HashMap::new(),
-        }
-    }
-}
-
-impl Keybinding for DefaultKeybinding {
-    fn handle_key_event(&self, ctx: &States, key_event: KeyEvent) -> bool {
-        let mut event_handled = false;
-        for (binding, binding_fn) in self.bindings.iter() {
-            if (key_event.code, key_event.modifiers) == *binding {
-                binding_fn(ctx);
-                event_handled = true;
-            }
-        }
-        event_handled
-    }
-
-    fn get_info(&self) -> &HashMap<String, String> {
-        &self.info
-    }
-}
-
-impl FromIterator<(Binding, Box<BindingFn>, String, String)> for DefaultKeybinding {
-    fn from_iter<T: IntoIterator<Item = (Binding, Box<BindingFn>, String, String)>>(
-        iter: T,
-    ) -> Self {
-        let mut default_keybinding = DefaultKeybinding {
-            bindings: HashMap::new(),
-            info: HashMap::new(),
-        };
-        for item in iter {
-            default_keybinding.bindings.insert(item.0, item.1);
-            default_keybinding.info.insert(item.2, item.3);
-        }
-        default_keybinding
     }
 }
 
@@ -212,3 +171,107 @@ mod tests {
     //     };
     // }
 }
+
+/// Implement this trait to define your own keybinding command
+pub trait Keybinding {
+    fn run(&self, sh: &Shell, states: &States) -> Result<()>;
+}
+
+pub trait IntoKeybinding<Input> {
+    type Keybinding: Keybinding;
+    fn into_keybinding(self) -> Self::Keybinding;
+}
+
+pub struct FunctionKeybinding<Input, F> {
+    f: F,
+    marker: PhantomData<fn() -> Input>,
+}
+
+impl<F> Keybinding for FunctionKeybinding<Shell, F>
+where
+    for<'a, 'b> &'a F: Fn(&Shell) -> Result<()>,
+{
+    fn run(&self, sh: &Shell, ctx: &States) -> Result<()> {
+        fn call_inner(f: impl Fn(&Shell) -> Result<()>, sh: &Shell) -> Result<()> {
+            f(&sh)
+        }
+
+        call_inner(&self.f, sh)
+    }
+}
+
+macro_rules! impl_keybinding {
+    (
+        $($params:ident),*
+    ) => {
+        #[allow(non_snake_case)]
+        #[allow(unused)]
+        impl<F, $($params: Param),+> Keybinding for FunctionKeybinding<($($params,)+), F>
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell,)->Result<()> +
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell, )->Result<()>
+        {
+            fn run(&self, sh: &Shell,states: &States,  )->Result<()> {
+                fn call_inner<$($params),+>(
+                    f: impl Fn($($params),+,&Shell,)->Result<()>,
+                    $($params: $params),*
+                    ,sh:&Shell,
+                ) -> Result<()>{
+                    f($($params),*,sh)
+                }
+
+                $(
+                    let $params = $params::retrieve(states);
+                )+
+
+                call_inner(&self.f, $($params),+,sh,)
+            }
+        }
+    }
+}
+
+impl<F> IntoKeybinding<()> for F
+where
+    for<'a, 'b> &'a F: Fn(&Shell) -> Result<()>,
+{
+    type Keybinding = FunctionKeybinding<Shell, Self>;
+
+    fn into_keybinding(self) -> Self::Keybinding {
+        FunctionKeybinding {
+            f: self,
+            marker: Default::default(),
+        }
+    }
+}
+
+macro_rules! impl_into_keybinding {
+    (
+        $($params:ident),+
+    ) => {
+        impl<F, $($params: Param),+> IntoKeybinding<($($params,)*)> for F
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&Shell, ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&Shell, )->Result<()>
+        {
+            type Keybinding = FunctionKeybinding<($($params,)+), Self>;
+
+            fn into_keybinding(self) -> Self::Keybinding {
+                FunctionKeybinding {
+                    f: self,
+                    marker: Default::default(),
+                }
+            }
+        }
+    }
+}
+
+impl_keybinding!(T1);
+impl_keybinding!(T1, T2);
+impl_keybinding!(T1, T2, T3);
+impl_keybinding!(T1, T2, T3, T4);
+impl_into_keybinding!(T1);
+impl_into_keybinding!(T1, T2);
+impl_into_keybinding!(T1, T2, T3);
+impl_into_keybinding!(T1, T2, T3, T4);

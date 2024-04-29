@@ -26,7 +26,7 @@ pub struct Shell {
     pub builtins: Builtins,
     /// The command language
     pub lang: Box<dyn Lang>,
-    pub keybinding: Box<dyn Keybinding>,
+    pub keybindings: Keybindings,
     pub hooks: Hooks,
     pub prompt: FullPrompt,
     pub highlighter: Box<dyn Highlighter>,
@@ -131,9 +131,9 @@ pub struct ShellConfig {
     pub config_dir: PathBuf,
 
     /// Keybindings, see [Keybinding]
-    #[builder(default = "Box::new(DefaultKeybinding::default())")]
+    #[builder(default = "Keybindings::new()")]
     #[builder(setter(custom))]
-    pub keybinding: Box<dyn Keybinding>,
+    pub keybinding: Keybindings,
 
     //-------
     //Line
@@ -194,8 +194,8 @@ impl ShellBuilder {
         self.completer = Some(Box::new(completer));
         self
     }
-    pub fn with_keybinding(mut self, keybinding: impl Keybinding + 'static) -> Self {
-        self.keybinding = Some(Box::new(keybinding));
+    pub fn with_keybinding(mut self, keybinding: Keybindings) -> Self {
+        self.keybinding = Some(keybinding);
         self
     }
     pub fn with_menu(
@@ -283,7 +283,7 @@ impl ShellConfig {
         let mut sh = Shell {
             builtins: self.builtins,
             lang: self.lang,
-            keybinding: self.keybinding,
+            keybindings: self.keybinding,
             hooks: self.hooks,
             prompt: self.prompt,
             highlighter: self.highlighter,

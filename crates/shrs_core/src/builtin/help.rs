@@ -42,7 +42,7 @@ pub fn help_builtin(
             }
         },
         Commands::Bindings => {
-            let info = sh.keybinding.get_info();
+            let info = sh.keybindings.get_info();
 
             out.println("Key Bindings")?;
 

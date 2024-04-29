@@ -206,7 +206,7 @@ impl Line {
             let event = read()?;
 
             if let Event::Key(key_event) = event {
-                if sh.keybinding.handle_key_event(states, key_event) {
+                if sh.keybindings.handle_key_event(states, key_event) {
                     break;
                 }
             }

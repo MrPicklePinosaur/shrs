@@ -95,8 +95,8 @@ impl MuxPlugin {
         MuxPlugin {
             mux_state: RefCell::new(Some(mux_state)),
         }
-    }
 
+    }
     // Proxy to register_lang of underlying MuxState
     pub fn register_lang(self, name: &str, lang: impl Lang + 'static) -> Self {
         // TODO make sure not called after plugin is inited
@@ -146,26 +146,25 @@ impl Lang for MuxLang {
     fn eval(
         &self,
         sh: &Shell,
-        ctx: &mut States,
-        rt: &mut Runtime,
+        ctx: &States,
         cmd: String,
     ) -> anyhow::Result<CmdOutput> {
-        let Some(state) = ctx.state.get::<MuxState>() else {
+        let Ok(state) = ctx.try_get::<MuxState>() else {
             return Ok(CmdOutput::error());
         };
 
-        state.current_lang().eval(sh, ctx, rt, cmd)
+        state.current_lang().eval(sh, ctx, cmd)
     }
 
     fn name(&self) -> String {
         "mux".to_string()
     }
 
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
-        let Some(mux_state) = state.ctx.state.get::<MuxState>() else {
+    fn needs_line_check(&self, shell: &Shell, ctx: &States) -> bool {
+        let Ok(mux_state) = ctx.try_get::<MuxState>() else {
             return false;
         };
         let lang = mux_state.current_lang();
-        lang.needs_line_check(state)
+        lang.needs_line_check(shell, ctx)
     }
 }

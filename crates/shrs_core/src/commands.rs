@@ -60,10 +60,7 @@ impl Commands {
     // Trigger a hook of given type with payload
     pub fn run_hook<C: HookCtx>(&mut self, hook_ctx: C) {
         self.run(move |sh: &mut Shell, states: &States| {
-            if let Err(e) = sh.hooks.run(sh, states, hook_ctx.clone()) {
-                let type_name = std::any::type_name::<C>();
-                warn!("failed to execute hook {e} of type {type_name}");
-            }
+            let _ = sh.hooks.run(sh, states, &hook_ctx);
         })
     }
 }

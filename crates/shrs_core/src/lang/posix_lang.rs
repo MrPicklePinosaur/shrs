@@ -99,9 +99,7 @@ impl Lang for PosixLang {
             match eval2::eval_command(&mut ctx.get_mut::<JobManager>(), &cmd, None, None) {
                 Ok((procs, pgid)) => (procs, pgid),
                 Err(PosixError::CommandNotFound(_)) => {
-                    sh.hooks
-                        .run(sh, ctx, CommandNotFoundCtx {})
-                        .expect("Error in hook");
+                    let _ = sh.hooks.run(sh, ctx, &CommandNotFoundCtx {});
                     return Ok(CmdOutput::error_with_status(127));
                 },
                 _ => return Ok(CmdOutput::error()),

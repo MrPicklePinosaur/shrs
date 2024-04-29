@@ -13,12 +13,14 @@
 use std::marker::PhantomData;
 
 use anyhow::Result;
+use log::warn;
 
 use crate::{
-    ctx::HookCtx,
+    hook_ctx::HookCtx,
     prelude::{Shell, States},
     state::Param,
 };
+
 impl<F, C: HookCtx> Hook<C> for FunctionHook<(Shell, C), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
@@ -131,20 +133,30 @@ impl_into_hook!(T1, T2, T3, T4);
 impl_into_hook!(T1, T2, T3, T4, T5);
 
 pub type StoredHook<C> = Box<dyn Hook<C>>;
+
 #[derive(Default)]
 pub struct Hooks {
     hooks: anymap::Map,
 }
+
 impl Hooks {
     pub fn new() -> Self {
         Self {
             hooks: anymap::Map::new(),
         }
     }
-    pub fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: C) -> Result<()> {
+
+    // TODO currently this will abort if a hook fails, potentially introduce fail modes like
+    // 'Best Effort' - run all hooks and report any failures
+    // 'Pedantic' - abort on the first failed hook
+    pub fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
         if let Some(hook_list) = self.get::<C>() {
             for hook in hook_list.iter() {
-                hook.run(sh, ctx, &c)?
+                if let Err(e) = hook.run(sh, ctx, c) {
+                    let type_name = std::any::type_name::<C>();
+                    warn!("failed to execute hook {e} of type {type_name}");
+                    return Err(e);
+                }
             }
         }
         Ok(())
@@ -156,6 +168,7 @@ impl Hooks {
     ) {
         self.insert_hook(Box::new(system.into_system()))
     }
+
     pub fn insert_hook<C: HookCtx>(&mut self, hook: Box<dyn Hook<C>>) {
         match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
             Some(hook_list) => {
@@ -167,6 +180,7 @@ impl Hooks {
             },
         };
     }
+
     /// gets hooks associated with Ctx
     pub fn get<C: HookCtx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
         self.hooks.get::<Vec<StoredHook<C>>>()

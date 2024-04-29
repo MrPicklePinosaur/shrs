@@ -72,7 +72,7 @@ impl MuxState {
 }
 
 /// Hook that emitted when the language is changed
-#[derive(HookCtx, Clone)]
+#[derive(HookCtx)]
 pub struct ChangeLangCtx {
     old_lang: String,
     new_lang: String,

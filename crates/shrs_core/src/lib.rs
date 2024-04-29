@@ -8,9 +8,9 @@ pub mod builtin;
 pub mod cmd_output;
 pub mod commands;
 pub mod completion;
-pub mod ctx;
 pub mod env;
 pub mod history;
+pub mod hook_ctx;
 pub mod hooks;
 pub mod jobs;
 pub mod keybinding;
@@ -36,9 +36,9 @@ pub mod prelude {
         cmd_output::CmdOutput,
         commands::Commands,
         completion::*,
-        ctx::*,
         env::Env,
         history::*,
+        hook_ctx::*,
         hooks::{Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::*,

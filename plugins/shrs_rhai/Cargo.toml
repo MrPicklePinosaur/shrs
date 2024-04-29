@@ -16,3 +16,7 @@ repository.workspace = true
 shrs = { path = "../../crates/shrs", version = "^0.0.5" }
 rhai = { version = "1.16" }
 dirs = { version = "5" }
+
+pino_deref = { version = "0.1.1" }
+
+log = "0.4"

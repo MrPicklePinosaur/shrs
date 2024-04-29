@@ -292,7 +292,7 @@ impl ShellConfig {
 
         // run post init for plugins
         for plugin in plugins.iter() {
-            if let Err(e) = plugin.post_init(&mut self.states) {
+            if let Err(e) = plugin.post_init(&mut sh, &mut self.states) {
                 let plugin_meta = plugin.meta();
                 info!("Post-initializing plugin '{}'...", plugin_meta.name);
 

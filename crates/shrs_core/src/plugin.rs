@@ -48,13 +48,13 @@ pub trait Plugin {
     ///
     /// Hook onto the initialization of the shell and add any hooks, functions, state variables
     /// that you would like
-    fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()>;
+    fn init(&self, config: &mut ShellConfig) -> anyhow::Result<()>;
 
     /// Plugin post initialization
     ///
     /// Gets called once after the shell has completed initialization process, giving access to
-    /// shell, context, and runtime state
-    fn post_init(&self, _states: &mut States) -> anyhow::Result<()> {
+    /// runtime shells state
+    fn post_init(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         Ok(())
     }
 

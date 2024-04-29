@@ -32,8 +32,9 @@ pub struct Shell {
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
 }
+
 impl Shell {
-    pub fn run_hooks<C: Ctx>(&mut self, states: &States, c: C) -> Result<()> {
+    pub fn run_hooks<C: HookCtx>(&mut self, states: &States, c: C) -> Result<()> {
         self.hooks.run(self, states, c)?;
         let mut q = states.get_mut::<Commands>().apply_all(self, states);
         while let Some(cmd) = q.pop_front() {

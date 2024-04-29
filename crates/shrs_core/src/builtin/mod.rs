@@ -57,11 +57,11 @@ impl Builtins {
     /// If a builtin of the same name has been registered, it will be overwritten.
     pub fn insert<I, B: Builtin + 'static>(
         &mut self,
-        name: String,
+        name: impl ToString,
         builtin: impl IntoBuiltin<I, Builtin = B>,
     ) {
         let item = Box::new(builtin.into_builtin());
-        self.builtins.insert(name, item);
+        self.builtins.insert(name.to_string(), item);
     }
 
     /// Get iterator of all registered builtin commands
@@ -79,14 +79,14 @@ impl Builtins {
 
 impl Default for Builtins {
     fn default() -> Self {
-        let mut b = Builtins::new();
-        b.insert("exit".to_string(), exit_builtin);
-        b.insert("help".to_string(), help_builtin);
-        b.insert("alias".to_string(), alias_builtin);
-        b.insert("cd".to_string(), cd_builtin);
-        b.insert("type".to_string(), type_builtin);
+        let mut builtins = Builtins::new();
+        builtins.insert("exit", exit_builtin);
+        builtins.insert("help", help_builtin);
+        builtins.insert("alias", alias_builtin);
+        builtins.insert("cd", cd_builtin);
+        builtins.insert("type", type_builtin);
 
-        b
+        builtins
 
         // Builtins {
         //     builtins: HashMap::from([

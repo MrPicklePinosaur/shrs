@@ -32,6 +32,7 @@ pub mod prelude {
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
         builtin::*,
         cmd_output::CmdOutput,
+        commands::Commands,
         completion::*,
         ctx::*,
         env::Env,
@@ -50,6 +51,7 @@ pub mod prelude {
         state::*,
         theme::Theme,
     };
+    pub use shrs_core_macros::*;
 }
 
 /*

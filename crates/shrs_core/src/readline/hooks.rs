@@ -1,29 +1,29 @@
 //! Hooks that are defined by shrs_readline
 
 use crossterm::event::KeyEvent;
-use shrs_core_macros::Ctx;
 
 use super::LineMode;
-use crate::prelude::Ctx;
+use crate::prelude::HookCtx;
 
 /// Runs whenever the current mode of the line changes
-#[derive(Ctx)]
+#[derive(HookCtx, Clone)]
 pub struct LineModeSwitchCtx {
     pub line_mode: LineMode,
 }
 
-#[derive(Ctx)]
+#[derive(HookCtx, Clone)]
 pub struct ReadEventStartCtx;
 
-#[derive(Ctx)]
+#[derive(HookCtx, Clone)]
 pub struct PreRenderCtx {}
-#[derive(Ctx)]
+
+#[derive(HookCtx, Clone)]
 pub struct PostRenderCtx {}
 
-#[derive(Ctx)]
+#[derive(HookCtx, Clone)]
 pub struct ReadEventEndCtx;
 
-#[derive(Ctx)]
+#[derive(HookCtx, Clone)]
 pub struct OnKeyCtx {
     key: KeyEvent,
 }

@@ -7,7 +7,7 @@ pub mod python;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use anyhow::anyhow;
-use builtin::MuxBuiltin;
+use builtin::mux_builtin;
 pub use highlighter::MuxHighlighter;
 pub use lang::{BashLang, NuLang, SqliteLang, SshLang};
 use shrs::{prelude::*, readline::highlight::ShrsTheme};
@@ -71,9 +71,8 @@ impl MuxState {
     }
 }
 
-#[derive(Clone)]
-#[allow(unused)]
 /// Hook that emitted when the language is changed
+#[derive(HookCtx, Clone)]
 pub struct ChangeLangCtx {
     old_lang: String,
     new_lang: String,
@@ -127,7 +126,7 @@ impl Plugin for MuxPlugin {
 
         shell.states.insert(mux_state);
 
-        shell.builtins.insert("mux", MuxBuiltin::new());
+        shell.builtins.insert("mux", mux_builtin);
         shell.lang = Box::new(MuxLang::new());
 
         Ok(())

@@ -15,16 +15,16 @@ use std::marker::PhantomData;
 use anyhow::Result;
 
 use crate::{
-    ctx::Ctx,
+    ctx::HookCtx,
     prelude::{Shell, States},
     state::Param,
 };
-impl<F, C: Ctx> Hook<C> for FunctionHook<(Shell, C), F>
+impl<F, C: HookCtx> Hook<C> for FunctionHook<(Shell, C), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
 {
     fn run(&self, sh: &Shell, _states: &States, c: &C) -> Result<()> {
-        fn call_inner<C: Ctx>(
+        fn call_inner<C: HookCtx>(
             f: impl Fn(&Shell, &C) -> Result<()>,
             sh: &Shell,
             states: &C,
@@ -42,14 +42,14 @@ macro_rules! impl_hook{
     ) => {
         #[allow(non_snake_case)]
         #[allow(unused)]
-        impl<F, C:Ctx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
+        impl<F, C:HookCtx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell,&C ) ->Result<()>+
                     Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
         {
             fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
-                fn call_inner<C:Ctx,$($params),+>(
+                fn call_inner<C:HookCtx,$($params),+>(
                     f: impl Fn($($params),+,&Shell,&C)->Result<()>,
                     $($params: $params),+
                     ,sh:&Shell
@@ -68,7 +68,7 @@ macro_rules! impl_hook{
     }
 }
 
-impl<F, C: Ctx> IntoHook<(), C> for F
+impl<F, C: HookCtx> IntoHook<(), C> for F
 where
     for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
 {
@@ -86,7 +86,7 @@ macro_rules! impl_into_hook {
     (
         $($params:ident),+
     ) => {
-        impl<F, C:Ctx,$($params: Param),+> IntoHook<($($params,)+),C> for F
+        impl<F, C:HookCtx,$($params: Param),+> IntoHook<($($params,)+),C> for F
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell,&C ) ->Result<()>+
@@ -109,7 +109,7 @@ pub struct FunctionHook<Input, F> {
     marker: PhantomData<fn() -> Input>,
 }
 
-pub trait Hook<C: Ctx> {
+pub trait Hook<C: HookCtx> {
     fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
 }
 impl_hook!(T1);
@@ -118,7 +118,7 @@ impl_hook!(T1, T2, T3);
 impl_hook!(T1, T2, T3, T4);
 impl_hook!(T1, T2, T3, T4, T5);
 
-pub trait IntoHook<Input, C: Ctx> {
+pub trait IntoHook<Input, C: HookCtx> {
     type Hook: Hook<C>;
 
     fn into_system(self) -> Self::Hook;
@@ -141,7 +141,7 @@ impl Hooks {
             hooks: anymap::Map::new(),
         }
     }
-    pub fn run<C: Ctx>(&self, sh: &Shell, ctx: &States, c: C) -> Result<()> {
+    pub fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: C) -> Result<()> {
         if let Some(hook_list) = self.get::<C>() {
             for hook in hook_list.iter() {
                 hook.run(sh, ctx, &c)?
@@ -150,13 +150,13 @@ impl Hooks {
         Ok(())
     }
 
-    pub fn insert<I, C: Ctx, S: Hook<C> + 'static>(
+    pub fn insert<I, C: HookCtx, S: Hook<C> + 'static>(
         &mut self,
         system: impl IntoHook<I, C, Hook = S>,
     ) {
         self.insert_hook(Box::new(system.into_system()))
     }
-    pub fn insert_hook<C: Ctx>(&mut self, hook: Box<dyn Hook<C>>) {
+    pub fn insert_hook<C: HookCtx>(&mut self, hook: Box<dyn Hook<C>>) {
         match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
             Some(hook_list) => {
                 hook_list.push(hook);
@@ -168,7 +168,7 @@ impl Hooks {
         };
     }
     /// gets hooks associated with Ctx
-    pub fn get<C: Ctx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
+    pub fn get<C: HookCtx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
         self.hooks.get::<Vec<StoredHook<C>>>()
     }
 }

@@ -13,59 +13,38 @@ struct Cli {
     lang: Option<String>,
 }
 
-#[derive(Default)]
-pub struct MuxBuiltin {}
+pub fn mux_builtin(
+    mut cmd: StateMut<Commands>,
+    mut mux_state: StateMut<MuxState>,
+    sh: &Shell,
+    args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
+    let cli = Cli::try_parse_from(args)?;
 
-impl MuxBuiltin {
-    pub fn new() -> Self {
-        Self {}
+    if cli.list {
+        for (lang_name, _) in mux_state.iter() {
+            println!("{lang_name}")
+        }
     }
-}
 
-impl Builtin for MuxBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
-        let cli = Cli::try_parse_from(args)?;
-
-        let Some(state) = ctx.state.get_mut::<MuxState>() else {
-            return Ok(CmdOutput::error());
+    if let Some(lang_name) = cli.lang {
+        let old_lang = mux_state.current_lang();
+        let hook_ctx = ChangeLangCtx {
+            old_lang: old_lang.name(),
+            new_lang: lang_name.clone().into(),
         };
 
-        if cli.list {
-            for (lang_name, _) in state.iter() {
-                println!("{lang_name}")
-            }
+        if let Err(e) = mux_state.set_current_lang(&lang_name) {
+            eprintln!("{e}");
+            return Ok(CmdOutput::error());
         }
 
-        if let Some(lang_name) = cli.lang {
-            let old_lang = state.current_lang();
-            let hook_ctx = ChangeLangCtx {
-                old_lang: old_lang.name(),
-                new_lang: lang_name.clone().into(),
-            };
+        println!("setting lang to {lang_name}");
 
-            if let Err(e) = state.set_current_lang(&lang_name) {
-                eprintln!("{e}");
-                return Ok(CmdOutput::error());
-            }
-
-            println!("setting lang to {lang_name}");
-
-            // HACK, prime the language so it can run any init that it needs (this is to support
-            // lazy loading languages)
-            let current_lang = state.current_lang();
-            let _ = current_lang.eval(sh, ctx, rt, "".into());
-
-            sh.hooks
-                .run(sh, ctx, rt, hook_ctx)
-                .expect("failed running hook");
-        }
-
-        Ok(CmdOutput::success())
+        // HACK, prime the language so it can run any init that it needs (this is to support
+        // lazy loading languages)
+        cmd.eval("");
+        cmd.run_hook(hook_ctx);
     }
+    Ok(CmdOutput::success())
 }

@@ -177,10 +177,7 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg: HookFn<StartupCtx> = |_sh: &Shell,
-                                           _sh_ctx: &mut Context,
-                                           _sh_rt: &mut Runtime,
-                                           _ctx: &StartupCtx|
+    let startup_msg: HookFn<StartupCtx> = |sh: &Shell|
      -> anyhow::Result<()> {
         let welcome_str = format!(
             r#"

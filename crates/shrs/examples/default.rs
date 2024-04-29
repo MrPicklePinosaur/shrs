@@ -79,4 +79,4 @@ impl Hook<StartupCtx> for Hooo {
     }
 }
 pub struct SCtx {}
-impl Ctx for SCtx {}
+impl HookCtx for SCtx {}

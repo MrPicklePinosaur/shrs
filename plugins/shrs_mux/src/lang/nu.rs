@@ -14,8 +14,7 @@ impl Lang for NuLang {
     fn eval(
         &self,
         _sh: &Shell,
-        _ctx: &mut States,
-        _rt: &mut Runtime,
+        _ctx: &States,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
         let handle = Command::new("nu")
@@ -33,7 +32,7 @@ impl Lang for NuLang {
         "nu".to_string()
     }
 
-    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, shell: &Shell, ctx: &States) -> bool {
         false
     }
 }

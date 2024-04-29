@@ -105,8 +105,7 @@ impl Lang for SshLang {
     fn eval(
         &self,
         _sh: &Shell,
-        _ctx: &mut States,
-        _rt: &mut Runtime,
+        _states: &States,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
@@ -124,7 +123,7 @@ impl Lang for SshLang {
         "ssh".to_string()
     }
 
-    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, shell: &Shell, ctx: &States) -> bool {
         false
     }
 }

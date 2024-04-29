@@ -416,7 +416,6 @@ pub fn set_working_dir(
     sh: &Shell,
     rt: &mut Runtime,
     cmd: &mut Commands,
-
     wd: &Path,
     run_hook: bool,
 ) -> anyhow::Result<()> {
@@ -446,16 +445,11 @@ pub fn set_working_dir(
 
     // Run change directory hook
     if run_hook {
-        cmd.run(move |sh: &mut Shell, states: &States| {
-            let hook_ctx = ChangeDirCtx {
-                old_dir: old_path.clone(),
-                new_dir: path.clone(),
-            };
-
-            if let Err(e) = sh.hooks.run(sh, states, hook_ctx) {
-                error!("Error running change dir hook {e:?}");
-            }
-        });
+        let hook_ctx = ChangeDirCtx {
+            old_dir: old_path.clone(),
+            new_dir: path.clone(),
+        };
+        cmd.run_hook(hook_ctx);
     }
 
     Ok(())

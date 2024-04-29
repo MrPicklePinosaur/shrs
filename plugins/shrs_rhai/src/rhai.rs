@@ -1,6 +1,8 @@
 //! Library functions to interact with shrs from rhai scripts
-use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
 
 use pino_deref::{Deref, DerefMut};
 use rhai::{Engine, Scope, AST};

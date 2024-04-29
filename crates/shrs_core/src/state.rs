@@ -102,7 +102,6 @@ pub struct States {
 }
 
 impl States {
-
     // Insert a new piece of state of given type into global state store, overriding previously
     // existing values
     // TODO should we allow overriding contents of state?
@@ -124,19 +123,16 @@ impl States {
 
     /// Attempts to get an immutable borrow of a state of a given type S from global state store
     pub fn try_get<S: 'static>(&self) -> Result<Ref<S>, StateError> {
-        let Some(s) = self
-            .states
-            .get(&TypeId::of::<S>()) else {
-
+        let Some(s) = self.states.get(&TypeId::of::<S>()) else {
             return Err(StateError::Missing);
         };
 
         let Ok(s) = s.try_borrow() else {
-            return Err(StateError::Borrow)
+            return Err(StateError::Borrow);
         };
 
         let Ok(s) = Ref::filter_map(s, |b| b.downcast_ref::<S>()) else {
-            return Err(StateError::Downcast)
+            return Err(StateError::Downcast);
         };
 
         Ok(s)
@@ -150,19 +146,16 @@ impl States {
 
     /// Attempts to get a mutable borrow of a state of a given type S from global state store
     pub fn try_get_mut<S: 'static>(&self) -> Result<RefMut<S>, StateError> {
-        let Some(s) = self
-            .states
-            .get(&TypeId::of::<S>()) else {
-
+        let Some(s) = self.states.get(&TypeId::of::<S>()) else {
             return Err(StateError::Missing);
         };
 
         let Ok(s) = s.try_borrow_mut() else {
-            return Err(StateError::Borrow)
+            return Err(StateError::Borrow);
         };
 
         let Ok(s) = RefMut::filter_map(s, |b| b.downcast_mut::<S>()) else {
-            return Err(StateError::Downcast)
+            return Err(StateError::Downcast);
         };
 
         Ok(s)

@@ -28,6 +28,8 @@ pub mod theme;
 pub mod prelude {
     //! Conveniently import commonly used types
 
+    pub use shrs_core_macros::*;
+
     pub use crate::{
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
         builtin::*,
@@ -51,7 +53,6 @@ pub mod prelude {
         state::*,
         theme::Theme,
     };
-    pub use shrs_core_macros::*;
 }
 
 /*

@@ -1,8 +1,15 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    path::{Path, PathBuf},
+};
 
+use anyhow::anyhow;
 use log::warn;
 
-use crate::{prelude::{Shell, HookCtx}, state::States};
+use crate::{
+    prelude::{HookCtx, Shell},
+    state::States,
+};
 
 pub trait Command: Send + 'static {
     fn apply(&self, sh: &mut Shell, states: &States);
@@ -59,5 +66,4 @@ impl Commands {
             }
         })
     }
-
 }

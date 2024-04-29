@@ -6,7 +6,8 @@ fn prompt_left(shell: &Shell) -> StyledBuf {
 }
 
 fn prompt_right(state: State<CommandTimerState>, shell: &Shell) -> StyledBuf {
-    let time_str = state.command_time()
+    let time_str = state
+        .command_time()
         .map(|x| format!("{x:?}"))
         .unwrap_or(String::new());
     styled_buf!(time_str.reset())

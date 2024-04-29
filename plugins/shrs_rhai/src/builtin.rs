@@ -1,7 +1,7 @@
 use log::{error, warn};
 use shrs::prelude::*;
 
-use crate::rhai::{RhaiEngine, RhaiAST, RhaiScope};
+use crate::rhai::{RhaiAST, RhaiEngine, RhaiScope};
 
 // Run functions defined in rhai script
 pub fn command_not_found_hook(

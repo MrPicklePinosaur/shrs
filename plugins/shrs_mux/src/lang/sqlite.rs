@@ -91,12 +91,7 @@ impl SqliteLang {
 }
 
 impl Lang for SqliteLang {
-    fn eval(
-        &self,
-        _sh: &Shell,
-        _states: &States,
-        cmd: String,
-    ) -> shrs::anyhow::Result<CmdOutput> {
+    fn eval(&self, _sh: &Shell, _states: &States, cmd: String) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
             .lang_ctx
             .get_or_init(|| SqliteLangCtx::init(&self.runtime, &self.db_file));

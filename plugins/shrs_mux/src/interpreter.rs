@@ -3,7 +3,7 @@ use std::{
     process::{ChildStderr, ChildStdout},
 };
 
-use shrs::{prelude::States, output_writer::OutputWriter};
+use shrs::{output_writer::OutputWriter, prelude::States};
 
 pub fn read_out(
     out: &mut OutputWriter,

@@ -11,12 +11,7 @@ impl NuLang {
 }
 
 impl Lang for NuLang {
-    fn eval(
-        &self,
-        _sh: &Shell,
-        _ctx: &States,
-        cmd: String,
-    ) -> shrs::anyhow::Result<CmdOutput> {
+    fn eval(&self, _sh: &Shell, _ctx: &States, cmd: String) -> shrs::anyhow::Result<CmdOutput> {
         let handle = Command::new("nu")
             .args(vec!["-c", &cmd])
             .stdout(Stdio::piped())

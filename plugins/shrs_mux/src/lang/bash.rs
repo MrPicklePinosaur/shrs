@@ -28,13 +28,7 @@ impl BashLang {
 }
 
 impl Lang for BashLang {
-    fn eval(
-        &self,
-        _sh: &Shell,
-        states: &States,
-        cmd: String,
-    ) -> shrs::anyhow::Result<CmdOutput> {
-
+    fn eval(&self, _sh: &Shell, states: &States, cmd: String) -> shrs::anyhow::Result<CmdOutput> {
         let Ok(rt) = states.try_get::<Runtime>() else {
             return Ok(CmdOutput::error());
         };

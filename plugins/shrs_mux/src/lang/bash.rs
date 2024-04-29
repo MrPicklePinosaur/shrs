@@ -31,10 +31,18 @@ impl Lang for BashLang {
     fn eval(
         &self,
         _sh: &Shell,
-        ctx: &mut States,
-        rt: &mut Runtime,
+        states: &States,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {
+
+        let Ok(rt) = states.try_get::<Runtime>() else {
+            return Ok(CmdOutput::error());
+        };
+
+        let Ok(mut out) = states.try_get_mut::<OutputWriter>() else {
+            return Ok(CmdOutput::error());
+        };
+
         let mut instance = self.instance.borrow_mut();
         let stdin = instance.stdin.as_mut().expect("Failed to open stdin");
 
@@ -56,11 +64,11 @@ impl Lang for BashLang {
 
         let stdout_reader =
             BufReader::new(instance.stdout.as_mut().expect("Failed to open stdout"));
-        let status = read_out(ctx, stdout_reader)?;
+        let status = read_out(&mut out, stdout_reader)?;
 
         let stderr_reader =
             BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
-        read_err(ctx, stderr_reader)?;
+        read_err(&mut out, stderr_reader)?;
 
         Ok(CmdOutput::new(status))
     }
@@ -69,7 +77,7 @@ impl Lang for BashLang {
         "bash".to_string()
     }
 
-    fn needs_line_check(&self, _state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, shell: &Shell, ctx: &States) -> bool {
         false
     }
 }

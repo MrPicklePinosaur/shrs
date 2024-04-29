@@ -145,14 +145,14 @@ impl Lang for MuxLang {
     fn eval(
         &self,
         sh: &Shell,
-        ctx: &States,
+        states: &States,
         cmd: String,
     ) -> anyhow::Result<CmdOutput> {
-        let Ok(state) = ctx.try_get::<MuxState>() else {
+        let Ok(state) = states.try_get::<MuxState>() else {
             return Ok(CmdOutput::error());
         };
 
-        state.current_lang().eval(sh, ctx, cmd)
+        state.current_lang().eval(sh, states, cmd)
     }
 
     fn name(&self) -> String {

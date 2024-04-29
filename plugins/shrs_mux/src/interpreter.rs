@@ -3,10 +3,10 @@ use std::{
     process::{ChildStderr, ChildStdout},
 };
 
-use shrs::prelude::States;
+use shrs::{prelude::States, output_writer::OutputWriter};
 
 pub fn read_out(
-    ctx: &mut States,
+    out: &mut OutputWriter,
     mut reader: BufReader<&mut ChildStdout>,
 ) -> shrs::anyhow::Result<i32> {
     loop {
@@ -19,12 +19,12 @@ pub fn read_out(
 
             return Ok(exit_status.parse::<i32>()?);
         }
-        ctx.out.print(line)?;
+        out.print(line)?;
     }
 }
 
 pub fn read_err(
-    ctx: &mut States,
+    out: &mut OutputWriter,
     mut reader: BufReader<&mut ChildStderr>,
 ) -> shrs::anyhow::Result<()> {
     loop {
@@ -35,7 +35,7 @@ pub fn read_err(
         if line.contains("\x1a") {
             break;
         }
-        ctx.out.eprint(line)?;
+        out.eprint(line)?;
     }
     Ok(())
 }

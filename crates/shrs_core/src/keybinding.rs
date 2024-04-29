@@ -1,11 +1,12 @@
 //! Keybinding system
 
-use super::state::Param;
+use std::{collections::HashMap, marker::PhantomData};
+
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::{collections::HashMap, marker::PhantomData};
 use thiserror::Error;
 
+use super::state::Param;
 use crate::prelude::{Shell, States};
 
 /// Implement this trait to define your own keybinding system
@@ -20,16 +21,20 @@ impl Keybindings {
             info: HashMap::new(),
         }
     }
-    fn insert<I, K: Keybinding + 'static>(
+    pub fn insert<I, K: Keybinding + 'static>(
         &mut self,
-        key: KeyEvent,
+        key: &str,
+        info: &str,
         binding: impl IntoKeybinding<I, Keybinding = K>,
-    ) {
+    ) -> Result<()> {
         let b = Box::new(binding.into_keybinding());
-        self.bindings.insert(key, b);
+        let key_event = parse_keybinding(key)?;
+        self.bindings.insert(key_event, b);
+        self.info.insert(key.to_string(), info.to_string());
+        Ok(())
     }
     /// Return true indicates that event was handled
-    fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
+    pub fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
         for (k, v) in self.bindings.iter() {
             if key_event == *k {
                 v.run(sh, states);
@@ -39,46 +44,9 @@ impl Keybindings {
         return false;
     }
 
-    fn get_info(&self) -> &HashMap<String, String> {
+    pub fn get_info(&self) -> &HashMap<String, String> {
         &self.info
     }
-}
-impl FromIterator<(KeyEvent, Box<BindingFn>, String, String)> for Keybindings {
-    fn from_iter<T: IntoIterator<Item = (Binding, Box<BindingFn>, String, String)>>(
-        iter: T,
-    ) -> Self {
-        let mut default_keybinding = Keybindings {
-            bindings: HashMap::new(),
-            info: HashMap::new(),
-        };
-        for item in iter {
-            default_keybinding.bindings.insert(item.0, item.1);
-            default_keybinding.info.insert(item.2, item.3);
-        }
-        default_keybinding
-    }
-}
-
-/// Macro to easily define keybindings
-#[macro_export]
-macro_rules! keybindings {
-    // TODO temp hacky macro
-
-    (|$state:ident| $($binding:expr => ($desc:expr, $func:block)),* $(,)*) => {{
-        use $crate::keybinding::{DefaultKeybinding, parse_keybinding, BindingFn};
-        use $crate::prelude::{LineStateBundle};
-        #[allow(unused)]
-        DefaultKeybinding::from_iter([
-            $((
-                parse_keybinding($binding).unwrap(),
-                Box::new(|$state: &mut LineStateBundle| {
-                    $func;
-                }) as Box<BindingFn>,
-                $binding.to_string(),
-                $desc.to_string(),
-            )),*
-        ])
-    }};
 }
 
 /// Errors from parsing keybinding from string
@@ -107,7 +75,7 @@ pub fn parse_keybinding(s: &str) -> Result<KeyEvent, BindingFromStrError> {
         mods.set(modifier, true);
     }
 
-    Ok((keycode, mods))
+    Ok(KeyEvent::new(keycode, mods))
 }
 
 /// Parse the keycode part of keybinding

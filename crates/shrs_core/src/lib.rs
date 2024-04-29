@@ -38,7 +38,7 @@ pub mod prelude {
         history::*,
         hooks::{Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
-        keybinding::{parse_keybinding, BindingFn, Keybindings},
+        keybinding::*,
         lang::{Lang, PosixLang},
         output_writer::OutputWriter,
         plugin::*,

@@ -194,7 +194,7 @@ impl ShellBuilder {
         self
     }
     pub fn with_keybinding(mut self, keybinding: Keybindings) -> Self {
-        self.keybinding = Some(Box::new(keybinding));
+        self.keybinding = Some(keybinding);
         self
     }
     pub fn with_menu(

@@ -17,9 +17,9 @@ pub struct FullPrompt {
     pub prompt_right: Box<dyn Prompt>,
 }
 impl FullPrompt {
-    pub fn from_sides<I, R: Prompt + 'static, L: Prompt + 'static>(
+    pub fn from_sides<I, J, R: Prompt + 'static, L: Prompt + 'static>(
         left_prompt: impl IntoPrompt<I, Prompt = L>,
-        right_prompt: impl IntoPrompt<I, Prompt = R>,
+        right_prompt: impl IntoPrompt<J, Prompt = R>,
     ) -> Self {
         Self {
             prompt_left: Box::new(left_prompt.into_prompt()),

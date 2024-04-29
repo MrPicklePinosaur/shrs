@@ -9,8 +9,8 @@ use skim::prelude::*;
 
 use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, History, OutputWriter, States},
-    prompt_content_queue::{PromptContent, PromptContentQueue},
+    prelude::{CmdOutput, History, OutputWriter, State, StateMut, States},
+    prompt_content_queue::{self, PromptContent, PromptContentQueue},
     shell::{Runtime, Shell},
 };
 
@@ -28,36 +28,32 @@ enum Commands {
 }
 
 pub fn history_buitin(
+    mut history: StateMut<Box<dyn History>>,
+    mut out: StateMut<OutputWriter>,
+    mut prompt_content_queue: StateMut<PromptContentQueue>,
     _sh: &Shell,
-    states: &mut States,
-    args: &[String],
+    args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
     // TODO hack
     let cli = Cli::try_parse_from(args)?;
 
     match &cli.command {
         None => {
-            for i in (0..states.get::<Box<dyn History>>().len()).rev() {
-                states.get_mut::<OutputWriter>().print(format!(
-                    "{}: {}\n",
-                    i,
-                    states.get::<Box<dyn History>>().get(i).unwrap()
-                ))?;
+            for i in (0..history.len()).rev() {
+                out.print(format!("{}: {}\n", i, history.get(i).unwrap()))?;
             }
         },
         Some(Commands::Clear) => {
-            states.get_mut::<Box<dyn History>>().clear();
+            history.clear();
         },
         Some(Commands::Run { index }) => {
-            if let Some(cmd) = states.get::<Box<dyn History>>().get(*index as usize) {
-                states
-                    .get_mut::<PromptContentQueue>()
-                    .push(PromptContent::new(cmd.to_string(), true))
+            if let Some(cmd) = history.get(*index as usize) {
+                prompt_content_queue.push(PromptContent::new(cmd.to_string(), true))
             } else {
-                states.get_mut::<OutputWriter>().print(format!(
+                out.print(format!(
                     "Please specificy an index from {} to {} inclusive",
                     0,
-                    states.get::<Box<dyn History>>().len() - 1
+                    history.len() - 1
                 ))?;
             }
         },
@@ -71,12 +67,8 @@ pub fn history_buitin(
                 .unwrap();
 
             let mut input = String::new();
-            for i in 0..states.get::<Box<dyn History>>().len() {
-                input = format!(
-                    "{}{}\n",
-                    input,
-                    states.get::<Box<dyn History>>().get(i).unwrap()
-                );
+            for i in 0..history.len() {
+                input = format!("{}{}\n", input, history.get(i).unwrap());
             }
             let item_reader = SkimItemReader::default();
             let items = item_reader.of_bufread(Cursor::new(input));
@@ -86,9 +78,7 @@ pub fn history_buitin(
                 .unwrap_or_else(|| Vec::new());
 
             for item in selected_items.iter() {
-                states
-                    .get_mut::<PromptContentQueue>()
-                    .push(PromptContent::new(item.output().to_string(), true));
+                prompt_content_queue.push(PromptContent::new(item.output().to_string(), true));
                 break;
             }
         },

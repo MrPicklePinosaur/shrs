@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, States},
+    prelude::{CmdOutput, OutputWriter, State, StateMut, States},
     shell::{Runtime, Shell},
 };
 
@@ -19,25 +19,26 @@ struct Cli {
 enum Commands {}
 
 pub fn export_builtin(
+    mut rt: StateMut<Runtime>,
+    mut out: StateMut<OutputWriter>,
     sh: &Shell,
-    states: &mut States,
-    args: &[String],
+    args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;
 
     // remove arg
     if cli.n {
         for var in cli.vars {
-            states.get_mut::<Runtime>().env.remove(&var)?;
+            rt.env.remove(&var)?;
         }
         return Ok(CmdOutput::success());
     }
 
     // print all env vars
     if cli.p {
-        for (var, val) in states.get_mut::<Runtime>().env.iter() {
+        for (var, val) in rt.env.iter() {
             let s = format!("export {:?}={:?}", var, val);
-            states.get_mut::<OutputWriter>().println(s)?;
+            out.println(s)?;
         }
         return Ok(CmdOutput::success());
     }
@@ -47,7 +48,7 @@ pub fn export_builtin(
         let var = it.next().unwrap();
         let val = it.next().unwrap_or_default();
 
-        states.get_mut::<Runtime>().env.set(var, val)?;
+        rt.env.set(var, val)?;
     }
 
     Ok(CmdOutput::success())

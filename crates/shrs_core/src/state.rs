@@ -8,6 +8,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use thiserror::Error;
+
 use crate::prelude::{line::LineContents, Runtime, Shell};
 
 pub trait Param {
@@ -78,31 +80,91 @@ impl<T: 'static> DerefMut for StateMut<'_, T> {
         self.value.downcast_mut().unwrap()
     }
 }
+
+// Potential errors that can occur when interacting with state store
+#[derive(Error, Debug)]
+pub enum StateError {
+    // TODO include the type in the error message
+    #[error("Value is missing")]
+    Missing,
+    #[error("Failed to borrow")]
+    Borrow,
+    #[error("Failed to borrow mut")]
+    BorrowMut,
+    #[error("Failed to downcast")]
+    Downcast,
+}
+
+// Global state store
 #[derive(Default)]
 pub struct States {
     states: HashMap<TypeId, RefCell<Box<dyn Any>>>,
 }
+
 impl States {
+
+    // Insert a new piece of state of given type into global state store, overriding previously
+    // existing values
+    // TODO should we allow overriding contents of state?
     pub fn insert<S: 'static>(&mut self, res: S) {
         self.states
             .insert(TypeId::of::<S>(), RefCell::new(Box::new(res)));
     }
-    pub fn remove<S>() {}
 
-    pub fn get_mut<S: 'static>(&self) -> RefMut<S> {
-        let s = self
-            .states
-            .get(&TypeId::of::<S>())
-            .expect("Value Missing")
-            .borrow_mut();
-        RefMut::map(s, |b| b.downcast_mut::<S>().unwrap())
+    // TODO this is potentially dangerous to allow arbitrary code to remove state
+    pub fn remove<S>() -> Option<S> {
+        todo!()
     }
+
+    /// Get an immutable borrow of a state of a given type S from global state store. Will panic
+    /// if a borrow exists or the type specified does not exist in the state store
     pub fn get<S: 'static>(&self) -> Ref<S> {
-        let s = self
+        self.try_get().unwrap()
+    }
+
+    /// Attempts to get an immutable borrow of a state of a given type S from global state store
+    pub fn try_get<S: 'static>(&self) -> Result<Ref<S>, StateError> {
+        let Some(s) = self
             .states
-            .get(&TypeId::of::<S>())
-            .expect("Value Missing")
-            .borrow();
-        Ref::map(s, |b| b.downcast_ref::<S>().unwrap())
+            .get(&TypeId::of::<S>()) else {
+
+            return Err(StateError::Missing);
+        };
+
+        let Ok(s) = s.try_borrow() else {
+            return Err(StateError::Borrow)
+        };
+
+        let Ok(s) = Ref::filter_map(s, |b| b.downcast_ref::<S>()) else {
+            return Err(StateError::Downcast)
+        };
+
+        Ok(s)
+    }
+
+    /// Get a mutable borrow of a state of a given type S from global state store. Will panic
+    /// if a borrow exists or the type specified does not exist in the state store
+    pub fn get_mut<S: 'static>(&self) -> RefMut<S> {
+        self.try_get_mut().unwrap()
+    }
+
+    /// Attempts to get a mutable borrow of a state of a given type S from global state store
+    pub fn try_get_mut<S: 'static>(&self) -> Result<RefMut<S>, StateError> {
+        let Some(s) = self
+            .states
+            .get(&TypeId::of::<S>()) else {
+
+            return Err(StateError::Missing);
+        };
+
+        let Ok(s) = s.try_borrow_mut() else {
+            return Err(StateError::Borrow)
+        };
+
+        let Ok(s) = RefMut::filter_map(s, |b| b.downcast_mut::<S>()) else {
+            return Err(StateError::Downcast)
+        };
+
+        Ok(s)
     }
 }

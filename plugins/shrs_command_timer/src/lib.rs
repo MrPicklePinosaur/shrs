@@ -61,26 +61,21 @@ impl Plugin for CommandTimerPlugin {
     }
 }
 
-fn before_command_hook(
-    _sh: &Shell,
-    sh_ctx: &mut States,
-    _sh_rt: &mut Runtime,
-    _ctx: &BeforeCommandCtx,
+pub fn before_command_hook(
+    mut state: StateMut<CommandTimerState>,
+    sh: &Shell,
+    ctx: &BeforeCommandCtx
 ) -> anyhow::Result<()> {
-    if let Some(state) = sh_ctx.state.get_mut::<CommandTimerState>() {
-        state.start();
-    }
+    state.start();
     Ok(())
 }
 
 fn after_command_hook(
-    _sh: &Shell,
-    sh_ctx: &mut States,
-    _sh_rt: &mut Runtime,
-    _ctx: &AfterCommandCtx,
+    mut state: StateMut<CommandTimerState>,
+    sh: &Shell,
+    ctx: &AfterCommandCtx
 ) -> anyhow::Result<()> {
-    if let Some(state) = sh_ctx.state.get_mut::<CommandTimerState>() {
-        state.end()
-    }
+    state.end();
     Ok(())
 }
+

@@ -26,7 +26,7 @@ impl Plugin for OutputCapturePlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.hooks.insert(after_command_hook);
         shell.builtins.insert("again", AgainBuiltin::new());
-        shell.state.insert(OutputCaptureState::new());
+        shell.states.insert(OutputCaptureState::new());
 
         Ok(())
     }
@@ -41,7 +41,7 @@ impl Plugin for OutputCapturePlugin {
 
 fn after_command_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {

@@ -44,7 +44,7 @@ pub trait Menu {
 }
 
 pub type SortFn = fn(&(String, Completion), &(String, Completion)) -> Ordering;
-
+pub type DefaultMenuState = Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>;
 /// Simple menu that prompts user for a selection
 pub struct DefaultMenu {
     selections: Vec<(String, Completion)>,
@@ -76,7 +76,6 @@ impl Default for DefaultMenu {
         }
     }
 }
-
 impl DefaultMenu {
     pub fn new_with_limit(_limit: usize) -> Self {
         Self {

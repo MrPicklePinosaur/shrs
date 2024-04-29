@@ -14,8 +14,12 @@ use crossterm::{
 use shrs_utils::styled_buf::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
-use super::{cursor::CursorStyle, line::LineStateBundle, menu::Menu, prompt::Prompt};
-use crate::prelude::Completion;
+use super::{
+    line::{LineContents, LineMode},
+    menu::Menu,
+    prompt::FullPrompt,
+};
+use crate::prelude::{Completion, Shell, States, Theme};
 pub struct Painter {
     /// The output buffer
     out: RefCell<BufWriter<std::io::Stdout>>,
@@ -63,14 +67,14 @@ impl Painter {
 
     // Clippy thinks we can just use &dyn but we cannot
     #[allow(clippy::borrowed_box)]
-    pub fn paint<T: Prompt + ?Sized>(
+    pub fn paint(
         &mut self,
-        line_ctx: &mut LineStateBundle,
-        prompt: impl AsRef<T>,
+        states: &States,
+        sh: &Shell,
         menu: &Box<dyn Menu<MenuItem = Completion, PreviewItem = String>>,
         styled_buf: &StyledBuf,
-        cursor_ind: usize,
     ) -> anyhow::Result<()> {
+        let cursor_ind: usize = states.get::<LineContents>().cb.cursor();
         self.out.borrow_mut().queue(cursor::Hide)?;
 
         // scroll up if we need more lines
@@ -84,8 +88,8 @@ impl Painter {
             }
         }
         //newlines to account for when clearing and printing prompt
-        let prompt_left = prompt.as_ref().prompt_left(line_ctx);
-        let prompt_right = prompt.as_ref().prompt_right(line_ctx);
+        let prompt_left = sh.prompt.prompt_left.prompt(sh, states);
+        let prompt_right = sh.prompt.prompt_left.prompt(sh, states);
         let prompt_left_lines = prompt_left.lines();
         let prompt_right_lines = prompt_right.lines();
         let styled_buf_lines = styled_buf.lines();
@@ -210,9 +214,12 @@ impl Painter {
             .queue(cursor::MoveToColumn(left_space as u16))?;
         self.out.borrow_mut().queue(cursor::Show)?;
 
+        let cursor_style = match *states.get::<LineMode>() {
+            super::line::LineMode::Insert => states.get::<Theme>().insert_cursor_style,
+            super::line::LineMode::Normal => states.get::<Theme>().normal_cursor_style,
+        };
         // set cursor style
-        let cursor_style = line_ctx.ctx.state.get_or_default::<CursorStyle>();
-        self.out.borrow_mut().queue(cursor_style.style)?;
+        self.out.borrow_mut().queue(cursor_style)?;
 
         self.out.borrow_mut().flush()?;
 

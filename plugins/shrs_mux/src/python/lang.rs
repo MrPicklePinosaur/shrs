@@ -110,7 +110,7 @@ impl Lang for PythonLang {
     fn eval(
         &self,
         _sh: &Shell,
-        _ctx: &mut Context,
+        _ctx: &mut States,
         _rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {

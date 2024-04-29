@@ -45,7 +45,7 @@ impl Plugin for AnalyticsPlugin {
         shell.builtins.insert("analytics", AnalyticsBuiltin);
         shell.hooks.insert(record_dir_change);
         shell.hooks.insert(most_common_commands);
-        shell.state.insert(AnalyticsState::new());
+        shell.states.insert(AnalyticsState::new());
 
         Ok(())
     }
@@ -53,7 +53,7 @@ impl Plugin for AnalyticsPlugin {
 
 fn record_dir_change(
     _sh: &Shell,
-    _ctx: &mut Context,
+    _ctx: &mut States,
     _rt: &mut Runtime,
     _cd_ctx: &ChangeDirCtx,
 ) -> Result<()> {
@@ -62,7 +62,7 @@ fn record_dir_change(
 
 fn most_common_commands(
     _sh: &Shell,
-    ctx: &mut Context,
+    ctx: &mut States,
     rt: &mut Runtime,
     cmd_ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {

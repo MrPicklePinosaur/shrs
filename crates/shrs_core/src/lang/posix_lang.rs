@@ -1,11 +1,11 @@
-use shrs_job::initialize_job_control;
+use shrs_job::{initialize_job_control, JobManager};
 use shrs_lang::{Lexer, Parser, ParserError, Token};
 use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{CmdOutput, CommandNotFoundCtx, LineStateBundle},
-    shell::{Context, Runtime, Shell},
+    prelude::{line::LineContents, CmdOutput, CommandNotFoundCtx, States},
+    shell::{Runtime, Shell},
 };
 
 // use crate::eval::{command_output, eval_command},
@@ -82,13 +82,7 @@ impl Lang for PosixLang {
     }
     */
 
-    fn eval(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        line: String,
-    ) -> anyhow::Result<CmdOutput> {
+    fn eval(&self, sh: &Shell, ctx: &States, line: String) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let parser = Parser::default();
@@ -101,19 +95,19 @@ impl Lang for PosixLang {
             },
         };
 
-        let mut job_manager = sh.job_manager.borrow_mut();
-        let (procs, pgid) = match eval2::eval_command(&mut job_manager, &cmd, None, None) {
-            Ok((procs, pgid)) => (procs, pgid),
-            Err(PosixError::CommandNotFound(_)) => {
-                sh.hooks
-                    .run(sh, ctx, rt, CommandNotFoundCtx {})
-                    .expect("Error in hook");
-                return Ok(CmdOutput::error_with_status(127));
-            },
-            _ => return Ok(CmdOutput::error()),
-        };
+        let (procs, pgid) =
+            match eval2::eval_command(&mut ctx.get_mut::<JobManager>(), &cmd, None, None) {
+                Ok((procs, pgid)) => (procs, pgid),
+                Err(PosixError::CommandNotFound(_)) => {
+                    sh.hooks
+                        .run(sh, ctx, CommandNotFoundCtx {})
+                        .expect("Error in hook");
+                    return Ok(CmdOutput::error_with_status(127));
+                },
+                _ => return Ok(CmdOutput::error()),
+            };
 
-        eval2::run_job(&mut job_manager, procs, pgid, true)?;
+        eval2::run_job(&mut ctx.get_mut::<JobManager>(), procs, pgid, true)?;
 
         Ok(CmdOutput::success())
     }
@@ -121,9 +115,9 @@ impl Lang for PosixLang {
     fn name(&self) -> String {
         "posix".to_string()
     }
-    fn needs_line_check(&self, state: &LineStateBundle) -> bool {
+    fn needs_line_check(&self, sh: &Shell, ctx: &States) -> bool {
         //TODO check if open quotes or brackets
-        let command = state.line.get_full_command();
+        let command = ctx.get::<LineContents>().get_full_command();
 
         if let Some(last_char) = command.chars().last() {
             if last_char == '\\' {

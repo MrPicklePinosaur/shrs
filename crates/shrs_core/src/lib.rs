@@ -6,7 +6,9 @@ extern crate lazy_static;
 pub mod alias;
 pub mod builtin;
 pub mod cmd_output;
+pub mod commands;
 pub mod completion;
+pub mod ctx;
 pub mod env;
 pub mod history;
 pub mod hooks;
@@ -31,9 +33,10 @@ pub mod prelude {
         builtin::*,
         cmd_output::CmdOutput,
         completion::*,
+        ctx::*,
         env::Env,
         history::*,
-        hooks::{Hook, HookFn, Hooks, *},
+        hooks::{Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::{parse_keybinding, BindingFn, DefaultKeybinding, Keybinding},
         lang::{Lang, PosixLang},
@@ -42,9 +45,9 @@ pub mod prelude {
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::*,
-        shell::{set_working_dir, Context, Runtime, Shell, ShellConfig},
+        shell::{set_working_dir, Runtime, Shell, ShellConfig},
         signal::Signals,
-        state::State,
+        state::*,
         theme::Theme,
     };
 }

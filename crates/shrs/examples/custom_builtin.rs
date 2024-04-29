@@ -18,7 +18,7 @@ impl BetterCdBuiltin {
     }
 }
 
-impl BuiltinCmd for BetterCdBuiltin {
+impl Builtin for BetterCdBuiltin {
     fn run(
         &self,
         sh: &Shell,
@@ -30,14 +30,14 @@ impl BuiltinCmd for BetterCdBuiltin {
         if let Some(arg) = args.get(0) {
             if let Some(alias) = arg.strip_prefix("@") {
                 if let Some(path) = self.aliases.get(alias) {
-                    set_working_dir(sh, ctx, rt, path, true).unwrap();
+                    set_working_dir(ctx, path, true).unwrap();
                     return Ok(CmdOutput::success());
                 }
             }
         }
 
         // otherwise just call to default cd builtin
-        let _ = CdBuiltin::default().run(sh, ctx, rt, args);
+        let _ = CdBuiltin::default().run(ctx, args);
 
         Ok(CmdOutput::success())
     }

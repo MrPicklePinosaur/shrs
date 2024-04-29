@@ -58,7 +58,7 @@ impl DirParseState {
 
 pub fn startup_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     sh_rt: &mut Runtime,
     _ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
@@ -68,7 +68,7 @@ pub fn startup_hook(
 
 pub fn change_dir_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     sh_rt: &mut Runtime,
     _ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
@@ -76,7 +76,7 @@ pub fn change_dir_hook(
     Ok(())
 }
 
-fn update_modules(sh_ctx: &mut Context, sh_rt: &mut Runtime) -> anyhow::Result<()> {
+fn update_modules(sh_ctx: &mut States, sh_rt: &mut Runtime) -> anyhow::Result<()> {
     if let Some(state) = sh_ctx.state.get_mut::<DirParseState>() {
         // TODO this code is horribly inefficient lol
         let mut updated: HashMap<String, QueryResult> = HashMap::new();
@@ -102,7 +102,7 @@ impl Plugin for DirParsePlugin {
             (String::from("git"), git::module().unwrap()),
         ]);
 
-        shell.state.insert(DirParseState::new(modules));
+        shell.states.insert(DirParseState::new(modules));
         shell.hooks.insert(startup_hook);
         shell.hooks.insert(change_dir_hook);
 

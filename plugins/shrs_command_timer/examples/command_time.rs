@@ -3,7 +3,7 @@ use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 
 struct MyPrompt;
 
-impl Prompt for MyPrompt {
+impl FullPrompt for MyPrompt {
     fn prompt_left(&self, _line_ctx: &LineStateBundle) -> StyledBuf {
         styled_buf!("> ")
     }

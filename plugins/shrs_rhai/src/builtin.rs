@@ -5,7 +5,7 @@ use crate::rhai::RhaiState;
 // Run functions defined in rhai script
 pub fn command_not_found_hook(
     _sh: &Shell,
-    sh_ctx: &mut Context,
+    sh_ctx: &mut States,
     _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
@@ -42,11 +42,11 @@ impl RhaiBuiltin {
     }
 }
 
-impl BuiltinCmd for RhaiBuiltin {
+impl Builtin for RhaiBuiltin {
     fn run(
         &self,
         _sh: &Shell,
-        ctx: &mut Context,
+        ctx: &mut States,
         _rt: &mut Runtime,
         args: &[String],
     ) -> anyhow::Result<CmdOutput> {

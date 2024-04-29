@@ -15,14 +15,16 @@
 
 use multimap::MultiMap;
 
-use crate::shell::{Context, Runtime, Shell};
+use crate::{
+    prelude::States,
+    shell::{Runtime, Shell},
+};
 
 /// Parameters passed to alias rule
 pub struct AliasRuleCtx<'a> {
     pub alias_name: &'a str,
     pub sh: &'a Shell,
-    pub ctx: &'a Context,
-    pub rt: &'a Runtime,
+    pub ctx: &'a States,
 }
 /// Predicate to decide if an alias should be used or not
 pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);

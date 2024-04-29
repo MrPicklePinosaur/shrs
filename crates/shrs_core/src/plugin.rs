@@ -3,8 +3,8 @@
 use log::warn;
 
 use crate::{
-    prelude::ShellConfig,
-    shell::{Context, Runtime, Shell},
+    prelude::{ShellConfig, States},
+    shell::{Runtime, Shell},
 };
 
 #[derive(Debug)]
@@ -54,7 +54,7 @@ pub trait Plugin {
     ///
     /// Gets called once after the shell has completed initialization process, giving access to
     /// shell, context, and runtime state
-    fn post_init(&self, _sh: &Shell, _ctx: &mut Context, _rt: &mut Runtime) -> anyhow::Result<()> {
+    fn post_init(&self, _states: &mut States) -> anyhow::Result<()> {
         Ok(())
     }
 

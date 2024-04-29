@@ -51,12 +51,12 @@ impl Plugin for RunContextPlugin {
             let contents = fs::read_to_string(context_file)?;
             let run_contexts: HashMap<String, Runtime> = ron::from_str(&contents)?;
 
-            shell.state.insert(RunContextState {
+            shell.states.insert(RunContextState {
                 run_contexts,
                 context_file: Some(context_file.clone()),
             });
         } else {
-            shell.state.insert(RunContextState {
+            shell.states.insert(RunContextState {
                 run_contexts: HashMap::new(),
                 context_file: None,
             });

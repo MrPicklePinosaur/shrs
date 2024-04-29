@@ -48,7 +48,7 @@ impl CdStackState {
 
 fn change_dir_hook(
     _sh: &Shell,
-    ctx: &mut Context,
+    ctx: &mut States,
     _rt: &mut Runtime,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
@@ -66,7 +66,7 @@ impl Plugin for CdStackPlugin {
         // TODO hopefully would be better to get current dir from shell, but shell isn't
         // constructed yet
         cd_stack_state.push(&current_dir().unwrap());
-        shell.state.insert(cd_stack_state);
+        shell.states.insert(cd_stack_state);
         shell.hooks.insert(change_dir_hook);
 
         Ok(())

@@ -31,7 +31,7 @@ impl Lang for BashLang {
     fn eval(
         &self,
         _sh: &Shell,
-        ctx: &mut Context,
+        ctx: &mut States,
         rt: &mut Runtime,
         cmd: String,
     ) -> shrs::anyhow::Result<CmdOutput> {

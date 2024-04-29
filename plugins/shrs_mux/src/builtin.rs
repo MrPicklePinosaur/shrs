@@ -22,7 +22,7 @@ impl MuxBuiltin {
     }
 }
 
-impl BuiltinCmd for MuxBuiltin {
+impl Builtin for MuxBuiltin {
     fn run(
         &self,
         sh: &Shell,

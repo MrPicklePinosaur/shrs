@@ -2,10 +2,11 @@ use std::fs::metadata;
 
 use clap::Parser;
 
-use super::BuiltinCmd;
+use super::Builtin;
 use crate::{
-    prelude::CmdOutput,
-    shell::{Context, Runtime, Shell},
+    prelude::{Alias, CmdOutput, OutputWriter, Runtime, State, States},
+    shell::Shell,
+    state::StateMut,
 };
 
 #[derive(Parser)]
@@ -21,9 +22,6 @@ struct Cli {
     names: Vec<String>,
 }
 
-#[derive(Default)]
-pub struct TypeBuiltin {}
-
 fn analyze_name(
     name: &String,
     path_search_only: bool,
@@ -31,20 +29,21 @@ fn analyze_name(
     type_only: bool,
     all: bool,
     sh: &Shell,
-    ctx: &mut Context,
-    rt: &mut Runtime,
+    out: &mut OutputWriter,
+    alias: &Alias,
+    rt: &Runtime,
 ) -> anyhow::Result<CmdOutput> {
     let mut name_found = false;
     if !path_search_only {
         // check if name is an alias
-        let alias_matches = ctx.alias.get_subst(name);
+        let alias_matches = alias.get_subst(name);
         if alias_matches.is_some() {
             name_found = true;
             if !path_result_only {
                 if type_only {
-                    ctx.out.println("alias")?;
+                    out.println("alias")?;
                 } else {
-                    ctx.out.println(format!(
+                    out.println(format!(
                         "{} is aliased to `{}'",
                         name,
                         alias_matches.unwrap()
@@ -61,9 +60,9 @@ fn analyze_name(
             name_found = true;
             if !path_result_only {
                 if type_only {
-                    ctx.out.println("builtin")?;
+                    out.println("builtin")?;
                 } else {
-                    ctx.out.println(format!("{} is a shell builtin", name))?;
+                    out.println(format!("{} is a shell builtin", name))?;
                 }
             }
             if !all {
@@ -78,11 +77,11 @@ fn analyze_name(
         let md = metadata(&full_path);
         if md.is_ok() && md.unwrap().is_file() {
             if type_only {
-                ctx.out.println("file")?;
+                out.println("file")?;
             } else if path_search_only {
-                ctx.out.println(&full_path)?;
+                out.println(&full_path)?;
             } else {
-                ctx.out.println(format!("{} is {}", name, &full_path))?;
+                out.println(format!("{} is {}", name, &full_path))?;
             }
             return Ok(CmdOutput::success());
         }
@@ -92,42 +91,40 @@ fn analyze_name(
         return Ok(CmdOutput::success());
     }
 
-    ctx.out
-        .eprintln(format!("-shrs: type: {} not found", name))?;
+    out.eprintln(format!("-shrs: type: {} not found", name))?;
     Ok(CmdOutput::success())
 }
 
-impl BuiltinCmd for TypeBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
-        let cli = Cli::try_parse_from(args)?;
+pub fn type_builtin(
+    alias: State<Alias>,
+    mut out: StateMut<OutputWriter>,
+    rt: StateMut<Runtime>,
+    sh: &Shell,
+    args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
+    let cli = Cli::try_parse_from(args)?;
 
-        let success = cli
-            .names
-            .iter()
-            .map(|n| {
-                analyze_name(
-                    n,
-                    cli.path_search_only,
-                    cli.path_result_only,
-                    cli.type_only,
-                    cli.all,
-                    sh,
-                    ctx,
-                    rt,
-                )
-            })
-            .all(|r| r.is_ok());
+    let success = cli
+        .names
+        .iter()
+        .map(|n| {
+            analyze_name(
+                n,
+                cli.path_search_only,
+                cli.path_result_only,
+                cli.type_only,
+                cli.all,
+                sh,
+                &mut *out,
+                &*alias,
+                &*rt,
+            )
+        })
+        .all(|r| r.is_ok());
 
-        if success {
-            Ok(CmdOutput::success())
-        } else {
-            Ok(CmdOutput::error())
-        }
+    if success {
+        Ok(CmdOutput::success())
+    } else {
+        Ok(CmdOutput::error())
     }
 }

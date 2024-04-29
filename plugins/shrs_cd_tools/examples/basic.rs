@@ -3,7 +3,7 @@ use shrs_cd_tools::{default_prompt, git::Git, DirParsePlugin, DirParseState};
 
 struct MyPrompt;
 
-impl Prompt for MyPrompt {
+impl FullPrompt for MyPrompt {
     fn prompt_left(&self, _line_ctx: &LineStateBundle) -> StyledBuf {
         styled_buf! {
             " > "

@@ -89,7 +89,7 @@ impl Painter {
         }
         //newlines to account for when clearing and printing prompt
         let prompt_left = sh.prompt.prompt_left.prompt(sh, states);
-        let prompt_right = sh.prompt.prompt_left.prompt(sh, states);
+        let prompt_right = sh.prompt.prompt_right.prompt(sh, states);
         let prompt_left_lines = prompt_left.lines();
         let prompt_right_lines = prompt_right.lines();
         let styled_buf_lines = styled_buf.lines();

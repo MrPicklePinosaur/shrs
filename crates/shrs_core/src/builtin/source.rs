@@ -6,7 +6,7 @@ use regex::Regex;
 
 use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, States},
+    prelude::{CmdOutput, OutputWriter, StateMut, States},
     shell::{Runtime, Shell},
 };
 
@@ -19,7 +19,11 @@ struct Cli {
     source_file: String,
 }
 
-pub fn source_builtin(sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::Result<CmdOutput> {
+pub fn source_builtin(
+    mut out: StateMut<OutputWriter>,
+    sh: &Shell,
+    args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;
 
     let file_path = PathBuf::from(&cli.source_file);
@@ -36,7 +40,7 @@ pub fn source_builtin(sh: &Shell, ctx: &mut States, args: &[String]) -> anyhow::
     match interp {
         Some(interp) => {
             let s = format!("using interp {} at {}", interp.as_str(), &cli.source_file);
-            ctx.get_mut::<OutputWriter>().println(s)?;
+            out.println(s)?;
             let mut _child = Command::new(interp.as_str())
                 .args(vec![cli.source_file])
                 .spawn()?;

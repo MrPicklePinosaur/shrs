@@ -25,8 +25,9 @@ use std::{
 use anyhow::Result;
 
 use self::{
-    alias::alias_builtin, cd::cd_builtin, exit::exit_builtin, help::help_builtin,
-    r#type::type_builtin,
+    alias::alias_builtin, cd::cd_builtin, debug::debug_builtin, exit::exit_builtin,
+    export::export_builtin, help::help_builtin, history::history_buitin, jobs::jobs_builtin,
+    r#type::type_builtin, source::source_builtin,
 };
 use crate::{
     prelude::{CmdOutput, States},
@@ -85,35 +86,13 @@ impl Default for Builtins {
         builtins.insert("alias", alias_builtin);
         builtins.insert("cd", cd_builtin);
         builtins.insert("type", type_builtin);
+        builtins.insert("export", export_builtin);
+        builtins.insert("history", history_buitin);
+        builtins.insert("jobs", jobs_builtin);
+        builtins.insert("source", source_builtin);
+        builtins.insert("debug", debug_builtin);
 
         builtins
-
-        // Builtins {
-        //     builtins: HashMap::from([
-        //         // (
-        //         //     "history",
-        //         //     Box::<HistoryBuiltin>::default() as Box<dyn Builtin>,
-        //         // ),
-        //         // ("exit", Box::<ExitBuiltin>::default() as Box<dyn Builtin>),
-        //         // ("cd", Box::<CdBuiltin>::default() as Box<dyn Builtin>),
-        //         // ("debug", Box::<DebugBuiltin>::default() as Box<dyn Builtin>),
-        //         // (
-        //         //     "export",
-        //         //     Box::<ExportBuiltin>::default() as Box<dyn Builtin>,
-        //         // ),
-        //         // ("alias", Box::<AliasBuiltin>::default() as Box<dyn Builtin>),
-        //         // (
-        //         //     "unalias",
-        //         //     Box::<UnaliasBuiltin>::default() as Box<dyn Builtin>,
-        //         // ),
-        //         // (
-        //         //     "source",
-        //         //     Box::<SourceBuiltin>::default() as Box<dyn Builtin>,
-        //         // ),
-        //         // ("type", Box::new(TypeBuiltin::default()) as Box<dyn Builtin>),
-        //         // ("jobs", Box::<JobsBuiltin>::default() as Box<dyn Builtin>),
-        //     ]),
-        // }
     }
 }
 

@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 
 use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, States},
+    prelude::{CmdOutput, OutputWriter, State, StateMut, States},
     shell::{Runtime, Shell},
 };
 
@@ -19,17 +19,22 @@ enum Commands {
     Env,
 }
 
-pub fn debug_builtin(sh: &Shell, ctx: &States, args: &[String]) -> anyhow::Result<CmdOutput> {
+pub fn debug_builtin(
+    rt: State<Runtime>,
+    mut out: StateMut<OutputWriter>,
+    sh: &Shell,
+    args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;
 
     match &cli.command {
         None => {
-            ctx.get_mut::<OutputWriter>().println("debug utility")?;
+            out.println("debug utility")?;
         },
         Some(Commands::Env) => {
-            for (var, val) in ctx.get::<Runtime>().env.iter() {
+            for (var, val) in rt.env.iter() {
                 let envs = format!("{:?} = {:?}", var, val);
-                ctx.get_mut::<OutputWriter>().println(envs)?;
+                out.println(envs)?;
             }
         },
     }

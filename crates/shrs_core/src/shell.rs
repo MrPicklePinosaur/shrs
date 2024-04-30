@@ -1,6 +1,8 @@
 //! Types for internal context of shell
 
 use std::{
+    cell::RefCell,
+    collections::VecDeque,
     env,
     path::{Path, PathBuf},
     process::ExitStatus,
@@ -14,7 +16,12 @@ use pino_deref::Deref;
 use shrs_job::JobManager;
 
 use self::{line::LineContents, menu::DefaultMenuState, painter::Painter};
-use crate::{commands::Commands, history::History, prelude::*, state::States};
+use crate::{
+    commands::{Command, Commands},
+    history::History,
+    prelude::*,
+    state::States,
+};
 
 #[derive(Deref)]
 pub struct StartupTime(Instant);
@@ -31,18 +38,39 @@ pub struct Shell {
     pub prompt: Prompt,
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
-    pub cmd: Commands,
+
+    cmd: Commands,
 }
 
 impl Shell {
-    pub fn run_hooks<C: HookCtx>(&mut self, states: &States, c: &C) -> Result<()> {
-        self.hooks.run(self, states, c)?;
+    pub fn run_cmd<C: Command + 'static>(&self, command: C) {
+        self.cmd.run(command);
+    }
+
+    // Trigger a hook of given type with payload
+    pub fn run_hooks<C: HookCtx>(&self, c: C) {
+        self.cmd.run(move |sh: &mut Shell, states: &States| {
+            let _ = sh.hooks.run(sh, states, &c);
+            sh.apply_queue(states);
+        })
+    }
+
+    // Execute all the queued commands
+    pub fn apply_queue(&mut self, states: &States) {
         let mut q = self.cmd.drain(states);
         while let Some(command) = q.pop_front() {
             command.apply(self, states);
         }
+    }
 
-        Ok(())
+    // Evaluate an arbitrary command using the shell interpreter
+    pub fn eval(&self, cmd_str: impl ToString) {
+        // TODO we can't actually get the result of this currently since it is queued
+        let cmd_str = cmd_str.to_string();
+        self.cmd.run(move |sh: &mut Shell, states: &States| {
+            // TODO should handle this error?
+            let _ = sh.lang.eval(sh, states, cmd_str.clone());
+        });
     }
 }
 
@@ -320,16 +348,9 @@ fn run_shell(
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
-    let res = sh.run_hooks(
-        states,
-        &StartupCtx {
-            startup_time: states.get::<StartupTime>().elapsed(),
-        },
-    );
-
-    if let Err(_e) = res {
-        // TODO log that startup hook failed
-    }
+    let res = sh.run_hooks(StartupCtx {
+        startup_time: states.get::<StartupTime>().elapsed(),
+    });
 
     loop {
         let line = readline.read_line(sh, states);
@@ -383,10 +404,7 @@ fn run_shell(
                 Err(e) => eprintln!("error: {e:?}"),
             }
 
-            let mut q = sh.cmd.drain(states);
-            while let Some(command) = q.pop_front() {
-                command.apply(sh, states);
-            }
+            sh.apply_queue(states);
         } else {
             let output = sh.lang.eval(sh, states, line.clone());
             match output {
@@ -454,7 +472,7 @@ pub fn set_working_dir(
             old_dir: old_path.clone(),
             new_dir: path.clone(),
         };
-        sh.cmd.run_hook(hook_ctx);
+        sh.run_hooks(hook_ctx);
     }
 
     Ok(())

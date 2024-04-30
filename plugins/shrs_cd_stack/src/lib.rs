@@ -51,7 +51,6 @@ fn change_dir_hook(
     sh: &Shell,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
-    println!("cd to {:?}", hook_ctx.new_dir);
     state.push(&hook_ctx.new_dir);
     Ok(())
 }

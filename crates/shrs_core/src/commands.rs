@@ -43,21 +43,4 @@ impl Commands {
     pub fn drain(&self, states: &States) -> VecDeque<Box<dyn Command>> {
         self.queue.borrow_mut().drain(..).collect()
     }
-
-    // Evaluate an arbitrary command using the shell interpreter
-    pub fn eval(&self, cmd_str: impl ToString) {
-        // TODO we can't actually get the result of this currently since it is queued
-        let cmd_str = cmd_str.to_string();
-        self.run(move |sh: &mut Shell, states: &States| {
-            // TODO should handle this error?
-            let _ = sh.lang.eval(sh, states, cmd_str.clone());
-        });
-    }
-
-    // Trigger a hook of given type with payload
-    pub fn run_hook<C: HookCtx>(&self, hook_ctx: C) {
-        self.run(move |sh: &mut Shell, states: &States| {
-            let _ = sh.run_hooks(states, &hook_ctx);
-        })
-    }
 }

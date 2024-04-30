@@ -7,7 +7,7 @@ fn cd_stack_down(
     sh: &Shell,
 ) -> anyhow::Result<()> {
     if let Some(path) = state.down() {
-        let _ = set_working_dir(sh, &mut rt, &path, true);
+        let _ = set_working_dir(sh, &mut rt, &path, false);
     }
     Ok(())
 }
@@ -18,7 +18,7 @@ fn cd_stack_up(
     sh: &Shell,
 ) -> anyhow::Result<()> {
     if let Some(path) = state.up() {
-        let _ = set_working_dir(sh, &mut rt, &path, true);
+        let _ = set_working_dir(sh, &mut rt, &path, false);
     }
     Ok(())
 }

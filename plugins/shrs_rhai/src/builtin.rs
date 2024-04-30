@@ -29,7 +29,6 @@ pub fn command_not_found_hook(
 }
 
 pub fn rhai_builtin(
-    mut cmd: StateMut<Commands>,
     mut scope: StateMut<RhaiScope>,
     engine: State<RhaiEngine>,
     mut rhai_ast: StateMut<RhaiAST>,

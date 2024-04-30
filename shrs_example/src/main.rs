@@ -7,10 +7,10 @@ use std::{
 
 use shrs::{
     history::FileBackedHistory,
-    keybindings,
     prelude::{styled_buf::StyledBuf, *},
+    readline::line::LineContents,
 };
-use shrs_cd_stack::{CdStackPlugin, CdStackState};
+use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
@@ -21,52 +21,47 @@ use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
-struct MyPrompt;
+fn prompt_left(
+    line_contents: State<LineContents>,
+    line_mode: State<LineMode>,
+    sh: &Shell,
+) -> StyledBuf {
+    let indicator = match *line_mode {
+        LineMode::Insert => String::from(">").cyan(),
+        LineMode::Normal => String::from(":").yellow(),
+    };
+    // if !line_contents.cb.is_empty() {
+    //     return styled_buf! {" ", indicator, " "};
+    // }
 
-impl Prompt for MyPrompt {
-    fn prompt_left(&self, state: &LineStateBundle) -> StyledBuf {
-        let indicator = match state.line.mode() {
-            LineMode::Insert => String::from(">").cyan(),
-            LineMode::Normal => String::from(":").yellow(),
-        };
-        if !state.line.lines.is_empty() {
-            return styled_buf! {" ", indicator, " "};
-        }
+    styled_buf!(
+        " ",
+        username().map(|u| u.blue()),
+        " ",
+        top_pwd().white().bold(),
+        " ",
+        indicator,
+        " "
+    )
+}
 
-        styled_buf!(
-            " ",
-            username().map(|u| u.blue()),
-            " ",
-            top_pwd().white().bold(),
-            " ",
-            indicator,
-            " "
-        )
-    }
-    fn prompt_right(&self, line_ctx: &LineStateBundle) -> StyledBuf {
-        let time_str = line_ctx
-            .ctx
-            .state
-            .get::<CommandTimerState>()
-            .and_then(|x| x.command_time())
-            .map(|x| format!("{x:?}"));
+fn prompt_right(
+    line_contents: State<LineContents>,
+    cmd_timer: State<CommandTimerState>,
+    mux: State<MuxState>,
+    sh: &Shell,
+) -> StyledBuf {
+    let time_str = cmd_timer.command_time().map(|x| format!("{x:?}"));
 
-        let lang_name = line_ctx
-            .ctx
-            .state
-            .get::<MuxState>()
-            .map(|state| state.current_lang())
-            .expect("MuxState should be provided")
-            .name();
+    let lang_name = mux.current_lang().name();
 
-        if !line_ctx.line.lines.is_empty() {
-            return styled_buf!("");
-        }
-        if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
-            styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
-        } else {
-            styled_buf!(time_str, " ", lang_name, " ")
-        }
+    // if !line_contents.cb.is_empty() {
+    //     return styled_buf!("");
+    // }
+    if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
+        styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
+    } else {
+        styled_buf!(time_str, " ", lang_name, " ")
     }
 }
 
@@ -119,27 +114,25 @@ fn main() {
 
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
-    let keybinding = keybindings! {
-        |ctx|
-        "C-l" => ("Clear the screen", { Command::new("clear").spawn().expect("Couldn't clear screen")}),
-        "C-p" => ("Move up one in the command history", {
-            if let Some(cd_state) = ctx.state.get_mut::<CdStackState>() {
-                if let Some(new_path) = cd_state.down() {
-                    set_working_dir(ctx, &new_path, false).unwrap();
-                }
-            }
-        }),
-        "C-n" => ("Move down one in the command history", {
-            if let Some(cd_state) = ctx.state.get_mut::<CdStackState>() {
-                if let Some(new_path) = cd_state.up() {
-                    set_working_dir(ctx, &new_path, false).unwrap();
-                }
-            }
-        }),
-    };
-
-    // =-=-= Prompt =-=-=
-    let prompt = MyPrompt;
+    let mut bindings = Keybindings::new();
+    bindings
+        .insert(
+            "C-l",
+            "Clear the screen",
+            |sh: &Shell| -> anyhow::Result<()> {
+                Command::new("clear")
+                    .spawn()
+                    .expect("Couldn't clear screen");
+                Ok(())
+            },
+        )
+        .unwrap();
+    bindings
+        .insert("C-p", "Move up one in the command history", cd_stack_down)
+        .unwrap();
+    bindings
+        .insert("C-n", "Move down one in the command history", cd_stack_up)
+        .unwrap();
 
     // =-=-= Readline =-=-=
     // Initialize readline with all of our components
@@ -153,14 +146,6 @@ fn main() {
         "ga".to_string(),
         SnippetInfo::new("git add .", Position::Command),
     );
-
-    let readline = LineBuilder::default()
-        .with_menu(menu)
-        .with_prompt(prompt)
-        .with_highlighter(MuxHighlighter {})
-        .with_snippets(snippets)
-        .build()
-        .expect("Could not construct readline");
 
     // =-=-= Aliases =-=-=
     // Set aliases
@@ -176,7 +161,7 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg: HookFn<StartupCtx> = |sh: &Shell| -> anyhow::Result<()> {
+    let startup_msg = |sh: &Shell, startup: &StartupCtx| -> anyhow::Result<()> {
         let welcome_str = format!(
             r#"
         __
@@ -207,9 +192,12 @@ a rusty POSIX shell | build {}"#,
         .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)
-        .with_readline(readline)
         .with_history(history)
-        .with_keybinding(keybinding)
+        .with_keybinding(bindings)
+        .with_prompt(Prompt::from_sides(prompt_left, prompt_right))
+        .with_menu(menu)
+        .with_highlighter(MuxHighlighter {})
+        .with_snippets(snippets)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin::default())
         .with_plugin(mux_plugin)

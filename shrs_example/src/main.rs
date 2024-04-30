@@ -15,7 +15,6 @@ use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_logger::{FileLogger, LevelFilter};
 use shrs_mux::{python::*, BashLang, MuxHighlighter, MuxPlugin, MuxState, NuLang};
-use shrs_output_capture::OutputCapturePlugin;
 use shrs_rhai::RhaiPlugin;
 use shrs_rhai_completion::CompletionsPlugin;
 use shrs_run_context::RunContextPlugin;
@@ -211,7 +210,6 @@ a rusty POSIX shell | build {}"#,
         .with_readline(readline)
         .with_history(history)
         .with_keybinding(keybinding)
-        .with_plugin(OutputCapturePlugin)
         .with_plugin(CommandTimerPlugin)
         .with_plugin(RunContextPlugin::default())
         .with_plugin(mux_plugin)

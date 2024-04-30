@@ -75,6 +75,28 @@ fn change_dir_hook(
     Ok(())
 }
 
+pub fn cd_stack_down(
+    mut rt: StateMut<Runtime>,
+    mut state: StateMut<CdStackState>,
+    sh: &Shell,
+) -> anyhow::Result<()> {
+    if let Some(path) = state.down() {
+        let _ = set_working_dir(sh, &mut rt, &path, false);
+    }
+    Ok(())
+}
+
+pub fn cd_stack_up(
+    mut rt: StateMut<Runtime>,
+    mut state: StateMut<CdStackState>,
+    sh: &Shell,
+) -> anyhow::Result<()> {
+    if let Some(path) = state.up() {
+        let _ = set_working_dir(sh, &mut rt, &path, false);
+    }
+    Ok(())
+}
+
 pub struct CdStackPlugin;
 
 impl Plugin for CdStackPlugin {

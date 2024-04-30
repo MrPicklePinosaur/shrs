@@ -1,27 +1,5 @@
 use shrs::prelude::*;
-use shrs_cd_stack::{CdStackPlugin, CdStackState};
-
-fn cd_stack_down(
-    mut rt: StateMut<Runtime>,
-    mut state: StateMut<CdStackState>,
-    sh: &Shell,
-) -> anyhow::Result<()> {
-    if let Some(path) = state.down() {
-        let _ = set_working_dir(sh, &mut rt, &path, false);
-    }
-    Ok(())
-}
-
-fn cd_stack_up(
-    mut rt: StateMut<Runtime>,
-    mut state: StateMut<CdStackState>,
-    sh: &Shell,
-) -> anyhow::Result<()> {
-    if let Some(path) = state.up() {
-        let _ = set_working_dir(sh, &mut rt, &path, false);
-    }
-    Ok(())
-}
+use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
 
 fn main() {
     let mut bindings = Keybindings::new();

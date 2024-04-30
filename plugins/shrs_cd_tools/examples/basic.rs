@@ -1,41 +1,28 @@
 use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_cd_tools::{default_prompt, git::Git, DirParsePlugin, DirParseState};
 
-struct MyPrompt;
-
-impl Prompt for MyPrompt {
-    fn prompt_left(&self, _line_ctx: &LineStateBundle) -> StyledBuf {
-        styled_buf! {
-            " > "
-        }
+fn prompt_left(sh: &Shell) -> StyledBuf {
+    styled_buf! {
+        " > "
     }
-    fn prompt_right(&self, line_ctx: &LineStateBundle) -> StyledBuf {
-        // TODO currently very unergonomic
-        let project_info = default_prompt(line_ctx);
+}
+fn prompt_right(state: State<DirParseState>, sh: &Shell) -> StyledBuf {
+    let project_info = default_prompt(&state, sh);
 
-        let git_branch = line_ctx
-            .ctx
-            .state
-            .get::<DirParseState>()
-            .and_then(|state| state.get_module_metadata::<Git>("git"))
-            .map(|git| format!("git:{}", git.branch));
+    let git_branch = state
+        .get_module_metadata::<Git>("git")
+        .map(|git| format!("git:{}", git.branch));
 
-        styled_buf! {
-            project_info,
-            git_branch
-        }
+    styled_buf! {
+        project_info,
+        git_branch
     }
 }
 
 fn main() {
-    let readline = LineBuilder::default()
-        .with_prompt(MyPrompt)
-        .build()
-        .unwrap();
-
     let myshell = ShellBuilder::default()
-        .with_readline(readline)
         .with_plugin(DirParsePlugin::new())
+        .with_prompt(Prompt::from_sides(prompt_left, prompt_right))
         .build()
         .unwrap();
 

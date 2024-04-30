@@ -42,8 +42,8 @@ pub fn mux_builtin(
 
         // HACK, prime the language so it can run any init that it needs (this is to support
         // lazy loading languages)
-        sh.cmd.eval("");
-        sh.cmd.run_hook(hook_ctx);
+        sh.eval("");
+        sh.run_hooks(hook_ctx);
     }
     Ok(CmdOutput::success())
 }

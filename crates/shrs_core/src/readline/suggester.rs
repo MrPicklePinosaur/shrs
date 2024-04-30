@@ -1,6 +1,5 @@
-use crate::prelude::{Shell, States};
-
 use super::line::LineContents;
+use crate::prelude::{Shell, States};
 
 pub trait Suggester {
     fn suggest(&self, sh: &Shell, states: &States) -> Option<String>;

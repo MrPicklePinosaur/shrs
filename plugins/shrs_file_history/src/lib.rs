@@ -1,7 +1,11 @@
-use std::io::Cursor;
+use std::{
+    collections::HashSet,
+    fs::File,
+    io::{BufRead, BufReader, BufWriter, Cursor, Write},
+    path::PathBuf,
+};
 
 use clap::{Parser, Subcommand};
-
 use shrs::{
     anyhow::Result,
     plugin::Plugin,
@@ -9,14 +13,6 @@ use shrs::{
     prompt_content_queue::{self, PromptContent, PromptContentQueue},
     shell::{Runtime, Shell, ShellConfig},
 };
-
-use std::{
-    collections::HashSet,
-    fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
-    path::PathBuf,
-};
-
 use thiserror::Error;
 
 /// Store the history persistently in a file on disk

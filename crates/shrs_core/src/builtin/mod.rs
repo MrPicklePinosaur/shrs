@@ -26,7 +26,7 @@ use anyhow::Result;
 
 use self::{
     alias::alias_builtin, cd::cd_builtin, debug::debug_builtin, exit::exit_builtin,
-    export::export_builtin, help::help_builtin, history::history_buitin, jobs::jobs_builtin,
+    export::export_builtin, help::help_builtin, history::HistoryBuiltin, jobs::jobs_builtin,
     r#type::type_builtin, source::source_builtin,
 };
 use crate::{
@@ -87,7 +87,7 @@ impl Default for Builtins {
         builtins.insert("cd", cd_builtin);
         builtins.insert("type", type_builtin);
         builtins.insert("export", export_builtin);
-        builtins.insert("history", history_buitin);
+        builtins.insert("history", HistoryBuiltin {});
         builtins.insert("jobs", jobs_builtin);
         builtins.insert("source", source_builtin);
         builtins.insert("debug", debug_builtin);
@@ -153,6 +153,7 @@ macro_rules! impl_builtin {
                 call_inner(&self.f, $($params),+,sh,&args)
             }
         }
+
     }
 }
 impl<F> IntoBuiltin<()> for F
@@ -166,6 +167,13 @@ where
             f: self,
             marker: Default::default(),
         }
+    }
+}
+impl<B: Builtin> IntoBuiltin<B> for B {
+    type Builtin = B;
+
+    fn into_builtin(self) -> Self::Builtin {
+        self
     }
 }
 

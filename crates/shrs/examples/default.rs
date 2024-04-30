@@ -39,6 +39,7 @@ fn main() {
 
     myshell.run().expect("Error when running shell");
 }
+
 pub fn c(
     mut h: StateMut<H>,
     contents: State<LineContents>,
@@ -50,16 +51,19 @@ pub fn c(
 
     Ok(())
 }
+
 pub fn d(mut cmd: StateMut<Commands>, h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!(h.i);
     cmd.run_hook(SCtx {});
     cmd.run(|sh: &mut Shell, states: &States| sh.hooks.insert(g));
     Ok(())
 }
+
 pub fn e(sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!("wqrg");
     Ok(())
 }
+
 pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
     dbg!("wqwe");
     cmd.run(|sh: &mut Shell, states: &States| {
@@ -68,13 +72,16 @@ pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
 
     Ok(())
 }
+
 pub fn g(sh: &Shell, ctx: &AfterCommandCtx) -> Result<()> {
     dbg!("hqwe");
     Ok(())
 }
+
 pub fn high(sh: &Shell, buf: &String) -> Result<StyledBuf> {
     Ok(styled_buf!(buf.clone().red()))
 }
+
 pub struct Hooo {
     s: String,
 }
@@ -85,5 +92,5 @@ impl Hook<StartupCtx> for Hooo {
         Ok(())
     }
 }
+#[derive(HookCtx)]
 pub struct SCtx {}
-impl HookCtx for SCtx {}

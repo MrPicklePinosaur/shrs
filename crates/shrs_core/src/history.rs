@@ -1,173 +1,50 @@
-//! Shell history
+use std::cell::RefCell;
 
-use std::{
-    collections::HashSet,
-    fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
-    path::PathBuf,
-};
-
-use thiserror::Error;
+use crate::prelude::{Shell, States};
 
 /// Trait to implement for shell history
 pub trait History {
-    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_>;
-    /// Insert item into shell history
-    fn add(&mut self, cmd: String);
+    /// Insert cmd into shell history
+    fn add(&self, sh: &Shell, states: &States, cmd: String);
     /// Remove all history entries
-    fn clear(&mut self);
-    // fn iter(&self) -> impl Iterator<Item = String>;
-    /// Query for a history entry
-    fn search(&self, query: &str) -> Option<&String>;
+    fn clear(&self, sh: &Shell, states: &States);
     /// Get number of history entries
-    fn len(&self) -> usize;
+    fn len(&self, sh: &Shell, states: &States) -> usize;
     /// Get a history entry by index
-    fn get(&self, i: usize) -> Option<&String>;
+    fn get(&self, sh: &Shell, states: &States, i: usize) -> Option<String>;
 
     /// Check if the history is empty
-    fn is_empty(&self) -> bool {
-        self.len() == 0
+    fn is_empty(&self, sh: &Shell, states: &States) -> bool {
+        self.len(sh, states) == 0
     }
+    fn items(&self, sh: &Shell, states: &States) -> Vec<String>;
 }
-
 /// Default implementation of [History] that saves history in process memory
 #[derive(Default)]
 pub struct DefaultHistory {
-    hist: Vec<String>,
+    hist: RefCell<Vec<String>>,
 }
 
 impl History for DefaultHistory {
-    fn add(&mut self, item: String) {
-        if !item.starts_with("history run") {
-            self.hist.insert(0, item);
+    fn add(&self, sh: &Shell, states: &States, cmd: String) {
+        if !cmd.starts_with("history run") {
+            self.hist.borrow_mut().insert(0, cmd);
         }
     }
 
-    fn clear(&mut self) {
-        self.hist.clear();
+    fn clear(&self, sh: &Shell, states: &States) {
+        self.hist.borrow_mut().clear();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = String> {
-    //     todo!()
-    // }
-
-    fn search(&self, _query: &str) -> Option<&String> {
-        todo!()
+    fn len(&self, sh: &Shell, states: &States) -> usize {
+        self.hist.borrow().len()
     }
-
-    fn len(&self) -> usize {
-        self.hist.len()
-    }
-
     /// Get index starts at most recent (index zero is previous command)
-    fn get(&self, i: usize) -> Option<&String> {
-        self.hist.get(i)
+
+    fn get(&self, sh: &Shell, states: &States, i: usize) -> Option<String> {
+        self.hist.borrow().get(i).cloned()
     }
-
-    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_> {
-        Box::new(self.hist.iter())
+    fn items(&self, sh: &Shell, states: &States) -> Vec<String> {
+        self.hist.borrow().clone()
     }
-}
-
-/// Store the history persistently in a file on disk
-///
-/// History file is a very simple file consistaning of each history item on it's own line
-// TODO potential options
-// - history len
-// - remove duplicates
-// - only use valid commands
-// - resolve alias
-pub struct FileBackedHistory {
-    hist: Vec<String>,
-    hist_file: PathBuf,
-    // config options
-    // /// Don't keep duplicate history values
-    // dedup: bool,
-    // /// Max length of history to keep
-    // max_length: usize,
-}
-
-#[derive(Debug, Error)]
-pub enum FileBackedHistoryError {
-    #[error("error when opening history file {0}")]
-    OpeningHistFile(std::io::Error),
-    #[error("error writing history to disk {0}")]
-    Flush(std::io::Error),
-}
-
-impl FileBackedHistory {
-    pub fn new(hist_file: PathBuf) -> Result<Self, FileBackedHistoryError> {
-        let hist = parse_history_file(hist_file.clone())?;
-        Ok(FileBackedHistory { hist, hist_file })
-    }
-
-    fn flush(&mut self) -> Result<(), FileBackedHistoryError> {
-        // TODO not efficient to dedup every step
-        self.dedup();
-        // TODO consider keeping handle to history file open the entire time
-        let handle = File::options()
-            .write(true)
-            .open(&self.hist_file)
-            .map_err(FileBackedHistoryError::OpeningHistFile)?;
-        let mut writer = BufWriter::new(handle);
-        writer
-            .write_all(self.hist.join("\n").as_bytes())
-            .map_err(FileBackedHistoryError::Flush)?;
-        writer.flush().map_err(FileBackedHistoryError::Flush)?;
-        Ok(())
-    }
-
-    /// Remove duplicate entries
-    fn dedup(&mut self) {
-        let mut uniques = HashSet::new();
-        self.hist.retain(|x| uniques.insert(x.clone()));
-    }
-}
-
-impl History for FileBackedHistory {
-    fn add(&mut self, item: String) {
-        if !item.starts_with("history run") {
-            self.hist.insert(0, item);
-            // TODO consider how often we want to flush
-            self.flush().unwrap();
-        }
-    }
-
-    fn clear(&mut self) {
-        self.hist.clear();
-        self.flush().unwrap();
-    }
-
-    // fn iter(&self) -> impl Iterator<Item = String> {
-    //     todo!()
-    // }
-
-    fn search(&self, _query: &str) -> Option<&String> {
-        todo!()
-    }
-
-    fn len(&self) -> usize {
-        self.hist.len()
-    }
-
-    fn get(&self, i: usize) -> Option<&String> {
-        self.hist.get(i)
-    }
-
-    fn iter(&self) -> Box<dyn Iterator<Item = &String> + '_> {
-        Box::new(self.hist.iter())
-    }
-}
-
-fn parse_history_file(hist_file: PathBuf) -> Result<Vec<String>, FileBackedHistoryError> {
-    let handle = File::options()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(hist_file)
-        .map_err(FileBackedHistoryError::OpeningHistFile)?;
-    let reader = BufReader::new(handle);
-    // TODO should error/terminate when a line cannot be read?
-    let hist = reader.lines().map_while(Result::ok).collect::<Vec<_>>();
-    Ok(hist)
 }

@@ -11,17 +11,13 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use dirs::home_dir;
-use log::{error, info, warn};
+use log::{info, warn};
 use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use self::{line::LineContents, menu::DefaultMenuState, painter::Painter};
-use crate::{
-    commands::{Command, Commands},
-    history::History,
-    prelude::*,
-    state::States,
-};
+use self::menu::DefaultMenuState;
+use crate::{commands::Commands, history::History, prelude::*, state::States};
+
 
 #[derive(Deref)]
 pub struct StartupTime(Instant);
@@ -38,8 +34,9 @@ pub struct Shell {
     pub prompt: Prompt,
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
-
+    pub history: Box<dyn History>,
     cmd: Commands,
+
 }
 
 impl Shell {
@@ -151,6 +148,7 @@ pub struct ShellConfig {
     pub states: States,
 
     /// History, see [History]
+    // The default is set again in DefaultHistoryPlugin so this default is just a dummy
     #[builder(default = "Box::new(DefaultHistory::default())")]
     #[builder(setter(custom))]
     pub history: Box<dyn History>,
@@ -291,7 +289,6 @@ impl ShellConfig {
         ));
         self.states.insert(self.theme);
         self.states.insert(Jobs::default());
-        self.states.insert(self.history);
         self.states.insert(PromptContentQueue::new());
         self.states.insert(self.completer);
         self.states.insert(StartupTime(Instant::now()));
@@ -316,6 +313,7 @@ impl ShellConfig {
             prompt: self.prompt,
             highlighter: self.highlighter,
             suggester: self.suggester,
+            history: self.history,
             cmd: Commands::new(),
         };
 

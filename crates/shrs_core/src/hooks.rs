@@ -83,6 +83,13 @@ where
         }
     }
 }
+impl<C: HookCtx, H: Hook<C>> IntoHook<H, C> for H {
+    type Hook = H;
+
+    fn into_system(self) -> Self::Hook {
+        self
+    }
+}
 
 macro_rules! impl_into_hook {
     (

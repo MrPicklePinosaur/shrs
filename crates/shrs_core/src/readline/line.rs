@@ -185,7 +185,7 @@ impl Line {
                     );
                 }
             } else {
-                if let Some(suggestion) = sh.suggester.suggest(states) {
+                if let Some(suggestion) = sh.suggester.suggest(sh, states) {
                     let trimmed_selection = suggestion[res.len()..].to_string();
                     styled_buf.push(
                         trimmed_selection.as_str(),
@@ -230,7 +230,7 @@ impl Line {
 
         let res = states.get::<LineContents>().get_full_command();
         if !res.is_empty() {
-            states.get_mut::<Box<dyn History>>().add(res.clone());
+            sh.history.add(sh, states, res.clone());
         }
         Ok(res)
     }
@@ -333,7 +333,7 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                if let Some(suggestion) = sh.suggester.suggest(states) {
+                if let Some(suggestion) = sh.suggester.suggest(sh, states) {
                     states.get_mut::<LineContents>().cb.clear();
                     states
                         .get_mut::<LineContents>()
@@ -549,14 +549,14 @@ impl Line {
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_down(states)?;
+                self.history_down(sh, states)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 ..
             }) => {
-                self.history_up(states)?;
+                self.history_up(sh, states)?;
             },
             Event::Key(KeyEvent {
                 code: KeyCode::Esc, ..
@@ -682,8 +682,8 @@ impl Line {
                                 .get_mut::<Box<dyn BufferHistory>>()
                                 .next(&mut states.get_mut::<LineContents>().cb),
                             Action::Move(motion) => match motion {
-                                Motion::Up => self.history_up(states)?,
-                                Motion::Down => self.history_down(states)?,
+                                Motion::Up => self.history_up(sh, states)?,
+                                Motion::Down => self.history_down(sh, states)?,
                                 _ => {},
                             },
                             Action::Editor => {
@@ -813,31 +813,29 @@ impl Line {
         Ok(())
     }
 
-    fn history_up(&mut self, states: &mut States) -> anyhow::Result<()> {
+    fn history_up(&mut self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         let cur_line = states.get::<LineContents>().cb.slice(..).to_string();
         // save current prompt
         if HistoryInd::Prompt == *states.get::<HistoryInd>() {
             *states.get_mut::<SavedLine>() = SavedLine(cur_line);
         }
 
-        let next_ind = states
-            .get::<HistoryInd>()
-            .up(states.get::<Box<dyn History>>().len());
+        let next_ind = states.get::<HistoryInd>().up(sh.history.len(sh, states));
         *states.get_mut::<HistoryInd>() = next_ind;
-        self.update_history(states)?;
+        self.update_history(sh, states)?;
 
         Ok(())
     }
 
-    fn history_down(&mut self, states: &mut States) -> anyhow::Result<()> {
+    fn history_down(&mut self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         let next_ind = states.get::<HistoryInd>().down();
         *states.get_mut::<HistoryInd>() = next_ind;
-        self.update_history(states)?;
+        self.update_history(sh, states)?;
 
         Ok(())
     }
 
-    fn update_history(&mut self, states: &mut States) -> anyhow::Result<()> {
+    fn update_history(&mut self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         match *states.get::<HistoryInd>() {
             // restore saved line
             HistoryInd::Prompt => {
@@ -849,13 +847,13 @@ impl Line {
             },
             // fill prompt with history element
             HistoryInd::Line(i) => {
-                let h = states.get::<Box<dyn History>>();
-                let history_item = h.get(i).unwrap();
+                let history_item = sh.history.get(sh, states, i).unwrap();
                 states.get_mut::<LineContents>().cb.clear();
+
                 states
                     .get_mut::<LineContents>()
                     .cb
-                    .insert(Location::Cursor(), history_item)?;
+                    .insert(Location::Cursor(), history_item.as_str())?;
             },
         }
         Ok(())

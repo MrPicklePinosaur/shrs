@@ -30,7 +30,7 @@ pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTh
 pub use hooks::*;
 pub use line::{Line, LineMode, Readline};
 pub use menu::{DefaultMenu, Menu};
-pub use prompt::FullPrompt;
+pub use prompt::Prompt;
 pub use snippet::*;
 pub use suggester::{DefaultSuggester, Suggester};
 pub use vi::*;

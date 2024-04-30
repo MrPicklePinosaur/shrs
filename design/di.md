@@ -117,3 +117,11 @@ Should Line Contents be created before startupctx?
 Do heavy review of changes, make sure no unintended changes
 More utility methods on states , return option
 Should highlighter return Option
+
+#History
+History Spawns its own state that can be used by suggester to figure out what it needs to suggest.
+Otherwise its opaque as Box<dyn History>
+
+it does need a mutable reference to its state, so either make it two part where
+sh.history takes in stuff and mutates its internal state and
+sh.history will be the opaque type, the internal will be in states so and is optional

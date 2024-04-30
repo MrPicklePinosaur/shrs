@@ -241,6 +241,13 @@ where
         }
     }
 }
+impl<H: Highlighter> IntoHighlighter<H> for H {
+    type Highlighter = H;
+
+    fn into_highlighter(self) -> Self::Highlighter {
+        self
+    }
+}
 
 macro_rules! impl_into_highlighter {
     (

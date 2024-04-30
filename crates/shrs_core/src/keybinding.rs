@@ -245,6 +245,14 @@ where
     }
 }
 
+impl<K: Keybinding> IntoKeybinding<K> for K {
+    type Keybinding = K;
+
+    fn into_keybinding(self) -> Self::Keybinding {
+        self
+    }
+}
+
 macro_rules! impl_into_keybinding {
     (
         $($params:ident),+

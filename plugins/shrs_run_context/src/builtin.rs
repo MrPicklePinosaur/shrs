@@ -59,7 +59,7 @@ pub fn load_builtin(
     }
 
     if let Some(new_rt) = new_rt.take() {
-        set_working_dir(sh, &mut rt, &mut cmd, &new_rt.working_dir, false).unwrap();
+        set_working_dir(sh, &mut rt, &new_rt.working_dir, false).unwrap();
         *rt = new_rt;
     }
 

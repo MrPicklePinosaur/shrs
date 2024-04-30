@@ -2,10 +2,14 @@
 
 use std::marker::PhantomData;
 
+use crossterm::style::Stylize;
 use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
 use super::super::state::Param;
-use crate::prelude::{Shell, States};
+use crate::{
+    prelude::{top_pwd, Runtime, Shell, State, States},
+    shell::get_working_dir,
+};
 
 pub trait PromptFn {
     fn prompt(&self, sh: &Shell, ctx: &States) -> StyledBuf;
@@ -34,7 +38,7 @@ impl Default for Prompt {
 }
 
 fn default_prompt_left(sh: &Shell) -> StyledBuf {
-    styled_buf!("> ")
+    styled_buf!(" ", top_pwd().white().bold(), " > ")
 }
 
 fn default_prompt_right(sh: &Shell) -> StyledBuf {

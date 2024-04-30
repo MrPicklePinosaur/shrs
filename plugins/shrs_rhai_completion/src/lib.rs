@@ -28,7 +28,12 @@ impl Plugin for CompletionsPlugin {
     fn init(&self, _: &mut ShellConfig) -> anyhow::Result<()> {
         Ok(())
     }
-    fn post_init(&self, _sh: &Shell, ctx: &mut States, _rt: &mut Runtime) -> ::anyhow::Result<()> {
+
+    fn post_init(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
+        let Ok(mut completer) = states.try_get_mut::<Box<dyn Completer>>() else {
+            return Err(shrs::anyhow::anyhow!("no completer registered"));
+        };
+
         let mut e = Engine::new();
         setup_engine(&mut e);
         let engine = Rc::new(e);
@@ -52,7 +57,7 @@ impl Plugin for CompletionsPlugin {
             let engine_ref_pred = engine.clone();
             let engine_ref_comp = engine.clone();
 
-            ctx.completer.register(Rule::new(
+            completer.register(Rule::new(
                 Pred::new(move |c| {
                     let mut scope = Scope::new();
 
@@ -95,5 +100,12 @@ impl Plugin for CompletionsPlugin {
     }
     fn meta(&self) -> PluginMeta {
         PluginMeta::new("Completions", "Provides Rhai completions for shrs", None)
+    }
+
+    fn fail_mode(&self) -> FailMode {
+        // Default to more strict fail mode to let users know faster there's a bug
+        //
+        // Should consider more how good of an idea this is
+        FailMode::Abort
     }
 }

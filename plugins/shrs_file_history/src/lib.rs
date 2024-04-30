@@ -71,6 +71,11 @@ impl FileBackedHistoryState {
 }
 
 pub struct FileBackedHistoryPlugin {}
+impl FileBackedHistoryPlugin {
+    pub fn new() -> Self {
+        FileBackedHistoryPlugin {}
+    }
+}
 
 impl Plugin for FileBackedHistoryPlugin {
     fn init(&self, shell: &mut ShellConfig) -> Result<()> {

@@ -1,10 +1,8 @@
-//! The most minimal working shell
-
 use shrs::shell::ShellBuilder;
 use shrs_file_history::FileBackedHistoryPlugin;
 fn main() {
     let myshell = ShellBuilder::default()
-        .with_plugin(FileBackedHistoryPlugin {})
+        .with_plugin(FileBackedHistoryPlugin::new())
         .build()
         .unwrap();
 

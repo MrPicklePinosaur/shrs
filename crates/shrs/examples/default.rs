@@ -94,5 +94,5 @@ impl Hook<StartupCtx> for Hooo {
         Ok(())
     }
 }
-#[derive(HookCtx, Clone)]
+#[derive(HookCtx)]
 pub struct SCtx {}

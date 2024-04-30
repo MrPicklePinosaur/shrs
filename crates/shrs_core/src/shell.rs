@@ -16,8 +16,12 @@ use pino_deref::Deref;
 use shrs_job::JobManager;
 
 use self::menu::DefaultMenuState;
-use crate::{commands::Commands, history::History, prelude::*, state::States};
-
+use crate::{
+    commands::{Command, Commands},
+    history::History,
+    prelude::*,
+    state::States,
+};
 
 #[derive(Deref)]
 pub struct StartupTime(Instant);
@@ -36,7 +40,6 @@ pub struct Shell {
     pub suggester: Box<dyn Suggester>,
     pub history: Box<dyn History>,
     cmd: Commands,
-
 }
 
 impl Shell {

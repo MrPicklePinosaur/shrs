@@ -30,31 +30,29 @@ impl CdStackState {
     /// Go back in path history
     pub fn down(&mut self) -> Option<PathBuf> {
         let top = self.down_stack.pop_back();
-        if let Some(top) = top {
-            self.up_stack.push_back(top);
+        if let Some(top) = &top {
+            self.up_stack.push_back(top.clone());
         }
-        self.down_stack.back().cloned()
+        top
     }
 
     /// Go forward in path history
     pub fn up(&mut self) -> Option<PathBuf> {
         let top = self.up_stack.pop_back();
-        if let Some(top) = top.clone() {
-            self.down_stack.push_back(top);
+        if let Some(top) = &top {
+            self.down_stack.push_back(top.clone());
         }
         top
     }
 }
 
 fn change_dir_hook(
-    _sh: &Shell,
-    ctx: &mut States,
-    _rt: &mut Runtime,
+    mut state: StateMut<CdStackState>,
+    sh: &Shell,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
-    if let Some(state) = ctx.state.get_mut::<CdStackState>() {
-        state.push(&hook_ctx.new_dir);
-    }
+    println!("cd to {:?}", hook_ctx.new_dir);
+    state.push(&hook_ctx.new_dir);
     Ok(())
 }
 
@@ -62,15 +60,17 @@ pub struct CdStackPlugin;
 
 impl Plugin for CdStackPlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        let mut cd_stack_state = CdStackState::new();
-        // TODO hopefully would be better to get current dir from shell, but shell isn't
-        // constructed yet
-        cd_stack_state.push(&current_dir().unwrap());
-        shell.states.insert(cd_stack_state);
         shell.hooks.insert(change_dir_hook);
-
         Ok(())
     }
+
+    fn post_init(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
+        let mut cd_stack_state = CdStackState::new();
+        cd_stack_state.push(&current_dir().unwrap());
+        states.insert(cd_stack_state);
+        Ok(())
+    }
+
     fn meta(&self) -> PluginMeta {
         PluginMeta::new(
             "Cd Stack",

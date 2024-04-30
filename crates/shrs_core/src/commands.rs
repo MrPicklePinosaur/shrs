@@ -12,15 +12,15 @@ use crate::{
 };
 
 pub trait Command: Send + 'static {
-    fn apply(&self, sh: &mut Shell, states: &States);
+    fn apply(&self, sh: &mut Shell, states: &States, cmd: &mut Commands);
 }
+
 impl<F> Command for F
 where
-    F: Fn(&mut Shell, &States) + Send + 'static,
+    F: Fn(&mut Shell, &States, &mut Commands) + Send + 'static,
 {
-    fn apply(&self, sh: &mut Shell, states: &States) {
-        dbg!(1);
-        self(sh, states);
+    fn apply(&self, sh: &mut Shell, states: &States, cmd: &mut Commands) {
+        self(sh, states, cmd);
     }
 }
 
@@ -48,19 +48,19 @@ impl Commands {
     }
 
     // Evaluate an arbitrary command using the shell interpreter
-    pub fn eval(&mut self, cmd: impl ToString) {
+    pub fn eval(&mut self, cmd_str: impl ToString) {
         // TODO we can't actually get the result of this currently since it is queued
-        let cmd = cmd.to_string();
-        self.run(move |sh: &mut Shell, states: &States| {
+        let cmd_str = cmd_str.to_string();
+        self.run(move |sh: &mut Shell, states: &States, cmd: &mut Commands| {
             // TODO should handle this error?
-            let _ = sh.lang.eval(sh, states, cmd.clone());
+            let _ = sh.lang.eval(sh, states, cmd_str.clone());
         });
     }
 
     // Trigger a hook of given type with payload
-    pub fn run_hook<C: HookCtx>(&mut self, hook_ctx: C) {
-        self.run(move |sh: &mut Shell, states: &States| {
-            let _ = sh.hooks.run(sh, states, &hook_ctx);
-        })
-    }
+    // pub fn run_hook<C: HookCtx>(&mut self, hook_ctx: C) {
+    //     self.run(move |sh: &mut Shell, states: &States| {
+    //         let _ = sh.run_hooks(states, &hook_ctx);
+    //     })
+    // }
 }

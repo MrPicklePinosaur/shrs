@@ -34,11 +34,16 @@ pub struct Shell {
 }
 
 impl Shell {
-    pub fn run_hooks<C: HookCtx>(&mut self, states: &States, c: C) -> Result<()> {
-        self.hooks.run(self, states, &c)?;
-        let mut q = states.get_mut::<Commands>().apply_all(self, states);
-        while let Some(cmd) = q.pop_front() {
-            cmd.apply(self, states);
+    pub fn run_hooks<C: HookCtx>(
+        &mut self,
+        states: &States,
+        cmd: &mut Commands,
+        c: &C,
+    ) -> Result<()> {
+        self.hooks.run(self, states, c)?;
+        let mut q = cmd.apply_all(self, states);
+        while let Some(command) = q.pop_front() {
+            command.apply(self, states, cmd);
         }
 
         Ok(())
@@ -319,15 +324,19 @@ fn run_shell(
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
-    let res = sh.run_hooks(
-        states,
-        StartupCtx {
-            startup_time: states.get::<StartupTime>().elapsed(),
-        },
-    );
+    {
+        let mut cmd = states.get_mut::<Commands>();
+        let res = sh.run_hooks(
+            states,
+            &mut cmd,
+            &StartupCtx {
+                startup_time: states.get::<StartupTime>().elapsed(),
+            },
+        );
 
-    if let Err(_e) = res {
-        // TODO log that startup hook failed
+        if let Err(_e) = res {
+            // TODO log that startup hook failed
+        }
     }
 
     loop {
@@ -380,6 +389,12 @@ fn run_shell(
             match output {
                 Ok(o) => cmd_output = o,
                 Err(e) => eprintln!("error: {e:?}"),
+            }
+
+            let mut cmd = states.get_mut::<Commands>();
+            let mut q = cmd.apply_all(sh, states);
+            while let Some(command) = q.pop_front() {
+                command.apply(sh, states, &mut cmd);
             }
         } else {
             let output = sh.lang.eval(sh, states, line.clone());
@@ -449,7 +464,9 @@ pub fn set_working_dir(
             old_dir: old_path.clone(),
             new_dir: path.clone(),
         };
-        cmd.run_hook(hook_ctx);
+        cmd.run(move |sh: &mut Shell, states: &States, cmd: &mut Commands| {
+            sh.run_hooks(states, cmd, &hook_ctx);
+        })
     }
 
     Ok(())

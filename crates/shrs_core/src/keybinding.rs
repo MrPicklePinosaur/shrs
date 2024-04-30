@@ -21,6 +21,7 @@ impl Keybindings {
             info: HashMap::new(),
         }
     }
+
     pub fn insert<I, K: Keybinding + 'static>(
         &mut self,
         key: &str,
@@ -33,6 +34,7 @@ impl Keybindings {
         self.info.insert(key.to_string(), info.to_string());
         Ok(())
     }
+
     /// Return true indicates that event was handled
     pub fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
         for (k, v) in self.bindings.iter() {

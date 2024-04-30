@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{line::LineContents, CmdOutput, CommandNotFoundCtx, States},
+    prelude::{line::LineContents, CmdOutput, CommandNotFoundCtx, Commands, States},
     shell::{Runtime, Shell},
 };
 
@@ -82,12 +82,14 @@ impl Lang for PosixLang {
     }
     */
 
-    fn eval(&self, sh: &Shell, ctx: &States, line: String) -> anyhow::Result<CmdOutput> {
+    fn eval(&self, sh: &Shell, states: &States, line: String) -> anyhow::Result<CmdOutput> {
+        let mut cmd = states.get_mut::<Commands>();
+
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let parser = Parser::default();
-        let cmd = match parser.parse(lexer) {
-            Ok(cmd) => cmd,
+        let parsed = match parser.parse(lexer) {
+            Ok(parsed) => parsed,
             Err(e) => {
                 // TODO detailed parse errors
                 eprintln!("parse error: {e}");
@@ -96,16 +98,16 @@ impl Lang for PosixLang {
         };
 
         let (procs, pgid) =
-            match eval2::eval_command(&mut ctx.get_mut::<JobManager>(), &cmd, None, None) {
+            match eval2::eval_command(&mut states.get_mut::<JobManager>(), &parsed, None, None) {
                 Ok((procs, pgid)) => (procs, pgid),
                 Err(PosixError::CommandNotFound(_)) => {
-                    let _ = sh.hooks.run(sh, ctx, &CommandNotFoundCtx {});
+                    // let _ = cmd.run_hook(CommandNotFoundCtx {});
                     return Ok(CmdOutput::error_with_status(127));
                 },
                 _ => return Ok(CmdOutput::error()),
             };
 
-        eval2::run_job(&mut ctx.get_mut::<JobManager>(), procs, pgid, true)?;
+        eval2::run_job(&mut states.get_mut::<JobManager>(), procs, pgid, true)?;
 
         Ok(CmdOutput::success())
     }

@@ -52,10 +52,8 @@ pub fn c(
 }
 pub fn d(mut cmd: StateMut<Commands>, h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!(h.i);
-    cmd.run(|sh: &mut Shell, states: &States| {
-        sh.run_hooks(states, SCtx {}).unwrap();
-        sh.hooks.insert(g)
-    });
+    cmd.run_hook(SCtx {});
+    cmd.run(|sh: &mut Shell, states: &States| sh.hooks.insert(g));
     Ok(())
 }
 pub fn e(sh: &Shell, ctx: &StartupCtx) -> Result<()> {

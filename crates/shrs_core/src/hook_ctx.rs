@@ -4,7 +4,7 @@ use shrs_core_macros::HookCtx;
 
 use crate::prelude::{CmdOutput, Runtime, ShellPlugin};
 
-pub trait HookCtx: 'static + std::marker::Send {}
+pub trait HookCtx: 'static + std::marker::Send + std::marker::Sync {}
 
 /// Runs when the shell starts up
 #[derive(HookCtx)]

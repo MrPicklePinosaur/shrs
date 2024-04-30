@@ -47,7 +47,7 @@ pub mod prelude {
         plugin::*,
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
-        readline::*,
+        readline::{prompt::*, *},
         shell::{set_working_dir, Runtime, Shell, ShellConfig},
         signal::Signals,
         state::*,

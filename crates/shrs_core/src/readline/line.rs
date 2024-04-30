@@ -17,7 +17,9 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    prelude::{Completer, Completion, CompletionCtx, History, ReplaceMethod, Shell, Theme},
+    prelude::{
+        Commands, Completer, Completion, CompletionCtx, History, ReplaceMethod, Shell, Theme,
+    },
     prompt_content_queue::PromptContentQueue,
     state::States,
 };
@@ -865,7 +867,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Normal,
         };
-        sh.run_hooks(states, hook_states)?;
+        sh.run_hooks(hook_states);
         Ok(())
     }
 
@@ -875,8 +877,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Insert,
         };
-        sh.run_hooks(states, hook_states)?;
-
+        sh.run_hooks(hook_states);
         Ok(())
     }
 }

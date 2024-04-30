@@ -149,7 +149,7 @@ impl Hooks {
     // TODO currently this will abort if a hook fails, potentially introduce fail modes like
     // 'Best Effort' - run all hooks and report any failures
     // 'Pedantic' - abort on the first failed hook
-    pub fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
+    pub(crate) fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
         if let Some(hook_list) = self.get::<C>() {
             for hook in hook_list.iter() {
                 if let Err(e) = hook.run(sh, ctx, c) {

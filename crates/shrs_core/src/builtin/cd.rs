@@ -18,7 +18,6 @@ struct Cli {
 pub fn cd_builtin(
     mut rt: StateMut<Runtime>,
     mut out: StateMut<OutputWriter>,
-    mut cmd: StateMut<Commands>,
     sh: &Shell,
     args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
@@ -47,7 +46,7 @@ pub fn cd_builtin(
         dirs::home_dir().unwrap()
     };
 
-    if let Err(e) = set_working_dir(sh, &mut rt, &mut cmd, &path, true) {
+    if let Err(e) = set_working_dir(sh, &mut rt, &path, true) {
         out.eprintln(e)?;
         return Ok(CmdOutput::error());
     }

@@ -57,39 +57,37 @@ impl DirParseState {
 }
 
 pub fn startup_hook(
+    mut state: StateMut<DirParseState>,
+    rt: State<Runtime>,
     _sh: &Shell,
-    sh_ctx: &mut States,
-    sh_rt: &mut Runtime,
-    _ctx: &StartupCtx,
+    ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
-    update_modules(sh_ctx, sh_rt)?;
+    update_modules(&mut state, &rt)?;
     Ok(())
 }
 
 pub fn change_dir_hook(
+    mut state: StateMut<DirParseState>,
+    rt: State<Runtime>,
     _sh: &Shell,
-    sh_ctx: &mut States,
-    sh_rt: &mut Runtime,
     _ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
-    update_modules(sh_ctx, sh_rt)?;
+    update_modules(&mut state, &rt)?;
     Ok(())
 }
 
-fn update_modules(sh_ctx: &mut States, sh_rt: &mut Runtime) -> anyhow::Result<()> {
-    if let Some(state) = sh_ctx.state.get_mut::<DirParseState>() {
-        // TODO this code is horribly inefficient lol
-        let mut updated: HashMap<String, QueryResult> = HashMap::new();
-        for (mod_name, module) in state.modules.iter() {
-            let mut query_res = module.scan(&sh_rt.working_dir);
-            if query_res.matched {
-                // NOTE we ignore errors in metadata fn
-                let _ = module.metadata_fn(&mut query_res);
-                updated.insert(mod_name.to_string(), query_res);
-            }
+fn update_modules(state: &mut DirParseState, rt: &Runtime) -> anyhow::Result<()> {
+    // TODO this code is horribly inefficient lol
+    let mut updated: HashMap<String, QueryResult> = HashMap::new();
+    for (mod_name, module) in state.modules.iter() {
+        let mut query_res = module.scan(&rt.working_dir);
+        if query_res.matched {
+            // NOTE we ignore errors in metadata fn
+            let _ = module.metadata_fn(&mut query_res);
+            updated.insert(mod_name.to_string(), query_res);
         }
-        state.parsed_modules = updated;
     }
+    state.parsed_modules = updated;
     Ok(())
 }
 
@@ -111,22 +109,16 @@ impl Plugin for DirParsePlugin {
 }
 
 /// Default example prompt that displays some information based on language
-pub fn default_prompt(line_ctx: &LineStateBundle) -> StyledBuf {
-    if let Some(dir_parse_state) = line_ctx.ctx.state.get::<DirParseState>() {
-        let rust_info: Option<String> = dir_parse_state
-            .get_module_metadata::<rust::CargoToml>("rust")
-            .map(|cargo_toml| format!("🦀 {} ", cargo_toml.package.edition));
+pub fn default_prompt(state: &State<DirParseState>, sh: &Shell) -> StyledBuf {
+    let rust_info: Option<String> = state
+        .get_module_metadata::<rust::CargoToml>("rust")
+        .map(|cargo_toml| format!("🦀 {} ", cargo_toml.package.edition));
 
-        let node_info: Option<String> = dir_parse_state
-            .get_module_metadata::<node::NodeJs>("node")
-            .map(|node_js| format!(" {} ", node_js.version));
+    let node_info: Option<String> = state
+        .get_module_metadata::<node::NodeJs>("node")
+        .map(|node_js| format!(" {} ", node_js.version));
 
-        styled_buf! {
-            rust_info, node_info,
-        }
-    } else {
-        styled_buf! {
-            ""
-        }
+    styled_buf! {
+        rust_info, node_info,
     }
 }

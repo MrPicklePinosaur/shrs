@@ -1,8 +1,15 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    path::{Path, PathBuf},
+};
 
+use anyhow::anyhow;
 use log::warn;
 
-use crate::{prelude::{Shell, HookCtx}, state::States};
+use crate::{
+    prelude::{HookCtx, Shell},
+    state::States,
+};
 
 pub trait Command: Send + 'static {
     fn apply(&self, sh: &mut Shell, states: &States);
@@ -53,11 +60,7 @@ impl Commands {
     // Trigger a hook of given type with payload
     pub fn run_hook<C: HookCtx>(&mut self, hook_ctx: C) {
         self.run(move |sh: &mut Shell, states: &States| {
-            if let Err(e) = sh.hooks.run(sh, states, hook_ctx.clone()) {
-                let type_name = std::any::type_name::<C>();
-                warn!("failed to execute hook {e} of type {type_name}");
-            }
+            let _ = sh.hooks.run(sh, states, &hook_ctx);
         })
     }
-
 }

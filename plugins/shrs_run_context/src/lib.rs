@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use builtin::{LoadBuiltin, SaveBuiltin};
+use builtin::{load_builtin, save_builtin};
 use shrs::prelude::*;
 
 pub struct RunContextState {
@@ -41,8 +41,8 @@ impl Plugin for RunContextPlugin {
     }
 
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
-        shell.builtins.insert("save", SaveBuiltin);
-        shell.builtins.insert("load", LoadBuiltin);
+        shell.builtins.insert("save", save_builtin);
+        shell.builtins.insert("load", load_builtin);
 
         // if context file was provided, read file into context state
         if let Some(context_file) = &self.context_file {

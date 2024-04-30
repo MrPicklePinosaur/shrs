@@ -2,7 +2,7 @@ mod builtin;
 pub mod rhai;
 
 use builtin::command_not_found_hook;
-use rhai::{RhaiEngine, RhaiScope, RhaiAST};
+use rhai::{RhaiAST, RhaiEngine, RhaiScope};
 use shrs::prelude::*;
 
 pub struct RhaiPlugin;

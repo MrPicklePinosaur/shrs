@@ -107,12 +107,7 @@ impl PythonLang {
 }
 
 impl Lang for PythonLang {
-    fn eval(
-        &self,
-        _sh: &Shell,
-        _states: &States,
-        cmd: String,
-    ) -> shrs::anyhow::Result<CmdOutput> {
+    fn eval(&self, _sh: &Shell, _states: &States, cmd: String) -> shrs::anyhow::Result<CmdOutput> {
         let lang_ctx = self
             .lang_ctx
             .get_or_init(|| PythonLangCtx::init(&self.runtime));

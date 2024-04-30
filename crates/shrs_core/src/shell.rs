@@ -35,7 +35,7 @@ pub struct Shell {
 
 impl Shell {
     pub fn run_hooks<C: HookCtx>(&mut self, states: &States, c: C) -> Result<()> {
-        self.hooks.run(self, states, c)?;
+        self.hooks.run(self, states, &c)?;
         let mut q = states.get_mut::<Commands>().apply_all(self, states);
         while let Some(cmd) = q.pop_front() {
             cmd.apply(self, states);
@@ -359,7 +359,7 @@ fn run_shell(
             raw_command: line.clone(),
             command: line.clone(),
         };
-        sh.hooks.run(sh, states, hook_ctx)?;
+        sh.hooks.run(sh, states, &hook_ctx)?;
 
         // Retrieve command name or return immediately (empty command)
         let cmd_name = match words.first() {
@@ -393,7 +393,7 @@ fn run_shell(
         let _ = sh.hooks.run(
             sh,
             states,
-            AfterCommandCtx {
+            &AfterCommandCtx {
                 command: line,
                 cmd_output,
             },
@@ -406,7 +406,7 @@ fn run_shell(
         });
 
         for status in exit_statuses.into_iter() {
-            sh.hooks.run(sh, states, JobExitCtx { status })?;
+            sh.hooks.run(sh, states, &JobExitCtx { status })?;
         }
     }
 }
@@ -416,7 +416,6 @@ pub fn set_working_dir(
     sh: &Shell,
     rt: &mut Runtime,
     cmd: &mut Commands,
-
     wd: &Path,
     run_hook: bool,
 ) -> anyhow::Result<()> {
@@ -446,16 +445,11 @@ pub fn set_working_dir(
 
     // Run change directory hook
     if run_hook {
-        cmd.run(move |sh: &mut Shell, states: &States| {
-            let hook_ctx = ChangeDirCtx {
-                old_dir: old_path.clone(),
-                new_dir: path.clone(),
-            };
-
-            if let Err(e) = sh.hooks.run(sh, states, hook_ctx) {
-                error!("Error running change dir hook {e:?}");
-            }
-        });
+        let hook_ctx = ChangeDirCtx {
+            old_dir: old_path.clone(),
+            new_dir: path.clone(),
+        };
+        cmd.run_hook(hook_ctx);
     }
 
     Ok(())

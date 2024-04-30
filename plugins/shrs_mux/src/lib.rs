@@ -72,7 +72,7 @@ impl MuxState {
 }
 
 /// Hook that emitted when the language is changed
-#[derive(HookCtx, Clone)]
+#[derive(HookCtx)]
 pub struct ChangeLangCtx {
     old_lang: String,
     new_lang: String,
@@ -94,7 +94,6 @@ impl MuxPlugin {
         MuxPlugin {
             mux_state: RefCell::new(Some(mux_state)),
         }
-
     }
     // Proxy to register_lang of underlying MuxState
     pub fn register_lang(self, name: &str, lang: impl Lang + 'static) -> Self {
@@ -142,12 +141,7 @@ impl MuxLang {
 }
 
 impl Lang for MuxLang {
-    fn eval(
-        &self,
-        sh: &Shell,
-        states: &States,
-        cmd: String,
-    ) -> anyhow::Result<CmdOutput> {
+    fn eval(&self, sh: &Shell, states: &States, cmd: String) -> anyhow::Result<CmdOutput> {
         let Ok(state) = states.try_get::<MuxState>() else {
             return Ok(CmdOutput::error());
         };

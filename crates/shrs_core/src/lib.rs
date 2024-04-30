@@ -8,9 +8,9 @@ pub mod builtin;
 pub mod cmd_output;
 pub mod commands;
 pub mod completion;
-pub mod ctx;
 pub mod env;
 pub mod history;
+pub mod hook_ctx;
 pub mod hooks;
 pub mod jobs;
 pub mod keybinding;
@@ -28,15 +28,17 @@ pub mod theme;
 pub mod prelude {
     //! Conveniently import commonly used types
 
+    pub use shrs_core_macros::*;
+
     pub use crate::{
         alias::{Alias, AliasInfo, AliasRule, AliasRuleCtx},
         builtin::*,
         cmd_output::CmdOutput,
         commands::Commands,
         completion::*,
-        ctx::*,
         env::Env,
         history::*,
+        hook_ctx::*,
         hooks::{Hooks, *},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::*,
@@ -51,7 +53,6 @@ pub mod prelude {
         state::*,
         theme::Theme,
     };
-    pub use shrs_core_macros::*;
 }
 
 /*

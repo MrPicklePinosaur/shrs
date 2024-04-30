@@ -869,8 +869,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Normal,
         };
-        let mut cmd = states.get_mut::<Commands>();
-        sh.run_hooks(states, &mut cmd, &hook_states)?;
+        sh.run_hooks(states, &hook_states)?;
         Ok(())
     }
 
@@ -880,8 +879,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Insert,
         };
-        let mut cmd = states.get_mut::<Commands>();
-        sh.run_hooks(states, &mut cmd, &hook_states)?;
+        sh.run_hooks(states, &hook_states)?;
         Ok(())
     }
 }

@@ -31,19 +31,15 @@ pub struct Shell {
     pub prompt: Prompt,
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
+    pub cmd: Commands,
 }
 
 impl Shell {
-    pub fn run_hooks<C: HookCtx>(
-        &mut self,
-        states: &States,
-        cmd: &mut Commands,
-        c: &C,
-    ) -> Result<()> {
+    pub fn run_hooks<C: HookCtx>(&mut self, states: &States, c: &C) -> Result<()> {
         self.hooks.run(self, states, c)?;
-        let mut q = cmd.apply_all(self, states);
+        let mut q = self.cmd.drain(states);
         while let Some(command) = q.pop_front() {
-            command.apply(self, states, cmd);
+            command.apply(self, states);
         }
 
         Ok(())
@@ -260,7 +256,6 @@ impl ShellConfig {
             // functions: self.functions,
         };
         self.states.insert(rt);
-        self.states.insert(Commands::new());
         self.states.insert(self.alias);
         self.states.insert(OutputWriter::new(
             self.theme.out_style,
@@ -293,6 +288,7 @@ impl ShellConfig {
             prompt: self.prompt,
             highlighter: self.highlighter,
             suggester: self.suggester,
+            cmd: Commands::new(),
         };
 
         // run post init for plugins
@@ -324,19 +320,15 @@ fn run_shell(
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
-    {
-        let mut cmd = states.get_mut::<Commands>();
-        let res = sh.run_hooks(
-            states,
-            &mut cmd,
-            &StartupCtx {
-                startup_time: states.get::<StartupTime>().elapsed(),
-            },
-        );
+    let res = sh.run_hooks(
+        states,
+        &StartupCtx {
+            startup_time: states.get::<StartupTime>().elapsed(),
+        },
+    );
 
-        if let Err(_e) = res {
-            // TODO log that startup hook failed
-        }
+    if let Err(_e) = res {
+        // TODO log that startup hook failed
     }
 
     loop {
@@ -391,10 +383,9 @@ fn run_shell(
                 Err(e) => eprintln!("error: {e:?}"),
             }
 
-            let mut cmd = states.get_mut::<Commands>();
-            let mut q = cmd.apply_all(sh, states);
+            let mut q = sh.cmd.drain(states);
             while let Some(command) = q.pop_front() {
-                command.apply(sh, states, &mut cmd);
+                command.apply(sh, states);
             }
         } else {
             let output = sh.lang.eval(sh, states, line.clone());
@@ -430,7 +421,6 @@ fn run_shell(
 pub fn set_working_dir(
     sh: &Shell,
     rt: &mut Runtime,
-    cmd: &mut Commands,
     wd: &Path,
     run_hook: bool,
 ) -> anyhow::Result<()> {
@@ -464,9 +454,7 @@ pub fn set_working_dir(
             old_dir: old_path.clone(),
             new_dir: path.clone(),
         };
-        cmd.run(move |sh: &mut Shell, states: &States, cmd: &mut Commands| {
-            sh.run_hooks(states, cmd, &hook_ctx);
-        })
+        sh.cmd.run_hook(hook_ctx);
     }
 
     Ok(())

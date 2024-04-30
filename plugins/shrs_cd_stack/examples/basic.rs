@@ -2,27 +2,25 @@ use shrs::prelude::*;
 use shrs_cd_stack::{CdStackPlugin, CdStackState};
 
 fn cd_stack_down(
-    mut cmd: StateMut<Commands>,
     mut rt: StateMut<Runtime>,
     mut state: StateMut<CdStackState>,
     sh: &Shell,
 ) -> anyhow::Result<()> {
     println!("down");
     if let Some(path) = state.down() {
-        let _ = set_working_dir(sh, &mut rt, &mut cmd, &path, true);
+        let _ = set_working_dir(sh, &mut rt, &path, true);
     }
     Ok(())
 }
 
 fn cd_stack_up(
-    mut cmd: StateMut<Commands>,
     mut rt: StateMut<Runtime>,
     mut state: StateMut<CdStackState>,
     sh: &Shell,
 ) -> anyhow::Result<()> {
     println!("up");
     if let Some(path) = state.up() {
-        let _ = set_working_dir(sh, &mut rt, &mut cmd, &path, true);
+        let _ = set_working_dir(sh, &mut rt, &path, true);
     }
     Ok(())
 }

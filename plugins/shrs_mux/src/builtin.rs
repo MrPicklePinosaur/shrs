@@ -14,7 +14,6 @@ struct Cli {
 }
 
 pub fn mux_builtin(
-    mut cmd: StateMut<Commands>,
     mut mux_state: StateMut<MuxState>,
     sh: &Shell,
     args: &Vec<String>,
@@ -43,8 +42,8 @@ pub fn mux_builtin(
 
         // HACK, prime the language so it can run any init that it needs (this is to support
         // lazy loading languages)
-        cmd.eval("");
-        cmd.run_hook(hook_ctx);
+        sh.cmd.eval("");
+        sh.cmd.run_hook(hook_ctx);
     }
     Ok(CmdOutput::success())
 }

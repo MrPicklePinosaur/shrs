@@ -83,8 +83,6 @@ impl Lang for PosixLang {
     */
 
     fn eval(&self, sh: &Shell, states: &States, line: String) -> anyhow::Result<CmdOutput> {
-        let mut cmd = states.get_mut::<Commands>();
-
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let parser = Parser::default();

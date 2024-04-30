@@ -164,19 +164,16 @@ impl Hooks {
 
     pub fn insert<I, C: HookCtx, S: Hook<C> + 'static>(
         &mut self,
-        system: impl IntoHook<I, C, Hook = S>,
+        hook: impl IntoHook<I, C, Hook = S>,
     ) {
-        self.insert_hook(Box::new(system.into_system()))
-    }
-
-    pub fn insert_hook<C: HookCtx>(&mut self, hook: Box<dyn Hook<C>>) {
+        let h = Box::new(hook.into_system());
         match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
             Some(hook_list) => {
-                hook_list.push(hook);
+                hook_list.push(h);
             },
             None => {
                 // register any empty vector for the type
-                self.hooks.insert::<Vec<StoredHook<C>>>(vec![hook]);
+                self.hooks.insert::<Vec<StoredHook<C>>>(vec![h]);
             },
         };
     }

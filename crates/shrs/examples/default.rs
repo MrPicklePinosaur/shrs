@@ -16,11 +16,9 @@ pub struct H {
 }
 fn main() {
     let mut hooks = Hooks::new();
-    hooks.insert(c);
     hooks.insert(d);
     hooks.insert(e);
     hooks.insert(f);
-    hooks.insert_hook(Box::new(Hooo { s: "S".to_string() }));
 
     let mut bindings = Keybindings::new();
     bindings.insert("C-l", "Clear the screen", |shell: &Shell| -> Result<()> {
@@ -40,22 +38,10 @@ fn main() {
     myshell.run().expect("Error when running shell");
 }
 
-pub fn c(
-    mut h: StateMut<H>,
-    contents: State<LineContents>,
-    sh: &Shell,
-    ctx: &AfterCommandCtx,
-) -> Result<()> {
-    h.i += 1;
-    println!("hello");
-
-    Ok(())
-}
-
-pub fn d(mut cmd: StateMut<Commands>, h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
+pub fn d(h: StateMut<H>, sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     dbg!(h.i);
     sh.run_hooks(SCtx {});
-    sh.run_cmd(|sh: &mut Shell, states: &States| sh.hooks.insert(g));
+    sh.run_cmd(|sh: &mut Shell, states: &mut States| sh.hooks.insert(g));
     Ok(())
 }
 
@@ -64,9 +50,9 @@ pub fn e(sh: &Shell, ctx: &StartupCtx) -> Result<()> {
     Ok(())
 }
 
-pub fn f(mut cmd: StateMut<Commands>, sh: &Shell, ctx: &SCtx) -> Result<()> {
+pub fn f(sh: &Shell, ctx: &SCtx) -> Result<()> {
     dbg!("wqwe");
-    sh.run_cmd(|sh: &mut Shell, states: &States| {
+    sh.run_cmd(|sh: &mut Shell, states: &mut States| {
         dbg!("qw");
     });
 
@@ -86,11 +72,5 @@ pub struct Hooo {
     s: String,
 }
 
-impl Hook<StartupCtx> for Hooo {
-    fn run(&self, sh: &Shell, states: &States, ctx: &StartupCtx) -> Result<()> {
-        dbg!(self.s.clone());
-        Ok(())
-    }
-}
 #[derive(HookCtx)]
 pub struct SCtx {}

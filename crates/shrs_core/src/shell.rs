@@ -49,14 +49,18 @@ impl Shell {
 
     // Trigger a hook of given type with payload
     pub fn run_hooks<C: HookCtx>(&self, c: C) {
-        self.cmd.run(move |sh: &mut Shell, states: &States| {
+        self.cmd.run(move |sh: &mut Shell, states: &mut States| {
             let _ = sh.hooks.run(sh, states, &c);
             sh.apply_queue(states);
         })
     }
+    pub(crate) fn run_hooks_in_core<C: HookCtx>(&mut self, states: &mut States, c: C) {
+        self.run_hooks(c);
+        self.apply_queue(states);
+    }
 
     // Execute all the queued commands
-    pub fn apply_queue(&mut self, states: &States) {
+    pub fn apply_queue(&mut self, states: &mut States) {
         let mut q = self.cmd.drain(states);
         while let Some(command) = q.pop_front() {
             command.apply(self, states);
@@ -67,7 +71,7 @@ impl Shell {
     pub fn eval(&self, cmd_str: impl ToString) {
         // TODO we can't actually get the result of this currently since it is queued
         let cmd_str = cmd_str.to_string();
-        self.cmd.run(move |sh: &mut Shell, states: &States| {
+        self.cmd.run(move |sh: &mut Shell, states: &mut States| {
             // TODO should handle this error?
             let _ = sh.lang.eval(sh, states, cmd_str.clone());
         });
@@ -349,9 +353,11 @@ fn run_shell(
     readline: &mut Box<dyn Readline>,
 ) -> anyhow::Result<()> {
     // init stuff
-    let res = sh.run_hooks(StartupCtx {
+    let startup_ctx = StartupCtx {
         startup_time: states.get::<StartupTime>().elapsed(),
-    });
+    };
+
+    sh.run_hooks_in_core(states, startup_ctx);
 
     loop {
         let line = readline.read_line(sh, states);
@@ -382,7 +388,7 @@ fn run_shell(
             raw_command: line.clone(),
             command: line.clone(),
         };
-        sh.hooks.run(sh, states, &hook_ctx)?;
+        sh.run_hooks_in_core(states, hook_ctx);
 
         // Retrieve command name or return immediately (empty command)
         let cmd_name = match words.first() {
@@ -415,10 +421,9 @@ fn run_shell(
         }
         let (out, err) = states.get_mut::<OutputWriter>().end_collecting();
         cmd_output.set_output(out, err);
-        let _ = sh.hooks.run(
-            sh,
+        sh.run_hooks_in_core(
             states,
-            &AfterCommandCtx {
+            AfterCommandCtx {
                 command: line,
                 cmd_output,
             },
@@ -430,9 +435,7 @@ fn run_shell(
             exit_statuses.push(status);
         });
 
-        for status in exit_statuses.into_iter() {
-            sh.hooks.run(sh, states, &JobExitCtx { status })?;
-        }
+        sh.run_hooks_in_core(states, JobExitCtx { exit_statuses });
     }
 }
 

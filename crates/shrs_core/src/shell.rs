@@ -28,7 +28,7 @@ pub struct Shell {
     pub lang: Box<dyn Lang>,
     pub keybindings: Keybindings,
     pub hooks: Hooks,
-    pub prompt: FullPrompt,
+    pub prompt: Prompt,
     pub highlighter: Box<dyn Highlighter>,
     pub suggester: Box<dyn Suggester>,
 }
@@ -152,8 +152,8 @@ pub struct ShellConfig {
     highlighter: Box<dyn Highlighter>,
 
     /// Custom prompt, see [Prompt]
-    #[builder(default = "FullPrompt::default()")]
-    prompt: FullPrompt,
+    #[builder(default = "Prompt::default()")]
+    prompt: Prompt,
 
     /// Suggestion inline
     #[builder(default = "Box::new(DefaultSuggester)")]

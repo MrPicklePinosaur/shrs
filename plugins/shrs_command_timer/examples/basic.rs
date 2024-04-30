@@ -6,14 +6,15 @@ fn prompt_left(shell: &Shell) -> StyledBuf {
 }
 
 fn prompt_right(state: State<CommandTimerState>, shell: &Shell) -> StyledBuf {
-    let time_str = state.command_time()
+    let time_str = state
+        .command_time()
         .map(|x| format!("{x:?}"))
         .unwrap_or(String::new());
     styled_buf!(time_str.reset())
 }
 
 fn main() {
-    let prompt = FullPrompt::from_sides(prompt_left, prompt_right);
+    let prompt = Prompt::from_sides(prompt_left, prompt_right);
 
     let myshell = ShellBuilder::default()
         .with_plugin(CommandTimerPlugin)

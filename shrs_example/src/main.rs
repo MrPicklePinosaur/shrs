@@ -24,7 +24,7 @@ use shrs_run_context::RunContextPlugin;
 // Create a new struct and implement the [Prompt] trait
 struct MyPrompt;
 
-impl FullPrompt for MyPrompt {
+impl Prompt for MyPrompt {
     fn prompt_left(&self, state: &LineStateBundle) -> StyledBuf {
         let indicator = match state.line.mode() {
             LineMode::Insert => String::from(">").cyan(),
@@ -177,8 +177,7 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg: HookFn<StartupCtx> = |sh: &Shell|
-     -> anyhow::Result<()> {
+    let startup_msg: HookFn<StartupCtx> = |sh: &Shell| -> anyhow::Result<()> {
         let welcome_str = format!(
             r#"
         __

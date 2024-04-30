@@ -7,19 +7,19 @@ use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 use super::super::state::Param;
 use crate::prelude::{Shell, States};
 
-/// Implement this trait to create your own prompt
-pub trait Prompt {
+pub trait PromptFn {
     fn prompt(&self, sh: &Shell, ctx: &States) -> StyledBuf;
 }
 
-pub struct FullPrompt {
-    pub prompt_left: Box<dyn Prompt>,
-    pub prompt_right: Box<dyn Prompt>,
+/// Implement this trait to create your own prompt
+pub struct Prompt {
+    pub prompt_left: Box<dyn PromptFn>,
+    pub prompt_right: Box<dyn PromptFn>,
 }
-impl FullPrompt {
-    pub fn from_sides<I, J, R: Prompt + 'static, L: Prompt + 'static>(
-        left_prompt: impl IntoPrompt<I, Prompt = L>,
-        right_prompt: impl IntoPrompt<J, Prompt = R>,
+impl Prompt {
+    pub fn from_sides<I, J, R: PromptFn + 'static, L: PromptFn + 'static>(
+        left_prompt: impl IntoPromptFn<I, PromptFn = L>,
+        right_prompt: impl IntoPromptFn<J, PromptFn = R>,
     ) -> Self {
         Self {
             prompt_left: Box::new(left_prompt.into_prompt()),
@@ -27,9 +27,9 @@ impl FullPrompt {
         }
     }
 }
-impl Default for FullPrompt {
+impl Default for Prompt {
     fn default() -> Self {
-        FullPrompt::from_sides(default_prompt_left, default_prompt_right)
+        Prompt::from_sides(default_prompt_left, default_prompt_right)
     }
 }
 
@@ -40,15 +40,15 @@ fn default_prompt_left(sh: &Shell) -> StyledBuf {
 fn default_prompt_right(sh: &Shell) -> StyledBuf {
     styled_buf!()
 }
-pub trait IntoPrompt<Input> {
-    type Prompt: Prompt;
-    fn into_prompt(self) -> Self::Prompt;
+pub trait IntoPromptFn<Input> {
+    type PromptFn: PromptFn;
+    fn into_prompt(self) -> Self::PromptFn;
 }
-pub struct FunctionPrompt<Input, F> {
+pub struct FunctionPromptFn<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
-impl<F> Prompt for FunctionPrompt<(Shell,), F>
+impl<F> PromptFn for FunctionPromptFn<(Shell,), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell) -> StyledBuf,
 {
@@ -67,7 +67,7 @@ macro_rules! impl_prompt {
     ) => {
         #[allow(non_snake_case)]
         #[allow(unused)]
-        impl<F, $($params: Param),+> Prompt for FunctionPrompt<($($params,)+), F>
+        impl<F, $($params: Param),+> PromptFn for FunctionPromptFn<($($params,)+), F>
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell)->StyledBuf +
@@ -91,14 +91,14 @@ macro_rules! impl_prompt {
         }
     }
 }
-impl<F> IntoPrompt<()> for F
+impl<F> IntoPromptFn<()> for F
 where
     for<'a, 'b> &'a F: Fn(&Shell) -> StyledBuf,
 {
-    type Prompt = FunctionPrompt<(Shell,), Self>;
+    type PromptFn = FunctionPromptFn<(Shell,), Self>;
 
-    fn into_prompt(self) -> Self::Prompt {
-        FunctionPrompt {
+    fn into_prompt(self) -> Self::PromptFn {
+        FunctionPromptFn {
             f: self,
             marker: Default::default(),
         }
@@ -109,16 +109,16 @@ macro_rules! impl_into_prompt {
     (
         $($params:ident),+
     ) => {
-        impl<F, $($params: Param),+> IntoPrompt<($($params,)*)> for F
+        impl<F, $($params: Param),+> IntoPromptFn<($($params,)*)> for F
             where
                 for<'a, 'b> &'a F:
                     Fn( $($params),+,&Shell) ->StyledBuf+
                     Fn( $(<$params as Param>::Item<'b>),+,&Shell)->StyledBuf
         {
-            type Prompt = FunctionPrompt<($($params,)+), Self>;
+            type PromptFn = FunctionPromptFn<($($params,)+), Self>;
 
-            fn into_prompt(self) -> Self::Prompt {
-                FunctionPrompt {
+            fn into_prompt(self) -> Self::PromptFn{
+                FunctionPromptFn {
                     f: self,
                     marker: Default::default(),
                 }

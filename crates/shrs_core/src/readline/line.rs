@@ -23,7 +23,7 @@ use crate::{
 };
 
 pub trait Readline {
-    fn read_line(&mut self, sh: &Shell, states: &mut States) -> String;
+    fn read_line(&mut self, sh: &mut Shell, states: &mut States) -> String;
 }
 
 /// Operating mode of readline
@@ -126,7 +126,7 @@ impl Default for Line {
 
 impl Readline for Line {
     /// Start readline and read one line of user input
-    fn read_line(&mut self, sh: &Shell, states: &mut States) -> String {
+    fn read_line(&mut self, sh: &mut Shell, states: &mut States) -> String {
         states.insert(CurrentWord(String::new()));
         states.insert(HistoryInd::Prompt);
         states.insert(SavedLine(String::new()));
@@ -138,7 +138,7 @@ impl Readline for Line {
 }
 
 impl Line {
-    fn read_events(&mut self, sh: &Shell, states: &States) -> anyhow::Result<String> {
+    fn read_events(&mut self, sh: &mut Shell, states: &mut States) -> anyhow::Result<String> {
         // ensure we are always cleaning up whenever we leave this scope
         struct CleanUp;
         impl Drop for CleanUp {
@@ -185,7 +185,6 @@ impl Line {
                     );
                 }
             } else {
-                // get search results from history and suggest the first result
                 if let Some(suggestion) = sh.suggester.suggest(states) {
                     let trimmed_selection = suggestion[res.len()..].to_string();
                     styled_buf.push(
@@ -238,8 +237,8 @@ impl Line {
 
     fn handle_menu_keys(
         &mut self,
-        sh: &Shell,
-        states: &States,
+        sh: &mut Shell,
+        states: &mut States,
         event: Event,
     ) -> anyhow::Result<()> {
         match event {
@@ -303,7 +302,7 @@ impl Line {
     fn handle_standard_keys(
         &mut self,
         sh: &Shell,
-        states: &States,
+        states: &mut States,
         event: Event,
     ) -> anyhow::Result<bool> {
         match event {
@@ -397,8 +396,9 @@ impl Line {
 
         Ok(false)
     }
+
     /// returns a bool whether input should still be handled
-    pub fn expand(&mut self, states: &States, event: &Event) -> anyhow::Result<bool> {
+    pub fn expand(&mut self, states: &mut States, event: &Event) -> anyhow::Result<bool> {
         if !states.get::<Snippets>().should_expand(event) {
             return Ok(true);
         }
@@ -448,8 +448,8 @@ impl Line {
 
     fn handle_insert_keys(
         &mut self,
-        sh: &Shell,
-        states: &States,
+        sh: &mut Shell,
+        states: &mut States,
         event: Event,
     ) -> anyhow::Result<()> {
         if !self.expand(states, &event)? {
@@ -640,8 +640,8 @@ impl Line {
 
     fn handle_normal_keys(
         &mut self,
-        sh: &Shell,
-        states: &States,
+        sh: &mut Shell,
+        states: &mut States,
         event: Event,
     ) -> anyhow::Result<()> {
         // TODO write better system toString support key combinations
@@ -749,7 +749,7 @@ impl Line {
     }
 
     // recalculate the current completions
-    fn populate_completions(&mut self, states: &States) -> anyhow::Result<()> {
+    fn populate_completions(&mut self, states: &mut States) -> anyhow::Result<()> {
         // TODO IFS
         let mut line_contents = states.get::<LineContents>();
         let cursor = line_contents.cb.cursor();
@@ -813,7 +813,7 @@ impl Line {
         Ok(())
     }
 
-    fn history_up(&mut self, states: &States) -> anyhow::Result<()> {
+    fn history_up(&mut self, states: &mut States) -> anyhow::Result<()> {
         let cur_line = states.get::<LineContents>().cb.slice(..).to_string();
         // save current prompt
         if HistoryInd::Prompt == *states.get::<HistoryInd>() {
@@ -829,7 +829,7 @@ impl Line {
         Ok(())
     }
 
-    fn history_down(&mut self, states: &States) -> anyhow::Result<()> {
+    fn history_down(&mut self, states: &mut States) -> anyhow::Result<()> {
         let next_ind = states.get::<HistoryInd>().down();
         *states.get_mut::<HistoryInd>() = next_ind;
         self.update_history(states)?;
@@ -837,7 +837,7 @@ impl Line {
         Ok(())
     }
 
-    fn update_history(&mut self, states: &States) -> anyhow::Result<()> {
+    fn update_history(&mut self, states: &mut States) -> anyhow::Result<()> {
         match *states.get::<HistoryInd>() {
             // restore saved line
             HistoryInd::Prompt => {
@@ -861,23 +861,24 @@ impl Line {
         Ok(())
     }
 
-    fn to_normal_mode(&self, sh: &Shell, states: &States) -> anyhow::Result<()> {
+    fn to_normal_mode(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         *states.get_mut::<LineMode>() = LineMode::Normal;
 
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Normal,
         };
-        sh.hooks.run(sh, states, hook_states)?;
+        sh.run_hooks(states, hook_states)?;
         Ok(())
     }
 
-    fn to_insert_mode(&self, sh: &Shell, states: &States) -> anyhow::Result<()> {
+    fn to_insert_mode(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         *states.get_mut::<LineMode>() = LineMode::Insert;
 
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Insert,
         };
-        sh.hooks.run(sh, states, hook_states)?;
+        sh.run_hooks(states, hook_states)?;
+
         Ok(())
     }
 }

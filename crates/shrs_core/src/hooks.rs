@@ -76,7 +76,7 @@ where
 {
     type Hook = FunctionHook<(Shell, C), Self>;
 
-    fn into_system(self) -> Self::Hook {
+    fn into_hook(self) -> Self::Hook {
         FunctionHook {
             f: self,
             marker: Default::default(),
@@ -86,7 +86,7 @@ where
 impl<C: HookCtx, H: Hook<C>> IntoHook<H, C> for H {
     type Hook = H;
 
-    fn into_system(self) -> Self::Hook {
+    fn into_hook(self) -> Self::Hook {
         self
     }
 }
@@ -103,7 +103,7 @@ macro_rules! impl_into_hook {
         {
             type Hook = FunctionHook<($($params,)+C), Self>;
 
-            fn into_system(self) -> Self::Hook {
+            fn into_hook(self) -> Self::Hook {
                 FunctionHook {
                     f: self,
                     marker: Default::default(),
@@ -130,7 +130,7 @@ impl_hook!(T1, T2, T3, T4, T5);
 pub trait IntoHook<Input, C: HookCtx> {
     type Hook: Hook<C>;
 
-    fn into_system(self) -> Self::Hook;
+    fn into_hook(self) -> Self::Hook;
 }
 
 impl_into_hook!(T1);
@@ -156,10 +156,10 @@ impl Hooks {
     // TODO currently this will abort if a hook fails, potentially introduce fail modes like
     // 'Best Effort' - run all hooks and report any failures
     // 'Pedantic' - abort on the first failed hook
-    pub(crate) fn run<C: HookCtx>(&self, sh: &Shell, ctx: &States, c: &C) -> Result<()> {
+    pub(crate) fn run<C: HookCtx>(&self, sh: &Shell, states: &States, c: &C) -> Result<()> {
         if let Some(hook_list) = self.get::<C>() {
             for hook in hook_list.iter() {
-                if let Err(e) = hook.run(sh, ctx, c) {
+                if let Err(e) = hook.run(sh, states, c) {
                     let type_name = std::any::type_name::<C>();
                     warn!("failed to execute hook {e} of type {type_name}");
                     return Err(e);
@@ -173,7 +173,7 @@ impl Hooks {
         &mut self,
         hook: impl IntoHook<I, C, Hook = S>,
     ) {
-        let h = Box::new(hook.into_system());
+        let h = Box::new(hook.into_hook());
         match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
             Some(hook_list) => {
                 hook_list.push(h);

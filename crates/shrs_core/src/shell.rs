@@ -55,7 +55,7 @@ impl Shell {
         })
     }
     pub(crate) fn run_hooks_in_core<C: HookCtx>(&mut self, states: &mut States, c: C) {
-        self.run_hooks(c);
+        let _ = self.hooks.run(self, states, &c);
         self.apply_queue(states);
     }
 

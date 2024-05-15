@@ -15,6 +15,7 @@ shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.5"
 shrs_run_context = { path = "../plugins/shrs_run_context", version = "0.0.5" }
 shrs_mux = { path = "../plugins/shrs_mux", version = "0.0.5" }
 shrs_cd_stack = { path = "../plugins/shrs_cd_stack", version = "0.0.5" }
+shrs_file_history = { path = "../plugins/shrs_file_history", version = "0.0.5" }
 shrs_file_logger = { path = "../plugins/shrs_file_logger", version = "0.0.5" }
 shrs_rhai = { path = "../plugins/shrs_rhai", version = "0.0.5" }
 shrs_rhai_completion = { path = "../plugins/shrs_rhai_completion", version = "0.0.5" }

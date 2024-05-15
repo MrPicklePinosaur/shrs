@@ -867,7 +867,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Normal,
         };
-        sh.run_hooks(hook_states);
+        sh.run_hooks_in_core(states, hook_states);
         Ok(())
     }
 
@@ -877,7 +877,7 @@ impl Line {
         let hook_states = LineModeSwitchCtx {
             line_mode: LineMode::Insert,
         };
-        sh.run_hooks(hook_states);
+        sh.run_hooks_in_core(states, hook_states);
         Ok(())
     }
 }

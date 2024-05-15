@@ -44,5 +44,5 @@ pub struct ChangeDirCtx {
 /// Runs when a job is completed
 #[derive(HookCtx)]
 pub struct JobExitCtx {
-    pub status: ExitStatus,
+    pub exit_statuses: Vec<ExitStatus>,
 }

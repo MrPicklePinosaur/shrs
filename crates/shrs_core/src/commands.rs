@@ -1,11 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::VecDeque,
-    path::{Path, PathBuf},
-};
-
-use anyhow::anyhow;
-use log::warn;
+use std::{cell::RefCell, collections::VecDeque};
 
 use crate::{
     prelude::{HookCtx, Shell},
@@ -13,14 +6,14 @@ use crate::{
 };
 
 pub trait Command: Send + 'static {
-    fn apply(&self, sh: &mut Shell, states: &States);
+    fn apply(&self, sh: &mut Shell, states: &mut States);
 }
 
 impl<F> Command for F
 where
-    F: Fn(&mut Shell, &States) + Send + 'static,
+    F: Fn(&mut Shell, &mut States) + Send + 'static,
 {
-    fn apply(&self, sh: &mut Shell, states: &States) {
+    fn apply(&self, sh: &mut Shell, states: &mut States) {
         self(sh, states);
     }
 }

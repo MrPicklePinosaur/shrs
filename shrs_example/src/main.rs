@@ -6,13 +6,13 @@ use std::{
 };
 
 use shrs::{
-    history::FileBackedHistory,
     prelude::{styled_buf::StyledBuf, *},
     readline::line::LineContents,
 };
 use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
+use shrs_file_history::FileBackedHistoryPlugin;
 use shrs_file_logger::{FileLogger, LevelFilter};
 use shrs_mux::{python::*, BashLang, MuxHighlighter, MuxPlugin, MuxState, NuLang};
 use shrs_rhai::RhaiPlugin;
@@ -107,11 +107,6 @@ fn main() {
     // =-=-= Menu =-=-=-=
     let menu = DefaultMenu::default();
 
-    // =-=-= History =-=-=
-    // Use history that writes to file on disk
-    let history_file = config_dir.as_path().join("history");
-    let history = FileBackedHistory::new(history_file).expect("Could not open history file");
-
     // =-=-= Keybindings =-=-=
     // Add basic keybindings
     let mut bindings = Keybindings::new();
@@ -192,7 +187,6 @@ a rusty POSIX shell | build {}"#,
         .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)
-        .with_history(history)
         .with_keybinding(bindings)
         .with_prompt(Prompt::from_sides(prompt_left, prompt_right))
         .with_menu(menu)
@@ -204,6 +198,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(CdStackPlugin)
         .with_plugin(RhaiPlugin)
         .with_plugin(CompletionsPlugin)
+        .with_plugin(FileBackedHistoryPlugin::new())
         .build()
         .expect("Could not construct shell");
 

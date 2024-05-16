@@ -5,9 +5,8 @@ use shrs::prelude::*;
 pub struct AutocdPlugin;
 
 pub fn after_command_hook(
+    mut rt: StateMut<Runtime>,
     sh: &Shell,
-    sh_ctx: &mut Context,
-    sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // Bash exit code for invalid command
@@ -22,9 +21,8 @@ pub fn after_command_hook(
 
             for path in paths {
                 let path = path.unwrap();
-                println!("{:?}", path);
                 if path.file_type().unwrap().is_dir() && path.file_name() == cmd_name {
-                    set_working_dir(sh, sh_ctx, sh_rt, &path.path(), true)?;
+                    set_working_dir(sh, &mut rt, &path.path(), true)?;
                     return Ok(());
                 }
             }

@@ -45,8 +45,8 @@ struct LoadBuiltinCli {
 }
 
 pub fn load_builtin(
-    mut state: StateMut<RunContextState>,
-    mut cmd: StateMut<Commands>,
+    state: StateMut<RunContextState>,
+    _cmd: StateMut<Commands>,
     mut rt: StateMut<Runtime>,
     sh: &Shell,
     args: &Vec<String>,

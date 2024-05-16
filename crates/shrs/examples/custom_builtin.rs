@@ -22,15 +22,14 @@ impl Builtin for BetterCdBuiltin {
     fn run(
         &self,
         sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
+        rt: StateMut<Runtime>,
         args: &[String],
     ) -> ::anyhow::Result<CmdOutput> {
         // Check if supplied path starts with '@' and is a registered alias
         if let Some(arg) = args.get(0) {
             if let Some(alias) = arg.strip_prefix("@") {
                 if let Some(path) = self.aliases.get(alias) {
-                    set_working_dir(ctx, path, true).unwrap();
+                    set_working_dir(sh, &mut rt, path, true).unwrap();
                     return Ok(CmdOutput::success());
                 }
             }

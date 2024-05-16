@@ -1,15 +1,13 @@
 //! Types for internal context of shell
 
 use std::{
-    cell::RefCell,
-    collections::VecDeque,
     env,
     path::{Path, PathBuf},
     process::ExitStatus,
     time::Instant,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use dirs::home_dir;
 use log::{info, warn};
 use pino_deref::Deref;
@@ -442,7 +440,7 @@ fn run_shell(
 /// Set the current working directory
 pub fn set_working_dir(
     sh: &Shell,
-    rt: &mut Runtime,
+    rt: &mut StateMut<Runtime>,
     wd: &Path,
     run_hook: bool,
 ) -> anyhow::Result<()> {

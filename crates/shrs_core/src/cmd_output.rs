@@ -11,7 +11,7 @@ impl CmdOutput {
         CmdOutput {
             stdout: String::new(),
             stderr: String::new(),
-            status: ExitStatus::from_raw(status),
+            status: ExitStatus::from_raw(status << 8),
         }
     }
     pub fn success() -> Self {

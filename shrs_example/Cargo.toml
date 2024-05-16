@@ -10,6 +10,7 @@ build = "build.rs"
 
 [dependencies]
 shrs = { path = "../crates/shrs", version = "^0.0.5" }
+shrs_autocd = { path = "../plugins/shrs_autocd", version = "0.0.5" }
 shrs_cd_tools = { path = "../plugins/shrs_cd_tools", version = "0.0.5" }
 shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.5" }
 shrs_run_context = { path = "../plugins/shrs_run_context", version = "0.0.5" }

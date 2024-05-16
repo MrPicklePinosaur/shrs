@@ -9,6 +9,7 @@ use shrs::{
     prelude::{styled_buf::StyledBuf, *},
     readline::line::LineContents,
 };
+use shrs_autocd::AutocdPlugin;
 use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
@@ -199,6 +200,7 @@ a rusty POSIX shell | build {}"#,
         .with_plugin(RhaiPlugin)
         .with_plugin(CompletionsPlugin)
         .with_plugin(FileBackedHistoryPlugin::new())
+        .with_plugin(AutocdPlugin)
         .build()
         .expect("Could not construct shell");
 

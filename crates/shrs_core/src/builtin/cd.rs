@@ -2,10 +2,8 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
-use super::Builtin;
 use crate::{
-    commands::{Command, Commands},
-    prelude::{CmdOutput, OutputWriter, States},
+    prelude::{CmdOutput, OutputWriter},
     shell::{set_working_dir, Runtime, Shell},
     state::StateMut,
 };

@@ -3,7 +3,7 @@
 //!
 mod builtin;
 
-use builtin::AgainBuiltin;
+use builtin::again_builtin;
 use shrs::prelude::*;
 
 pub struct OutputCaptureState {
@@ -25,7 +25,7 @@ pub struct OutputCapturePlugin;
 impl Plugin for OutputCapturePlugin {
     fn init(&self, shell: &mut ShellConfig) -> anyhow::Result<()> {
         shell.hooks.insert(after_command_hook);
-        shell.builtins.insert("again", AgainBuiltin::new());
+        shell.builtins.insert("again", again_builtin);
         shell.states.insert(OutputCaptureState::new());
 
         Ok(())
@@ -40,15 +40,12 @@ impl Plugin for OutputCapturePlugin {
 }
 
 fn after_command_hook(
+    mut state: StateMut<OutputCaptureState>,
     _sh: &Shell,
-    sh_ctx: &mut States,
-    _sh_rt: &mut Runtime,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
-    if let Some(state) = sh_ctx.state.get_mut::<OutputCaptureState>() {
-        state.last_command = ctx.command.clone();
-        state.last_output = ctx.cmd_output.clone();
-    }
+    state.last_command = ctx.command.clone();
+    state.last_output = ctx.cmd_output.clone();
     Ok(())
 }
 

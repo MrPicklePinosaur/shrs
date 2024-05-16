@@ -2,28 +2,13 @@ use shrs::prelude::*;
 
 use crate::OutputCaptureState;
 
-#[derive(Default)]
-pub struct AgainBuiltin {}
+pub fn again_builtin(
+    state: State<OutputCaptureState>,
+    _sh: &Shell,
+    _args: &Vec<String>,
+) -> anyhow::Result<CmdOutput> {
+    print!("{}", state.last_output.stdout);
+    print!("{}", state.last_output.stderr);
 
-impl AgainBuiltin {
-    pub fn new() -> Self {
-        AgainBuiltin {}
-    }
-}
-
-impl Builtin for AgainBuiltin {
-    fn run(
-        &self,
-        _sh: &Shell,
-        ctx: &mut States,
-        _rt: &mut Runtime,
-        _args: &[String],
-    ) -> anyhow::Result<CmdOutput> {
-        if let Some(state) = ctx.state.get::<OutputCaptureState>() {
-            print!("{}", state.last_output.stdout);
-            print!("{}", state.last_output.stderr);
-        }
-
-        Ok(CmdOutput::success())
-    }
+    Ok(CmdOutput::success())
 }

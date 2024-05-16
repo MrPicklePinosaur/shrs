@@ -11,8 +11,6 @@ fn main() {
 
     logger.init().unwrap();
 
-    let _readline = LineBuilder::default().build().unwrap();
-
     let myshell = ShellBuilder::default().build().unwrap();
 
     myshell.run().expect("Error when running shell");

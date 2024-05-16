@@ -119,7 +119,9 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 
 #[cfg(test)]
 mod tests {
-    use crossterm::event::{KeyCode, KeyModifiers};
+    use std::default;
+
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
     use super::parse_keybinding;
 
@@ -127,38 +129,38 @@ mod tests {
     fn keybinding_parse() {
         assert_eq!(
             parse_keybinding("<space>"),
-            Ok((KeyCode::Char(' '), KeyModifiers::NONE))
+            Ok(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE))
         );
         assert_eq!(
             parse_keybinding("<esc>"),
-            Ok((KeyCode::Esc, KeyModifiers::NONE))
+            Ok(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE))
         );
         assert_eq!(
             parse_keybinding("c"),
-            Ok((KeyCode::Char('c'), KeyModifiers::NONE))
+            Ok(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE))
         );
         assert_eq!(
             parse_keybinding("C"),
-            Ok((KeyCode::Char('C'), KeyModifiers::NONE))
+            Ok(KeyEvent::new(KeyCode::Char('C'), KeyModifiers::NONE))
         );
         assert_eq!(
             parse_keybinding("C-c"),
-            Ok((KeyCode::Char('c'), KeyModifiers::CONTROL))
+            Ok(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL))
         );
         assert_eq!(
             parse_keybinding("Ctrl-c"),
-            Ok((KeyCode::Char('c'), KeyModifiers::CONTROL))
+            Ok(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL))
         );
         assert_eq!(
             parse_keybinding("C-S-c"),
-            Ok((
+            Ok(KeyEvent::new(
                 KeyCode::Char('c'),
                 KeyModifiers::CONTROL | KeyModifiers::SHIFT
             ))
         );
         assert_eq!(
             parse_keybinding("Ctrl-Shift-c"),
-            Ok((
+            Ok(KeyEvent::new(
                 KeyCode::Char('c'),
                 KeyModifiers::CONTROL | KeyModifiers::SHIFT
             ))

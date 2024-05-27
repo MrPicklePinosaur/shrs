@@ -15,14 +15,14 @@ use crate::prelude::{line::LineContents, Runtime, Shell};
 pub trait Param {
     type Item<'new>;
 
-    fn retrieve<'r>(states: &'r States) -> Self::Item<'r>;
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r>;
 }
 
 /// State store that uses types to index
 impl<'res, T: 'static> Param for State<'res, T> {
     type Item<'new> = State<'new, T>;
 
-    fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
         State {
             value: states.states.get(&TypeId::of::<T>()).unwrap().borrow(),
             _marker: PhantomData,
@@ -33,7 +33,7 @@ impl<'res, T: 'static> Param for State<'res, T> {
 impl<'res, T: 'static> Param for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
-    fn retrieve<'r>(states: &'r States) -> Self::Item<'r> {
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
         let state = states.states.get(&TypeId::of::<T>());
 
         match state {
@@ -46,6 +46,13 @@ impl<'res, T: 'static> Param for StateMut<'res, T> {
                 panic!("{} Not Found", type_name::<T>())
             },
         }
+    }
+}
+impl<'res> Param for &'res Shell {
+    type Item<'new> = &'new Shell;
+
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
+        shell
     }
 }
 

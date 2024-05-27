@@ -21,17 +21,17 @@ use crate::{
     state::Param,
 };
 
-impl<F, C: HookCtx> Hook<C> for FunctionHook<(Shell, C), F>
+impl<F, C: HookCtx> Hook<C> for FunctionHook<C, F>
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
+    for<'a, 'b> &'a F: Fn(&C) -> Result<()>,
 {
     fn run(&self, sh: &Shell, _states: &States, c: &C) -> Result<()> {
         fn call_inner<C: HookCtx>(
-            f: impl Fn(&Shell, &C) -> Result<()>,
+            f: impl Fn(&C) -> Result<()>,
             sh: &Shell,
             states: &C,
         ) -> Result<()> {
-            f(&sh, &states)
+            f(&states)
         }
 
         call_inner(&self.f, sh, c)
@@ -47,24 +47,23 @@ macro_rules! impl_hook{
         impl<F, C:HookCtx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
+                    Fn( $($params),+,&C ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&C )->Result<()>
         {
             fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
                 fn call_inner<C:HookCtx,$($params),+>(
-                    f: impl Fn($($params),+,&Shell,&C)->Result<()>,
+                    f: impl Fn($($params),+,&C)->Result<()>,
                     $($params: $params),+
-                    ,sh:&Shell
                     ,states:&C
                 ) ->Result<()>{
-                    f($($params),+,sh,&states)
+                    f($($params),+,&states)
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
+                    let $params = $params::retrieve(sh,states);
                 )+
 
-                call_inner(&self.f, $($params),+,sh,c)
+                call_inner(&self.f, $($params),+,c)
             }
         }
     }
@@ -72,9 +71,9 @@ macro_rules! impl_hook{
 
 impl<F, C: HookCtx> IntoHook<(), C> for F
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
+    for<'a, 'b> &'a F: Fn(&C) -> Result<()>,
 {
-    type Hook = FunctionHook<(Shell, C), Self>;
+    type Hook = FunctionHook<C, Self>;
 
     fn into_hook(self) -> Self::Hook {
         FunctionHook {
@@ -98,8 +97,8 @@ macro_rules! impl_into_hook {
         impl<F, C:HookCtx,$($params: Param),+> IntoHook<($($params,)+),C> for F
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
+                    Fn( $($params),+,&C ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&C )->Result<()>
         {
             type Hook = FunctionHook<($($params,)+C), Self>;
 

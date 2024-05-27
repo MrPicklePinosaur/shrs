@@ -220,7 +220,7 @@ macro_rules! impl_highlighter {
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
+                    let $params = $params::retrieve(sh,states);
                 )+
 
                 call_inner(&self.f, $($params),+,sh,&buf)

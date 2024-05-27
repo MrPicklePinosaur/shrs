@@ -188,7 +188,7 @@ a rusty POSIX shell | build {}"#,
         .with_hooks(hooks)
         .with_env(env)
         .with_alias(alias)
-        .with_keybinding(bindings)
+        .with_keybindings(bindings)
         .with_prompt(Prompt::from_sides(prompt_left, prompt_right))
         .with_menu(menu)
         .with_highlighter(MuxHighlighter {})

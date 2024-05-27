@@ -12,7 +12,7 @@ fn main() {
 
     let myshell = ShellBuilder::default()
         .with_plugin(CdStackPlugin)
-        .with_keybinding(bindings)
+        .with_keybindings(bindings)
         .build()
         .unwrap();
 

@@ -226,7 +226,7 @@ impl ShellBuilder {
         self.completer = Some(Box::new(completer));
         self
     }
-    pub fn with_keybinding(mut self, keybinding: Keybindings) -> Self {
+    pub fn with_keybindings(mut self, keybinding: Keybindings) -> Self {
         self.keybinding = Some(keybinding);
         self
     }

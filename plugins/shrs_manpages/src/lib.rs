@@ -1,11 +1,13 @@
 use std::{ffi::OsStr, process::Command};
 
+use anyhow::Result;
 use shrs::{prelude::*, readline::line::LineContents};
 
 /// Open a man page for the currently typed command using the `man` command by default.
 /// If you wish to specify a different man command, use [open_manpage_with].
-pub fn open_manpage(state: &mut LineContents) {
-    _open_manpage(state, "man")
+pub fn open_manpage(mut contents: StateMut<LineContents>, sh: &Shell) -> Result<()> {
+    _open_manpage(&mut contents, "man");
+    Ok(())
 }
 
 pub fn open_manpage_with<S: AsRef<OsStr>>(state: &mut LineContents, man_command: S) {

@@ -1,14 +1,11 @@
-use shrs::{keybindings, prelude::*};
+use shrs::{keybinding, prelude::*};
 use shrs_manpages::open_manpage;
 
 fn main() {
-    let keybinding = keybindings! {
-        |state|
-        "C-n" => ("Open manpage", { open_manpage(state); }),
-    };
-
+    let mut keybindings = Keybindings::new();
+    keybindings.insert("C-n", "Open manpage", open_manpage);
     let myshell = ShellBuilder::default()
-        .with_keybinding(keybinding)
+        .with_keybindings(keybindings)
         .build()
         .unwrap();
 

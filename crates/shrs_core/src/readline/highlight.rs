@@ -220,7 +220,7 @@ macro_rules! impl_highlighter {
                 }
 
                 $(
-                    let $params = $params::retrieve(sh,states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
                 call_inner(&self.f, $($params),+,sh,&buf)
@@ -270,11 +270,4 @@ macro_rules! impl_into_highlighter {
         }
     }
 }
-impl_highlighter!(T1);
-impl_highlighter!(T1, T2);
-impl_highlighter!(T1, T2, T3);
-impl_highlighter!(T1, T2, T3, T4);
-impl_into_highlighter!(T1);
-impl_into_highlighter!(T1, T2);
-impl_into_highlighter!(T1, T2, T3);
-impl_into_highlighter!(T1, T2, T3, T4);
+all_the_tuples!(impl_highlighter, impl_into_highlighter);

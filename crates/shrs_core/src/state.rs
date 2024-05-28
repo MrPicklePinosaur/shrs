@@ -8,51 +8,78 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use anyhow::{Context, Result};
 use thiserror::Error;
 
 use crate::prelude::{line::LineContents, Runtime, Shell};
-
 pub trait Param {
     type Item<'new>;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r>;
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>>;
 }
 
 /// State store that uses types to index
 impl<'res, T: 'static> Param for State<'res, T> {
     type Item<'new> = State<'new, T>;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
-        State {
-            value: states.states.get(&TypeId::of::<T>()).unwrap().borrow(),
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+        Ok(State {
+            value: states
+                .states
+                .get(&TypeId::of::<T>())
+                .context("State Not Found")?
+                .borrow(),
             _marker: PhantomData,
-        }
+        })
     }
 }
 
 impl<'res, T: 'static> Param for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
         let state = states.states.get(&TypeId::of::<T>());
 
-        match state {
-            Some(v) => StateMut {
-                value: states.states.get(&TypeId::of::<T>()).unwrap().borrow_mut(),
-                _marker: PhantomData,
-            },
-
-            None => {
-                panic!("{} Not Found", type_name::<T>())
-            },
-        }
+        Ok(StateMut {
+            value: states
+                .states
+                .get(&TypeId::of::<T>())
+                .context("State Not Found")?
+                .borrow_mut(),
+            _marker: PhantomData,
+        })
     }
 }
+// Not useful for us
+// impl<T: 'static> Param for Result<T>
+// where
+//     T: Param,
+//     <T as Param>::Item<'static>: 'static,
+// {
+//     type Item<'new> = Result<<T as Param>::Item<'new>>;
+
+//     fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+//         Ok(T::retrieve(shell, states))
+//     }
+// }
+
+impl<T: 'static> Param for Option<T>
+where
+    T: Param,
+    <T as Param>::Item<'static>: 'static,
+{
+    type Item<'new> = Option<<T as Param>::Item<'new>>;
+
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+        Ok(T::retrieve(shell, states).ok())
+    }
+}
+
 impl<'res> Param for &'res Shell {
     type Item<'new> = &'new Shell;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Self::Item<'r> {
-        shell
+    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+        Ok(shell)
     }
 }
 

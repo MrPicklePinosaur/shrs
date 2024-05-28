@@ -12,14 +12,79 @@
 
 use std::marker::PhantomData;
 
-use anyhow::Result;
-use log::warn;
-
+use crate::all_the_tuples;
 use crate::{
     hook_ctx::HookCtx,
     prelude::{Shell, States},
     state::Param,
 };
+use anyhow::Result;
+use log::warn;
+
+#[derive(Default)]
+pub struct Hooks {
+    hooks: anymap::Map,
+}
+
+impl Hooks {
+    pub fn new() -> Self {
+        Self {
+            hooks: anymap::Map::new(),
+        }
+    }
+
+    // TODO currently this will abort if a hook fails, potentially introduce fail modes like
+    // 'Best Effort' - run all hooks and report any failures
+    // 'Pedantic' - abort on the first failed hook
+    pub(crate) fn run<C: HookCtx>(&self, sh: &Shell, states: &States, c: &C) -> Result<()> {
+        if let Some(hook_list) = self.get::<C>() {
+            for hook in hook_list.iter() {
+                if let Err(e) = hook.run(sh, states, c) {
+                    let type_name = std::any::type_name::<C>();
+                    warn!("failed to execute hook {e} of type {type_name}");
+                    return Err(e);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn insert<I, C: HookCtx, S: Hook<C> + 'static>(
+        &mut self,
+        hook: impl IntoHook<I, C, Hook = S>,
+    ) {
+        let h = Box::new(hook.into_hook());
+        match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
+            Some(hook_list) => {
+                hook_list.push(h);
+            },
+            None => {
+                // register any empty vector for the type
+                self.hooks.insert::<Vec<StoredHook<C>>>(vec![h]);
+            },
+        };
+    }
+
+    /// gets hooks associated with Ctx
+    pub fn get<C: HookCtx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
+        self.hooks.get::<Vec<StoredHook<C>>>()
+    }
+}
+pub trait Hook<C: HookCtx> {
+    fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
+}
+
+pub trait IntoHook<Input, C: HookCtx> {
+    type Hook: Hook<C>;
+
+    fn into_hook(self) -> Self::Hook;
+}
+pub struct FunctionHook<Input, F> {
+    f: F,
+    marker: PhantomData<fn() -> Input>,
+}
+
+pub type StoredHook<C> = Box<dyn Hook<C>>;
 
 impl<F, C: HookCtx> Hook<C> for FunctionHook<C, F>
 where
@@ -60,7 +125,7 @@ macro_rules! impl_hook{
                 }
 
                 $(
-                    let $params = $params::retrieve(sh,states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
                 call_inner(&self.f, $($params),+,c)
@@ -112,80 +177,4 @@ macro_rules! impl_into_hook {
     }
 }
 
-pub struct FunctionHook<Input, F> {
-    f: F,
-    marker: PhantomData<fn() -> Input>,
-}
-
-pub trait Hook<C: HookCtx> {
-    fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
-}
-impl_hook!(T1);
-impl_hook!(T1, T2);
-impl_hook!(T1, T2, T3);
-impl_hook!(T1, T2, T3, T4);
-impl_hook!(T1, T2, T3, T4, T5);
-
-pub trait IntoHook<Input, C: HookCtx> {
-    type Hook: Hook<C>;
-
-    fn into_hook(self) -> Self::Hook;
-}
-
-impl_into_hook!(T1);
-impl_into_hook!(T1, T2);
-impl_into_hook!(T1, T2, T3);
-impl_into_hook!(T1, T2, T3, T4);
-impl_into_hook!(T1, T2, T3, T4, T5);
-
-pub type StoredHook<C> = Box<dyn Hook<C>>;
-
-#[derive(Default)]
-pub struct Hooks {
-    hooks: anymap::Map,
-}
-
-impl Hooks {
-    pub fn new() -> Self {
-        Self {
-            hooks: anymap::Map::new(),
-        }
-    }
-
-    // TODO currently this will abort if a hook fails, potentially introduce fail modes like
-    // 'Best Effort' - run all hooks and report any failures
-    // 'Pedantic' - abort on the first failed hook
-    pub(crate) fn run<C: HookCtx>(&self, sh: &Shell, states: &States, c: &C) -> Result<()> {
-        if let Some(hook_list) = self.get::<C>() {
-            for hook in hook_list.iter() {
-                if let Err(e) = hook.run(sh, states, c) {
-                    let type_name = std::any::type_name::<C>();
-                    warn!("failed to execute hook {e} of type {type_name}");
-                    return Err(e);
-                }
-            }
-        }
-        Ok(())
-    }
-
-    pub fn insert<I, C: HookCtx, S: Hook<C> + 'static>(
-        &mut self,
-        hook: impl IntoHook<I, C, Hook = S>,
-    ) {
-        let h = Box::new(hook.into_hook());
-        match self.hooks.get_mut::<Vec<StoredHook<C>>>() {
-            Some(hook_list) => {
-                hook_list.push(h);
-            },
-            None => {
-                // register any empty vector for the type
-                self.hooks.insert::<Vec<StoredHook<C>>>(vec![h]);
-            },
-        };
-    }
-
-    /// gets hooks associated with Ctx
-    pub fn get<C: HookCtx>(&self) -> Option<&Vec<Box<dyn Hook<C>>>> {
-        self.hooks.get::<Vec<StoredHook<C>>>()
-    }
-}
+all_the_tuples!(impl_hook, impl_into_hook);

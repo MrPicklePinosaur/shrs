@@ -7,7 +7,10 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
 use super::state::Param;
-use crate::prelude::{Shell, States};
+use crate::{
+    all_the_tuples,
+    prelude::{Shell, States},
+};
 
 /// Implement this trait to define your own keybinding system
 pub struct Keybindings {
@@ -226,7 +229,7 @@ macro_rules! impl_keybinding {
                 }
 
                 $(
-                    let $params = $params::retrieve(sh,states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
                 call_inner(&self.f, $($params),+,sh,)
@@ -278,12 +281,4 @@ macro_rules! impl_into_keybinding {
         }
     }
 }
-
-impl_keybinding!(T1);
-impl_keybinding!(T1, T2);
-impl_keybinding!(T1, T2, T3);
-impl_keybinding!(T1, T2, T3, T4);
-impl_into_keybinding!(T1);
-impl_into_keybinding!(T1, T2);
-impl_into_keybinding!(T1, T2, T3);
-impl_into_keybinding!(T1, T2, T3, T4);
+all_the_tuples!(impl_keybinding, impl_into_keybinding);

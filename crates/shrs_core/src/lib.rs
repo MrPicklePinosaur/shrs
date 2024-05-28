@@ -15,6 +15,8 @@ pub mod hooks;
 pub mod jobs;
 pub mod keybinding;
 pub mod lang;
+#[macro_use]
+mod macros;
 pub mod output_writer;
 pub mod plugin;
 pub mod prompt;

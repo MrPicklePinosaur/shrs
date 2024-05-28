@@ -74,7 +74,7 @@ macro_rules! impl_prompt {
                 }
 
                 $(
-                    let $params = $params::retrieve(sh,states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )*
 
                 call_inner(&self.f, $($params),*)
@@ -105,12 +105,5 @@ macro_rules! impl_into_prompt {
     }
 }
 impl_prompt!();
-impl_prompt!(T1);
-impl_prompt!(T1, T2);
-impl_prompt!(T1, T2, T3);
-impl_prompt!(T1, T2, T3, T4);
 impl_into_prompt!();
-impl_into_prompt!(T1);
-impl_into_prompt!(T1, T2);
-impl_into_prompt!(T1, T2, T3);
-impl_into_prompt!(T1, T2, T3, T4);
+all_the_tuples!(impl_prompt, impl_into_prompt);

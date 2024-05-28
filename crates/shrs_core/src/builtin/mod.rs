@@ -30,6 +30,7 @@ use self::{
     r#type::type_builtin, source::source_builtin,
 };
 use crate::{
+    all_the_tuples,
     prelude::{CmdOutput, States},
     shell::Shell,
     state::Param,
@@ -147,7 +148,7 @@ macro_rules! impl_builtin {
                 }
 
                 $(
-                    let $params = $params::retrieve(sh,states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
                 call_inner(&self.f, $($params),+,sh,&args)
@@ -198,11 +199,4 @@ macro_rules! impl_into_builtin {
         }
     }
 }
-impl_builtin!(T1);
-impl_builtin!(T1, T2);
-impl_builtin!(T1, T2, T3);
-impl_builtin!(T1, T2, T3, T4);
-impl_into_builtin!(T1);
-impl_into_builtin!(T1, T2);
-impl_into_builtin!(T1, T2, T3);
-impl_into_builtin!(T1, T2, T3, T4);
+all_the_tuples!(impl_builtin, impl_into_builtin);

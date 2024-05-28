@@ -1,10 +1,8 @@
 use clap::{Parser, Subcommand};
 
-use super::Builtin;
 use crate::{
     alias::AliasInfo,
-    prelude::{Alias, CmdOutput, States},
-    shell::Shell,
+    prelude::{Alias, CmdOutput},
     state::StateMut,
 };
 
@@ -16,11 +14,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {}
 
-pub fn alias_builtin(
-    mut alias: StateMut<Alias>,
-    sh: &Shell,
-    args: &Vec<String>,
-) -> anyhow::Result<CmdOutput> {
+pub fn alias_builtin(mut alias: StateMut<Alias>, args: &Vec<String>) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;
 
     let mut it = cli.alias.splitn(2, '=');

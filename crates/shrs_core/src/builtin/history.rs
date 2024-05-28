@@ -7,12 +7,13 @@ use std::io::Cursor;
 use clap::{Parser, Subcommand};
 use skim::prelude::*;
 
-use super::{Builtin, IntoBuiltin};
 use crate::{
-    prelude::{CmdOutput, History, OutputWriter, State, StateMut, States},
-    prompt_content_queue::{self, PromptContent, PromptContentQueue},
-    shell::{Runtime, Shell},
+    prelude::{CmdOutput, OutputWriter, States},
+    prompt_content_queue::{PromptContent, PromptContentQueue},
+    shell::Shell,
 };
+
+use super::Builtin;
 
 #[derive(Parser)]
 struct Cli {

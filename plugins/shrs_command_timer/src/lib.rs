@@ -63,8 +63,7 @@ impl Plugin for CommandTimerPlugin {
 
 pub fn before_command_hook(
     mut state: StateMut<CommandTimerState>,
-    sh: &Shell,
-    ctx: &BeforeCommandCtx,
+    _ctx: &BeforeCommandCtx,
 ) -> anyhow::Result<()> {
     state.start();
     Ok(())
@@ -72,8 +71,7 @@ pub fn before_command_hook(
 
 fn after_command_hook(
     mut state: StateMut<CommandTimerState>,
-    sh: &Shell,
-    ctx: &AfterCommandCtx,
+    _ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     state.end();
     Ok(())

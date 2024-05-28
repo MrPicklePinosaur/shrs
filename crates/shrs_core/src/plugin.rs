@@ -2,10 +2,7 @@
 
 use log::warn;
 
-use crate::{
-    prelude::{ShellConfig, States},
-    shell::{Runtime, Shell},
-};
+use crate::prelude::{Shell, ShellConfig, States};
 
 #[derive(Debug)]
 pub struct PluginMeta {
@@ -54,7 +51,7 @@ pub trait Plugin {
     ///
     /// Gets called once after the shell has completed initialization process, giving access to
     /// runtime shells state
-    fn post_init(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
+    fn post_init(&self, _sh: &mut Shell, _states: &mut States) -> anyhow::Result<()> {
         Ok(())
     }
 

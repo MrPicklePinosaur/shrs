@@ -1,4 +1,4 @@
-use log::{error, warn};
+use log::error;
 use shrs::prelude::*;
 
 use crate::rhai::{RhaiAST, RhaiEngine, RhaiScope};
@@ -8,7 +8,6 @@ pub fn command_not_found_hook(
     rhai_ast: State<RhaiAST>,
     mut scope: StateMut<RhaiScope>,
     engine: State<RhaiEngine>,
-    sh: &Shell,
     ctx: &AfterCommandCtx,
 ) -> anyhow::Result<()> {
     // TODO this will make defined functions be shadowed by actual commands, not sure if this is

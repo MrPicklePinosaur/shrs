@@ -1,11 +1,11 @@
 use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 
-fn prompt_left(shell: &Shell) -> StyledBuf {
+fn prompt_left() -> StyledBuf {
     styled_buf!("> ")
 }
 
-fn prompt_right(state: State<CommandTimerState>, shell: &Shell) -> StyledBuf {
+fn prompt_right(state: State<CommandTimerState>) -> StyledBuf {
     let time_str = state
         .command_time()
         .map(|x| format!("{x:?}"))

@@ -22,7 +22,7 @@ pub fn after_command_hook(
             for path in paths {
                 let path = path.unwrap();
                 if path.file_type().unwrap().is_dir() && path.file_name() == cmd_name {
-                    set_working_dir(sh, &mut rt, &path.path(), true)?;
+                    set_working_dir(&sh, &mut rt, &path.path(), true)?;
                     return Ok(());
                 }
             }

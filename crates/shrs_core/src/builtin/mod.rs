@@ -23,6 +23,7 @@ use std::{
 };
 
 use anyhow::Result;
+use unalias::unalias_builtin;
 
 use self::{
     alias::alias_builtin, cd::cd_builtin, debug::debug_builtin, exit::exit_builtin,
@@ -30,6 +31,7 @@ use self::{
     r#type::type_builtin, source::source_builtin,
 };
 use crate::{
+    all_the_tuples,
     prelude::{CmdOutput, States},
     shell::Shell,
     state::Param,
@@ -91,6 +93,7 @@ impl Default for Builtins {
         builtins.insert("jobs", jobs_builtin);
         builtins.insert("source", source_builtin);
         builtins.insert("debug", debug_builtin);
+        builtins.insert("unalias", unalias_builtin);
 
         builtins
     }
@@ -108,20 +111,19 @@ pub struct FunctionBuiltin<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
-impl<F> Builtin for FunctionBuiltin<(Shell, Vec<String>), F>
+impl<F> Builtin for FunctionBuiltin<Vec<String>, F>
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
+    for<'a, 'b> &'a F: Fn(&Vec<String>) -> Result<CmdOutput>,
 {
-    fn run(&self, sh: &Shell, ctx: &States, args: &Vec<String>) -> Result<CmdOutput> {
+    fn run(&self, _sh: &Shell, _ctx: &States, args: &Vec<String>) -> Result<CmdOutput> {
         fn call_inner(
-            f: impl Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
-            sh: &Shell,
+            f: impl Fn(&Vec<String>) -> Result<CmdOutput>,
             args: &Vec<String>,
         ) -> Result<CmdOutput> {
-            f(&sh, &args)
+            f(&args)
         }
 
-        call_inner(&self.f, sh, &args)
+        call_inner(&self.f, &args)
     }
 }
 
@@ -134,23 +136,23 @@ macro_rules! impl_builtin {
         impl<F, $($params: Param),+> Builtin for FunctionBuiltin<($($params,)+), F>
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&Vec<String>)->Result<CmdOutput> +
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&Vec<String> )->Result<CmdOutput>
+                    Fn( $($params),+,&Vec<String>)->Result<CmdOutput> +
+                    Fn( $(<$params as Param>::Item<'b>),+,&Vec<String> )->Result<CmdOutput>
         {
             fn run(&self, sh: &Shell,states: &States, args: &Vec<String>)->Result<CmdOutput> {
                 fn call_inner<$($params),+>(
-                    f: impl Fn($($params),+,&Shell,&Vec<String>)->Result<CmdOutput>,
+                    f: impl Fn($($params),+,&Vec<String>)->Result<CmdOutput>,
                     $($params: $params),*
-                    ,sh:&Shell,args:&Vec<String>
+                    ,args:&Vec<String>
                 ) -> Result<CmdOutput>{
-                    f($($params),*,sh,args)
+                    f($($params),*,args)
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
-                call_inner(&self.f, $($params),+,sh,&args)
+                call_inner(&self.f, $($params),+,&args)
             }
         }
 
@@ -158,9 +160,9 @@ macro_rules! impl_builtin {
 }
 impl<F> IntoBuiltin<()> for F
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
+    for<'a, 'b> &'a F: Fn(&Vec<String>) -> Result<CmdOutput>,
 {
-    type Builtin = FunctionBuiltin<(Shell, Vec<String>), Self>;
+    type Builtin = FunctionBuiltin<Vec<String>, Self>;
 
     fn into_builtin(self) -> Self::Builtin {
         FunctionBuiltin {
@@ -184,8 +186,8 @@ macro_rules! impl_into_builtin {
         impl<F, $($params: Param),+> IntoBuiltin<($($params,)*)> for F
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&Vec<String> ) ->Result<CmdOutput>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&Vec<String> )->Result<CmdOutput>
+                    Fn( $($params),+,&Vec<String> ) ->Result<CmdOutput>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&Vec<String> )->Result<CmdOutput>
         {
             type Builtin = FunctionBuiltin<($($params,)+), Self>;
 
@@ -198,11 +200,4 @@ macro_rules! impl_into_builtin {
         }
     }
 }
-impl_builtin!(T1);
-impl_builtin!(T1, T2);
-impl_builtin!(T1, T2, T3);
-impl_builtin!(T1, T2, T3, T4);
-impl_into_builtin!(T1);
-impl_into_builtin!(T1, T2);
-impl_into_builtin!(T1, T2, T3);
-impl_into_builtin!(T1, T2, T3, T4);
+all_the_tuples!(impl_builtin, impl_into_builtin);

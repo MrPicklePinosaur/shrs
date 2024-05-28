@@ -1,17 +1,15 @@
 use std::{
     collections::HashSet,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Cursor, Write},
+    io::{BufRead, BufReader, BufWriter, Write},
     path::PathBuf,
 };
 
-use clap::{Parser, Subcommand};
 use shrs::{
     anyhow::Result,
     plugin::Plugin,
-    prelude::{CmdOutput, History, OutputWriter, State, StateMut, States},
-    prompt_content_queue::{self, PromptContent, PromptContentQueue},
-    shell::{Runtime, Shell, ShellConfig},
+    prelude::{History, States},
+    shell::{Shell, ShellConfig},
 };
 use thiserror::Error;
 
@@ -91,7 +89,7 @@ impl Plugin for FileBackedHistoryPlugin {
 pub struct FileBackedHistory;
 
 impl History for FileBackedHistory {
-    fn add(&self, sh: &Shell, states: &States, cmd: String) {
+    fn add(&self, _sh: &Shell, states: &States, cmd: String) {
         let mut state = states.get_mut::<FileBackedHistoryState>();
         if !cmd.starts_with("history run") {
             state.hist.insert(0, cmd);
@@ -100,24 +98,24 @@ impl History for FileBackedHistory {
         }
     }
 
-    fn clear(&self, sh: &Shell, states: &States) {
+    fn clear(&self, _sh: &Shell, states: &States) {
         let mut state = states.get_mut::<FileBackedHistoryState>();
 
         state.hist.clear();
         state.flush().unwrap();
     }
 
-    fn len(&self, sh: &Shell, states: &States) -> usize {
-        let mut state = states.get_mut::<FileBackedHistoryState>();
+    fn len(&self, _sh: &Shell, states: &States) -> usize {
+        let state = states.get_mut::<FileBackedHistoryState>();
 
         state.hist.len()
     }
 
-    fn get(&self, sh: &Shell, states: &States, i: usize) -> Option<String> {
-        let mut state = states.get_mut::<FileBackedHistoryState>();
+    fn get(&self, _sh: &Shell, states: &States, i: usize) -> Option<String> {
+        let state = states.get_mut::<FileBackedHistoryState>();
         state.hist.get(i).cloned()
     }
-    fn items(&self, sh: &Shell, states: &States) -> Vec<String> {
+    fn items(&self, _sh: &Shell, states: &States) -> Vec<String> {
         states.get_mut::<FileBackedHistoryState>().hist.clone()
     }
 }

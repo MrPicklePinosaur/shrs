@@ -4,11 +4,7 @@ use clap::Parser;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use super::Builtin;
-use crate::{
-    prelude::{CmdOutput, OutputWriter, StateMut, States},
-    shell::{Runtime, Shell},
-};
+use crate::prelude::{CmdOutput, OutputWriter, StateMut};
 
 lazy_static! {
     static ref SHEBANG_REGEX: Regex = Regex::new(r"#!(?P<interp>.+)").unwrap();
@@ -21,7 +17,6 @@ struct Cli {
 
 pub fn source_builtin(
     mut out: StateMut<OutputWriter>,
-    sh: &Shell,
     args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;

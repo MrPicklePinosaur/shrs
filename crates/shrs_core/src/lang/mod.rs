@@ -6,11 +6,7 @@ mod eval2;
 mod posix_lang;
 pub use posix_lang::PosixLang;
 
-use crate::{
-    cmd_output::CmdOutput,
-    prelude::States,
-    shell::{Runtime, Shell},
-};
+use crate::{cmd_output::CmdOutput, prelude::States, shell::Shell};
 
 /// Trait to implement a shell command language
 pub trait Lang {

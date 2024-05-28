@@ -1,5 +1,5 @@
 use shrs::prelude::*;
-use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
+use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin};
 
 fn main() {
     let mut bindings = Keybindings::new();

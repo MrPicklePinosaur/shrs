@@ -15,10 +15,7 @@
 
 use multimap::MultiMap;
 
-use crate::{
-    prelude::States,
-    shell::{Runtime, Shell},
-};
+use crate::{prelude::States, shell::Shell};
 
 /// Parameters passed to alias rule
 pub struct AliasRuleCtx<'a> {

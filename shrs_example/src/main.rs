@@ -5,12 +5,9 @@ use std::{
     process::Command,
 };
 
-use shrs::{
-    prelude::{styled_buf::StyledBuf, *},
-    readline::line::LineContents,
-};
+use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_autocd::AutocdPlugin;
-use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin, CdStackState};
+use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin};
 use shrs_cd_tools::git;
 use shrs_command_timer::{CommandTimerPlugin, CommandTimerState};
 use shrs_file_history::FileBackedHistoryPlugin;
@@ -22,18 +19,11 @@ use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
-fn prompt_left(
-    line_contents: State<LineContents>,
-    line_mode: State<LineMode>,
-    sh: &Shell,
-) -> StyledBuf {
+fn prompt_left(line_mode: State<LineMode>) -> StyledBuf {
     let indicator = match *line_mode {
         LineMode::Insert => String::from(">").cyan(),
         LineMode::Normal => String::from(":").yellow(),
     };
-    // if !line_contents.cb.is_empty() {
-    //     return styled_buf! {" ", indicator, " "};
-    // }
 
     styled_buf!(
         " ",
@@ -46,19 +36,11 @@ fn prompt_left(
     )
 }
 
-fn prompt_right(
-    line_contents: State<LineContents>,
-    cmd_timer: State<CommandTimerState>,
-    mux: State<MuxState>,
-    sh: &Shell,
-) -> StyledBuf {
+fn prompt_right(cmd_timer: State<CommandTimerState>, mux: State<MuxState>) -> StyledBuf {
     let time_str = cmd_timer.command_time().map(|x| format!("{x:?}"));
 
     let lang_name = mux.current_lang().name();
 
-    // if !line_contents.cb.is_empty() {
-    //     return styled_buf!("");
-    // }
     if let Ok(git_branch) = git::branch().map(|s| format!("git:{s}").blue().bold()) {
         styled_buf!(git_branch, " ", time_str, " ", lang_name, " ")
     } else {
@@ -112,16 +94,12 @@ fn main() {
     // Add basic keybindings
     let mut bindings = Keybindings::new();
     bindings
-        .insert(
-            "C-l",
-            "Clear the screen",
-            |sh: &Shell| -> anyhow::Result<()> {
-                Command::new("clear")
-                    .spawn()
-                    .expect("Couldn't clear screen");
-                Ok(())
-            },
-        )
+        .insert("C-l", "Clear the screen", || -> anyhow::Result<()> {
+            Command::new("clear")
+                .spawn()
+                .expect("Couldn't clear screen");
+            Ok(())
+        })
         .unwrap();
     bindings
         .insert("C-p", "Move up one in the command history", cd_stack_down)
@@ -157,7 +135,7 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg = |sh: &Shell, startup: &StartupCtx| -> anyhow::Result<()> {
+    let startup_msg = |_sh: &Shell, _startup: &StartupCtx| -> anyhow::Result<()> {
         let welcome_str = format!(
             r#"
         __

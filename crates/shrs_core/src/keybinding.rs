@@ -7,7 +7,10 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use thiserror::Error;
 
 use super::state::Param;
-use crate::prelude::{Shell, States};
+use crate::{
+    all_the_tuples,
+    prelude::{Shell, States},
+};
 
 /// Implement this trait to define your own keybinding system
 pub struct Keybindings {
@@ -39,7 +42,7 @@ impl Keybindings {
     pub fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
         for (k, v) in self.bindings.iter() {
             if key_event == *k {
-                v.run(sh, states);
+                v.run(sh, states).unwrap();
                 return true;
             }
         }
@@ -119,7 +122,6 @@ fn parse_modifier(s: &str) -> Result<KeyModifiers, BindingFromStrError> {
 
 #[cfg(test)]
 mod tests {
-    use std::default;
 
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -191,83 +193,47 @@ pub struct FunctionKeybinding<Input, F> {
     marker: PhantomData<fn() -> Input>,
 }
 
-impl<F> Keybinding for FunctionKeybinding<Shell, F>
-where
-    for<'a, 'b> &'a F: Fn(&Shell) -> Result<()>,
-{
-    fn run(&self, sh: &Shell, ctx: &States) -> Result<()> {
-        fn call_inner(f: impl Fn(&Shell) -> Result<()>, sh: &Shell) -> Result<()> {
-            f(&sh)
-        }
-
-        call_inner(&self.f, sh)
-    }
-}
-
 macro_rules! impl_keybinding {
     (
         $($params:ident),*
     ) => {
         #[allow(non_snake_case)]
         #[allow(unused)]
-        impl<F, $($params: Param),+> Keybinding for FunctionKeybinding<($($params,)+), F>
+        impl<F, $($params: Param),*> Keybinding for FunctionKeybinding<($($params,)*), F>
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,)->Result<()> +
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell, )->Result<()>
+                    Fn( $($params),*)->Result<()> +
+                    Fn( $(<$params as Param>::Item<'b>),* )->Result<()>
         {
             fn run(&self, sh: &Shell,states: &States,  )->Result<()> {
-                fn call_inner<$($params),+>(
-                    f: impl Fn($($params),+,&Shell,)->Result<()>,
+                fn call_inner<$($params),*>(
+                    f: impl Fn($($params),*)->Result<()>,
                     $($params: $params),*
-                    ,sh:&Shell,
                 ) -> Result<()>{
-                    f($($params),*,sh)
+                    f($($params),*)
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
-                )+
+                    let $params = $params::retrieve(sh,states).unwrap();
+                )*
 
-                call_inner(&self.f, $($params),+,sh,)
+                call_inner(&self.f, $($params),*)
             }
         }
     }
 }
 
-impl<F> IntoKeybinding<()> for F
-where
-    for<'a, 'b> &'a F: Fn(&Shell) -> Result<()>,
-{
-    type Keybinding = FunctionKeybinding<Shell, Self>;
-
-    fn into_keybinding(self) -> Self::Keybinding {
-        FunctionKeybinding {
-            f: self,
-            marker: Default::default(),
-        }
-    }
-}
-
-impl<K: Keybinding> IntoKeybinding<K> for K {
-    type Keybinding = K;
-
-    fn into_keybinding(self) -> Self::Keybinding {
-        self
-    }
-}
-
 macro_rules! impl_into_keybinding {
     (
-        $($params:ident),+
+        $($params:ident),*
     ) => {
-        impl<F, $($params: Param),+> IntoKeybinding<($($params,)*)> for F
+        impl<F, $($params: Param),*> IntoKeybinding<($($params,)*)> for F
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell, ) ->Result<()>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell, )->Result<()>
+                    Fn( $($params),* ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),* )->Result<()>
         {
-            type Keybinding = FunctionKeybinding<($($params,)+), Self>;
+            type Keybinding = FunctionKeybinding<($($params,)*), Self>;
 
             fn into_keybinding(self) -> Self::Keybinding {
                 FunctionKeybinding {
@@ -278,12 +244,6 @@ macro_rules! impl_into_keybinding {
         }
     }
 }
-
-impl_keybinding!(T1);
-impl_keybinding!(T1, T2);
-impl_keybinding!(T1, T2, T3);
-impl_keybinding!(T1, T2, T3, T4);
-impl_into_keybinding!(T1);
-impl_into_keybinding!(T1, T2);
-impl_into_keybinding!(T1, T2, T3);
-impl_into_keybinding!(T1, T2, T3, T4);
+impl_keybinding!();
+impl_into_keybinding!();
+all_the_tuples!(impl_keybinding, impl_into_keybinding);

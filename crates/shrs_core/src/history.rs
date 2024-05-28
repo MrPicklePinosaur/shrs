@@ -26,25 +26,25 @@ pub struct DefaultHistory {
 }
 
 impl History for DefaultHistory {
-    fn add(&self, sh: &Shell, states: &States, cmd: String) {
+    fn add(&self, _sh: &Shell, _states: &States, cmd: String) {
         if !cmd.starts_with("history run") {
             self.hist.borrow_mut().insert(0, cmd);
         }
     }
 
-    fn clear(&self, sh: &Shell, states: &States) {
+    fn clear(&self, _sh: &Shell, _states: &States) {
         self.hist.borrow_mut().clear();
     }
 
-    fn len(&self, sh: &Shell, states: &States) -> usize {
+    fn len(&self, _sh: &Shell, _states: &States) -> usize {
         self.hist.borrow().len()
     }
     /// Get index starts at most recent (index zero is previous command)
 
-    fn get(&self, sh: &Shell, states: &States, i: usize) -> Option<String> {
+    fn get(&self, _sh: &Shell, _states: &States, i: usize) -> Option<String> {
         self.hist.borrow().get(i).cloned()
     }
-    fn items(&self, sh: &Shell, states: &States) -> Vec<String> {
+    fn items(&self, _sh: &Shell, _states: &States) -> Vec<String> {
         self.hist.borrow().clone()
     }
 }

@@ -1,13 +1,8 @@
-use super::Builtin;
-use crate::{
-    prelude::{CmdOutput, Jobs, OutputWriter, StateMut, States},
-    shell::{Runtime, Shell},
-};
+use crate::prelude::{CmdOutput, Jobs, OutputWriter, StateMut};
 
 pub fn jobs_builtin(
-    mut jobs: StateMut<Jobs>,
+    jobs: StateMut<Jobs>,
     mut out: StateMut<OutputWriter>,
-    sh: &Shell,
     _args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
     for (job_id, _) in jobs.iter() {

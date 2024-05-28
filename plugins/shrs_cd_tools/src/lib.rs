@@ -60,7 +60,7 @@ pub fn startup_hook(
     mut state: StateMut<DirParseState>,
     rt: State<Runtime>,
     _sh: &Shell,
-    ctx: &StartupCtx,
+    _ctx: &StartupCtx,
 ) -> anyhow::Result<()> {
     update_modules(&mut state, &rt)?;
     Ok(())

@@ -5,11 +5,8 @@ use std::marker::PhantomData;
 use crossterm::style::Stylize;
 use shrs_utils::{styled_buf, styled_buf::StyledBuf};
 
-use super::super::state::Param;
-use crate::{
-    prelude::{top_pwd, Runtime, Shell, State, States},
-    shell::get_working_dir,
-};
+use super::super::state::*;
+use crate::prelude::{top_pwd, Shell, States};
 
 pub trait PromptFn {
     fn prompt(&self, sh: &Shell, ctx: &States) -> StyledBuf;
@@ -37,11 +34,11 @@ impl Default for Prompt {
     }
 }
 
-fn default_prompt_left(sh: &Shell) -> StyledBuf {
+fn default_prompt_left() -> StyledBuf {
     styled_buf!(" ", top_pwd().white().bold(), " > ")
 }
 
-fn default_prompt_right(sh: &Shell) -> StyledBuf {
+fn default_prompt_right() -> StyledBuf {
     styled_buf!()
 }
 pub trait IntoPromptFn<Input> {
@@ -52,18 +49,6 @@ pub struct FunctionPromptFn<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
-impl<F> PromptFn for FunctionPromptFn<(Shell,), F>
-where
-    for<'a, 'b> &'a F: Fn(&Shell) -> StyledBuf,
-{
-    fn prompt(&self, sh: &Shell, ctx: &States) -> StyledBuf {
-        fn call_inner(f: impl Fn(&Shell) -> StyledBuf, sh: &Shell) -> StyledBuf {
-            f(&sh)
-        }
-
-        call_inner(&self.f, sh)
-    }
-}
 
 macro_rules! impl_prompt {
     (
@@ -71,55 +56,41 @@ macro_rules! impl_prompt {
     ) => {
         #[allow(non_snake_case)]
         #[allow(unused)]
-        impl<F, $($params: Param),+> PromptFn for FunctionPromptFn<($($params,)+), F>
+        impl<F, $($params: Param),*> PromptFn for FunctionPromptFn<($($params,)*), F>
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell)->StyledBuf +
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell)->StyledBuf
+                    Fn( $($params),*)->StyledBuf +
+                    Fn( $(<$params as Param>::Item<'b>),*)->StyledBuf
         {
             fn prompt(&self, sh: &Shell,states: &States)->StyledBuf {
-                fn call_inner<$($params),+>(
-                    f: impl Fn($($params),+,&Shell)->StyledBuf,
+                fn call_inner<$($params),*>(
+                    f: impl Fn($($params),*)->StyledBuf,
                     $($params: $params),*
-                    ,sh:&Shell
                 ) -> StyledBuf{
-                    f($($params),*,sh)
+                    f($($params),*)
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
-                )+
+                    let $params = $params::retrieve(sh,states).unwrap();
+                )*
 
-                call_inner(&self.f, $($params),+,sh)
+                call_inner(&self.f, $($params),*)
             }
-        }
-    }
-}
-impl<F> IntoPromptFn<()> for F
-where
-    for<'a, 'b> &'a F: Fn(&Shell) -> StyledBuf,
-{
-    type PromptFn = FunctionPromptFn<(Shell,), Self>;
-
-    fn into_prompt(self) -> Self::PromptFn {
-        FunctionPromptFn {
-            f: self,
-            marker: Default::default(),
         }
     }
 }
 
 macro_rules! impl_into_prompt {
     (
-        $($params:ident),+
+        $($params:ident),*
     ) => {
-        impl<F, $($params: Param),+> IntoPromptFn<($($params,)*)> for F
+        impl<F, $($params: Param),*> IntoPromptFn<($($params,)*)> for F
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell) ->StyledBuf+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell)->StyledBuf
+                    Fn( $($params),*) ->StyledBuf+
+                    Fn( $(<$params as Param>::Item<'b>),*)->StyledBuf
         {
-            type PromptFn = FunctionPromptFn<($($params,)+), Self>;
+            type PromptFn = FunctionPromptFn<($($params,)*), Self>;
 
             fn into_prompt(self) -> Self::PromptFn{
                 FunctionPromptFn {
@@ -130,11 +101,6 @@ macro_rules! impl_into_prompt {
         }
     }
 }
-impl_prompt!(T1);
-impl_prompt!(T1, T2);
-impl_prompt!(T1, T2, T3);
-impl_prompt!(T1, T2, T3, T4);
-impl_into_prompt!(T1);
-impl_into_prompt!(T1, T2);
-impl_into_prompt!(T1, T2, T3);
-impl_into_prompt!(T1, T2, T3, T4);
+impl_prompt!();
+impl_into_prompt!();
+all_the_tuples!(impl_prompt, impl_into_prompt);

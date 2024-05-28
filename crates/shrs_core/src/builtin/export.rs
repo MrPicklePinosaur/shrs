@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
 
-use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, State, StateMut, States},
-    shell::{Runtime, Shell},
+    prelude::{CmdOutput, OutputWriter, StateMut},
+    shell::Runtime,
 };
 
 #[derive(Parser)]
@@ -21,7 +20,6 @@ enum Commands {}
 pub fn export_builtin(
     mut rt: StateMut<Runtime>,
     mut out: StateMut<OutputWriter>,
-    sh: &Shell,
     args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {
     let cli = Cli::try_parse_from(args)?;

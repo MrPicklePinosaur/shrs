@@ -16,130 +16,11 @@ use anyhow::Result;
 use log::warn;
 
 use crate::{
+    all_the_tuples,
     hook_ctx::HookCtx,
     prelude::{Shell, States},
     state::Param,
 };
-
-impl<F, C: HookCtx> Hook<C> for FunctionHook<(Shell, C), F>
-where
-    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
-{
-    fn run(&self, sh: &Shell, _states: &States, c: &C) -> Result<()> {
-        fn call_inner<C: HookCtx>(
-            f: impl Fn(&Shell, &C) -> Result<()>,
-            sh: &Shell,
-            states: &C,
-        ) -> Result<()> {
-            f(&sh, &states)
-        }
-
-        call_inner(&self.f, sh, c)
-    }
-}
-
-macro_rules! impl_hook{
-    (
-        $($params:ident),+
-    ) => {
-        #[allow(non_snake_case)]
-        #[allow(unused)]
-        impl<F, C:HookCtx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
-            where
-                for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
-        {
-            fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
-                fn call_inner<C:HookCtx,$($params),+>(
-                    f: impl Fn($($params),+,&Shell,&C)->Result<()>,
-                    $($params: $params),+
-                    ,sh:&Shell
-                    ,states:&C
-                ) ->Result<()>{
-                    f($($params),+,sh,&states)
-                }
-
-                $(
-                    let $params = $params::retrieve(states);
-                )+
-
-                call_inner(&self.f, $($params),+,sh,c)
-            }
-        }
-    }
-}
-
-impl<F, C: HookCtx> IntoHook<(), C> for F
-where
-    for<'a, 'b> &'a F: Fn(&Shell, &C) -> Result<()>,
-{
-    type Hook = FunctionHook<(Shell, C), Self>;
-
-    fn into_hook(self) -> Self::Hook {
-        FunctionHook {
-            f: self,
-            marker: Default::default(),
-        }
-    }
-}
-impl<C: HookCtx, H: Hook<C>> IntoHook<H, C> for H {
-    type Hook = H;
-
-    fn into_hook(self) -> Self::Hook {
-        self
-    }
-}
-
-macro_rules! impl_into_hook {
-    (
-        $($params:ident),+
-    ) => {
-        impl<F, C:HookCtx,$($params: Param),+> IntoHook<($($params,)+),C> for F
-            where
-                for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&C ) ->Result<()>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&C )->Result<()>
-        {
-            type Hook = FunctionHook<($($params,)+C), Self>;
-
-            fn into_hook(self) -> Self::Hook {
-                FunctionHook {
-                    f: self,
-                    marker: Default::default(),
-                }
-            }
-        }
-    }
-}
-
-pub struct FunctionHook<Input, F> {
-    f: F,
-    marker: PhantomData<fn() -> Input>,
-}
-
-pub trait Hook<C: HookCtx> {
-    fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
-}
-impl_hook!(T1);
-impl_hook!(T1, T2);
-impl_hook!(T1, T2, T3);
-impl_hook!(T1, T2, T3, T4);
-impl_hook!(T1, T2, T3, T4, T5);
-
-pub trait IntoHook<Input, C: HookCtx> {
-    type Hook: Hook<C>;
-
-    fn into_hook(self) -> Self::Hook;
-}
-
-impl_into_hook!(T1);
-impl_into_hook!(T1, T2);
-impl_into_hook!(T1, T2, T3);
-impl_into_hook!(T1, T2, T3, T4);
-impl_into_hook!(T1, T2, T3, T4, T5);
-
-pub type StoredHook<C> = Box<dyn Hook<C>>;
 
 #[derive(Default)]
 pub struct Hooks {
@@ -190,3 +71,111 @@ impl Hooks {
         self.hooks.get::<Vec<StoredHook<C>>>()
     }
 }
+pub trait Hook<C: HookCtx> {
+    fn run(&self, sh: &Shell, states: &States, ctx: &C) -> Result<()>;
+}
+
+pub trait IntoHook<Input, C: HookCtx> {
+    type Hook: Hook<C>;
+
+    fn into_hook(self) -> Self::Hook;
+}
+pub struct FunctionHook<Input, F> {
+    f: F,
+    marker: PhantomData<fn() -> Input>,
+}
+
+pub type StoredHook<C> = Box<dyn Hook<C>>;
+
+impl<F, C: HookCtx> Hook<C> for FunctionHook<C, F>
+where
+    for<'a, 'b> &'a F: Fn(&C) -> Result<()>,
+{
+    fn run(&self, sh: &Shell, _states: &States, c: &C) -> Result<()> {
+        fn call_inner<C: HookCtx>(
+            f: impl Fn(&C) -> Result<()>,
+            sh: &Shell,
+            states: &C,
+        ) -> Result<()> {
+            f(&states)
+        }
+
+        call_inner(&self.f, sh, c)
+    }
+}
+
+macro_rules! impl_hook{
+    (
+        $($params:ident),+
+    ) => {
+        #[allow(non_snake_case)]
+        #[allow(unused)]
+        impl<F, C:HookCtx,$($params: Param),+> Hook<C> for FunctionHook<($($params),+,C), F>
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&C ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&C )->Result<()>
+        {
+            fn run(&self, sh:&Shell,states: &States, c: &C)->Result<()> {
+                fn call_inner<C:HookCtx,$($params),+>(
+                    f: impl Fn($($params),+,&C)->Result<()>,
+                    $($params: $params),+
+                    ,states:&C
+                ) ->Result<()>{
+                    f($($params),+,&states)
+                }
+
+                $(
+                    let $params = $params::retrieve(sh,states).unwrap();
+                )+
+
+                call_inner(&self.f, $($params),+,c)
+            }
+        }
+    }
+}
+
+impl<F, C: HookCtx> IntoHook<(), C> for F
+where
+    for<'a, 'b> &'a F: Fn(&C) -> Result<()>,
+{
+    type Hook = FunctionHook<C, Self>;
+
+    fn into_hook(self) -> Self::Hook {
+        FunctionHook {
+            f: self,
+            marker: Default::default(),
+        }
+    }
+}
+impl<C: HookCtx, H: Hook<C>> IntoHook<H, C> for H {
+    type Hook = H;
+
+    fn into_hook(self) -> Self::Hook {
+        self
+    }
+}
+
+macro_rules! impl_into_hook {
+    (
+        $($params:ident),+
+    ) => {
+        impl<F, C:HookCtx,$($params: Param),+> IntoHook<($($params,)+),C> for F
+            where
+                for<'a, 'b> &'a F:
+                    Fn( $($params),+,&C ) ->Result<()>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&C )->Result<()>
+        {
+            type Hook = FunctionHook<($($params,)+C), Self>;
+
+            fn into_hook(self) -> Self::Hook {
+                FunctionHook {
+                    f: self,
+                    marker: Default::default(),
+                }
+            }
+        }
+    }
+}
+
+all_the_tuples!(impl_hook, impl_into_hook);

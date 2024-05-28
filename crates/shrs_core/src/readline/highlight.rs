@@ -17,7 +17,7 @@ pub struct DefaultHighlighter {
 }
 
 impl Highlighter for DefaultHighlighter {
-    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
+    fn highlight(&self, _sh: &Shell, _ctx: &States, buf: &String) -> Result<StyledBuf> {
         let mut styled_buf = StyledBuf::empty();
 
         styled_buf.push(
@@ -63,7 +63,7 @@ impl SyntaxHighlighter {
     }
 }
 impl Highlighter for SyntaxHighlighter {
-    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
+    fn highlight(&self, _sh: &Shell, _ctx: &States, buf: &String) -> Result<StyledBuf> {
         let mut styled_buf = StyledBuf::new(&buf).style(self.auto);
 
         for syntax_theme in self.syntax_themes.iter() {
@@ -185,7 +185,7 @@ impl<F> Highlighter for FunctionHighlighter<(Shell, String), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell, &String) -> Result<StyledBuf>,
 {
-    fn highlight(&self, sh: &Shell, ctx: &States, buf: &String) -> Result<StyledBuf> {
+    fn highlight(&self, sh: &Shell, _ctx: &States, buf: &String) -> Result<StyledBuf> {
         fn call_inner(
             f: impl Fn(&Shell, &String) -> Result<StyledBuf>,
             sh: &Shell,
@@ -220,7 +220,7 @@ macro_rules! impl_highlighter {
                 }
 
                 $(
-                    let $params = $params::retrieve(states);
+                    let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
                 call_inner(&self.f, $($params),+,sh,&buf)
@@ -270,11 +270,4 @@ macro_rules! impl_into_highlighter {
         }
     }
 }
-impl_highlighter!(T1);
-impl_highlighter!(T1, T2);
-impl_highlighter!(T1, T2, T3);
-impl_highlighter!(T1, T2, T3, T4);
-impl_into_highlighter!(T1);
-impl_into_highlighter!(T1, T2);
-impl_into_highlighter!(T1, T2, T3);
-impl_into_highlighter!(T1, T2, T3, T4);
+all_the_tuples!(impl_highlighter, impl_into_highlighter);

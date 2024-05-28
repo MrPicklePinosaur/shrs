@@ -17,7 +17,6 @@ use unicode_width::UnicodeWidthStr;
 use super::{
     line::{LineContents, LineMode},
     menu::Menu,
-    prompt::Prompt,
 };
 use crate::prelude::{Completion, Shell, States, Theme};
 pub struct Painter {

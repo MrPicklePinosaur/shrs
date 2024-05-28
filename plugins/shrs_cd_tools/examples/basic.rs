@@ -1,7 +1,7 @@
 use shrs::prelude::{styled_buf::StyledBuf, *};
 use shrs_cd_tools::{default_prompt, git::Git, DirParsePlugin, DirParseState};
 
-fn prompt_left(sh: &Shell) -> StyledBuf {
+fn prompt_left() -> StyledBuf {
     styled_buf! {
         " > "
     }

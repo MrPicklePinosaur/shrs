@@ -2,7 +2,7 @@ use std::{path::PathBuf, process::ExitStatus, time::Duration};
 
 use shrs_core_macros::HookCtx;
 
-use crate::prelude::{CmdOutput, Runtime, ShellPlugin};
+use crate::prelude::CmdOutput;
 
 pub trait HookCtx: 'static + std::marker::Send + std::marker::Sync {}
 

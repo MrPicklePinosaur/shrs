@@ -23,6 +23,7 @@ use std::{
 };
 
 use anyhow::Result;
+use unalias::unalias_builtin;
 
 use self::{
     alias::alias_builtin, cd::cd_builtin, debug::debug_builtin, exit::exit_builtin,
@@ -92,6 +93,7 @@ impl Default for Builtins {
         builtins.insert("jobs", jobs_builtin);
         builtins.insert("source", source_builtin);
         builtins.insert("debug", debug_builtin);
+        builtins.insert("unalias", unalias_builtin);
 
         builtins
     }

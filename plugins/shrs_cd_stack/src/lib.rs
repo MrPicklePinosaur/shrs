@@ -21,20 +21,6 @@ impl CdStackState {
         }
     }
 
-    fn debug(&self) {
-        print!("down: ");
-        for dir in self.down_stack.iter() {
-            print!("{:?}, ", dir);
-        }
-        print!("\n");
-
-        print!("up: ");
-        for dir in self.up_stack.iter() {
-            print!("{:?}, ", dir);
-        }
-        print!("\n");
-    }
-
     /// Add new directory location to path
     pub fn push(&mut self, path: &Path) {
         self.down_stack.push_back(path.to_path_buf());
@@ -65,7 +51,6 @@ impl CdStackState {
 
 fn change_dir_hook(
     mut state: StateMut<CdStackState>,
-    sh: &Shell,
     hook_ctx: &ChangeDirCtx,
 ) -> anyhow::Result<()> {
     // only push if we have actually changed dirs
@@ -105,8 +90,8 @@ impl Plugin for CdStackPlugin {
         Ok(())
     }
 
-    fn post_init(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
-        let mut cd_stack_state = CdStackState::new();
+    fn post_init(&self, _sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
+        let cd_stack_state = CdStackState::new();
         // cd_stack_state.push(&current_dir().unwrap());
         states.insert(cd_stack_state);
         Ok(())

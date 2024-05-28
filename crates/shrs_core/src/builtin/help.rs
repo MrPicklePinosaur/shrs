@@ -2,9 +2,8 @@ use clap::{Parser, Subcommand};
 use crossterm::style::Stylize;
 use shrs_utils::styled_buf;
 
-use super::Builtin;
 use crate::{
-    prelude::{CmdOutput, OutputWriter, Shell, State, States},
+    prelude::{CmdOutput, OutputWriter, Shell, State},
     shell::PluginMetas,
     state::StateMut,
 };

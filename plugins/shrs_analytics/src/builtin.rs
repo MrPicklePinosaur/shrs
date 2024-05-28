@@ -3,8 +3,8 @@ use shrs::prelude::*;
 use crate::AnalyticsState;
 
 pub fn analytics_builtin(
-    analytics: State<AnalyticsState>,
-    mut out: StateMut<OutputWriter>,
+    _analytics: State<AnalyticsState>,
+    _out: StateMut<OutputWriter>,
     _sh: &Shell,
     _args: &Vec<String>,
 ) -> anyhow::Result<CmdOutput> {

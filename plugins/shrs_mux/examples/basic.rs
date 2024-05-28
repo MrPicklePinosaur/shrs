@@ -1,7 +1,7 @@
-use std::{env, path::Path};
+use std::path::Path;
 
 use shrs::prelude::*;
-use shrs_mux::{python::*, BashLang, MuxPlugin, NuLang, SqliteLang, SshLang};
+use shrs_mux::{python::*, BashLang, MuxPlugin, NuLang, SqliteLang};
 
 fn main() {
     // the remote supplied here currently does not support interactive passwords, use an ssh key

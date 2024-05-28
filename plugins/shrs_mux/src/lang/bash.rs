@@ -71,7 +71,7 @@ impl Lang for BashLang {
         "bash".to_string()
     }
 
-    fn needs_line_check(&self, shell: &Shell, ctx: &States) -> bool {
+    fn needs_line_check(&self, _shell: &Shell, _ctx: &States) -> bool {
         false
     }
 }

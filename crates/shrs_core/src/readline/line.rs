@@ -17,9 +17,7 @@ use shrs_vi::{Action, Command, Motion, Parser};
 
 use super::{painter::Painter, *};
 use crate::{
-    prelude::{
-        Commands, Completer, Completion, CompletionCtx, History, ReplaceMethod, Shell, Theme,
-    },
+    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod, Shell, Theme},
     prompt_content_queue::PromptContentQueue,
     state::States,
 };
@@ -753,7 +751,7 @@ impl Line {
     // recalculate the current completions
     fn populate_completions(&mut self, states: &mut States) -> anyhow::Result<()> {
         // TODO IFS
-        let mut line_contents = states.get::<LineContents>();
+        let line_contents = states.get::<LineContents>();
         let cursor = line_contents.cb.cursor();
 
         let args = line_contents

@@ -1,9 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque};
 
-use crate::{
-    prelude::{HookCtx, Shell},
-    state::States,
-};
+use crate::{prelude::Shell, state::States};
 
 pub trait Command: Send + 'static {
     fn apply(&self, sh: &mut Shell, states: &mut States);

@@ -2,9 +2,8 @@ use std::fs::metadata;
 
 use clap::Parser;
 
-use super::Builtin;
 use crate::{
-    prelude::{Alias, CmdOutput, OutputWriter, Runtime, State, States},
+    prelude::{Alias, CmdOutput, OutputWriter, Runtime, State},
     shell::Shell,
     state::StateMut,
 };

@@ -4,8 +4,8 @@ use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{line::LineContents, CmdOutput, CommandNotFoundCtx, Commands, States},
-    shell::{Runtime, Shell},
+    prelude::{line::LineContents, CmdOutput, States},
+    shell::Shell,
 };
 
 // use crate::eval::{command_output, eval_command},
@@ -82,7 +82,7 @@ impl Lang for PosixLang {
     }
     */
 
-    fn eval(&self, sh: &Shell, states: &States, line: String) -> anyhow::Result<CmdOutput> {
+    fn eval(&self, _sh: &Shell, states: &States, line: String) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
         let lexer = Lexer::new(&line);
         let parser = Parser::default();
@@ -113,7 +113,7 @@ impl Lang for PosixLang {
     fn name(&self) -> String {
         "posix".to_string()
     }
-    fn needs_line_check(&self, sh: &Shell, ctx: &States) -> bool {
+    fn needs_line_check(&self, _sh: &Shell, ctx: &States) -> bool {
         //TODO check if open quotes or brackets
         let command = ctx.get::<LineContents>().get_full_command();
 

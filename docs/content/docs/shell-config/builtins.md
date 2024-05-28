@@ -26,40 +26,24 @@ help builtins
 ## Creating your own Builtin
 
 An example of creating a builtin and registering it is provided below.
-
-First, define a builtin and implement the `BuiltinCmd` trait:
+Builtins are simply functions that have a required parameter `&Vec<String>`.
+Other states can also be accessed by adding them to the parameters; see [States](../states/).
 
 ```rust
-struct MyBuiltin { }
-
-impl BuiltinCmd for MyBuiltin {
-    fn run(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        args: &[String],
-    ) -> ::anyhow::Result<CmdOutput> {
-
-        // builtin implementation ...
-        println!("this is my builtin~");
-
-        // return command status code
-        Ok(CmdOutput::success())
-    }
+fn my_builtin(args: &Vec<String>){
+    Ok(CmdOutput::success())
 }
 ```
 
 Then you can register it like so
 ```rust
 let mut builtins = Builtins::default();
-builtins.insert("mybuiltin", MyBuiltin {});
+builtins.insert("mybuiltin", my_builtin);
 
 myshell.with_builtins(builtins);
 ```
-The builtin can then be ran by calling `mybuiltin`. Any existing builtins of the same name will also be overwritten, so this is a good way to override default builtins with your own version.
+The builtin can then be run by calling `mybuiltin`. Any existing builtins of the same name will also be overwritten, so this is a good way to override default builtins with your own version.
 
 A much more comprehensive example can be found in the `shrs` examples directory, [here](https://github.com/MrPicklePinosaur/shrs/blob/master/crates/shrs/examples/custom_builtin.rs).
 
 Note that we used `Builtins::default` instead of `Builtins::new`, it is highly recommended that you use the default builtins since it gives you many essential builtin commands like `cd` and `exit`, where `Builtins::new` gives you literally nothing. So it is much better practice to start with `Builtins::default` and override the ones you want.
-

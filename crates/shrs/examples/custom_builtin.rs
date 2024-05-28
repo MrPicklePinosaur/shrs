@@ -3,20 +3,16 @@
 //! The example builtin will be a 'better cd' plugin, which onto of acting like normal cd, also
 //! allows you to provide alias specific directories using `cd @work` syntax
 
-use std::{collections::HashMap, path::PathBuf};
-
 use shrs::prelude::*;
-use shrs_core::shell::set_working_dir;
 
 fn hello_builtin(
     mut out: StateMut<OutputWriter>,
-    sh: &Shell,
     args: &Vec<String>,
 ) -> ::anyhow::Result<CmdOutput> {
     if let Some(s) = args.first() {
-        out.println(format!("Hello {s}"));
+        out.println(format!("Hello {s}"))?;
     } else {
-        out.println("Hello World");
+        out.println("Hello World")?;
     }
     Ok(CmdOutput::success())
 }

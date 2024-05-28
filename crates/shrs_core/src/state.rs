@@ -1,7 +1,7 @@
 //! Globally accessible state store
 
 use std::{
-    any::{type_name, Any, TypeId},
+    any::{Any, TypeId},
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
     marker::PhantomData,
@@ -11,7 +11,7 @@ use std::{
 use anyhow::{Context, Result};
 use thiserror::Error;
 
-use crate::prelude::{line::LineContents, Runtime, Shell};
+use crate::prelude::Shell;
 pub trait Param {
     type Item<'new>;
 
@@ -22,7 +22,7 @@ pub trait Param {
 impl<'res, T: 'static> Param for State<'res, T> {
     type Item<'new> = State<'new, T>;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+    fn retrieve<'r>(_shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
         Ok(State {
             value: states
                 .states
@@ -37,9 +37,7 @@ impl<'res, T: 'static> Param for State<'res, T> {
 impl<'res, T: 'static> Param for StateMut<'res, T> {
     type Item<'new> = StateMut<'new, T>;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
-        let state = states.states.get(&TypeId::of::<T>());
-
+    fn retrieve<'r>(_shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
         Ok(StateMut {
             value: states
                 .states
@@ -78,7 +76,7 @@ where
 impl<'res> Param for &'res Shell {
     type Item<'new> = &'new Shell;
 
-    fn retrieve<'r>(shell: &'r Shell, states: &'r States) -> Result<Self::Item<'r>> {
+    fn retrieve<'r>(shell: &'r Shell, _states: &'r States) -> Result<Self::Item<'r>> {
         Ok(shell)
     }
 }

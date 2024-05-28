@@ -12,14 +12,15 @@
 
 use std::marker::PhantomData;
 
-use crate::all_the_tuples;
+use anyhow::Result;
+use log::warn;
+
 use crate::{
+    all_the_tuples,
     hook_ctx::HookCtx,
     prelude::{Shell, States},
     state::Param,
 };
-use anyhow::Result;
-use log::warn;
 
 #[derive(Default)]
 pub struct Hooks {

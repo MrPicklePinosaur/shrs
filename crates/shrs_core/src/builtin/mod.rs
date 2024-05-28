@@ -109,20 +109,19 @@ pub struct FunctionBuiltin<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
-impl<F> Builtin for FunctionBuiltin<(Shell, Vec<String>), F>
+impl<F> Builtin for FunctionBuiltin<Vec<String>, F>
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
+    for<'a, 'b> &'a F: Fn(&Vec<String>) -> Result<CmdOutput>,
 {
-    fn run(&self, sh: &Shell, ctx: &States, args: &Vec<String>) -> Result<CmdOutput> {
+    fn run(&self, _sh: &Shell, _ctx: &States, args: &Vec<String>) -> Result<CmdOutput> {
         fn call_inner(
-            f: impl Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
-            sh: &Shell,
+            f: impl Fn(&Vec<String>) -> Result<CmdOutput>,
             args: &Vec<String>,
         ) -> Result<CmdOutput> {
-            f(&sh, &args)
+            f(&args)
         }
 
-        call_inner(&self.f, sh, &args)
+        call_inner(&self.f, &args)
     }
 }
 
@@ -135,23 +134,23 @@ macro_rules! impl_builtin {
         impl<F, $($params: Param),+> Builtin for FunctionBuiltin<($($params,)+), F>
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&Vec<String>)->Result<CmdOutput> +
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&Vec<String> )->Result<CmdOutput>
+                    Fn( $($params),+,&Vec<String>)->Result<CmdOutput> +
+                    Fn( $(<$params as Param>::Item<'b>),+,&Vec<String> )->Result<CmdOutput>
         {
             fn run(&self, sh: &Shell,states: &States, args: &Vec<String>)->Result<CmdOutput> {
                 fn call_inner<$($params),+>(
-                    f: impl Fn($($params),+,&Shell,&Vec<String>)->Result<CmdOutput>,
+                    f: impl Fn($($params),+,&Vec<String>)->Result<CmdOutput>,
                     $($params: $params),*
-                    ,sh:&Shell,args:&Vec<String>
+                    ,args:&Vec<String>
                 ) -> Result<CmdOutput>{
-                    f($($params),*,sh,args)
+                    f($($params),*,args)
                 }
 
                 $(
                     let $params = $params::retrieve(sh,states).unwrap();
                 )+
 
-                call_inner(&self.f, $($params),+,sh,&args)
+                call_inner(&self.f, $($params),+,&args)
             }
         }
 
@@ -159,9 +158,9 @@ macro_rules! impl_builtin {
 }
 impl<F> IntoBuiltin<()> for F
 where
-    for<'a, 'b> &'a F: Fn(&Shell, &Vec<String>) -> Result<CmdOutput>,
+    for<'a, 'b> &'a F: Fn(&Vec<String>) -> Result<CmdOutput>,
 {
-    type Builtin = FunctionBuiltin<(Shell, Vec<String>), Self>;
+    type Builtin = FunctionBuiltin<Vec<String>, Self>;
 
     fn into_builtin(self) -> Self::Builtin {
         FunctionBuiltin {
@@ -185,8 +184,8 @@ macro_rules! impl_into_builtin {
         impl<F, $($params: Param),+> IntoBuiltin<($($params,)*)> for F
             where
                 for<'a, 'b> &'a F:
-                    Fn( $($params),+,&Shell,&Vec<String> ) ->Result<CmdOutput>+
-                    Fn( $(<$params as Param>::Item<'b>),+,&Shell,&Vec<String> )->Result<CmdOutput>
+                    Fn( $($params),+,&Vec<String> ) ->Result<CmdOutput>+
+                    Fn( $(<$params as Param>::Item<'b>),+,&Vec<String> )->Result<CmdOutput>
         {
             type Builtin = FunctionBuiltin<($($params,)+), Self>;
 

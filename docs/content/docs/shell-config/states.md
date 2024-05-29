@@ -1,8 +1,6 @@
 +++
 title = "States"
 description = ""
-date = 2023-12-01t08:00:00+00:00
-updated = 2023-12-01t08:00:00+00:00
 draft = false
 weight = 10
 sort_by = "weight"

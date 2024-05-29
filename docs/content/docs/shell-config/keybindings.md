@@ -1,8 +1,6 @@
 +++
 title = "Keybindings"
 description = ""
-date = 2021-05-01T08:00:00+00:00
-updated = 2021-05-01T08:00:00+00:00
 draft = false
 weight = 10
 sort_by = "weight"
@@ -13,24 +11,35 @@ lead = ''
 toc = true
 top = false
 +++
-
 Keybindings allow you to run arbitrary commands in respond to arbitrary key
 presses in the shell. A common example is the ability to clear the terminal
-when `Control+L` is pressed. How keybindings are represented is a bit more of an
-internal detail and not very fun to write, so a macro is provided to make the
-experience a bit better.
+when `Control+L` is pressed. Keybindings are also able to access `State` (see [States](../states/)), which could be used to modify on keypress.
 ```rust
-let keybinding = keybindings! {
-    |sh, ctx, rt|
-    "C-l" => ("Clear the screen", { Command::new("clear").spawn() }),
-};
 
-myshell.with_keybinding(keybinding);
+let mut bindings = Keybindings::new();
+bindings
+    .insert("C-l", "Clear the screen", || -> anyhow::Result<()> {
+        Command::new("clear")
+            .spawn()
+            .expect("Couldn't clear screen");
+        Ok(())
+    })
+    .unwrap();
+//cd_stack_down and cd_stack_up are hook functions
+bindings
+    .insert("C-p", "Move up one in the command history", cd_stack_down)
+    .unwrap();
+bindings
+    .insert("C-n", "Move down one in the command history", cd_stack_up)
+    .unwrap();
+
+
+myshell.with_keybindings(bindings);
 ```
 
-`sh`, `ctx`, and `rt` are shell, context, and runtime variables respectively. Each keybinding is matched with a tuple. The first item in the tuple is a description of what the keybinding performs. The second item in the tuple is the function that will be executed once that key combination is pressed.
+Each keybinding is inserted as a tuple. The first item in the tuple is the required key combination. The second provides info on what the binding does. The third item is the function that will be executed once that key combination is pressed.
 
-The macro allows us to represent key combinations in terms of strings. You can also include modifier keys (such as control and shift). Here are the supported modifiers:
+key combinations are represented in terms of strings and stored internally as a `KeyEvent`. You can also include modifier keys (such as control and shift). Here are the supported modifiers:
 
 | Modifier | Usage |
 | ---|--- |

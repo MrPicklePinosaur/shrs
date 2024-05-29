@@ -1,8 +1,6 @@
 +++
 title = "Hooks"
 description = ""
-date = 2021-05-01T08:00:00+00:00
-updated = 2021-05-01T08:00:00+00:00
 draft = false
 weight = 10
 sort_by = "weight"
@@ -24,21 +22,16 @@ of the last command.
 
 An example usage of the `startup` hook.
 ```rust
-let startup_msg = | _sh: &Shell, _sh_ctx: &mut Context, _sh_rt: &mut Runtime, _ctx: StartupHookCtx | {
-    let welcome_str = "Welcome to my shell!";
-    println!("{}", welcome_str);
+let startup_msg = | mut out: StateMut<OutputWriter>, _ctx: StartupHookCtx |
+    ->Result<()>{
+    out.println("Welcome to my shell!")
 };
-let hooks = Hooks {
-    startup: HookList::from_iter(vec![startup_msg]),
-    ..Default::default()
-};
-
+let mut hooks = Hooks::new();
+hooks.insert(startup_msg);
 myshell.with_hooks(hooks);
 ```
+Hooks must have the a parameter at the end that determines which `Ctx` triggers it. They must also return a `Result<()>`.
 
 Hooks also have additional context that is passed as a parameter which you can
 leverage. For a list of all the hooks and the context that is passed, please
 refer to the rust docs.
-
-Also notice that each type of hook actually takes in a list of hooks to run.
-These hooks are ran in the order they are registered.

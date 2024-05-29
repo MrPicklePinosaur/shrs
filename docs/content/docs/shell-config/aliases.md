@@ -1,8 +1,6 @@
 +++
 title = "Aliases"
 description = ""
-date = 2021-05-01T08:00:00+00:00
-updated = 2021-05-01T08:00:00+00:00
 draft = false
 weight = 10
 sort_by = "weight"
@@ -49,10 +47,9 @@ use chrono::{Datelike, Local, Weekday};
 let mut alias = Alias::new();
 
 let ls_alias = AliasInfo::with_rule("ls | lolcat", |ctx: &AliasRuleCtx| -> bool {
-    let weekday = Local::now().weekday(); 
+    let weekday = Local::now().weekday();
     weekday == Weekday::Fri
 });
 alias.set("ls", ls_alias);
 ```
 `AliasRuleCtx` gives you access to shell state when deciding if the alias should be enabled or not. See the docs for more detail.
-

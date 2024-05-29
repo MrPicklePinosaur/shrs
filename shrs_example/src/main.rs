@@ -135,20 +135,21 @@ fn main() {
 
     // =-=-= Hooks =-=-=
     // Create a hook that prints a welcome message on startup
-    let startup_msg = |_sh: &Shell, _startup: &StartupCtx| -> anyhow::Result<()> {
-        let welcome_str = format!(
-            r#"
+    let startup_msg =
+        |mut out: StateMut<OutputWriter>, _startup: &StartupCtx| -> anyhow::Result<()> {
+            let welcome_str = format!(
+                r#"
         __
    ___ / /  _______
   (_-</ _ \/ __(_-<
  /___/_//_/_/ /___/
 a rusty POSIX shell | build {}"#,
-            env!("SHRS_VERSION")
-        );
+                env!("SHRS_VERSION")
+            );
 
-        println!("{welcome_str}");
-        Ok(())
-    };
+            out.println(welcome_str)?;
+            Ok(())
+        };
     let mut hooks = Hooks::new();
     hooks.insert(startup_msg);
 

@@ -27,7 +27,7 @@ help builtins
 
 An example of creating a builtin and registering it is provided below.
 Builtins are simply functions that have a required parameter `&Vec<String>`.
-Other states can also be accessed by adding them to the parameters; see [States](../states/).
+Other states can also be accessed by adding them to the parameters; see [States](../states/). Builtins must return `Result<CmdOutput>` representing the result of the execution.
 
 ```rust
 fn my_builtin(args: &Vec<String>){

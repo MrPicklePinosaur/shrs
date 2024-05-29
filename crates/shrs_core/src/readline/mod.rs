@@ -7,12 +7,6 @@
 //! shrs_line has a similar design philosophy to the rest of shrs in that it is also highly
 //! configurable and extensible. Simply construct your own readline and give it to shrs to use.
 //!
-//! # Example
-//! ```
-//! use shrs_line::prelude::*;
-//!
-//! let mut myline = LineBuilder::default();
-//! ```
 
 pub mod buffer_history;
 pub mod highlight;

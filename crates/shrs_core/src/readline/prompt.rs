@@ -1,4 +1,7 @@
 //! Shell prompt
+//!
+//! The prompt consists of the text preceding and following input,
+//!  which is produced by a handler
 
 use std::marker::PhantomData;
 
@@ -7,17 +10,21 @@ use shrs_utils::{styled_buf, StyledBuf};
 
 use super::super::state::*;
 use crate::prelude::{top_pwd, Shell, States};
-
+/// Handler for either side of the prompt.
+///
+/// Returns a StyledBuf that is
 pub trait PromptFn {
     fn prompt(&self, sh: &Shell, ctx: &States) -> StyledBuf;
 }
 
-/// Implement this trait to create your own prompt
+/// Implement this trait to create a prompt
+/// `Prompt` is split into right and left where each is a `PromptFn`
 pub struct Prompt {
     pub prompt_left: Box<dyn PromptFn>,
     pub prompt_right: Box<dyn PromptFn>,
 }
 impl Prompt {
+    ///Constructor for making a `Prompt` from two `PromptFn`
     pub fn from_sides<I, J, R: PromptFn + 'static, L: PromptFn + 'static>(
         left_prompt: impl IntoPromptFn<I, PromptFn = L>,
         right_prompt: impl IntoPromptFn<J, PromptFn = R>,
@@ -33,7 +40,7 @@ impl Default for Prompt {
         Prompt::from_sides(default_prompt_left, default_prompt_right)
     }
 }
-
+///Bash style Prompt
 fn default_prompt_left() -> StyledBuf {
     styled_buf!(" ", top_pwd().white().bold(), " > ")
 }

@@ -17,8 +17,8 @@ use shrs_vi::{Action, Command, Motion, Parser};
 use super::painter::Painter;
 use crate::{
     prelude::{
-        BufferHistory, Completer, Completion, CompletionCtx, DefaultMenuState, LineModeSwitchEvent,
-        Position, ReplaceMethod, Shell, Snippets, Theme, ViCursorBuffer,
+        BufferHistory, Completer, Completion, CompletionCtx, DefaultMenuState, InsertPosition,
+        LineModeSwitchEvent, ReplaceMethod, Shell, Snippets, Theme, ViCursorBuffer,
     },
     prompt_content_queue::PromptContentQueue,
     state::States,
@@ -429,7 +429,7 @@ impl Line {
         if let Some(c) = cur_word_index {
             if let Some(expanded) = states.get::<Snippets>().get(&words[c].to_string()) {
                 //check if we're we're expanding the first word
-                if expanded.position == Position::Command {
+                if expanded.position == InsertPosition::Command {
                     if c != 0 {
                         return Ok(true);
                     }

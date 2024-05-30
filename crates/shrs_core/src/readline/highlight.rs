@@ -1,5 +1,7 @@
 //! Syntax highlighting
-
+//!
+//! Highlighters are handlers that modify the style of the line buffer,
+//! which can be used to provide syntax highlighting.
 use std::marker::PhantomData;
 
 use anyhow::Result;
@@ -33,10 +35,15 @@ impl Highlighter for DefaultHighlighter {
 }
 
 /// trait that modifies a StyledBuf inplace and applies a theme to highlight the text
+///
+/// Can be used standalone to apply a set of syntax rules
 pub trait SyntaxTheme {
     fn apply(&self, buf: &mut StyledBuf);
 }
 
+/// A highlighter implementation that applies a list of `SyntaxTheme` to the line buffer
+///
+/// `Syntax Theme` are applied in order, so more general ones should be inserted first.
 pub struct SyntaxHighlighter {
     auto: ContentStyle,
     pub syntax_themes: Vec<Box<dyn SyntaxTheme>>,
@@ -51,6 +58,7 @@ impl Default for SyntaxHighlighter {
 }
 
 impl SyntaxHighlighter {
+    ///pushes a `SyntaxTheme` to the end of the list
     pub fn push_rule(&mut self, syntax_theme: Box<dyn SyntaxTheme>) {
         self.syntax_themes.push(syntax_theme);
     }
@@ -74,6 +82,7 @@ impl Highlighter for SyntaxHighlighter {
     }
 }
 /// Implementation of a highlighter for the shrs language.
+///
 /// Utilizes the shrs parser to parse and highlight various tokens based on their type
 pub struct ShrsTheme {
     cmd_style: ContentStyle,

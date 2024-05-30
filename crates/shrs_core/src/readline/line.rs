@@ -10,17 +10,20 @@ use ::crossterm::{
     style::{Color, ContentStyle},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use line::menu::DefaultMenuState;
 use pino_deref::{Deref, DerefMut};
-use shrs_utils::cursor_buffer::{CursorBuffer, Location};
+use shrs_utils::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
-use super::{painter::Painter, *};
 use crate::{
-    prelude::{Completer, Completion, CompletionCtx, ReplaceMethod, Shell, Theme},
+    prelude::{
+        BufferHistory, Completer, Completion, CompletionCtx, DefaultMenuState, LineModeSwitchEvent,
+        Position, ReplaceMethod, Shell, Snippets, Theme, ViCursorBuffer,
+    },
     prompt_content_queue::PromptContentQueue,
     state::States,
 };
+
+use super::painter::Painter;
 
 pub trait Readline {
     fn read_line(&mut self, sh: &mut Shell, states: &mut States) -> String;

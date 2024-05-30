@@ -256,7 +256,7 @@ impl<E> From<Result<String, E>> for StyledBuf {
 macro_rules! styled_buf {
     ($($part:expr),* $(,)*) => {{
 
-        use $crate::{styled_buf::StyledBuf };
+        use $crate::StyledBuf;
 
         StyledBuf::from_iter(vec![
             $(

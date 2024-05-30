@@ -1,4 +1,4 @@
-use shrs::prelude::{styled_buf::StyledBuf, *};
+use shrs::prelude::{StyledBuf, *};
 use shrs_cd_tools::{default_prompt, git::Git, DirParsePlugin, DirParseState};
 
 fn prompt_left() -> StyledBuf {

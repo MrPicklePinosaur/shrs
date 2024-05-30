@@ -2,8 +2,7 @@
 
 use crossterm::event::KeyEvent;
 
-use super::LineMode;
-use crate::prelude::{HookEvent, HookEventMarker};
+use crate::prelude::{HookEvent, HookEventMarker, LineMode};
 
 /// Runs whenever the current mode of the line changes
 #[derive(HookEvent)]

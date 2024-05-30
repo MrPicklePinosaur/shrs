@@ -1,6 +1,9 @@
 use crossterm::style::ContentStyle;
 use rustpython_parser::{lexer::lex, Mode, Tok};
-use shrs::{crossterm::Stylize, prelude::styled_buf::StyledBuf, readline::SyntaxTheme};
+use shrs::{
+    crossterm::Stylize,
+    prelude::{StyledBuf, SyntaxTheme},
+};
 
 pub struct PythonTheme {
     pub name_style: ContentStyle,

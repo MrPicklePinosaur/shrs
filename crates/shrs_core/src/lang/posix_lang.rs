@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use super::{eval2, Lang};
 use crate::{
-    prelude::{line::LineContents, CmdOutput, States},
+    prelude::{CmdOutput, LineContents, States},
     shell::Shell,
 };
 

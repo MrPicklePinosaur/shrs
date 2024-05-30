@@ -1,7 +1,10 @@
 use crossterm::style::ContentStyle;
 use lazy_static::lazy_static;
 use regex::Regex;
-use shrs::{crossterm::Stylize, prelude::styled_buf::StyledBuf, readline::SyntaxTheme};
+use shrs::{
+    crossterm::Stylize,
+    prelude::{StyledBuf, SyntaxTheme},
+};
 lazy_static! {
     static ref FILE_PATTERN: Regex = Regex::new(r#"File (".*"), line (\d+), in (.*)"#).unwrap();
     static ref ERROR_PATTERN: Regex = Regex::new(r#"([^:]+:) (.+)"#).unwrap();

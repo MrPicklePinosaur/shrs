@@ -13,7 +13,7 @@ pub mod rust;
 use std::collections::HashMap;
 
 use query::{Query, QueryResult};
-use shrs::prelude::{styled_buf::StyledBuf, *};
+use shrs::prelude::{StyledBuf, *};
 
 pub struct DirParsePlugin {
     // pub modules: Option<Vec<Query>>,

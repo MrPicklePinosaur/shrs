@@ -4,10 +4,11 @@
 //! and will be run directly after it ends.
 //! `Commands` is stored in `Shell`, which can be accessed in handlers.
 //! ```rust
-//! pub struct C{}
-//! fn add_state(sh:&Shell){
-//!    sh.run_cmd(|sh:&mut Shell, states: &mut States|{
-//!        states.insert(C{});
+//! # use shrs_core::prelude::*;
+//! pub struct C {}
+//! fn add_state(sh: &Shell){
+//!    sh.run_cmd(|sh: &mut Shell, states: &mut States| {
+//!        states.insert(C {});
 //!    });
 //! }
 //! ```

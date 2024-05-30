@@ -18,13 +18,3 @@ pub mod prompt;
 pub mod snippet;
 pub mod suggester;
 pub mod vi;
-
-pub use buffer_history::{BufferHistory, DefaultBufferHistory};
-pub use highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme};
-pub use hooks::*;
-pub use line::{Line, LineMode, Readline};
-pub use menu::{DefaultMenu, Menu};
-pub use prompt::Prompt;
-pub use snippet::*;
-pub use suggester::{DefaultSuggester, Suggester};
-pub use vi::*;

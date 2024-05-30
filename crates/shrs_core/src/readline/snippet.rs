@@ -11,8 +11,9 @@ pub enum ExpandSnippet {
     Never,
     OnKey(KeyEvent),
 }
+///Snippet insertion
 #[derive(Default, PartialEq, Eq, Clone, Copy, Debug)]
-pub enum Position {
+pub enum InsertPosition {
     #[default]
     Command,
     Anywhere,
@@ -22,10 +23,10 @@ pub struct SnippetInfo {
     ///value to be inserted
     pub value: String,
     ///where the snippet needs to be, to be expanded
-    pub position: Position,
+    pub position: InsertPosition,
 }
 impl SnippetInfo {
-    pub fn new<S: ToString>(value: S, position: Position) -> Self {
+    pub fn new<S: ToString>(value: S, position: InsertPosition) -> Self {
         Self {
             value: value.to_string(),
             position,

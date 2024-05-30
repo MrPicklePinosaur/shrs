@@ -1,4 +1,5 @@
 //! Globally accessible state store
+//! States are accessible through handlers
 
 use std::{
     any::{Any, TypeId},

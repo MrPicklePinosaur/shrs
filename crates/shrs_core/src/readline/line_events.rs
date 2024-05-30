@@ -1,4 +1,4 @@
-//! Hooks that are defined by shrs_readline
+//! Events that occur in readline
 
 use crossterm::event::KeyEvent;
 
@@ -21,7 +21,10 @@ pub struct PostRenderEvent {}
 
 #[derive(HookEvent)]
 pub struct ReadEventEndEvent;
-
+/// Alternative for keybinding
+///
+/// It is recommended that keybinding is used instead
+/// if the hook is responding to a specific keypress
 #[derive(HookEvent)]
 pub struct OnKeyEvent {
     key: KeyEvent,

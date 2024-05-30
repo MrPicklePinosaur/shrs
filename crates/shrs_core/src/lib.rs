@@ -52,8 +52,8 @@ pub mod prelude {
         readline::{
             buffer_history::{BufferHistory, DefaultBufferHistory},
             highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme},
-            hooks::*,
             line::{Line, LineContents, LineMode, Readline},
+            line_events::*,
             menu::{DefaultMenu, DefaultMenuState, Menu},
             prompt::Prompt,
             snippet::*,

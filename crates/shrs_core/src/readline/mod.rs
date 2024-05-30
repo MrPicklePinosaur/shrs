@@ -10,7 +10,7 @@
 
 pub mod buffer_history;
 pub mod highlight;
-pub mod hooks;
+pub mod line_events;
 pub mod line;
 pub mod menu;
 pub mod painter;

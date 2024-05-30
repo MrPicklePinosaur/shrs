@@ -5,7 +5,6 @@ extern crate lazy_static;
 
 pub mod alias;
 pub mod builtin;
-pub mod cmd_output;
 pub mod commands;
 pub mod completion;
 pub mod env;
@@ -16,15 +15,18 @@ pub mod keybinding;
 pub mod lang;
 #[macro_use]
 mod macros;
-pub mod output_writer;
+mod cmd_output;
+mod output_writer;
 pub mod plugin;
 pub mod prompt;
 pub mod prompt_content_queue;
 pub mod readline;
 pub mod shell;
-pub mod signal;
 pub mod state;
 pub mod theme;
+
+pub use cmd_output::CmdOutput;
+pub use output_writer::OutputWriter;
 
 pub mod prelude {
     //! Conveniently import commonly used types
@@ -49,7 +51,6 @@ pub mod prelude {
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::{prompt::*, *},
         shell::{set_working_dir, Runtime, Shell, ShellBuilder, ShellConfig},
-        signal::Signals,
         state::*,
         theme::Theme,
     };

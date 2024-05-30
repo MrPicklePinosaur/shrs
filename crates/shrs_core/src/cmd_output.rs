@@ -1,9 +1,10 @@
-//! Command output is used by shell builtins as well as shell languages to pass return state of
-//! commands or programs. This captures stdout and stderr output, as well as exit code
+//! Describes the output of a command
 
 use std::{os::unix::process::ExitStatusExt, process::ExitStatus};
-
 /// Describes the output of a command
+///
+/// Command output is used by shell builtins as well as shell languages to pass return state of
+/// commands or programs. This captures stdout and stderr output, as well as exit code
 #[derive(Clone, Debug)]
 pub struct CmdOutput {
     pub stdout: String,

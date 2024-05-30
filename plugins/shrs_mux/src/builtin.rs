@@ -40,8 +40,7 @@ pub fn mux_builtin(
 
         println!("setting lang to {lang_name}");
 
-        // HACK, prime the language so it can run any init that it needs (this is to support
-        // lazy loading languages)
+        // HACK, prime the language so it can run any init that it needs (this is to support lazy loading languages)
         sh.eval("");
         sh.run_hooks(hook_ctx);
     }

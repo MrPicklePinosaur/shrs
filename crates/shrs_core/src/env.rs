@@ -1,4 +1,22 @@
 //! Environment variables
+//!
+//! You can load all the current environment variables into shrs by using [`Env::load`]. This is
+//! useful in the case that you are launching your shrs shell from another shell, like bash.
+//! ```
+//! # use shrs_core::prelude::*;
+//! # let mut myshell = ShellBuilder::default();
+//! let mut env = Env::new();
+//! env.load();
+//!
+//! myshell.with_env(env);
+//! ```
+//!
+//! In the case that the shrs shell is your login shell, or that you wish to define additional
+//! environment variables, you can do so by appending to the [`Env`] object. Note that environment
+//! variables are also case insensitive.
+//! ```ignore
+//! env.set("SHELL", "my_shrs");
+//! ```
 
 use std::{collections::HashMap, env};
 

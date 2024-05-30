@@ -12,6 +12,33 @@
 //!     ("la", "ls -a"),
 //! ]);
 //! ```
+//! It is also possible to set one alias at a time using [`Alias::set()`], which let's you employ more
+//! complex control flow when setting aliases. This is the equivalent of the above:
+//! ```
+//! # use shrs_core::prelude::*;
+//! let mut alias = Alias::new();
+//! alias.set("l", AliasInfo::always("ls"));
+//! alias.set("c", AliasInfo::always("cd"));
+//! alias.set("g", AliasInfo::always("git"));
+//! alias.set("v", AliasInfo::always("vim"));
+//! alias.set("la", AliasInfo::always("ls -a"));
+//! ```
+//! You have have noticed the usage of [`AliasInfo::always`], which will unconditionally expand the
+//! alias. [`AliasInfo`] also features the ability to conditionally execute aliases based on a
+//! predicate. This allows you to enable/disable groups of aliases at runtime, for example only
+//! enable git aliases when in a git repo. It is not yet supported to add conditional aliases using
+//! [`Alias::from_iter()`], so you must use the [`Alias::set()`] syntax. The below shows how you
+//! can make your ls rainbow only on Fridays:
+//! ```
+//! use chrono::{Datelike, Local, Weekday};
+//!
+//! let mut alias = Alias::new();
+//! let ls_alias = AliasInfo::with_rule("ls | lolcat", |ctx: &AliasRuleCtx| -> bool {
+//!     let weekday = Local::now().weekday();
+//!     weekday == Weekday::Fri
+//! });
+//! alias.set("ls", ls_alias);
+//! ```
 
 use multimap::MultiMap;
 
@@ -19,10 +46,12 @@ use crate::{prelude::States, shell::Shell};
 
 /// Parameters passed to alias rule
 pub struct AliasRuleCtx<'a> {
+    /// Name of the aliases that was ran
     pub alias_name: &'a str,
     pub sh: &'a Shell,
-    pub ctx: &'a States,
+    pub states: &'a States,
 }
+
 /// Predicate to decide if an alias should be used or not
 pub struct AliasRule(Box<dyn Fn(&AliasRuleCtx) -> bool>);
 
@@ -44,13 +73,6 @@ impl AliasInfo {
     }
 
     /// Conditionally run this alias
-    // ```
-    // # use chrono::{Datelike, Local, Weekday};
-    // let myalias = AliasInfo::with_rule("ls | lolcat", |ctx: &AliasRuleCtx| -> bool {
-    //     let weekday = Local::now().weekday();
-    //     weekday == Weekday::Fri
-    // });
-    // ```
     pub fn with_rule<S, R>(subst: S, rule: R) -> Self
     where
         S: ToString,
@@ -72,7 +94,7 @@ pub struct Alias {
 }
 
 impl Alias {
-    // Construct a new alias map
+    /// Construct a new alias map
     pub fn new() -> Self {
         Alias {
             aliases: MultiMap::new(),
@@ -93,6 +115,7 @@ impl Alias {
             .collect::<Vec<_>>()
     }
 
+    /// For a given alias, check what it will evaluate to
     pub fn get_subst(&self, alias_name: &String) -> Option<&String> {
         match self.aliases.get(alias_name) {
             Some(alias_info) => Some(&alias_info.subst),
@@ -100,14 +123,14 @@ impl Alias {
         }
     }
 
-    /// Set an alias
+    /// Update an alias of given name
     pub fn set(&mut self, alias_name: &str, alias_info: AliasInfo) {
         self.aliases.insert(alias_name.into(), alias_info);
     }
 
-    /// Clear an aliass
+    /// Clear an alias
     ///
-    /// This removes ALL aliases of a given name
+    /// This removes ALL aliases of a given name.
     pub fn unset(&mut self, alias_name: &str) {
         self.aliases.remove(alias_name);
     }

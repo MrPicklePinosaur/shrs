@@ -1,4 +1,7 @@
-//! Types for internal context of shell
+//! Core shell structs and shell config builder
+//!
+//! Shell configuration "wizard" with many options to configure any aspect of your shell. Start
+//! with a [`ShellBuilder`], configure to your liking, finalize it, and then run the shell.
 
 use std::{
     env,
@@ -21,51 +24,74 @@ use crate::{
     state::States,
 };
 
+/// Keeps track of how long the plugin initialization process took
 #[derive(Deref)]
 pub struct StartupTime(Instant);
+
+/// Holds metadata for each plugin
 #[derive(Deref)]
 pub struct PluginMetas(Vec<PluginMeta>);
 
+/// Container for shell components
+///
+/// This struct can be queried for in any handler (insert link), allowing for easy access to shell
+/// components.
 pub struct Shell {
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
     /// The command language
     pub lang: Box<dyn Lang>,
+    /// Shell keybindings
     pub keybindings: Keybindings,
+    /// Register new hooks to events or emit an event
     pub hooks: Hooks,
+    /// Shell prompt
     pub prompt: Prompt,
+    /// Syntax highlighter
     pub highlighter: Box<dyn Highlighter>,
+    /// Active command suggestion
     pub suggester: Box<dyn Suggester>,
+    /// Command history
     pub history: Box<dyn History>,
     cmd: Commands,
 }
 
 impl Shell {
+    /// Run an arbitrary shell [`Command`]
     pub fn run_cmd<C: Command + 'static>(&self, command: C) {
         self.cmd.run(command);
     }
 
-    // Trigger a hook of given type with payload
+    /// Trigger an event of given type with payload.
+    ///
+    /// See [`crate::hooks`] for details.
     pub fn run_hooks<C: HookEventMarker>(&self, c: C) {
         self.cmd.run(move |sh: &mut Shell, states: &mut States| {
             let _ = sh.hooks.run(sh, states, &c);
             sh.apply_queue(states);
         })
     }
+
     pub(crate) fn run_hooks_in_core<C: HookEventMarker>(&mut self, states: &mut States, c: C) {
         let _ = self.hooks.run(self, states, &c);
         self.apply_queue(states);
     }
 
-    // Execute all the queued commands
-    pub fn apply_queue(&mut self, states: &mut States) {
+    /// Execute all the queued commands
+    ///
+    /// Commands that are queued via [`Shell::run_cmd`] are not executed until a call to this
+    /// function is made.
+    pub(crate) fn apply_queue(&mut self, states: &mut States) {
         let mut q = self.cmd.drain(states);
         while let Some(command) = q.pop_front() {
             command.apply(self, states);
         }
     }
 
-    // Evaluate an arbitrary command using the shell interpreter
+    /// Evaluate an arbitrary command programatically using the shell interpreter
+    ///
+    /// The command will be evaluated as if the user has typed this string in the prompt
+    /// themselves.
     pub fn eval(&self, cmd_str: impl ToString) {
         // TODO we can't actually get the result of this currently since it is queued
         let cmd_str = cmd_str.to_string();
@@ -104,11 +130,11 @@ pub struct Runtime {
 #[builder(name = "ShellBuilder", pattern = "owned")]
 #[builder(setter(prefix = "with"))]
 pub struct ShellConfig {
-    /// Runtime hooks, see [Hooks]
+    /// Runtime hooks, see [`crate::hooks`]
     #[builder(default = "Hooks::default()")]
     pub hooks: Hooks,
 
-    /// Builtin shell commands, see [Builtins]
+    /// Builtin shell commands, see [`crate::builtin`]
     #[builder(default = "Builtins::default()")]
     pub builtins: Builtins,
 
@@ -117,15 +143,15 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub readline: Box<dyn Readline>,
 
-    /// Aliases, see [Alias]
+    /// Aliases, see [`crate::alias`]
     #[builder(default = "Alias::new()")]
     pub alias: Alias,
 
-    /// Environment variables, see [Env]
+    /// Environment variables, see [`crate::env`]
     #[builder(default = "Env::default()")]
     pub env: Env,
 
-    /// Completion system, see [Completer]
+    /// Completion system, see [`crate::completion`]
     #[builder(default = "Box::new(DefaultCompleter::new())")]
     #[builder(setter(custom))]
     completer: Box<dyn Completer>,
@@ -133,7 +159,7 @@ pub struct ShellConfig {
     // /// List of defined functions
     // #[builder(default = "HashMap::new()")]
     // pub functions: HashMap<String, Box<ast::Command>>,
-    /// Color theme
+    /// Color theme, see [`crate::theme`]
     #[builder(default = "Theme::default()")]
     pub theme: Theme,
 
@@ -142,17 +168,17 @@ pub struct ShellConfig {
     #[builder(setter(custom))]
     pub lang: Box<dyn Lang>,
 
-    /// Plugins, see [Plugins]
+    /// Plugins, see [`crate::plugin`]
     #[builder(default = "Vec::new()")]
     #[builder(setter(custom))]
     pub plugins: Vec<Box<dyn Plugin>>, // TODO could also maybe use anymap to get the concrete type
 
-    /// Globally accessible state, see [State]
+    /// Globally accessible state, see [`crate::state`]
     #[builder(default = "States::default()")]
     #[builder(setter(custom))]
     pub states: States,
 
-    /// History, see [History]
+    /// History, see [`crate::history`]
     // The default is set again in DefaultHistoryPlugin so this default is just a dummy
     #[builder(default = "Box::new(DefaultHistory::default())")]
     #[builder(setter(custom))]
@@ -162,36 +188,37 @@ pub struct ShellConfig {
     #[builder(default = "home_dir().unwrap().join(\".config/shrs\")")]
     pub config_dir: PathBuf,
 
-    /// Keybindings, see [Keybinding]
+    /// Keybindings, see [`crate::keybinding`]
     #[builder(default = "Keybindings::new()")]
     #[builder(setter(custom))]
     pub keybinding: Keybindings,
 
     //-------
     //Line
-    /// Completion menu, see [Menu]
+    /// Completion menu, see [`crate::readline::menu`]
     #[builder(default = "Box::new(DefaultMenu::default())")]
     #[builder(setter(custom))]
     menu: DefaultMenuState,
 
+    /// Edit history tracked in readline buffer
     #[builder(default = "Box::new(DefaultBufferHistory::default())")]
     #[builder(setter(custom))]
     buffer_history: Box<dyn BufferHistory>,
 
-    /// Syntax highlighter, see [Highlighter]
+    /// Syntax highlighter, see [`crate::readline::highlight`]
     #[builder(default = "Box::new(SyntaxHighlighter::default())")]
     #[builder(setter(custom))]
     highlighter: Box<dyn Highlighter>,
 
-    /// Custom prompt, see [Prompt]
+    /// Custom prompt, see [`crate::prompt`]
     #[builder(default = "Prompt::default()")]
     prompt: Prompt,
 
-    /// Suggestion inline
+    /// Suggestion inline, see [`crate::readline::suggester`]
     #[builder(default = "Box::new(DefaultSuggester)")]
     suggester: Box<dyn Suggester>,
 
-    /// Alias expansions, see [Abbreviations]
+    /// Buffer snippets, see [`crate::readline::snippet`]
     #[builder(default = "Snippets::default()")]
     snippets: Snippets,
 }
@@ -345,6 +372,7 @@ impl ShellConfig {
         run_shell(&mut self.states, &mut sh, &mut self.readline)
     }
 }
+
 fn run_shell(
     states: &mut States,
     sh: &mut Shell,
@@ -371,7 +399,7 @@ fn run_shell(
             let alias_ctx = AliasRuleCtx {
                 alias_name: first,
                 sh,
-                ctx: states,
+                states,
             };
 
             // Currently only use the last alias, can also render a menu
@@ -439,7 +467,9 @@ fn run_shell(
     }
 }
 
-/// Set the current working directory
+/// Set the current working directory programatically
+///
+/// The `run_hook` parameter determines if a change directory event should be emitted.
 pub fn set_working_dir(
     sh: &Shell,
     rt: &mut StateMut<Runtime>,
@@ -482,6 +512,7 @@ pub fn set_working_dir(
     Ok(())
 }
 
+/// Fetch the current working directory the shell is in
 pub fn get_working_dir(rt: &Runtime) -> &Path {
     &rt.working_dir
 }

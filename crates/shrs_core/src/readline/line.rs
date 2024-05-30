@@ -14,6 +14,7 @@ use pino_deref::{Deref, DerefMut};
 use shrs_utils::{CursorBuffer, Location};
 use shrs_vi::{Action, Command, Motion, Parser};
 
+use super::painter::Painter;
 use crate::{
     prelude::{
         BufferHistory, Completer, Completion, CompletionCtx, DefaultMenuState, LineModeSwitchEvent,
@@ -22,8 +23,6 @@ use crate::{
     prompt_content_queue::PromptContentQueue,
     state::States,
 };
-
-use super::painter::Painter;
 
 pub trait Readline {
     fn read_line(&mut self, sh: &mut Shell, states: &mut States) -> String;

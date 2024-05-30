@@ -1,8 +1,9 @@
-use crate::prelude::LineMode;
 /// Vi mode for shrs_line
 use arboard::Clipboard;
 use shrs_utils::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
+
+use crate::prelude::LineMode;
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {

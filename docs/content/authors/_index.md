@@ -13,6 +13,8 @@ draft = false
 # Note: We use quoted keys here.
 [extra.author_pages]
 "aaran-xu" = "authors/aaran-xu.md"
+"nithin-muthukumar" = "authors/aaran-xu.md"
+
 +++
 
 The authors of the blog articles.

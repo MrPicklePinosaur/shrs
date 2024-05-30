@@ -26,10 +26,11 @@ pub struct StartupTime(Instant);
 #[derive(Deref)]
 pub struct PluginMetas(Vec<PluginMeta>);
 
+/// Shell holds systems that require shared state.
 pub struct Shell {
     /// Builtin shell functions that have access to the shell's context
     pub builtins: Builtins,
-    /// The command language
+    /// The Command Language
     pub lang: Box<dyn Lang>,
     pub keybindings: Keybindings,
     pub hooks: Hooks,
@@ -45,13 +46,14 @@ impl Shell {
         self.cmd.run(command);
     }
 
-    // Trigger a hook of given type with payload
+    /// Trigger a hook of given type with a Ctx
     pub fn run_hooks<C: HookCtx>(&self, c: C) {
         self.cmd.run(move |sh: &mut Shell, states: &mut States| {
             let _ = sh.hooks.run(sh, states, &c);
             sh.apply_queue(states);
         })
     }
+    /// Used in core to run hooks, applies queue right away
     pub(crate) fn run_hooks_in_core<C: HookCtx>(&mut self, states: &mut States, c: C) {
         let _ = self.hooks.run(self, states, &c);
         self.apply_queue(states);

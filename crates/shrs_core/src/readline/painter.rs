@@ -11,7 +11,7 @@ use crossterm::{
     terminal::{self, Clear, ScrollUp},
     QueueableCommand,
 };
-use shrs_utils::styled_buf::{line_content_len, StyledBuf};
+use shrs_utils::{line_content_len, StyledBuf};
 use unicode_width::UnicodeWidthStr;
 
 use super::{

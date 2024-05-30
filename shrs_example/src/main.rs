@@ -5,7 +5,7 @@ use std::{
     process::Command,
 };
 
-use shrs::prelude::{styled_buf::StyledBuf, *};
+use shrs::prelude::*;
 use shrs_autocd::AutocdPlugin;
 use shrs_cd_stack::{cd_stack_down, cd_stack_up, CdStackPlugin};
 use shrs_cd_tools::git;

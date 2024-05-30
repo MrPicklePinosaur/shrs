@@ -1,4 +1,9 @@
-pub mod algo;
-pub mod cursor_buffer;
-pub mod macros;
-pub mod styled_buf;
+mod algo;
+mod cursor_buffer;
+mod macros;
+mod styled_buf;
+
+pub use algo::*;
+pub use cursor_buffer::*;
+pub use macros::*;
+pub use styled_buf::*;

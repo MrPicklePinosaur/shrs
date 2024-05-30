@@ -9,12 +9,15 @@ use crossterm::{
     style::{ContentStyle, PrintStyledContent, Stylize},
     QueueableCommand,
 };
-use shrs_utils::styled_buf::StyledBuf;
+use shrs_utils::StyledBuf;
+/// Writer for printing to stdout and stderr
+///
 /// Printing in handlers should be done through `OutputWriter`,
 /// which automatically uses the configured out and err colors.
 /// It also records output in commands so that it can be collected into `CmdOutput`
-/// ```rust
-/// fn hello(mut out: StateMut<OutputWriter>)->Result<()>{
+/// ```
+/// # use shrs_core::prelude::*;
+/// fn hello(mut out: StateMut<OutputWriter>) -> anyhow::Result<()> {
 ///     out.println("Hello")?;
 ///     Ok(())
 /// }
@@ -41,9 +44,12 @@ impl OutputWriter {
             err: String::new(),
         }
     }
-    pub fn begin_collecting(&mut self) {
+
+    pub(crate) fn begin_collecting(&mut self) {
         self.collecting = true;
     }
+
+    /// Prints to stderr and appends a newline character
     pub fn eprint<T: Display>(&mut self, s: T) -> anyhow::Result<()> {
         if self.collecting {
             self.err.push_str(s.to_string().as_str());
@@ -54,12 +60,15 @@ impl OutputWriter {
         self.stderr.flush()?;
         Ok(())
     }
+
+    /// Calls eprint, then prints a newline
     pub fn eprintln<T: Display>(&mut self, s: T) -> anyhow::Result<()> {
         self.eprint(s)?;
         self.eprint("\r\n")?;
         Ok(())
     }
 
+    /// Prints to stdout using out_style for styling.
     pub fn print<T: Display>(&mut self, s: T) -> anyhow::Result<()> {
         if self.collecting {
             self.out.push_str(s.to_string().as_str());
@@ -69,15 +78,19 @@ impl OutputWriter {
         self.stdout.flush()?;
         Ok(())
     }
+    ///Calls print, then prints a newline.
     pub fn println<T: Display>(&mut self, s: T) -> anyhow::Result<()> {
         self.print(s)?;
         self.print("\r\n")?;
         Ok(())
     }
-    pub fn end_collecting(&mut self) -> (String, String) {
+
+    pub(crate) fn end_collecting(&mut self) -> (String, String) {
         self.collecting = false;
         (self.out.drain(..).collect(), self.err.drain(..).collect())
     }
+    /// Prints a `StyledBuf` to stdout.
+    /// If there are multiple lines, if will print \r\n between them.
     pub fn print_buf(&mut self, buf: StyledBuf) -> anyhow::Result<()> {
         let lines = buf.lines();
 

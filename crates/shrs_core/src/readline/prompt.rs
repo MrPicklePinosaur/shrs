@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 
 use crossterm::style::Stylize;
-use shrs_utils::{styled_buf, styled_buf::StyledBuf};
+use shrs_utils::{styled_buf, StyledBuf};
 
 use super::super::state::*;
 use crate::prelude::{top_pwd, Shell, States};

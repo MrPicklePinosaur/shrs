@@ -16,7 +16,6 @@ use log::{info, warn};
 use pino_deref::Deref;
 use shrs_job::JobManager;
 
-use self::menu::DefaultMenuState;
 use crate::{
     commands::{Command, Commands},
     history::History,

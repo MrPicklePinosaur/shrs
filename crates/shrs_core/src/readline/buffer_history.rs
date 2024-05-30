@@ -1,4 +1,5 @@
-use shrs_utils::cursor_buffer::{self, CursorBuffer, Location};
+use anyhow::Result;
+use shrs_utils::{self, CursorBuffer, Location};
 
 pub trait BufferHistory {
     /// Redo
@@ -30,7 +31,7 @@ impl Default for DefaultBufferHistory {
 }
 
 impl DefaultBufferHistory {
-    fn update_buffer(&mut self, cb: &mut CursorBuffer) -> cursor_buffer::Result<()> {
+    fn update_buffer(&mut self, cb: &mut CursorBuffer) -> Result<()> {
         let new_buf = &self.hist.get(self.index).unwrap().0;
         cb.clear();
         cb.insert(Location::Cursor(), new_buf)?;

@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use anyhow::Result;
 use crossterm::style::{Color, ContentStyle};
 use shrs_lang::{Lexer, Token};
-use shrs_utils::styled_buf::StyledBuf;
+use shrs_utils::StyledBuf;
 
 use super::super::prelude::Param;
 use crate::prelude::{Shell, States};

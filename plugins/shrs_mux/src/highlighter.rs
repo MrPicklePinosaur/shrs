@@ -1,4 +1,4 @@
-use shrs::prelude::{styled_buf::StyledBuf, *};
+use shrs::prelude::*;
 
 use crate::MuxState;
 

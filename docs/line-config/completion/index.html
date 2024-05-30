@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" as="font" href="https://mrpicklepinosaur.github.io/shrs/fonts/vendor/jost/jost-v4-latin-regular.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="https://mrpicklepinosaur.github.io/shrs/fonts/vendor/jost/jost-v4-latin-700.woff2"  type="font/woff2" crossorigin>
+
+
+<link rel="stylesheet" href="https://mrpicklepinosaur.github.io/shrs/main.css">
+
+
+
+  
+  
+    
+  
+
+  
+  
+    
+    
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+
+
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+
+	
+
+
+	
+
+<title>Completion | shrs</title>
+<meta name="description" content="The rusty shell toolkit for hackers">
+<link rel="canonical" href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/">
+
+
+  <meta name="twitter:card" content="summary_large_image">
+  
+    <meta name="twitter:image" content="https://mrpicklepinosaur.github.io/shrs//shrs_banner.png">
+  
+  <meta name="twitter:title" content="Completion">
+  <meta name="twitter:description" content="The rusty shell toolkit for hackers">
+  <meta name="twitter:site" content="@">
+  <meta name="twitter:creator" content="@">
+  
+  <meta property="og:title" content="Completion">
+  <meta property="og:description" content="The rusty shell toolkit for hackers">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/">
+
+  
+    <meta property="og:image" content="https://mrpicklepinosaur.github.io/shrs//shrs_banner.png">
+  
+
+  <meta property="og:updated_time" content="2021-05-01T08:00:00+00:00">
+  <meta property="og:site_name" content="Completion">
+
+  
+
+  
+
+  
+  <meta property="article:publisher" content="https://www.facebook.com/">
+  <meta property="article:author" content="https://www.facebook.com/">
+  <meta property="og:locale" content="en_US">
+
+
+
+
+
+  
+
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BreadcrumbList",
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+          {
+            "@type": "ListItem",
+            "position":  1 ,
+            "name": "Home",
+            "item": "https://mrpicklepinosaur.github.io/shrs/"
+          },
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  2 ,
+            "name": "Docs",
+            "item": "https://mrpicklepinosaur.github.io/shrs/docs/"
+          },
+        
+      
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  3 ,
+            "name": "Line Config",
+            "item": "https://mrpicklepinosaur.github.io/shrs/docs/line-config/"
+          },
+        
+      
+        
+        
+        
+        
+        
+        
+        
+        
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  4 ,
+            "name": "Completion",
+            "item": "https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/"
+          },
+        
+      
+    
+  }
+</script>
+
+
+
+
+
+
+  <meta name="theme-color" content="#fff">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://mrpicklepinosaur.github.io/shrs/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://mrpicklepinosaur.github.io/shrs/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://mrpicklepinosaur.github.io/shrs/favicon-16x16.png">
+  
+    <link rel="manifest" href="https://mrpicklepinosaur.github.io/shrs/site.webmanifest" crossorigin>
+  
+
+
+  
+
+</head>
+
+  
+
+<body class="docs single">
+  
+  
+  
+  
+<div class="header-bar fixed-top"></div>
+<header class="navbar fixed-top navbar-expand-md navbar-light">
+	<div class="container">
+		<input class="menu-btn order-0" type="checkbox" id="menu-btn">
+		<label class="menu-icon d-md-none" for="menu-btn"><span class="navicon"></span></label>
+		<a class="navbar-brand order-1 order-md-0 me-auto" href="https://mrpicklepinosaur.github.io/shrs/">shrs</a>
+		<button id="mode" class="btn btn-link order-2 order-md-4" type="button" aria-label="Toggle mode">
+			<span class="toggle-dark"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+			<span class="toggle-light"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
+		</button>
+		<ul class="navbar-nav fork-me order-3 order-md-5">
+			
+				
+					<li class="nav-item">
+						<a class="nav-link" href="https://github.com/MrPicklePinosaur/shrs"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg><span class="ms-2 visually-hidden">GitHub</span></a>
+					</li>
+				
+			
+		</ul>
+		<div class="collapse navbar-collapse order-4 order-md-1">
+			<ul class="navbar-nav main-nav me-auto order-5 order-md-2">
+				
+					
+				
+				
+				
+					
+						<li class="nav-item docs active">
+							<a class="nav-link" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/">book</a>
+						</li>
+					
+						<li class="nav-item">
+							<a class="nav-link" href="https://mrpicklepinosaur.github.io/shrs/blog/">blog</a>
+						</li>
+					
+				
+			</ul>
+			<div class="break order-6 d-md-none"></div>
+			
+				<form class="navbar-form flex-grow-1 order-7 order-md-3">
+					<input id="userinput" class="form-control is-search" type="search" placeholder="Search docs..."
+						aria-label="Search docs..." autocomplete="off">
+					<div id="suggestions" class="shadow bg-white rounded"></div>
+				</form>
+			
+		</div>
+	</div>
+</header>
+
+
+
+  
+<div class="wrap container" role="document">
+  <div class="content">
+    <div class="row flex-xl-nowrap">
+	  
+<div class="col-lg-5 col-xl-4 docs-sidebar">
+	<nav class="docs-links" aria-label="Main navigation">
+			
+			
+			
+			
+					
+					
+					
+							<h3>Getting Started</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/">Introduction</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/example-shell/">Example Shell</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/quick-start/">Quick Start</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Shell Configuration</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/aliases/">Aliases</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/builtins/">Builtin Commands</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/env-vars/">Environment Variables</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/history/">History</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/hooks/">Hooks</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/keybindings/">Keybindings</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/prompt/">Prompt</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/snippets/">Snippets</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/states/">States</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Line Configuration</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link active" href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/">Completion</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/vi/">Vi Mode</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Output and Styling</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/output/">Output</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/style/">Style</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/theme/">Theme</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Plugins</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/introduction/">Introduction</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/using-plugins/">Using Plugins</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/plugin-development/">Developing Plugins</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Contributing</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/introduction/">Introduction</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/">How to Contribute</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/pull-request/">Pull Request Guidelines</a></li>
+							                           
+									<li><a class="docs-link" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/resources/">Resources</a></li>
+							
+					</ul>
+					
+					
+			
+	</nav>
+</div>
+
+	  
+  
+  <nav class="docs-toc d-none d-xl-block col-xl-3" aria-label="Secondary navigation">
+  	<div class="page-links">
+  			<h3>On this page</h3>
+  			<nav id="TableOfContents">
+  					<ul>
+  							
+  							<li><a href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/#rule-based">Rule based</a></li>
+  							
+  									<ul>
+  											
+  											<li><a href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/#let-s-write-completion-rules-for-ls">Let&#x27;s write completion rules for ls</a></li>
+  											
+  									</ul>
+  							
+  							
+  							<li><a href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/#coming-soon-declarative">Coming soon: declarative</a></li>
+  							
+  							
+  					</ul>
+  			</nav>
+  	</div>
+  </nav>
+  
+
+      <main class="docs-content col-lg-11 col-xl-9">
+        <h1>Completion</h1>
+        
+        <h2 id="rule-based">Rule based</h2>
+<p>The autocompletion system works on <strong>rules</strong>, which are pairs of <strong>predicates</strong>
+and <strong>actions</strong>. Predicates help determine when an action is allowed to run,
+and actions return the actual word list for the completion system to display to
+the user.</p>
+<p>There are a variety of commonly used builtin <strong>predicates</strong> to make write
+completions a bit easier, these include <code>cmdname_pred</code> which checks that the
+current completion is for a specific command name and <code>flag_pred</code> which checks
+if we are attempting to complete a flag.</p>
+<p>Similarly, there are also builtin <strong>actions</strong> like <code>cmdname_action</code> which
+returns a list of all executables in the PATH, and <code>filename_action</code> which
+outputs all the files in the current working directory.</p>
+<h3 id="let-s-write-completion-rules-for-ls">Let's write completion rules for ls</h3>
+<p>As an example, let's write completion rules for the popular <strong>ls</strong> command.</p>
+<p>Let's begin by initializing the <code>DefaultCompleter</code>. This comes with a couple of
+sensible rules that most completion engines are expected to have, such as
+autocompleting the command name from PATH:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>shrs::line::completion::*;
+</span><span>
+</span><span style="color:#b48ead;">let mut</span><span> completer = DefaultCompleter::default();
+</span></code></pre>
+<p>Next, we need to create a rule that will provide completion options for each of
+the flags <strong>ls</strong> has. We can do this by writign a rule that first checks if the
+user has already typed the command <strong>ls</strong> using <code>cmdname_pred</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> ls_pred = Pred::new(</span><span style="color:#96b5b4;">cmdname_pred</span><span>(&quot;</span><span style="color:#a3be8c;">ls</span><span>&quot;));
+</span></code></pre>
+<p>However, we also want to complete the flags for <strong>ls</strong>, so we need to also
+check if we are currently typing a flag. We can use the provided <code>flag_pred</code>
+for this. Notice how we can chain <strong>predicates</strong> with <code>.and()</code>:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> ls_pred = Pred::new(</span><span style="color:#96b5b4;">cmdname_pred</span><span>(&quot;</span><span style="color:#a3be8c;">ls</span><span>&quot;)).</span><span style="color:#96b5b4;">and</span><span>(flag_pred);
+</span></code></pre>
+<p>Next we need to write the action that returns all the possible flags. An action
+is just a function that takes in <code>CompletionCtx</code> and returns a list of possible
+completions. <code>Completion</code> holds a bit more metadata that we will not touch for
+now, but if we just wish to return a list of strings to the completer, we can
+use the helper function <code>default_format</code> to generate default options for <code>Completion</code>.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">let</span><span> ls_action = Box::new(|</span><span style="color:#bf616a;">ctx</span><span>: &amp;CompletionCtx| -&gt; Vec&lt;Completion&gt; {
+</span><span>    </span><span style="color:#96b5b4;">default_format</span><span>(vec![&quot;</span><span style="color:#a3be8c;">-a</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>(), &quot;</span><span style="color:#a3be8c;">-l</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>(), &quot;</span><span style="color:#a3be8c;">-h</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>()])
+</span><span>});
+</span></code></pre>
+<p>And with that we can register our first completion rule:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>completer.</span><span style="color:#96b5b4;">register</span><span>(Rule::new(ls_pred, ls_action));
+</span></code></pre>
+<p>In the end, our resulting code looks like:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>shrs::line::completion::*;
+</span><span>
+</span><span style="color:#b48ead;">let mut</span><span> completer = DefaultCompleter::default();
+</span><span>
+</span><span style="color:#b48ead;">let</span><span> ls_pred = Pred::new(</span><span style="color:#96b5b4;">cmdname_pred</span><span>(&quot;</span><span style="color:#a3be8c;">ls</span><span>&quot;)).</span><span style="color:#96b5b4;">and</span><span>(flag_pred);
+</span><span style="color:#b48ead;">let</span><span> ls_action = Box::new(|</span><span style="color:#bf616a;">ctx</span><span>: &amp;CompletionCtx| -&gt; Vec&lt;Completion&gt; {
+</span><span>    </span><span style="color:#96b5b4;">default_format</span><span>(vec![&quot;</span><span style="color:#a3be8c;">-a</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>(), &quot;</span><span style="color:#a3be8c;">-l</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>(), &quot;</span><span style="color:#a3be8c;">-h</span><span>&quot;.</span><span style="color:#96b5b4;">into</span><span>()])
+</span><span>});
+</span><span>
+</span><span>completer.</span><span style="color:#96b5b4;">register</span><span>(Rule::new(ls_pred, ls_action));
+</span></code></pre>
+<h2 id="coming-soon-declarative">Coming soon: declarative</h2>
+<p>The plugin <code>shrs_derive_completion</code> provides a declarative way to create
+completions in the form of a procedual macro. If you are familiar with the
+crate <a href="https://github.com/clap-rs/clap">clap</a> this should feel very familiar.</p>
+
+        
+        
+<div class="docs-navigation d-flex justify-content-between">
+  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+          
+        
+      
+        
+        
+          
+        
+      
+        
+        
+          
+        
+      
+        
+        
+          
+        
+      
+        
+        
+          
+            
+              
+              <a href="https:&#x2F;&#x2F;mrpicklepinosaur.github.io&#x2F;shrs&#x2F;docs&#x2F;shell-config&#x2F;states&#x2F;">
+                <div class="card my-1">
+                  <div class="card-body py-2">
+                    &larr; States
+                  </div>
+                </div>
+              </a>
+            
+            
+            
+          
+        
+      
+        
+        
+          
+        
+      
+    
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+          
+          
+          <a class="ms-auto" href="https:&#x2F;&#x2F;mrpicklepinosaur.github.io&#x2F;shrs&#x2F;docs&#x2F;output-styling&#x2F;output&#x2F;">
+            <div class="card my-1">
+              <div class="card-body py-2">
+                Output &rarr;
+              </div>
+            </div>
+          </a>
+          
+          
+          
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+  
+</div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+
+  
+    
+<footer class="footer text-muted">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8 order-last order-lg-first">
+				<ul class="list-inline">
+					
+						<li class="list-inline-item">Powered by <a href="https://www.getzola.org/">Zola</a> and <a href="https://github.com/aaranxu/adidoks">AdiDoks</a></li>
+					
+				</ul>
+			</div>
+			<div class="col-lg-8 order-first order-lg-last text-lg-end">
+				<ul class="list-inline">
+					
+						
+							<li class="list-inline-item"><a href="https://mrpicklepinosaur.github.io/shrs/privacy-policy/">Privacy</a></li>
+						
+					
+				</ul>
+			</div>
+		</div>
+	</div>
+</footer>
+
+  
+
+  
+<script type="text/javascript" src="https://mrpicklepinosaur.github.io/shrs/js/main.js" defer></script>
+
+  <script type="text/javascript" src="https://mrpicklepinosaur.github.io/shrs/plugins/elasticlunr.min.js" defer></script>
+  <script type="text/javascript" src="https://mrpicklepinosaur.github.io/shrs/search_index.en.js" defer></script>
+  <script type="text/javascript" src="https://mrpicklepinosaur.github.io/shrs/js/search.js" defer></script>
+
+  
+</body>
+</html>

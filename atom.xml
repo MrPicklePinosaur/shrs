@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+	<title>shrs</title>
+	<subtitle>The rusty shell toolkit for hackers</subtitle>
+	<link href="https://mrpicklepinosaur.github.io/shrs/atom.xml" rel="self" type="application/atom+xml"/>
+  <link href="https://mrpicklepinosaur.github.io/shrs/"/>
+	<generator uri="https://www.getzola.org/">Zola</generator>
+	<updated>2024-01-07T00:00:00+00:00</updated>
+	<id>https://mrpicklepinosaur.github.io/shrs/atom.xml</id>
+	<entry xml:lang="en">
+		<title>Introducing shrs</title>
+		<published>2024-01-07T00:00:00+00:00</published>
+		<updated>2024-01-07T00:00:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/blog/introducing-shrs/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/blog/introducing-shrs/</id>
+		<content type="html">&lt;p&gt;shrs is an open source shell toolkit built in Rust. The project aims to be developer friendly and easily customizable.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;raw&#x2F;master&#x2F;media&#x2F;demo.gif&quot; alt=&quot;showcase example of shrs&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;To get started on using shrs, visit the &lt;a href=&quot;http:&#x2F;&#x2F;127.0.0.1:1111&#x2F;docs&#x2F;getting-started&#x2F;introduction&#x2F;&quot;&gt;shrs book&lt;&#x2F;a&gt; on this website. The Getting Started section covers the basic and also includes an example shell.&lt;&#x2F;p&gt;
+&lt;p&gt;The tool is currently under active development. If you would like to contribute to the project, do not hesitate to check out the &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&quot;&gt;GitHub repository&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Builtin Commands</title>
+		<published>2023-12-01T08:00:00+00:00</published>
+		<updated>2023-12-01T08:00:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/shell-config/builtins/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/shell-config/builtins/</id>
+		<content type="html">&lt;p&gt;Builtin Commands are a set of commands that users can call in the shell. &lt;strong&gt;shrs&lt;&#x2F;strong&gt; lets you create custom commands in rust and make them callable from the shell.&lt;&#x2F;p&gt;
+&lt;p&gt;The main difference between builtin commands and external commands is that builtin commands have access to the shell&#x27;s context during execution. This may be useful if you specifically need to query or mutate the shell&#x27;s state. Some uses of this include switching the working directory, calling hooks or accessing the state store.&lt;&#x2F;p&gt;
+&lt;p&gt;There is a set of predefined builtins for certain commands like &lt;code&gt;cd&lt;&#x2F;code&gt; and &lt;code&gt;help&lt;&#x2F;code&gt; in &lt;strong&gt;shrs&lt;&#x2F;strong&gt; to provide some basic functionalities. Builtins are called first after alias resolution so they will shadow other commands. You can see the available builtins by typing&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;help builtins
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;creating-your-own-builtin&quot;&gt;Creating your own Builtin&lt;&#x2F;h2&gt;
+&lt;p&gt;An example of creating a builtin and registering it is provided below.
+Builtins are simply functions that have a required parameter &lt;code&gt;&amp;amp;Vec&amp;lt;String&amp;gt;&lt;&#x2F;code&gt;.
+Other states can also be accessed by adding them to the parameters; see &lt;a href=&quot;..&#x2F;states&#x2F;&quot;&gt;States&lt;&#x2F;a&gt;. Builtins must return &lt;code&gt;Result&amp;lt;CmdOutput&amp;gt;&lt;&#x2F;code&gt; representing the result of the execution.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;fn &lt;&#x2F;span&gt;&lt;span style=&quot;color:#8fa1b3;&quot;&gt;my_builtin&lt;&#x2F;span&gt;&lt;span&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;args&lt;&#x2F;span&gt;&lt;span&gt;: &amp;amp;Vec&amp;lt;String&amp;gt;){
+&lt;&#x2F;span&gt;&lt;span&gt;    Ok(CmdOutput::success())
+&lt;&#x2F;span&gt;&lt;span&gt;}
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Then you can register it like so&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let mut&lt;&#x2F;span&gt;&lt;span&gt; builtins = Builtins::default();
+&lt;&#x2F;span&gt;&lt;span&gt;builtins.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;insert&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;mybuiltin&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;, my_builtin);
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;myshell.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;with_builtins&lt;&#x2F;span&gt;&lt;span&gt;(builtins);
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The builtin can then be run by calling &lt;code&gt;mybuiltin&lt;&#x2F;code&gt;. Any existing builtins of the same name will also be overwritten, so this is a good way to override default builtins with your own version.&lt;&#x2F;p&gt;
+&lt;p&gt;A much more comprehensive example can be found in the &lt;code&gt;shrs&lt;&#x2F;code&gt; examples directory, &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;blob&#x2F;master&#x2F;crates&#x2F;shrs&#x2F;examples&#x2F;custom_builtin.rs&quot;&gt;here&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;Note that we used &lt;code&gt;Builtins::default&lt;&#x2F;code&gt; instead of &lt;code&gt;Builtins::new&lt;&#x2F;code&gt;, it is highly recommended that you use the default builtins since it gives you many essential builtin commands like &lt;code&gt;cd&lt;&#x2F;code&gt; and &lt;code&gt;exit&lt;&#x2F;code&gt;, where &lt;code&gt;Builtins::new&lt;&#x2F;code&gt; gives you literally nothing. So it is much better practice to start with &lt;code&gt;Builtins::default&lt;&#x2F;code&gt; and override the ones you want.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>How to Contribute</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/contributing/how-to-contribute/</id>
+		<content type="html">&lt;p&gt;How you can help out with &lt;strong&gt;shrs&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;issue-tracking&quot;&gt;Issue tracking&lt;&#x2F;h3&gt;
+&lt;p&gt;To see current feature status and what would needs to be done, look at the github actions kanban&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;users&#x2F;MrPicklePinosaur&#x2F;projects&#x2F;1&#x2F;views&#x2F;1&quot;&gt;shrs_lib: general project tasks&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;users&#x2F;MrPicklePinosaur&#x2F;projects&#x2F;2&#x2F;views&#x2F;1&quot;&gt;shrs_line: readline related tasks&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;It is also helpful to fix &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;issues&quot;&gt;open issues&lt;&#x2F;a&gt;. If you are a new contributor you can use the &lt;code&gt;good first issue&lt;&#x2F;code&gt; label to filter issues.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;create-an-issue&quot;&gt;Create an issue&lt;&#x2F;h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;issues&#x2F;new?template=bug_report.md&quot;&gt;Bug report&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;issues&#x2F;new?template=feature_request.md&quot;&gt;Feature request&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;issues&#x2F;new?template=docs.md&quot;&gt;Documentation improvement&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Introduction</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/introduction/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/contributing/introduction/</id>
+		<content type="html">&lt;p&gt;Firstly, thanks for taking the time to contribute to &lt;strong&gt;shrs&lt;&#x2F;strong&gt;! This page will
+go over starting steps to get you ready to create your first PR!.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;&#x2F;h2&gt;
+&lt;p&gt;Since &lt;strong&gt;shrs&lt;&#x2F;strong&gt; is a rust project, you should have a working rust development
+environment. You can get started with installing rust by using
+&lt;a href=&quot;https:&#x2F;&#x2F;rustup.rs&#x2F;&quot;&gt;rustup&lt;&#x2F;a&gt; - the rust toolchain installer. You should also
+install the nightly rust toolchain as some parts of the developer workflow
+depends on nightly versions of rust tools.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;shrs&lt;&#x2F;strong&gt; uses &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;casey&#x2F;just&quot;&gt;just&lt;&#x2F;a&gt; as it&#x27;s command runner.
+Install it in whatever method suitable for your system.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;build-the-example&quot;&gt;Build the example&lt;&#x2F;h2&gt;
+&lt;p&gt;First we will get an example build of &lt;strong&gt;shrs&lt;&#x2F;strong&gt; up and running to take a tour of
+all the features it offers.&lt;&#x2F;p&gt;
+&lt;p&gt;Clone the repository and enter the project directory:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sh&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-sh &quot;&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;git&lt;&#x2F;span&gt;&lt;span&gt; clone https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs.git
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;cd&lt;&#x2F;span&gt;&lt;span&gt; shrs
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;There are a couple of special git hooks that are run on commit that or
+especially for developers. These git hooks do things like lint your code and
+format it. You can install them with:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sh&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-sh &quot;&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;just&lt;&#x2F;span&gt;&lt;span&gt; devsetup
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now to run the example shell&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sh&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-sh &quot;&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;just
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;You should now be throw into the example &lt;strong&gt;shrs&lt;&#x2F;strong&gt; shell, which shows off a good
+number of the features &lt;strong&gt;shrs&lt;&#x2F;strong&gt; offers. Take some time to explore what the
+shell is capable of. You can also examine &lt;code&gt;shrs_example&#x2F;src&#x2F;main.rs&lt;&#x2F;code&gt; to see the
+actual configuration.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;build-your-own-shell&quot;&gt;Build your own shell&lt;&#x2F;h2&gt;
+&lt;p&gt;Next is to use &lt;strong&gt;shrs&lt;&#x2F;strong&gt; as it was intended, as a library. To get started with
+creating your own shell, take a look at the &lt;a href=&quot;..&#x2F;getting-started&#x2F;quick-start&quot;&gt;Quick Start&lt;&#x2F;a&gt; section.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;tackle-an-issue&quot;&gt;Tackle an issue&lt;&#x2F;h2&gt;
+&lt;p&gt;Once you are decently familiar with the &lt;strong&gt;shrs&lt;&#x2F;strong&gt; API, you can try to tackle an
+actual issue and open your first PR! See the open issues, especially those
+marked &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;labels&#x2F;good%20first%20issue&quot;&gt;good first issue&lt;&#x2F;a&gt;.
+If you have any questions, don&#x27;t be afraid to reach out for help!&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Pull Request Guidelines</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/pull-request/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/contributing/pull-request/</id>
+		<content type="html">&lt;p&gt;Branch name should be in the format &lt;code&gt;your-name&#x2F;description&lt;&#x2F;code&gt;. For example, if I were to implement tab completion I would create a branch called &lt;code&gt;pinosaur&#x2F;tab-completion&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Resources</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/contributing/resources/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/contributing/resources/</id>
+		<content type="html">&lt;h2 id=&quot;related-projects&quot;&gt;RELATED PROJECTS&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;nuta&#x2F;nsh&quot;&gt;nsh&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;nushell&#x2F;nushell&quot;&gt;nushell&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;hiking90&#x2F;rushell&quot;&gt;rushell&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;resources&quot;&gt;RESOURCES&lt;&#x2F;h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;tokenrove&#x2F;build-your-own-shell&quot;&gt;build your own shell&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;pubs.opengroup.org&#x2F;onlinepubs&#x2F;9699919799&#x2F;utilities&#x2F;V3_chap02.html#tag_18_10&quot;&gt;grammar for posix shell&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;nixpulvis&#x2F;oursh&quot;&gt;oursh: rust shell using lalrpop&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;www.gnu.org&#x2F;software&#x2F;libc&#x2F;manual&#x2F;html_node&#x2F;Implementing-a-Shell.html&quot;&gt;gnu: implementing a job control shell&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;blog.nelhage.com&#x2F;2009&#x2F;12&#x2F;a-brief-introduction-to-termios&#x2F;&quot;&gt;A Brief Introduction to termios&lt;&#x2F;a&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Output</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/output/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/output-styling/output/</id>
+		<content type="html">&lt;p&gt;Printing to stdout can be done in shrs using &lt;code&gt;println!()&lt;&#x2F;code&gt;, however it is recommended to use &lt;code&gt;ctx.out&lt;&#x2F;code&gt; whenever possible.
+It provides various print functions that will automatically use the configured out and error colors. Output is also recorded
+and can be accessed by hooks through the AfterCommandCtx. &lt;code&gt;print_buf&lt;&#x2F;code&gt; is also provided to allow users to easily output &lt;code&gt;StyledBuf&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span&gt;ctx.out.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;println&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;Hello&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;)?;
+&lt;&#x2F;span&gt;&lt;span&gt;ctx.out.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;print_buf&lt;&#x2F;span&gt;&lt;span&gt;(styled_buf!(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;Hello&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;red&lt;&#x2F;span&gt;&lt;span&gt;()))?;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Style</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/style/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/output-styling/style/</id>
+		<content type="html">&lt;p&gt;Shrs uses Crossterm internally to manipulate and output to the terminal.
+There are various parts of the terminal that shrs allows you to style in a custom manner, such as the prompt and output from builtins and plugins.
+Styling text in shrs involves using the &lt;code&gt;StyledBuf&lt;&#x2F;code&gt; struct which is able to hold text where every character has its own style.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;code&gt;StyledBuf&lt;&#x2F;code&gt; can be easily created using the &lt;code&gt;styled_buf!&lt;&#x2F;code&gt; macro:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span&gt;styled_buf!(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;user&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;bold&lt;&#x2F;span&gt;&lt;span&gt;(),&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;&amp;gt;&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;green&lt;&#x2F;span&gt;&lt;span&gt;())
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The macro accepts any number of arguments. The only constraints are that the arguments must either implement the &lt;code&gt;Display&lt;&#x2F;code&gt; trait, be a &lt;code&gt;StyledContent&lt;&#x2F;code&gt; or a &lt;code&gt;StyledBuf&lt;&#x2F;code&gt;.
+It&#x27;s very easy to create styled segments using &lt;code&gt;crossterm::Stylize&lt;&#x2F;code&gt; which is exposed through shrs.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Theme</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/output-styling/theme/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/output-styling/theme/</id>
+		<content type="html">&lt;p&gt;Shrs provides a theme struct to allow you to change styles that are used internally such as out_style or completion_style.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span&gt;myshell.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;with_theme&lt;&#x2F;span&gt;&lt;span&gt;(Theme {
+&lt;&#x2F;span&gt;&lt;span&gt;    out_style: ContentStyle::new().&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;red&lt;&#x2F;span&gt;&lt;span&gt;(),
+&lt;&#x2F;span&gt;&lt;span&gt;    ..Default::default()
+&lt;&#x2F;span&gt;&lt;span&gt;})
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Introduction</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/introduction/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/plugins/introduction/</id>
+		<content type="html">&lt;p&gt;Plugins are a way to add addition functionality that may be opinionated or heavy to &lt;strong&gt;shrs&lt;&#x2F;strong&gt; in a modular fashion. &lt;strong&gt;shrs&lt;&#x2F;strong&gt; comes with a couple officially maintained plugins, which you can see in the &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;tree&#x2F;master&#x2F;plugins&quot;&gt;plugins directory&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;Some examples of official plugins are:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;shrs_output_capture&lt;&#x2F;code&gt;: add a builtin called &lt;code&gt;again&lt;&#x2F;code&gt; that will output the result of the previous command&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;shrs_prompt_builder&lt;&#x2F;code&gt;: configure your prompt using the builder pattern&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Developing Plugins</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/plugin-development/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/plugins/plugin-development/</id>
+		<content type="html">&lt;p&gt;Making a plugin is as easy as implementing the &lt;code&gt;Plugin&lt;&#x2F;code&gt; trait. The &lt;code&gt;Plugin&lt;&#x2F;code&gt;
+trait has an &lt;code&gt;init&lt;&#x2F;code&gt; method that is ran when the plugin is registered with the
+&lt;code&gt;with_plugin&lt;&#x2F;code&gt; function. In the &lt;code&gt;init&lt;&#x2F;code&gt; method, you get the &lt;code&gt;shell&lt;&#x2F;code&gt; as context
+and are free to modify it however you please, be it registering additional
+hooks are adding a new builtin function.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;use &lt;&#x2F;span&gt;&lt;span&gt;shrs::plugin::Plugin;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;pub struct &lt;&#x2F;span&gt;&lt;span&gt;MyPlugin;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;impl &lt;&#x2F;span&gt;&lt;span&gt;Plugin &lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;for &lt;&#x2F;span&gt;&lt;span&gt;PlugPlugin {
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;fn &lt;&#x2F;span&gt;&lt;span style=&quot;color:#8fa1b3;&quot;&gt;init&lt;&#x2F;span&gt;&lt;span&gt;(&amp;amp;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;self&lt;&#x2F;span&gt;&lt;span&gt;, &lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;shell&lt;&#x2F;span&gt;&lt;span&gt;: &amp;amp;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;mut &lt;&#x2F;span&gt;&lt;span&gt;shrs::ShellConfig) {
+&lt;&#x2F;span&gt;&lt;span&gt;        shell.hooks.after_command.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;register&lt;&#x2F;span&gt;&lt;span&gt;(after_command_hook);
+&lt;&#x2F;span&gt;&lt;span&gt;        shell.builtins.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;insert&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;my_builtin&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;, MyBuiltin::new());
+&lt;&#x2F;span&gt;&lt;span&gt;        shell.state.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;insert&lt;&#x2F;span&gt;&lt;span&gt;(MyState::new());
+&lt;&#x2F;span&gt;&lt;span&gt;    }
+&lt;&#x2F;span&gt;&lt;span&gt;}
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;You can see some of the official maintained plugins for an example on how
+plugins are created.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Using Plugins</title>
+		<published>2021-05-01T18:10:00+00:00</published>
+		<updated>2021-05-01T18:10:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/plugins/using-plugins/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/plugins/using-plugins/</id>
+		<content type="html">&lt;p&gt;Plugins are just regular crates that can be obtained from
+&lt;a href=&quot;https:&#x2F;&#x2F;crates.io&#x2F;&quot;&gt;crates.io&lt;&#x2F;a&gt;. Most &lt;strong&gt;shrs&lt;&#x2F;strong&gt; related crates have the prefix
+&lt;code&gt;shrs_&lt;&#x2F;code&gt;. Simply add the crate to your project. To make &lt;strong&gt;shrs&lt;&#x2F;strong&gt; use the plugin,
+it&#x27;s as using as using &lt;code&gt;with_plugin&lt;&#x2F;code&gt; when constructing the shell and pass in
+the plugin.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; myshell = ShellBuilder::default()
+&lt;&#x2F;span&gt;&lt;span&gt;    .&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;with_plugin&lt;&#x2F;span&gt;&lt;span&gt;(OutputCapturePlugin)
+&lt;&#x2F;span&gt;&lt;span&gt;    .&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;build&lt;&#x2F;span&gt;&lt;span&gt;()
+&lt;&#x2F;span&gt;&lt;span&gt;    .&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;unwrap&lt;&#x2F;span&gt;&lt;span&gt;();
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;myshell.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;run&lt;&#x2F;span&gt;&lt;span&gt;();
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Example Shell</title>
+		<published>2021-05-01T08:20:00+00:00</published>
+		<updated>2021-05-01T08:20:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/example-shell/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/getting-started/example-shell/</id>
+		<content type="html">&lt;p&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&#x2F;tree&#x2F;master&#x2F;shrs_example&quot;&gt;shrs_example&lt;&#x2F;a&gt;
+is an example shell that makes use of the default features provided by
+&lt;strong&gt;shrs&lt;&#x2F;strong&gt;. If you want a working shell quickly, you can simply install the
+binary directly. However, the goal of &lt;strong&gt;shrs&lt;&#x2F;strong&gt; is to provide a fully
+customizable shell that you can build yourself in rust, it is recommended that
+you make your own project, which you can learn about in the Quick Start section.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Quick Start</title>
+		<published>2021-05-01T08:20:00+00:00</published>
+		<updated>2021-05-01T08:20:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/quick-start/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/getting-started/quick-start/</id>
+		<content type="html">&lt;h3 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;&#x2F;h3&gt;
+&lt;p&gt;To get started with using &lt;strong&gt;shrs&lt;&#x2F;strong&gt;, you need a functioning Rust installation.
+To install Rust, you can use the &lt;a href=&quot;https:&#x2F;&#x2F;rustup.rs&#x2F;&quot;&gt;rustup&lt;&#x2F;a&gt;, the Rust
+toolchain installer. You will also need &lt;strong&gt;cargo&lt;&#x2F;strong&gt;, the Rust package manager.&lt;&#x2F;p&gt;
+&lt;p&gt;Finally, you will need some basic knowledge on how &lt;strong&gt;Rust&lt;&#x2F;strong&gt; works, if you are
+still new to &lt;strong&gt;Rust&lt;&#x2F;strong&gt;, you can consult the &lt;a href=&quot;https:&#x2F;&#x2F;doc.rust-lang.org&#x2F;stable&#x2F;book&#x2F;&quot;&gt;rust
+book&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;create-cargo-project&quot;&gt;Create Cargo project&lt;&#x2F;h3&gt;
+&lt;p&gt;Create your own shell project using cargo:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sh&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-sh &quot;&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;cargo&lt;&#x2F;span&gt;&lt;span&gt; new &amp;lt;project-name&amp;gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;cd &lt;&#x2F;span&gt;&lt;span&gt;&amp;lt;project-name&amp;gt;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Next, add shrs as a dependency in your &lt;code&gt;Cargo.toml&lt;&#x2F;code&gt;. shrs is still currently in pre-release, so there will be frequent updates. You can use the most recently published version with:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;toml&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-toml &quot;&gt;&lt;code class=&quot;language-toml&quot; data-lang=&quot;toml&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;shrs &lt;&#x2F;span&gt;&lt;span&gt;= { &lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;version &lt;&#x2F;span&gt;&lt;span&gt;= &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;0.0.5&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot; }
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Otherwise, if you wish to be on the bleeding edge, you can depend directly on the master branch (beware that there may be unexpected bugs and breaking API changes on master):&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;toml&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-toml &quot;&gt;&lt;code class=&quot;language-toml&quot; data-lang=&quot;toml&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;shrs &lt;&#x2F;span&gt;&lt;span&gt;= { &lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;git &lt;&#x2F;span&gt;&lt;span&gt;= &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;https:&#x2F;&#x2F;github.com&#x2F;MrPicklePinosaur&#x2F;shrs&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot; }
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h3 id=&quot;building-the-shell&quot;&gt;Building the Shell&lt;&#x2F;h3&gt;
+&lt;p&gt;Next, you can create a basic shell using all of the &lt;strong&gt;shrs&lt;&#x2F;strong&gt; provided defaults with the following:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;use &lt;&#x2F;span&gt;&lt;span&gt;shrs::prelude::*;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;fn &lt;&#x2F;span&gt;&lt;span style=&quot;color:#8fa1b3;&quot;&gt;main&lt;&#x2F;span&gt;&lt;span&gt;() {
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; myshell = ShellBuilder::default()
+&lt;&#x2F;span&gt;&lt;span&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;build&lt;&#x2F;span&gt;&lt;span&gt;()
+&lt;&#x2F;span&gt;&lt;span&gt;        .&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;unwrap&lt;&#x2F;span&gt;&lt;span&gt;();
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;    myshell.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;run&lt;&#x2F;span&gt;&lt;span&gt;();
+&lt;&#x2F;span&gt;&lt;span&gt;}
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Now to run the shell&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sh&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-sh &quot;&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;cargo&lt;&#x2F;span&gt;&lt;span&gt; run
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;From here we can start digging into all the potential configuration and
+extensions that can be applied to &lt;strong&gt;shrs&lt;&#x2F;strong&gt;. See the next section for details.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Introduction</title>
+		<published>2021-05-01T08:00:00+00:00</published>
+		<updated>2021-05-01T08:00:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/getting-started/introduction/</id>
+		<content type="html">&lt;p&gt;Welcome to &lt;strong&gt;shrs&lt;&#x2F;strong&gt;, the toolkit that will help you build and configure your
+own shell in &lt;strong&gt;Rust&lt;&#x2F;strong&gt;!&lt;&#x2F;p&gt;
+&lt;p&gt;First of all &lt;strong&gt;shrs&lt;&#x2F;strong&gt; is NOT a shell, it is a library for YOU to build your own
+shell. It is meant for those that have reached the limits of what can be
+accomplished with just tinkering with the configuration files of pre-existing
+shells and would like to go beyond and add experimental and wild features to
+their own shells.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;quick-start&quot;&gt;Quick Start&lt;&#x2F;h3&gt;
+&lt;p&gt;Get a working shell up and quickly: &lt;a href=&quot;..&#x2F;quick-start&#x2F;&quot;&gt;Quick Start →&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;go-further&quot;&gt;Go further&lt;&#x2F;h3&gt;
+&lt;p&gt;Contributing and Help.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;contributing&quot;&gt;Contributing&lt;&#x2F;h3&gt;
+&lt;p&gt;Find out how to contribute to Doks. &lt;a href=&quot;..&#x2F;..&#x2F;contributing&#x2F;how-to-contribute&#x2F;&quot;&gt;Contributing →&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;help&quot;&gt;Help&lt;&#x2F;h3&gt;
+&lt;p&gt;Get help on Doks. &lt;a href=&quot;..&#x2F;..&#x2F;help&#x2F;faq&#x2F;&quot;&gt;Help →&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Completion</title>
+		<published>2021-05-01T08:00:00+00:00</published>
+		<updated>2021-05-01T08:00:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/line-config/completion/</id>
+		<content type="html">&lt;h2 id=&quot;rule-based&quot;&gt;Rule based&lt;&#x2F;h2&gt;
+&lt;p&gt;The autocompletion system works on &lt;strong&gt;rules&lt;&#x2F;strong&gt;, which are pairs of &lt;strong&gt;predicates&lt;&#x2F;strong&gt;
+and &lt;strong&gt;actions&lt;&#x2F;strong&gt;. Predicates help determine when an action is allowed to run,
+and actions return the actual word list for the completion system to display to
+the user.&lt;&#x2F;p&gt;
+&lt;p&gt;There are a variety of commonly used builtin &lt;strong&gt;predicates&lt;&#x2F;strong&gt; to make write
+completions a bit easier, these include &lt;code&gt;cmdname_pred&lt;&#x2F;code&gt; which checks that the
+current completion is for a specific command name and &lt;code&gt;flag_pred&lt;&#x2F;code&gt; which checks
+if we are attempting to complete a flag.&lt;&#x2F;p&gt;
+&lt;p&gt;Similarly, there are also builtin &lt;strong&gt;actions&lt;&#x2F;strong&gt; like &lt;code&gt;cmdname_action&lt;&#x2F;code&gt; which
+returns a list of all executables in the PATH, and &lt;code&gt;filename_action&lt;&#x2F;code&gt; which
+outputs all the files in the current working directory.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;let-s-write-completion-rules-for-ls&quot;&gt;Let&#x27;s write completion rules for ls&lt;&#x2F;h3&gt;
+&lt;p&gt;As an example, let&#x27;s write completion rules for the popular &lt;strong&gt;ls&lt;&#x2F;strong&gt; command.&lt;&#x2F;p&gt;
+&lt;p&gt;Let&#x27;s begin by initializing the &lt;code&gt;DefaultCompleter&lt;&#x2F;code&gt;. This comes with a couple of
+sensible rules that most completion engines are expected to have, such as
+autocompleting the command name from PATH:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;use &lt;&#x2F;span&gt;&lt;span&gt;shrs::line::completion::*;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let mut&lt;&#x2F;span&gt;&lt;span&gt; completer = DefaultCompleter::default();
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Next, we need to create a rule that will provide completion options for each of
+the flags &lt;strong&gt;ls&lt;&#x2F;strong&gt; has. We can do this by writign a rule that first checks if the
+user has already typed the command &lt;strong&gt;ls&lt;&#x2F;strong&gt; using &lt;code&gt;cmdname_pred&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; ls_pred = Pred::new(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;cmdname_pred&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;ls&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;));
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;However, we also want to complete the flags for &lt;strong&gt;ls&lt;&#x2F;strong&gt;, so we need to also
+check if we are currently typing a flag. We can use the provided &lt;code&gt;flag_pred&lt;&#x2F;code&gt;
+for this. Notice how we can chain &lt;strong&gt;predicates&lt;&#x2F;strong&gt; with &lt;code&gt;.and()&lt;&#x2F;code&gt;:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; ls_pred = Pred::new(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;cmdname_pred&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;ls&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;)).&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;and&lt;&#x2F;span&gt;&lt;span&gt;(flag_pred);
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Next we need to write the action that returns all the possible flags. An action
+is just a function that takes in &lt;code&gt;CompletionCtx&lt;&#x2F;code&gt; and returns a list of possible
+completions. &lt;code&gt;Completion&lt;&#x2F;code&gt; holds a bit more metadata that we will not touch for
+now, but if we just wish to return a list of strings to the completer, we can
+use the helper function &lt;code&gt;default_format&lt;&#x2F;code&gt; to generate default options for &lt;code&gt;Completion&lt;&#x2F;code&gt;.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; ls_action = Box::new(|&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;ctx&lt;&#x2F;span&gt;&lt;span&gt;: &amp;amp;CompletionCtx| -&amp;gt; Vec&amp;lt;Completion&amp;gt; {
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;default_format&lt;&#x2F;span&gt;&lt;span&gt;(vec![&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-a&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;(), &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-l&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;(), &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-h&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;()])
+&lt;&#x2F;span&gt;&lt;span&gt;});
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;And with that we can register our first completion rule:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span&gt;completer.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;register&lt;&#x2F;span&gt;&lt;span&gt;(Rule::new(ls_pred, ls_action));
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;In the end, our resulting code looks like:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;rust&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-rust &quot;&gt;&lt;code class=&quot;language-rust&quot; data-lang=&quot;rust&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;use &lt;&#x2F;span&gt;&lt;span&gt;shrs::line::completion::*;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let mut&lt;&#x2F;span&gt;&lt;span&gt; completer = DefaultCompleter::default();
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; ls_pred = Pred::new(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;cmdname_pred&lt;&#x2F;span&gt;&lt;span&gt;(&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;ls&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;)).&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;and&lt;&#x2F;span&gt;&lt;span&gt;(flag_pred);
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;let&lt;&#x2F;span&gt;&lt;span&gt; ls_action = Box::new(|&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;ctx&lt;&#x2F;span&gt;&lt;span&gt;: &amp;amp;CompletionCtx| -&amp;gt; Vec&amp;lt;Completion&amp;gt; {
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;default_format&lt;&#x2F;span&gt;&lt;span&gt;(vec![&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-a&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;(), &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-l&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;(), &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;-h&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;into&lt;&#x2F;span&gt;&lt;span&gt;()])
+&lt;&#x2F;span&gt;&lt;span&gt;});
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;completer.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;register&lt;&#x2F;span&gt;&lt;span&gt;(Rule::new(ls_pred, ls_action));
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h2 id=&quot;coming-soon-declarative&quot;&gt;Coming soon: declarative&lt;&#x2F;h2&gt;
+&lt;p&gt;The plugin &lt;code&gt;shrs_derive_completion&lt;&#x2F;code&gt; provides a declarative way to create
+completions in the form of a procedual macro. If you are familiar with the
+crate &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;clap-rs&#x2F;clap&quot;&gt;clap&lt;&#x2F;a&gt; this should feel very familiar.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Vi Mode</title>
+		<published>2021-05-01T08:00:00+00:00</published>
+		<updated>2021-05-01T08:00:00+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/docs/line-config/vi/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/docs/line-config/vi/</id>
+		<content type="html">&lt;p&gt;Prompt editing in vi mode is supported in shrs, however it is currently not configurable. In the future, hopefully custom commands
+and keybindings will be supported.&lt;&#x2F;p&gt;
+</content>
+	</entry>
+	<entry xml:lang="en">
+		<title>Aaran Xu</title>
+		<published>2021-04-01T08:50:45+00:00</published>
+		<updated>2021-04-01T08:50:45+00:00</updated>
+		<link rel="alternate" href="https://mrpicklepinosaur.github.io/shrs/authors/aaran-xu/" type="text/html"/>
+		<id>https://mrpicklepinosaur.github.io/shrs/authors/aaran-xu/</id>
+		<content type="html">&lt;p&gt;Creator of &lt;strong&gt;AdiDoks&lt;&#x2F;strong&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;aaranxu&quot;&gt;@aaranxu&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+	</entry>
+</feed>

@@ -10,7 +10,6 @@ pub mod commands;
 pub mod completion;
 pub mod env;
 pub mod history;
-pub mod hook_ctx;
 pub mod hooks;
 pub mod jobs;
 pub mod keybinding;
@@ -40,8 +39,7 @@ pub mod prelude {
         completion::*,
         env::Env,
         history::*,
-        hook_ctx::*,
-        hooks::{Hooks, *},
+        hooks::{events::*, Hook, HookEventMarker, Hooks, IntoHook},
         jobs::{JobId, JobInfo, Jobs},
         keybinding::*,
         lang::{Lang, PosixLang},
@@ -50,7 +48,7 @@ pub mod prelude {
         prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::{prompt::*, *},
-        shell::{set_working_dir, Runtime, Shell, ShellConfig},
+        shell::{set_working_dir, Runtime, Shell, ShellBuilder, ShellConfig},
         signal::Signals,
         state::*,
         theme::Theme,

@@ -862,7 +862,7 @@ impl Line {
     fn to_normal_mode(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         *states.get_mut::<LineMode>() = LineMode::Normal;
 
-        let hook_states = LineModeSwitchCtx {
+        let hook_states = LineModeSwitchEvent {
             line_mode: LineMode::Normal,
         };
         sh.run_hooks_in_core(states, hook_states);
@@ -872,7 +872,7 @@ impl Line {
     fn to_insert_mode(&self, sh: &mut Shell, states: &mut States) -> anyhow::Result<()> {
         *states.get_mut::<LineMode>() = LineMode::Insert;
 
-        let hook_states = LineModeSwitchCtx {
+        let hook_states = LineModeSwitchEvent {
             line_mode: LineMode::Insert,
         };
         sh.run_hooks_in_core(states, hook_states);

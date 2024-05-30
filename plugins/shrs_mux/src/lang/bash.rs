@@ -64,7 +64,7 @@ impl Lang for BashLang {
             BufReader::new(instance.stderr.as_mut().expect("Failed to open stdout"));
         read_err(&mut out, stderr_reader)?;
 
-        Ok(CmdOutput::new(status))
+        Ok(CmdOutput::from_status(status))
     }
 
     fn name(&self) -> String {

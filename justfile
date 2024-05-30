@@ -32,7 +32,7 @@ test:
     cargo test --workspace 
 
 doc:
-    cargo doc --workspace --all-features --no-deps --open
+    cargo doc --workspace --all-features --no-deps
 
 book:
     cd docs && zola serve

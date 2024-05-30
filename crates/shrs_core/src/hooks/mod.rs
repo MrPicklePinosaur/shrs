@@ -76,7 +76,7 @@ pub struct Hooks {
 }
 
 impl Hooks {
-    /// Initialize the Hooks State struct
+    /// Initialize the Hooks state struct
     pub fn new() -> Self {
         Self {
             hooks: anymap::Map::new(),

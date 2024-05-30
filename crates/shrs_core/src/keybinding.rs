@@ -1,4 +1,26 @@
 //! Keybinding system
+//!
+//! Keybindings allow you to register certain sequences of keys, which upon entry will trigger a
+//! custom defined keybinding handler. This allows you to define ergonomic shortcuts for a variety
+//! of actions.
+//!
+//! Let's see an example of how we would map the keys `Ctrl+L` to run a command to clear the
+//! screen. The call to [`Keybindings::insert`], takes in a keybinding string (see [`parse_keybinding`] for what is a valid keybinding string), a description, and a keybinding handler function.
+//! ```
+//! # use shrs_core::prelude::*;
+//! let mut bindings = Keybindings::new();
+//!
+//! bindings
+//!     .insert("C-l", "Clear the screen", || -> anyhow::Result<()> {
+//!         std::process::Command::new("clear")
+//!             .spawn()
+//!             .expect("Couldn't clear screen");
+//!         Ok(())
+//!     })
+//!     .unwrap();
+//!
+//! let myshell = ShellBuilder::default().with_keybindings(bindings);
+//! ```
 
 use std::{collections::HashMap, marker::PhantomData};
 
@@ -12,12 +34,14 @@ use crate::{
     prelude::{Shell, States},
 };
 
-/// Implement this trait to define your own keybinding system
+/// Shell state containing registered keybindings
 pub struct Keybindings {
-    pub bindings: HashMap<KeyEvent, Box<dyn Keybinding>>,
-    pub info: HashMap<String, String>,
+    bindings: HashMap<KeyEvent, Box<dyn Keybinding>>,
+    info: HashMap<String, String>,
 }
+
 impl Keybindings {
+    /// Initialize the Keybindings state struct
     pub fn new() -> Self {
         Self {
             bindings: HashMap::new(),
@@ -25,6 +49,11 @@ impl Keybindings {
         }
     }
 
+    /// Insert a new keybinding and handler
+    ///
+    /// Takes in a keybinding string, which will be parsed by [`parse_keybinding`], a description
+    /// for the keybinding, and a keybinding handler function. Multiple keybinding handlers for
+    /// the same keybinding can be registered, and all will be evaluated
     pub fn insert<I, K: Keybinding + 'static>(
         &mut self,
         key: &str,
@@ -38,17 +67,22 @@ impl Keybindings {
         Ok(())
     }
 
-    /// Return true indicates that event was handled
+    /// Attempt to evaluate any registered keybindings
+    ///
+    /// Return true indicates that some event was handled.
     pub fn handle_key_event(&self, sh: &Shell, states: &States, key_event: KeyEvent) -> bool {
+        let mut handled = false;
         for (k, v) in self.bindings.iter() {
             if key_event == *k {
                 v.run(sh, states).unwrap();
-                return true;
+                handled = true;
             }
         }
-        return false;
+        return handled;
     }
 
+    /// Get all the keybindings and their respective descriptions
+    // TODO, would be nice to return an iterator
     pub fn get_info(&self) -> &HashMap<String, String> {
         &self.info
     }
@@ -66,6 +100,35 @@ pub enum BindingFromStrError {
 }
 
 /// Parse a keybinding from a keybinding string
+///
+/// This function allows us to represent key combinations in terms of strings. You can also include modifier keys (such as control and shift). The supported modifiers are
+///
+/// |Modifier|Usage|
+/// |---|---|
+/// |Shift|"S" or "Shift"|
+/// |Alt|"A" or "Alt"|
+/// |Control|"C" or "Ctrl"|
+/// |Super|"Super"|
+/// |Meta|"M" or "Meta"|
+///
+/// Furthermore, there are also some keys that are hard to represent in a string, so we use a special string to denote them
+///
+/// |Key|Usage|
+/// |---|---|
+/// |Space|"\<space>"|
+/// |Backspace|"\<backspace>"|
+/// |Escape|"\<esc>"|
+/// |Enter|"\<enter>"|
+/// |Tab|"\<tab>"|
+///
+/// Some example keybinding strings include
+///
+/// |Meaning|Usage|
+/// |---|---|
+/// |Control + Alt + q|"C-A-q"|
+/// |Super + Space|"Super-\<space>"|
+/// |Alt + Tab|"A-\<tab>"|
+///
 pub fn parse_keybinding(s: &str) -> Result<KeyEvent, BindingFromStrError> {
     let mut parts = s.split('-').collect::<Vec<_>>();
 
@@ -178,7 +241,7 @@ mod tests {
     // }
 }
 
-/// Implement this trait to define your own keybinding command
+/// Keybinding handler function
 pub trait Keybinding {
     fn run(&self, sh: &Shell, states: &States) -> Result<()>;
 }
@@ -244,6 +307,7 @@ macro_rules! impl_into_keybinding {
         }
     }
 }
+
 impl_keybinding!();
 impl_into_keybinding!();
 all_the_tuples!(impl_keybinding, impl_into_keybinding);

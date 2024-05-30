@@ -1,20 +1,18 @@
+//! Hook definitions that are emitted by the shell
+
 use std::{path::PathBuf, process::ExitStatus, time::Duration};
 
-use shrs_core_macros::HookCtx;
-
-use crate::prelude::CmdOutput;
-
-pub trait HookCtx: 'static + std::marker::Send + std::marker::Sync {}
+use crate::prelude::{CmdOutput, HookEvent, HookEventMarker};
 
 /// Runs when the shell starts up
-#[derive(HookCtx)]
+#[derive(HookEvent)]
 pub struct StartupCtx {
     /// How long it took the shell to startup
     pub startup_time: Duration,
 }
 
 /// Runs before a command is executed
-#[derive(HookCtx)]
+#[derive(HookEvent)]
 pub struct BeforeCommandCtx {
     /// Literal command entered by user
     pub raw_command: String,
@@ -22,7 +20,8 @@ pub struct BeforeCommandCtx {
     pub command: String,
 }
 
-#[derive(HookCtx)]
+/// Runs after a command has completed
+#[derive(HookEvent)]
 pub struct AfterCommandCtx {
     /// The command that was ran
     pub command: String,
@@ -31,18 +30,20 @@ pub struct AfterCommandCtx {
 }
 
 /// Runs when a command not found error is received
-#[derive(HookCtx)]
+#[derive(HookEvent)]
 pub struct CommandNotFoundCtx {}
 
 /// Runs when the current working directory is modified
-#[derive(HookCtx)]
+#[derive(HookEvent)]
 pub struct ChangeDirCtx {
     pub old_dir: PathBuf,
     pub new_dir: PathBuf,
 }
 
 /// Runs when a job is completed
-#[derive(HookCtx)]
+///
+/// Multiple jobs may have completed at the same time so a vector of exit statuses is returned
+#[derive(HookEvent)]
 pub struct JobExitCtx {
     pub exit_statuses: Vec<ExitStatus>,
 }

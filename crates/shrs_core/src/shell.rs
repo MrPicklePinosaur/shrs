@@ -46,13 +46,13 @@ impl Shell {
     }
 
     // Trigger a hook of given type with payload
-    pub fn run_hooks<C: HookCtx>(&self, c: C) {
+    pub fn run_hooks<C: HookEventMarker>(&self, c: C) {
         self.cmd.run(move |sh: &mut Shell, states: &mut States| {
             let _ = sh.hooks.run(sh, states, &c);
             sh.apply_queue(states);
         })
     }
-    pub(crate) fn run_hooks_in_core<C: HookCtx>(&mut self, states: &mut States, c: C) {
+    pub(crate) fn run_hooks_in_core<C: HookEventMarker>(&mut self, states: &mut States, c: C) {
         let _ = self.hooks.run(self, states, &c);
         self.apply_queue(states);
     }
@@ -418,7 +418,9 @@ fn run_shell(
             }
         }
         let (out, err) = states.get_mut::<OutputWriter>().end_collecting();
-        cmd_output.set_output(out, err);
+        cmd_output.stdout(out);
+        cmd_output.stderr(err);
+
         sh.run_hooks_in_core(
             states,
             AfterCommandCtx {

@@ -3,27 +3,27 @@
 use crossterm::event::KeyEvent;
 
 use super::LineMode;
-use crate::prelude::HookCtx;
+use crate::prelude::{HookEvent, HookEventMarker};
 
 /// Runs whenever the current mode of the line changes
-#[derive(HookCtx)]
-pub struct LineModeSwitchCtx {
+#[derive(HookEvent)]
+pub struct LineModeSwitchEvent {
     pub line_mode: LineMode,
 }
 
-#[derive(HookCtx)]
-pub struct ReadEventStartCtx;
+#[derive(HookEvent)]
+pub struct ReadEventStartEvent;
 
-#[derive(HookCtx)]
-pub struct PreRenderCtx {}
+#[derive(HookEvent)]
+pub struct PreRenderEvent {}
 
-#[derive(HookCtx)]
-pub struct PostRenderCtx {}
+#[derive(HookEvent)]
+pub struct PostRenderEvent {}
 
-#[derive(HookCtx)]
-pub struct ReadEventEndCtx;
+#[derive(HookEvent)]
+pub struct ReadEventEndEvent;
 
-#[derive(HookCtx)]
-pub struct OnKeyCtx {
+#[derive(HookEvent)]
+pub struct OnKeyEvent {
     key: KeyEvent,
 }

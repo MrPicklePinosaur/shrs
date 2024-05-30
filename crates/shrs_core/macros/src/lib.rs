@@ -2,7 +2,8 @@ extern crate proc_macro;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(HookCtx)]
+// TODO should this automatically import the HookEvent trait?
+#[proc_macro_derive(HookEvent)]
 pub fn derive_ctx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
@@ -12,7 +13,7 @@ pub fn derive_ctx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     // Generate the implementation of the Ctx trait for the specified type
     let expanded = quote! {
-        impl HookCtx for #type_name {}
+        impl HookEventMarker for #type_name {}
     };
 
     // Return the generated implementation as a TokenStream

@@ -100,7 +100,7 @@ impl Lang for PosixLang {
                 Ok((procs, pgid)) => (procs, pgid),
                 Err(PosixError::CommandNotFound(_)) => {
                     // let _ = cmd.run_hook(CommandNotFoundCtx {});
-                    return Ok(CmdOutput::error_with_status(127));
+                    return Ok(CmdOutput::from_status(127));
                 },
                 _ => return Ok(CmdOutput::error()),
             };

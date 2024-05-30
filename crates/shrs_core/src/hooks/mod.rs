@@ -9,7 +9,7 @@
 //! An event that can be emitted at any time in the shell lifecycle, by either the
 //! shell directly, or as a custom event used in a 3rd party plugin. It is then possible to
 //! register a hook on this event to be ran every time the event occurs.
-//! To define your own event, you must satisfy the [`HookEventMarker`] marker trait. An easy way to
+//! To define your own event, you must satisfy the [`HookEventMarker`] trait. An easy way to
 //! do this is to use the [`HookEvent`] derive macro.
 //! ```
 //! # use shrs_core::prelude::*;

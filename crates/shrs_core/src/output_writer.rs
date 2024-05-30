@@ -1,3 +1,5 @@
+//! Writer for printing to stdout and stderr
+
 use std::{
     fmt::Display,
     io::{stderr, stdout, BufWriter, Write},
@@ -8,6 +10,15 @@ use crossterm::{
     QueueableCommand,
 };
 use shrs_utils::styled_buf::StyledBuf;
+/// Printing in handlers should be done through `OutputWriter`,
+/// which automatically uses the configured out and err colors.
+/// It also records output in commands so that it can be collected into `CmdOutput`
+/// ```rust
+/// fn hello(mut out: StateMut<OutputWriter>)->Result<()>{
+///     out.println("Hello")?;
+///     Ok(())
+/// }
+/// ```
 
 pub struct OutputWriter {
     stdout: BufWriter<std::io::Stdout>,

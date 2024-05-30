@@ -130,17 +130,17 @@ mod tests {
 
     use super::{QueryBuilder, QueryResult};
 
-    #[test]
-    fn basic() {
-        let query = QueryBuilder::default()
-            .files(vec![String::from(".vimrc")])
-            .build()
-            .unwrap();
+    // #[test]
+    // fn basic() {
+    //     let query = QueryBuilder::default()
+    //         .files(vec![String::from(".vimrc")])
+    //         .build()
+    //         .unwrap();
 
-        // TODO make proper test (that works on all dev machines)
-        let path = PathBuf::from("/home/pinosaur");
-        assert!(query.scan(&path).matched);
-    }
+    //     // TODO make proper test (that works on all dev machines)
+    //     let path = PathBuf::from("/home/pinosaur");
+    //     assert!(query.scan(&path).matched);
+    // }
 
     #[derive(Debug, Deserialize, PartialEq, Eq)]
     struct TestParse {

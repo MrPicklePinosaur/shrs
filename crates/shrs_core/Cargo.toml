@@ -38,7 +38,7 @@ shrs_job = { path = "../shrs_job", version = "^0.0.6" }
 shrs_utils = { path = "../shrs_utils", version = "^0.0.6" }
 shrs_lang = { path = "../shrs_lang", version = "^0.0.6" }
 shrs_vi = { path = "../shrs_vi", version = "^0.0.6" }
-shrs_core_macros = { path = "macros", version = "0.1" }
+shrs_core_macros = { path = "macros", version = "^0.0.6" }
 
 
 pino_deref = "0.1"

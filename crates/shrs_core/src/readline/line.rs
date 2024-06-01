@@ -24,11 +24,20 @@ use crate::{
     state::States,
 };
 
+/// [`Readline`] describes an interface to read a line from the user
+///
+/// Implementing this trait allows you to define your own readline if you so choose. The readline
+/// implementation shrs provides is already quite feature-ful with a vi mode, history, syntax
+/// highlighting, tab completion, and more.
+///
+/// However, this I could be helpful if you want to use a third party readline program instead. See
+/// [shrs_reedline](https://github.com/MrPicklePinosaur/shrs_reedline) to use [reedline](https://github.com/nushell/reedline) (from the nushell project) with shrs.
+/// shrs.
 pub trait Readline {
     fn read_line(&mut self, sh: &mut Shell, states: &mut States) -> String;
 }
 
-/// Operating mode of readline
+/// Vi mode of readline
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LineMode {
     /// Vi insert mode
@@ -79,6 +88,7 @@ impl HistoryInd {
 ///Current word cursor is on
 #[derive(Deref, DerefMut)]
 pub struct CurrentWord(String);
+
 /// Line contents that were present before entering history mode
 #[derive(Deref, DerefMut)]
 pub struct SavedLine(String);
@@ -109,7 +119,10 @@ impl LineContents {
     }
 }
 
-/// Configuration for readline
+/// The shrs implementation of the [`Readline`] trait
+///
+/// It is advised to use this default implementation as it follows the shrs design philosophy and
+/// it will integrate much better with the rest of the shell.
 pub struct Line {
     painter: Painter,
 
@@ -300,7 +313,7 @@ impl Line {
         Ok(())
     }
 
-    //Keys that are universal regardless of mode, ex. Enter, Ctrl-c
+    /// Keys that are universal regardless of mode, ex. Enter, Ctrl-c
     fn handle_standard_keys(
         &mut self,
         sh: &Shell,
@@ -428,7 +441,7 @@ impl Line {
 
         if let Some(c) = cur_word_index {
             if let Some(expanded) = states.get::<Snippets>().get(&words[c].to_string()) {
-                //check if we're we're expanding the first word
+                // check if we're we're expanding the first word
                 if expanded.position == InsertPosition::Command {
                     if c != 0 {
                         return Ok(true);

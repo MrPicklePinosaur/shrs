@@ -2,6 +2,7 @@
 //!
 //! Highlighters are handlers that modify the style of the line buffer,
 //! which can be used to provide syntax highlighting.
+
 use std::marker::PhantomData;
 
 use anyhow::Result;
@@ -34,16 +35,16 @@ impl Highlighter for DefaultHighlighter {
     }
 }
 
-/// trait that modifies a StyledBuf inplace and applies a theme to highlight the text
+/// Trait that modifies a [`StyledBuf`] inplace and applies a theme to highlight the text
 ///
 /// Can be used standalone to apply a set of syntax rules
 pub trait SyntaxTheme {
     fn apply(&self, buf: &mut StyledBuf);
 }
 
-/// A highlighter implementation that applies a list of `SyntaxTheme` to the line buffer
+/// A highlighter implementation that applies a list of [`SyntaxTheme`] to the line buffer
 ///
-/// `Syntax Theme` are applied in order, so more general ones should be inserted first.
+/// [`Syntax Theme`] are applied in order, so more general ones should be inserted first.
 pub struct SyntaxHighlighter {
     auto: ContentStyle,
     pub syntax_themes: Vec<Box<dyn SyntaxTheme>>,
@@ -81,6 +82,7 @@ impl Highlighter for SyntaxHighlighter {
         Ok(styled_buf)
     }
 }
+
 /// Implementation of a highlighter for the shrs language.
 ///
 /// Utilizes the shrs parser to parse and highlight various tokens based on their type
@@ -176,9 +178,9 @@ impl SyntaxTheme for ShrsTheme {
         }
     }
 }
+
 /// Implement this trait to define your own highlighter command
 pub trait Highlighter {
-    /// highlight buf
     fn highlight(&self, sh: &Shell, states: &States, buf: &String) -> Result<StyledBuf>;
 }
 
@@ -186,10 +188,12 @@ pub trait IntoHighlighter<Input> {
     type Highlighter: Highlighter;
     fn into_highlighter(self) -> Self::Highlighter;
 }
+
 pub struct FunctionHighlighter<Input, F> {
     f: F,
     marker: PhantomData<fn() -> Input>,
 }
+
 impl<F> Highlighter for FunctionHighlighter<(Shell, String), F>
 where
     for<'a, 'b> &'a F: Fn(&Shell, &String) -> Result<StyledBuf>,
@@ -237,6 +241,7 @@ macro_rules! impl_highlighter {
         }
     }
 }
+
 impl<F> IntoHighlighter<()> for F
 where
     for<'a, 'b> &'a F: Fn(&Shell, &String) -> Result<StyledBuf>,
@@ -250,6 +255,7 @@ where
         }
     }
 }
+
 impl<H: Highlighter> IntoHighlighter<H> for H {
     type Highlighter = H;
 

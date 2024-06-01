@@ -33,7 +33,6 @@ pub fn top_pwd() -> String {
 }
 
 // TODO this is very linux specific, could use crate that abstracts
-// TODO this function is disgusting
 /// Get the username of the current user
 pub fn username() -> anyhow::Result<String> {
     let username = Command::new("whoami").output()?.stdout;
@@ -54,7 +53,7 @@ pub fn hostname() -> anyhow::Result<String> {
     Ok(encoded)
 }
 
-/// Get the current time
-pub fn current_time() {
-    todo!()
-}
+// /// Get the current time
+// pub fn current_time() {
+//     todo!()
+// }

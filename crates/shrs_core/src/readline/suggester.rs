@@ -3,6 +3,7 @@
 //! Suggester is a handler that provides inline suggestions.
 //!
 //! The suggestion is styled using the `suggestion_style` field in `Theme`.
+
 use super::line::LineContents;
 use crate::prelude::{Shell, States};
 

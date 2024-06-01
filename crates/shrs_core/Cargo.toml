@@ -53,6 +53,7 @@ trie-rs = "0.1"
 unicode-width = "0.1"
 arboard = "3.2.0"
 tempfile = "3.9"
+chrono = "0.4"
 
 
 [dev-dependencies]

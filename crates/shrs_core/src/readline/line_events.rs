@@ -10,17 +10,18 @@ pub struct LineModeSwitchEvent {
     pub line_mode: LineMode,
 }
 
-#[derive(HookEvent)]
-pub struct ReadEventStartEvent;
+// #[derive(HookEvent)]
+// pub struct ReadEventStartEvent;
 
-#[derive(HookEvent)]
-pub struct PreRenderEvent {}
+// #[derive(HookEvent)]
+// pub struct PreRenderEvent {}
 
-#[derive(HookEvent)]
-pub struct PostRenderEvent {}
+// #[derive(HookEvent)]
+// pub struct PostRenderEvent {}
 
-#[derive(HookEvent)]
-pub struct ReadEventEndEvent;
+// #[derive(HookEvent)]
+// pub struct ReadEventEndEvent;
+
 /// Alternative for keybinding
 ///
 /// It is recommended that keybinding is used instead

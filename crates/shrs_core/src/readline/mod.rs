@@ -5,13 +5,13 @@
 //! and many more.
 //!
 //! shrs_line has a similar design philosophy to the rest of shrs in that it is also highly
-//! configurable and extensible. Simply construct your own readline and give it to shrs to use.
+//! configurable and extensible. Readline is configurable via [`crate::shell::ShellBuilder`].
 //!
 
 pub mod buffer_history;
 pub mod highlight;
-pub mod line_events;
 pub mod line;
+pub mod line_events;
 pub mod menu;
 pub mod painter;
 pub mod prompt;

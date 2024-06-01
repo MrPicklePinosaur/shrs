@@ -1,4 +1,5 @@
-//! Vi mode for shrs_line
+//! Vi mode implementation
+
 use arboard::Clipboard;
 use shrs_utils::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};

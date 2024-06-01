@@ -1,4 +1,7 @@
 //! General purpose selection menu for shell
+//!
+//! The menu is used to select between multiple choices, most commonly used to select a tab
+//! completion.
 
 use std::{cmp::Ordering, fmt::Display};
 

@@ -3,6 +3,7 @@
 crates=(
     shrs_job
     shrs_utils
+    shrs_core_macros
     shrs_core
     shrs_lang
     shrs_vi

@@ -16,7 +16,7 @@ This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 First add this plugin to your dependencies
 ```toml
-shrs_manpages = { version = "0.0.5" }
+shrs_manpages = { version = "0.0.6" }
 ```
 
 Register your own keybinding with the manpage handler

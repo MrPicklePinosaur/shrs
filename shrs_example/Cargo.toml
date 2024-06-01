@@ -1,6 +1,6 @@
 [package]
 name = "shrs_example"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["MrPicklePinosaur"]
@@ -9,17 +9,17 @@ repository = "https://github.com/MrPicklePinosaur/shrs"
 build = "build.rs"
 
 [dependencies]
-shrs = { path = "../crates/shrs", version = "^0.0.5" }
-shrs_autocd = { path = "../plugins/shrs_autocd", version = "0.0.5" }
-shrs_cd_tools = { path = "../plugins/shrs_cd_tools", version = "0.0.5" }
-shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.5" }
-shrs_run_context = { path = "../plugins/shrs_run_context", version = "0.0.5" }
-shrs_mux = { path = "../plugins/shrs_mux", version = "0.0.5" }
-shrs_cd_stack = { path = "../plugins/shrs_cd_stack", version = "0.0.5" }
-shrs_file_history = { path = "../plugins/shrs_file_history", version = "0.0.5" }
-shrs_file_logger = { path = "../plugins/shrs_file_logger", version = "0.0.5" }
-shrs_rhai = { path = "../plugins/shrs_rhai", version = "0.0.5" }
-shrs_rhai_completion = { path = "../plugins/shrs_rhai_completion", version = "0.0.5" }
+shrs = { path = "../crates/shrs", version = "^0.0.6" }
+shrs_autocd = { path = "../plugins/shrs_autocd", version = "0.0.6" }
+shrs_cd_tools = { path = "../plugins/shrs_cd_tools", version = "0.0.6" }
+shrs_command_timer = { path = "../plugins/shrs_command_timer", version = "0.0.6" }
+shrs_run_context = { path = "../plugins/shrs_run_context", version = "0.0.6" }
+shrs_mux = { path = "../plugins/shrs_mux", version = "0.0.6" }
+shrs_cd_stack = { path = "../plugins/shrs_cd_stack", version = "0.0.6" }
+shrs_file_history = { path = "../plugins/shrs_file_history", version = "0.0.6" }
+shrs_file_logger = { path = "../plugins/shrs_file_logger", version = "0.0.6" }
+shrs_rhai = { path = "../plugins/shrs_rhai", version = "0.0.6" }
+shrs_rhai_completion = { path = "../plugins/shrs_rhai_completion", version = "0.0.6" }
 
 dirs = "5"
 anyhow = "1"

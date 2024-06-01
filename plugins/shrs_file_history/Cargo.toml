@@ -1,6 +1,6 @@
 [package]
 name = "shrs_file_history"
-version = "0.0.5"
+version = "0.0.6"
 description = "File backed history support"
 
 authors.workspace = true
@@ -13,7 +13,7 @@ repository.workspace = true
 
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.5" }
+shrs = { path = "../../crates/shrs", version = "^0.0.6" }
 clap = { version = "4.1", features = ["derive"] }
 thiserror = "1.0.59"
 anyhow = "1.0.82"

@@ -1,6 +1,6 @@
 [package]
 name = "shrs_core"
-version = "0.0.5"
+version = "0.0.6"
 description = "modular library to build your own shell in rust"
 
 authors.workspace = true
@@ -34,11 +34,11 @@ skim = "0.10.4"
 glob = "0.3.1"
 
 
-shrs_job = { path = "../shrs_job", version = "^0.0.5" }
-shrs_utils = { path = "../shrs_utils", version = "^0.0.5" }
-shrs_lang = { path = "../shrs_lang", version = "^0.0.5" }
-shrs_vi = { path = "../shrs_vi", version = "^0.0.5" }
-shrs_core_macros = { path = "macros", version = "0.1" }
+shrs_job = { path = "../shrs_job", version = "^0.0.6" }
+shrs_utils = { path = "../shrs_utils", version = "^0.0.6" }
+shrs_lang = { path = "../shrs_lang", version = "^0.0.6" }
+shrs_vi = { path = "../shrs_vi", version = "^0.0.6" }
+shrs_core_macros = { path = "macros", version = "^0.0.6" }
 
 
 pino_deref = "0.1"
@@ -53,6 +53,7 @@ trie-rs = "0.1"
 unicode-width = "0.1"
 arboard = "3.2.0"
 tempfile = "3.9"
+chrono = "0.4"
 
 
 [dev-dependencies]

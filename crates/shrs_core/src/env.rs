@@ -55,6 +55,13 @@ pub struct Env {
 }
 
 impl Env {
+    /// Create a new environment variable holder
+    pub fn new() -> Self {
+        Env {
+            var_table: HashMap::new(),
+        }
+    }
+
     /// Load environment variables into shrs
     ///
     /// Useful if calling shrs from another shell and some environment variables are already set

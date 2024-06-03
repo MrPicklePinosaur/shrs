@@ -18,7 +18,6 @@ mod macros;
 mod cmd_output;
 mod output_writer;
 pub mod plugin;
-pub mod prompt;
 pub mod prompt_content_queue;
 pub mod readline;
 pub mod shell;
@@ -47,15 +46,14 @@ pub mod prelude {
         lang::{Lang, PosixLang},
         output_writer::OutputWriter,
         plugin::*,
-        prompt::*,
         prompt_content_queue::{PromptContent, PromptContentQueue},
         readline::{
             buffer_history::{BufferHistory, DefaultBufferHistory},
             highlight::{DefaultHighlighter, Highlighter, SyntaxHighlighter, SyntaxTheme},
-            hooks::*,
             line::{Line, LineContents, LineMode, Readline},
+            line_events::*,
             menu::{DefaultMenu, DefaultMenuState, Menu},
-            prompt::Prompt,
+            prompt::*,
             snippet::*,
             suggester::{DefaultSuggester, Suggester},
             vi::*,

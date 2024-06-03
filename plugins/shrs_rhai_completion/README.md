@@ -19,7 +19,7 @@ This also makes generating completions easy since other tools can be easily modi
 First add this plugin to your dependencies
 
 ```toml
-shrs_rhai_completion = { version = "0.0.5" }
+shrs_rhai_completion = { version = "0.0.6" }
 ```
 
 Then include this plugin when initializing shrs

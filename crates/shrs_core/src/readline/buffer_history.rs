@@ -1,3 +1,8 @@
+//! Line buffer history, for undo redo functionality
+//!
+//! The shell uses the stored [`BufferHistory`] in [`States`] to
+//! enable undo redo functionality
+
 use anyhow::Result;
 use shrs_utils::{self, CursorBuffer, Location};
 
@@ -16,6 +21,10 @@ pub trait BufferHistory {
 #[derive(Default)]
 struct HistItem(String, usize);
 
+/// The default [`BufferHistory`] implementation
+///
+/// Maintains a list of changes,
+/// clearing to the end if index is not at the end
 pub struct DefaultBufferHistory {
     index: usize,
     hist: Vec<HistItem>,
@@ -72,6 +81,7 @@ impl BufferHistory for DefaultBufferHistory {
         self.hist.push(HistItem(b, cb.cursor()));
         self.index += 1;
     }
+
     fn clear(&mut self) {
         self.hist.drain(1..);
         self.index = 0;

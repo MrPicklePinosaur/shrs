@@ -1,6 +1,6 @@
 [package]
 name = "shrs_derive_completion"
-version = "0.0.5"
+version = "0.0.6"
 description = "Specify shell completions from derive macro"
 
 authors.workspace = true
@@ -19,7 +19,7 @@ name = "tests"
 path = "tests/test.rs"
 
 [dependencies]
-shrs = { path = "../../crates/shrs", version = "^0.0.5" }
+shrs = { path = "../../crates/shrs", version = "^0.0.6" }
 
 derive_builder = "0.12"
 

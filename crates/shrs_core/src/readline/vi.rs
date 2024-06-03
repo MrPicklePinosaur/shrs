@@ -1,4 +1,5 @@
-/// Vi mode for shrs_line
+//! Vi mode implementation
+
 use arboard::Clipboard;
 use shrs_utils::{CursorBuffer, Location, Result};
 use shrs_vi::{Action, Motion};
@@ -7,7 +8,9 @@ use crate::prelude::LineMode;
 
 /// Extension trait to [CursorBuffer] that enables the execution of vi motions
 pub trait ViCursorBuffer {
+    /// Returns a location in the buffer after a motion is executed
     fn motion_to_loc(&self, motion: Motion) -> Result<Location>;
+    /// Executes a vi action on the buffer, returning the new `LineMode`
     fn execute_vi(&mut self, action: Action) -> Result<LineMode>;
 }
 

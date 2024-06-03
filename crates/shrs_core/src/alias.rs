@@ -30,6 +30,7 @@
 //! [`Alias::from_iter()`], so you must use the [`Alias::set()`] syntax. The below shows how you
 //! can make your ls rainbow only on Fridays:
 //! ```
+//! # use shrs_core::prelude::*;
 //! use chrono::{Datelike, Local, Weekday};
 //!
 //! let mut alias = Alias::new();

@@ -114,11 +114,11 @@ fn main() {
     let mut snippets = Snippets::new(ExpandSnippet::OnSpace);
     snippets.add(
         "gc".to_string(),
-        SnippetInfo::new("git commit -m \"", Position::Command),
+        SnippetInfo::new("git commit -m \"", InsertPosition::Command),
     );
     snippets.add(
         "ga".to_string(),
-        SnippetInfo::new("git add .", Position::Command),
+        SnippetInfo::new("git add .", InsertPosition::Command),
     );
 
     // =-=-= Aliases =-=-=

@@ -3,6 +3,7 @@
 crates=(
     shrs_job
     shrs_utils
+    shrs_core_macros
     shrs_core
     shrs_lang
     shrs_vi
@@ -16,6 +17,7 @@ plugins=(
     shrs_command_timer
     shrs_completion
     shrs_derive_completion
+    shrs_file_history
     shrs_file_logger
     shrs_manpages
     shrs_mux

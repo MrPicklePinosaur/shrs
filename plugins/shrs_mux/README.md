@@ -16,7 +16,7 @@ This is a plugin for [shrs](https://github.com/MrPicklePinosaur/shrs).
 
 First add this plugin to your dependencies
 ```toml
-shrs_mux = { version = "0.0.5" }
+shrs_mux = { version = "0.0.6" }
 ```
 
 Then include this plugin when initializing shrs

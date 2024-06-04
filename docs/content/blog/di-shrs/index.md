@@ -24,7 +24,7 @@ This blog post explores my journey of implementing dependency injection (DI) in 
 
 Traditionally, a direct solution to managing shared states involves using global mutable state. However, this approach introduces several issues, particularly when designing a library. As a consequence, the shrs library had to rely on passing mutable references to states throughout the codebase, resulting in verbose traits in the user-facing API.
 ```rust
-// example of a verbose trait in a handler
+// example of a verbose handler trait
 // sh, ctx and rt represent global state, themselves containing various values
 pub trait BuiltinCmd {
     fn run(
@@ -42,7 +42,11 @@ Moreover, user-defined states were managed using an `AnyMap`, further complicati
 Having prior experience with Bevy, I found the idea of implementing a similar system in SHRS a great idea. The concept of having handlers that resemble systems, with variable parameters and the ability to access requested resources, which is dependency injection.
 
 
-After searching around I found this tutorial [Dependency Injection like Bevy Engine from Scratch](https://promethia-27.github.io/dependency_injection_like_bevy_from_scratch/introductions.html). I was able to quickly adapt the provided code for the various handlers. (Provide explanation of implementation)
+After searching around I found this tutorial, [Dependency Injection like Bevy Engine from Scratch](https://promethia-27.github.io/dependency_injection_like_bevy_from_scratch/introductions.html). I was able to quickly adapt the provided code for the various handlers. The idea is that handlers only need to implement a trait, which can be implemented on Fn with some number of parameters.
+```rust
+
+```
+The trick is to use a macro to implement it for as many parameters as is wanted.
 
 It instantly felt like a great improvement. For example, writing a builtin went from [this](https://github.com/MrPicklePinosaur/shrs/blob/e2f839806d37108120394e3e5cdfad495ce2701c/crates/shrs_core/src/builtin/help.rs) to [this](https://github.com/MrPicklePinosaur/shrs/blob/master/crates/shrs_core/src/builtin/help.rs).
 

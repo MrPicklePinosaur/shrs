@@ -68,30 +68,41 @@ pub struct Prompt {
 impl Prompt {
     /// Constructor for making a [`Prompt`] from two [`PromptFn`
     pub fn from_sides<I, J, R: PromptFn + 'static, L: PromptFn + 'static>(
-        left_prompt: impl IntoPromptFn<I, PromptFn = L>,
-        right_prompt: impl IntoPromptFn<J, PromptFn = R>,
+        prompt_left: impl IntoPromptFn<I, PromptFn = L>,
+        prompt_right: impl IntoPromptFn<J, PromptFn = R>,
     ) -> Self {
         Self {
-            prompt_left: Box::new(left_prompt.into_prompt()),
-            prompt_right: Box::new(right_prompt.into_prompt()),
+            prompt_left: Box::new(prompt_left.into_prompt()),
+            prompt_right: Box::new(prompt_right.into_prompt()),
+        }
+    }
+    pub fn from_left<I, L: PromptFn + 'static>(
+        prompt_left: impl IntoPromptFn<I, PromptFn = L>,
+    ) -> Self {
+        Self {
+            prompt_left: Box::new(prompt_left.into_prompt()),
+            prompt_right: Box::new((|| StyledBuf::empty()).into_prompt()),
+        }
+    }
+    pub fn from_right<I, R: PromptFn + 'static>(
+        prompt_right: impl IntoPromptFn<I, PromptFn = R>,
+    ) -> Self {
+        Self {
+            prompt_left: Box::new((|| StyledBuf::empty()).into_prompt()),
+            prompt_right: Box::new(prompt_right.into_prompt()),
         }
     }
 }
 
 impl Default for Prompt {
     fn default() -> Self {
-        Prompt::from_sides(default_prompt_left, default_prompt_right)
+        Prompt::from_left(default_prompt_left)
     }
 }
 
 /// Left side of bash style default prompt
 fn default_prompt_left() -> StyledBuf {
     styled_buf!(" ", top_pwd().white().bold(), " > ")
-}
-
-/// Right side of bash style default prompt
-fn default_prompt_right() -> StyledBuf {
-    styled_buf!()
 }
 
 pub trait IntoPromptFn<Input> {

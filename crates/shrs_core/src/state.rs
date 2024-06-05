@@ -1,8 +1,10 @@
 //! Globally accessible state store
 //!
-//! States is a collection that holds are shared mutable data
-//! The values within state are accessible in handler using `State` and `StateMut` params
-//! Inserting and removing states can be done using Commands
+//! States is a collection that holds shared mutable data.
+//!
+//! The values within state are accessible in handler using [`State`] and [`StateMut`] params.
+//!
+//! Inserting and removing states can be done using Commands.
 
 use std::{
     any::{Any, TypeId},

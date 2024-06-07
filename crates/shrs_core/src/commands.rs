@@ -23,14 +23,14 @@ use crate::{prelude::Shell, state::States};
 /// Trait automatically implemented for functions of the correct signature.
 /// Runs after handler completes
 pub trait Command: Send + 'static {
-    fn apply(&self, sh: &mut Shell, states: &mut States);
+    fn apply(self: Box<Self>, sh: &mut Shell, states: &mut States);
 }
 
 impl<F> Command for F
 where
-    F: Fn(&mut Shell, &mut States) + Send + 'static,
+    F: FnOnce(&mut Shell, &mut States) + Send + 'static,
 {
-    fn apply(&self, sh: &mut Shell, states: &mut States) {
+    fn apply(self: Box<Self>, sh: &mut Shell, states: &mut States) {
         self(sh, states);
     }
 }

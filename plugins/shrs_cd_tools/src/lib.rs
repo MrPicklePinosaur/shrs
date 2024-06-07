@@ -97,7 +97,6 @@ impl Plugin for DirParsePlugin {
         let modules = HashMap::from_iter([
             (String::from("rust"), rust::module().unwrap()),
             (String::from("node"), node::module().unwrap()),
-            (String::from("git"), git::module().unwrap()),
         ]);
 
         shell.states.insert(DirParseState::new(modules));
@@ -109,7 +108,7 @@ impl Plugin for DirParsePlugin {
 }
 
 /// Default example prompt that displays some information based on language
-pub fn default_prompt(state: &State<DirParseState>, sh: &Shell) -> StyledBuf {
+pub fn default_prompt(state: &DirParseState, sh: &Shell) -> StyledBuf {
     let rust_info: Option<String> = state
         .get_module_metadata::<rust::CargoToml>("rust")
         .map(|cargo_toml| format!("🦀 {} ", cargo_toml.package.edition));

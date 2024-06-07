@@ -1,89 +1,65 @@
 //! Utilities for git repositories
 
-use std::{path::PathBuf, process::Command, str};
+use std::env::current_dir;
 
-use shrs::anyhow;
+use anyhow::Result;
+use git2::Repository;
+use shrs::prelude::*;
 use thiserror::Error;
-
-use crate::query::{Query, QueryBuilder, QueryBuilderError, QueryResult};
-
-#[derive(Debug)]
 pub struct Git {
-    pub branch: String,
+    repository: Option<Repository>,
 }
-
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum GitError {
     #[error("git command failed: {0}")]
     GitError(String),
     #[error("not in git repository")]
     NotGitRepo,
 }
-
-/// Get the top level directory of the git repository
-pub fn root_dir() -> anyhow::Result<PathBuf> {
-    let res = Command::new("git")
-        .args(vec!["rev-parse", "--show-toplevel"])
-        .output()
-        .map_err(|e| Error::GitError(e.to_string()))?;
-
-    Ok(PathBuf::from(str::from_utf8(&res.stdout).unwrap()))
-}
-
-/// Get name of current branch
-pub fn branch() -> anyhow::Result<String> {
-    let res = Command::new("git")
-        .args(vec!["branch", "--show-current"])
-        .output()
-        .map_err(|e| Error::GitError(e.to_string()))?;
-
-    if !res.status.success() {
-        return Err(anyhow::anyhow!(Error::NotGitRepo));
+impl Git {
+    pub fn new() -> Self {
+        Self { repository: None }
     }
+    pub fn discover(&mut self) {
+        self.repository = Repository::discover(current_dir().unwrap()).ok();
+    }
+    pub fn stashes(&mut self) -> Result<usize> {
+        let mut count = 0;
 
-    Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
+        if let Some(repo) = &mut self.repository {
+            repo.stash_foreach(|i, s, o| {
+                count += 1;
+                true
+            })?;
+        } else {
+            return Err(anyhow::anyhow!(GitError::NotGitRepo));
+        }
+        Ok(count)
+    }
+    pub fn is_repo(&self) -> bool {
+        self.repository.is_some()
+    }
+    pub fn current_branch(&mut self) {}
+    pub fn commits_ahead() {}
+    pub fn commits_behind() {}
 }
-pub fn commits_behind_remote() -> anyhow::Result<u32> {
-    let res = Command::new("git")
-        .args(vec![
-            "rev-list",
-            "--right-only",
-            "--count",
-            "HEAD...@{upstream}",
-        ])
-        .output()
-        .map_err(|e| Error::GitError(e.to_string()))?;
-    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
-}
-pub fn commits_ahead_remote() -> anyhow::Result<u32> {
-    let res = Command::new("git")
-        .args(vec![
-            "rev-list",
-            "--left-only",
-            "--count",
-            "HEAD...@{upstream}",
-        ])
-        .output()
-        .map_err(|e| Error::GitError(e.to_string()))?;
-    Ok(str::from_utf8(&res.stdout).unwrap().trim().parse::<u32>()?)
-}
+pub struct GitPlugin;
+impl Plugin for GitPlugin {
+    fn init(&self, config: &mut ShellConfig) -> anyhow::Result<()> {
+        config.states.insert(Git::new());
+        config.hooks.insert(
+            |mut git: StateMut<Git>, sh: &Shell, _: &StartupCtx| -> Result<()> {
+                git.discover();
+                Ok(())
+            },
+        );
+        config.hooks.insert(
+            |mut git: StateMut<Git>, sh: &Shell, _: &ChangeDirCtx| -> Result<()> {
+                git.discover();
+                Ok(())
+            },
+        );
 
-pub fn latest_commit_summary() -> anyhow::Result<String> {
-    let res = Command::new("git")
-        .args(vec!["show", "--pretty=%s", "--no-patch", "HEAD"])
-        .output()
-        .map_err(|e| Error::GitError(e.to_string()))?;
-    Ok(str::from_utf8(&res.stdout).unwrap().trim().to_string())
-}
-
-fn metadata_fn(query_res: &mut QueryResult) -> anyhow::Result<()> {
-    query_res.add_metadata(Git { branch: branch()? });
-
-    Ok(())
-}
-
-pub fn module() -> Result<Query, QueryBuilderError> {
-    QueryBuilder::default()
-        .metadata_fn(Box::new(metadata_fn))
-        .build()
+        Ok(())
+    }
 }

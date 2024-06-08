@@ -15,7 +15,9 @@ pub use lexer::{Lexer, Token, RESERVED_WORDS};
 
 pub mod ast;
 
-// pub mod process;
-// pub mod eval;
+mod eval;
+pub use eval::eval;
 
-// pub mod process;
+
+mod error;
+pub use error::PosixError;

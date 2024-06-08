@@ -2,7 +2,6 @@
 //!
 //!
 
-mod eval2;
 mod posix_lang;
 pub use posix_lang::PosixLang;
 

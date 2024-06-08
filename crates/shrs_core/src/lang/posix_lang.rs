@@ -1,37 +1,12 @@
 use shrs_job::{initialize_job_control, JobManager};
-use shrs_lang::{Lexer, Parser, ParserError, Token};
+use shrs_lang::{Lexer, Parser, ParserError, Token, PosixError};
 use thiserror::Error;
 
-use super::{eval2, Lang};
+use super::Lang;
 use crate::{
     prelude::{CmdOutput, LineContents, States},
     shell::Shell,
 };
-
-// use crate::eval::{command_output, eval_command},
-
-#[derive(Error, Debug)]
-#[allow(dead_code)]
-pub enum PosixError {
-    /// Error when attempting file redirection
-    #[error("Redirection Error: {0}")]
-    Redirect(std::io::Error),
-    /// Error emitted by hook
-    #[error("Hook Error:")]
-    Hook(),
-    /// Issue parsing command
-    #[error("Parse failed: {0}")]
-    Parse(ParserError),
-    /// Issue evaluating command
-    #[error("Failed evaluating command: {0}")]
-    Eval(anyhow::Error),
-    /// Command not found
-    #[error("Command not found: {0}")]
-    CommandNotFound(String),
-    /// Job manager specific error
-    #[error("Job manager error: {0}")]
-    Job(anyhow::Error),
-}
 
 /// Posix implementation of shell command language
 pub struct PosixLang {}
@@ -44,75 +19,24 @@ impl Default for PosixLang {
 }
 
 impl Lang for PosixLang {
-    /* eval1 impl
-    fn eval(
-        &self,
-        sh: &Shell,
-        ctx: &mut Context,
-        rt: &mut Runtime,
-        line: String,
-    ) -> anyhow::Result<CmdOutput> {
-        // TODO rewrite the error handling here better
-        let lexer = Lexer::new(&line);
-        let mut parser = Parser::new();
-        let cmd = match parser.parse(lexer) {
-            Ok(cmd) => cmd,
-            Err(e) => {
-                // TODO detailed parse errors
-                eprintln!("{e}");
-                return Err(e.into());
-            },
-        };
-        let exit_status =
-            match eval_command(sh, ctx, rt, &cmd, Stdio::inherit(), Stdio::inherit(), None) {
-                Ok(cmd_handle) => cmd_handle,
-                Err(e) => {
-                    eprintln!("{e}");
-                    return Err(e);
-                },
-            };
-
-        match exit_status {
-            crate::process::ExitStatus::Exited(_) => {},
-            crate::process::ExitStatus::Running(pid) => {},
-        }
-
-        // TODO make this accurate
-        Ok(CmdOutput::success())
-    }
-    */
 
     fn eval(&self, _sh: &Shell, states: &States, line: String) -> anyhow::Result<CmdOutput> {
         // TODO rewrite the error handling here better
+        // TODO why are we creating a new lexer and parser each eval? is this necessary?
         let lexer = Lexer::new(&line);
         let parser = Parser::default();
-        let parsed = match parser.parse(lexer) {
-            Ok(parsed) => parsed,
-            Err(e) => {
-                // TODO detailed parse errors
-                eprintln!("parse error: {e}");
-                return Err(e.into());
-            },
-        };
+        let job_manger = &mut states.get_mut::<JobManager>();
 
-        let (procs, pgid) =
-            match eval2::eval_command(&mut states.get_mut::<JobManager>(), &parsed, None, None) {
-                Ok((procs, pgid)) => (procs, pgid),
-                Err(PosixError::CommandNotFound(_)) => {
-                    // let _ = cmd.run_hook(CommandNotFoundCtx {});
-                    return Ok(CmdOutput::from_status(127));
-                },
-                _ => return Ok(CmdOutput::error()),
-            };
-
-        eval2::run_job(&mut states.get_mut::<JobManager>(), procs, pgid, true)?;
-
-        Ok(CmdOutput::success())
+        match shrs_lang::eval(job_manger, parser, lexer) {
+            Ok(_) => Ok(CmdOutput::success()),
+            Err(_e) => Ok(CmdOutput::error()),
+        }
     }
 
     fn name(&self) -> String {
         "posix".to_string()
     }
+
     fn needs_line_check(&self, _sh: &Shell, ctx: &States) -> bool {
         //TODO check if open quotes or brackets
         let command = ctx.get::<LineContents>().get_full_command();

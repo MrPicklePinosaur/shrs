@@ -18,6 +18,7 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 regex = "1"
 nix = { version = "0.26", default-features = false, features = ["fs", "term", "process", "signal"]}
 log = { version = "0.4" }
+glob = "0.3.1"
 
 
 pino_deref = "0.1"

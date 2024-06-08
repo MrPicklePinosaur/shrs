@@ -19,11 +19,14 @@ use shrs_run_context::RunContextPlugin;
 
 // =-=-= Prompt customization =-=-=
 // Create a new struct and implement the [Prompt] trait
-fn prompt_left(line_mode: State<LineMode>) -> StyledBuf {
+fn prompt_left(line_mode: State<LineMode>, contents: State<LineContents>) -> StyledBuf {
     let indicator = match *line_mode {
         LineMode::Insert => String::from(">").cyan(),
         LineMode::Normal => String::from(":").yellow(),
     };
+    if !contents.lines.is_empty() {
+        return styled_buf!(" ", indicator, " ");
+    }
 
     styled_buf!(
         " ",

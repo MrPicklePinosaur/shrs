@@ -144,9 +144,9 @@ impl<'input> Lexer<'input> {
         start: usize,
         end: usize,
     ) -> Result<(usize, Token<'input>, usize), Error> {
-        let (_, end) = self.take_until_inclusive(start, end, |ch| ch == '\'');
+        let (_, end) = self.take_until_inclusive(start + 1, end, |ch| ch == '\'');
         self.advance();
-        Ok((start, Token::WORD(&self.input[start..end]), end))
+        Ok((start, Token::WORD(&self.input[start + 1..end]), end))
     }
 
     fn double_quote(
@@ -154,9 +154,9 @@ impl<'input> Lexer<'input> {
         start: usize,
         end: usize,
     ) -> Result<(usize, Token<'input>, usize), Error> {
-        let (_, end) = self.take_until_inclusive(start, end, |ch| ch == '"');
+        let (_, end) = self.take_until(start + 1, end, |ch| ch == '"');
         self.advance();
-        Ok((start, Token::WORD(&self.input[start..end]), end))
+        Ok((start, Token::WORD(&self.input[start + 1..end]), end))
     }
 
     // utils for reading until condition is met

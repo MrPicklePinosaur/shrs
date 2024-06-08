@@ -374,14 +374,11 @@ impl Line {
                 self.painter.newline()?;
 
                 if sh.lang.needs_line_check(sh, states) {
-                    states.get_mut::<LineContents>().lines += states
-                        .get::<LineContents>()
-                        .cb
-                        .as_str()
-                        .into_owned()
-                        .as_str();
-                    states.get_mut::<LineContents>().lines += "\n";
-                    states.get_mut::<LineContents>().cb.clear();
+                    let mut lc = states.get_mut::<LineContents>();
+                    let cb_str = lc.cb.as_str().to_string();
+                    lc.lines += cb_str.as_str();
+                    lc.lines += "\n";
+                    lc.cb.clear();
 
                     return Ok(false);
                 }

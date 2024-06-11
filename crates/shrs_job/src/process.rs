@@ -9,7 +9,7 @@ use log::*;
 use nix::libc::{STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 
 use super::{io::Stdin, pid_t, util, Output};
-use crate::log_if_err;
+use crate::warn_if_err;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ProcessId(u32);
@@ -322,7 +322,7 @@ where
             Pid::from_raw(pgid as pid_t),
         );
 
-        log_if_err!(
+        warn_if_err!(
             temp_result,
             "failed to set pgid ({}) for pid ({})",
             child.id(),

@@ -26,6 +26,25 @@ macro_rules! log_if_err {
     }};
 }
 
+#[macro_export]
+macro_rules! warn_if_err {
+    ($result:expr) => {{
+        if let Err(e) = $result {
+            log::warn!("{}", e);
+        }
+    }};
+    ($result:expr, $fmt:expr) => {{
+        if let Err(e) = $result {
+            log::warn!(concat!($fmt, ": {}"), e);
+        }
+    }};
+    ($result:expr, $fmt:expr, $($arg:tt)*) => {{
+        if let Err(e) = $result {
+            log::warn!(concat!($fmt, ": {}"), $($arg)*, e);
+        }
+    }};
+}
+
 pub fn get_terminal() -> RawFd {
     std::io::stdin().as_raw_fd()
 }

@@ -120,28 +120,20 @@ impl ViCursorBuffer for CursorBuffer {
                     .unwrap_or(Location::Back(self)))
             },
             Motion::BackWord => {
-                // TODO logic is getting comlpicatied, need more predicates to test location of
-                // cursor (is cursor on first char of word, last char of word etc)
-
                 // Move to the beginning of previous word
-                let offset = match self.char_at(Location::Cursor()) {
-                    Some(cur_char) if cur_char.is_whitespace() => {
-                        Location::FindBack(self, Location::Cursor(), |ch| !ch.is_whitespace())
+                let offset = match self.char_at(Location::Before()) {
+                    Some(before) if before.is_whitespace() => {
+                        Location::FindBack(self, Location::Before(), |ch| !ch.is_whitespace())
                             .unwrap_or(Location::Front())
                     },
-                    _ => match self.char_at(Location::Before()) {
-                        Some(before) if before.is_whitespace() => {
-                            Location::FindBack(self, Location::Before(), |ch| !ch.is_whitespace())
-                                .unwrap_or(Location::Front())
-                        },
-                        _ => Location::Cursor(),
-                    },
+                    _ => Location::Cursor(),
                 };
 
                 let ret = match Location::FindBack(self, offset, |ch| ch.is_whitespace()) {
                     Some(back) => back,
                     None => return Ok(Location::Front()),
                 };
+
                 Ok(ret + Location::After())
             },
             _ => Ok(Location::Cursor()),

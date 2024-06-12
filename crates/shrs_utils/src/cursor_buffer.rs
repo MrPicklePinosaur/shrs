@@ -99,18 +99,17 @@ impl Location {
 impl Add for Location {
     type Output = Location;
 
-    // TODO handle case where l is ABS, r is REL and |l| < |-r|
     fn add(self, rhs: Self) -> Self::Output {
         match self {
             Location::Abs(l) => match rhs {
                 Location::Abs(r) => Location::Abs(l + r),
                 Location::Rel(r) => {
-                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r) as usize)
+                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r).max(0) as usize)
                 },
             },
             Location::Rel(l) => match rhs {
                 Location::Abs(r) => {
-                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()) as usize)
+                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()).max(0) as usize)
                 },
                 Location::Rel(r) => Location::Rel(l + r),
             },

@@ -69,8 +69,9 @@ impl ViCursorBuffer for CursorBuffer {
                     Location::Cursor()
                 };
 
-                let Some(after_word) = Location::Find(self, start, |ch| ch.is_whitespace()) else {
-                    return Ok(Location::Back(self));
+                let after_word = match Location::Find(self, start, |ch| ch.is_whitespace()) {
+                    Some(location) => location,
+                    None => return Ok(Location::Back(self)),
                 };
 
                 Ok(after_word + Location::Before())

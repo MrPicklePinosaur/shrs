@@ -66,7 +66,7 @@ impl ViCursorBuffer for CursorBuffer {
                     Location::Find(self, Location::After(), |ch| !ch.is_whitespace())
                         .unwrap_or(Location::Back(self))
                 } else {
-                    Location::Cursor()
+                    Location::After()
                 };
 
                 let after_word = match Location::Find(self, start, |ch| ch.is_whitespace()) {
@@ -77,18 +77,12 @@ impl ViCursorBuffer for CursorBuffer {
                 Ok(after_word + Location::Before())
             },
             Motion::BackWordEnd => {
-                // No need to check EOL, enough to get prev char
-                let prev_char = if let Some(ch) = self.char_at(Location::Before()) {
-                    ch
-                } else {
-                    return Ok(Location::Front());
-                };
-
-                let start = if !prev_char.is_whitespace() {
-                    Location::FindBack(self, Location::Before(), |ch| ch.is_whitespace())
+                let start = match self.char_at(Location::Cursor()) {
+                    Some(before) if !before.is_whitespace() => {
+                    Location::FindBack(self, Location::Cursor(), |ch| ch.is_whitespace())
                         .unwrap_or(Location::Front())
-                } else {
-                    Location::Before()
+                    },
+                    _ => Location::Cursor(),
                 };
 
                 Ok(Location::FindBack(self, start, |ch| !ch.is_whitespace())

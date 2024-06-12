@@ -47,6 +47,46 @@ impl ViCursorBuffer for CursorBuffer {
                 Ok(Location::Find(self, start, |ch| !ch.is_whitespace())
                     .unwrap_or(Location::Back(self)))
             },
+            Motion::WordEnd => {
+                // check if at end of line
+                let next_char = if let Some(next_ch) = self.char_at(Location::After()) {
+                    next_ch
+                } else {
+                    return Ok(Location::Back(self));
+                };
+
+                let start = if next_char.is_whitespace() {
+                    // If cursor positioning to last char of the word, need to seek *next* word
+                    Location::Find(self, Location::After(), |ch| !ch.is_whitespace())
+                        .unwrap_or(Location::Back(self))
+                } else {
+                    Location::Cursor()
+                };
+
+                let Some(after_word) = Location::Find(self, start, |ch| ch.is_whitespace()) else {
+                    return Ok(Location::Back(self));
+                };
+
+                Ok(after_word + Location::Before())
+            },
+            Motion::BackWordEnd => {
+                // No need to check EOL, enough to get prev char
+                let prev_char = if let Some(ch) = self.char_at(Location::Before()) {
+                    ch
+                } else {
+                    return Ok(Location::Front());
+                };
+
+                let start = if !prev_char.is_whitespace() {
+                    Location::FindBack(self, Location::Before(), |ch| ch.is_whitespace())
+                        .unwrap_or(Location::Front())
+                } else {
+                    Location::Before()
+                };
+
+                Ok(Location::FindBack(self, start, |ch| !ch.is_whitespace())
+                    .unwrap_or(Location::Front()))
+            },
             Motion::WordPunc => {
                 let punc = "!-~*|\".?[]{}()";
                 //check if at end of line
@@ -111,6 +151,8 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Start
                 | Motion::End
                 | Motion::Word
+                | Motion::WordEnd
+                | Motion::BackWordEnd
                 | Motion::WordPunc
                 | Motion::BackWord
                 | Motion::Find(_) => {
@@ -127,6 +169,8 @@ impl ViCursorBuffer for CursorBuffer {
                 | Motion::Start
                 | Motion::End
                 | Motion::Word
+                | Motion::WordEnd
+                | Motion::BackWordEnd
                 | Motion::WordPunc
                 | Motion::BackWord
                 | Motion::Find(_) => {

@@ -10,6 +10,8 @@ pub enum Motion {
     BackWord,
     WordPunc,
     Word,
+    WordEnd,
+    BackWordEnd,
     Left,
     Right,
     Start,

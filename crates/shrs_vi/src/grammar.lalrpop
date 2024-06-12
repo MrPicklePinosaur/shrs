@@ -21,7 +21,7 @@ pub Motion: Motion = {
     "h" => Motion::Left,
     "l" => Motion::Right,
     "$" => Motion::End,
-    "^" => Motion::Start,
+    "^" => Motion::NonBlankStart,
     "0" => Motion::Start, // currently implementing 0 as same as ^
     "f" <c:r"[a-zA-Z]"> => Motion::Find(c.chars().next().unwrap()),
 };

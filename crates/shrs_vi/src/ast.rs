@@ -15,6 +15,7 @@ pub enum Motion {
     Left,
     Right,
     Start,
+    NonBlankStart,
     Up,
     Down,
     End,

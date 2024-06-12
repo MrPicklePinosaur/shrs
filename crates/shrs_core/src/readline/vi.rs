@@ -28,6 +28,12 @@ impl ViCursorBuffer for CursorBuffer {
             Motion::Left => Ok(Location::Before()),
             Motion::Right => Ok(Location::After()),
             Motion::Start => Ok(Location::Front()),
+            Motion::NonBlankStart => {
+                Ok(
+                    Location::Find(self, Location::Front(), |ch| !ch.is_whitespace())
+                        .unwrap_or(Location::Front()),
+                )
+            },
             Motion::End => Ok(Location::Back(self)),
             Motion::Word => {
                 // check if at end of line
@@ -149,6 +155,7 @@ impl ViCursorBuffer for CursorBuffer {
                 Motion::Left
                 | Motion::Right
                 | Motion::Start
+                | Motion::NonBlankStart
                 | Motion::End
                 | Motion::Word
                 | Motion::WordEnd
@@ -167,6 +174,7 @@ impl ViCursorBuffer for CursorBuffer {
                 Motion::Left
                 | Motion::Right
                 | Motion::Start
+                | Motion::NonBlankStart
                 | Motion::End
                 | Motion::Word
                 | Motion::WordEnd

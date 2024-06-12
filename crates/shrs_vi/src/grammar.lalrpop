@@ -16,10 +16,12 @@ pub Motion: Motion = {
     "b" => Motion::BackWord,
     "w" => Motion::WordPunc,
     "W" => Motion::Word,
+    "e" => Motion::WordEnd,
+    "ge" => Motion::BackWordEnd,
     "h" => Motion::Left,
     "l" => Motion::Right,
     "$" => Motion::End,
-    "^" => Motion::Start,
+    "^" => Motion::NonBlankStart,
     "0" => Motion::Start, // currently implementing 0 as same as ^
     "f" <c:r"[a-zA-Z]"> => Motion::Find(c.chars().next().unwrap()),
 };

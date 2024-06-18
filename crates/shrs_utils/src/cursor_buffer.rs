@@ -99,18 +99,17 @@ impl Location {
 impl Add for Location {
     type Output = Location;
 
-    // TODO handle case where l is ABS, r is REL and |l| < |-r|
     fn add(self, rhs: Self) -> Self::Output {
         match self {
             Location::Abs(l) => match rhs {
                 Location::Abs(r) => Location::Abs(l + r),
                 Location::Rel(r) => {
-                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r) as usize)
+                    Location::Abs((TryInto::<isize>::try_into(l).unwrap() + r).max(0) as usize)
                 },
             },
             Location::Rel(l) => match rhs {
                 Location::Abs(r) => {
-                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()) as usize)
+                    Location::Abs((l + TryInto::<isize>::try_into(r).unwrap()).max(0) as usize)
                 },
                 Location::Rel(r) => Location::Rel(l + r),
             },
@@ -389,6 +388,48 @@ mod tests {
         cb.insert(Location::Cursor(), "こここ")?;
         assert_eq!(cb.cursor(), 4);
         assert_eq!(cb.len(), 8);
+        Ok(())
+    }
+
+    #[test]
+    fn check_location_add() -> Result<()> {
+        let cursor_abs_position = Location::Abs(5);
+
+        assert_eq!(cursor_abs_position + Location::Rel(1), Location::Abs(6));
+        assert_eq!(cursor_abs_position + Location::Abs(10), Location::Abs(15));
+        assert_eq!(cursor_abs_position + Location::Rel(-5), Location::Abs(0));
+        assert_eq!(cursor_abs_position + Location::Rel(-15), Location::Abs(0));
+
+        let cursor_rel_position = Location::Rel(5);
+
+        assert_eq!(cursor_rel_position + Location::Rel(5), Location::Rel(10));
+        assert_eq!(cursor_rel_position + Location::Abs(5), Location::Abs(10));
+        assert_eq!(cursor_rel_position + Location::Rel(-10), Location::Rel(-5));
+
+        let cursor_neg_rel_position = Location::Rel(-5);
+
+        assert_eq!(cursor_neg_rel_position + Location::Rel(5), Location::Rel(0));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(5), Location::Abs(0));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(4), Location::Abs(0));
+        assert_eq!(cursor_neg_rel_position + Location::Rel(-5), Location::Rel(-10));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(10), Location::Abs(5));
+        assert_eq!(cursor_neg_rel_position + Location::Rel(10), Location::Rel(5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn check_location_overflowing_add() -> Result<()> {
+        let cursor_location = Location::Abs(10_000);
+        let new_position = cursor_location + Location::Rel(-10_001);
+
+        assert_eq!(new_position, Location::Abs(0));
+
+        let cursor_location = Location::Rel(-10_001);
+        let new_position = cursor_location + Location::Abs(10_000);
+
+        assert_eq!(new_position, Location::Abs(0));
+
         Ok(())
     }
 }

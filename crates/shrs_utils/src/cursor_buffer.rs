@@ -390,4 +390,46 @@ mod tests {
         assert_eq!(cb.len(), 8);
         Ok(())
     }
+
+    #[test]
+    fn check_location_add() -> Result<()> {
+        let cursor_abs_position = Location::Abs(5);
+
+        assert_eq!(cursor_abs_position + Location::Rel(1), Location::Abs(6));
+        assert_eq!(cursor_abs_position + Location::Abs(10), Location::Abs(15));
+        assert_eq!(cursor_abs_position + Location::Rel(-5), Location::Abs(0));
+        assert_eq!(cursor_abs_position + Location::Rel(-15), Location::Abs(0));
+
+        let cursor_rel_position = Location::Rel(5);
+
+        assert_eq!(cursor_rel_position + Location::Rel(5), Location::Rel(10));
+        assert_eq!(cursor_rel_position + Location::Abs(5), Location::Abs(10));
+        assert_eq!(cursor_rel_position + Location::Rel(-10), Location::Rel(-5));
+
+        let cursor_neg_rel_position = Location::Rel(-5);
+
+        assert_eq!(cursor_neg_rel_position + Location::Rel(5), Location::Rel(0));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(5), Location::Abs(0));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(4), Location::Abs(0));
+        assert_eq!(cursor_neg_rel_position + Location::Rel(-5), Location::Rel(-10));
+        assert_eq!(cursor_neg_rel_position + Location::Abs(10), Location::Abs(5));
+        assert_eq!(cursor_neg_rel_position + Location::Rel(10), Location::Rel(5));
+
+        Ok(())
+    }
+
+    #[test]
+    fn check_location_overflowing_add() -> Result<()> {
+        let cursor_location = Location::Abs(10_000);
+        let new_position = cursor_location + Location::Rel(-10_001);
+
+        assert_eq!(new_position, Location::Abs(0));
+
+        let cursor_location = Location::Rel(-10_001);
+        let new_position = cursor_location + Location::Abs(10_000);
+
+        assert_eq!(new_position, Location::Abs(0));
+
+        Ok(())
+    }
 }

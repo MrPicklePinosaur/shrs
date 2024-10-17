@@ -73,7 +73,12 @@ pub fn initialize_job_control() -> anyhow::Result<()> {
 
     // Put ourselves in our own process group
     let shell_pgid = Pid::this();
-    unistd::setpgid(shell_pgid, shell_pgid)?;
+    match unistd::setpgid(shell_pgid, shell_pgid) {
+        Ok(_) => {},
+        Err(_) => {
+            eprintln!("WARN: Failed to set process group id");
+        },
+    }
 
     // Grab control of the terminal and save default terminal attributes
     let shell_terminal = get_terminal();
